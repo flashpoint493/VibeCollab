@@ -14,6 +14,7 @@ from . import __version__
 from .generator import LLMContextGenerator
 from .project import Project
 from .templates import TemplateManager
+from .llmstxt import LLMsTxtManager
 
 console = Console()
 
@@ -89,7 +90,8 @@ def init(name: str, domain: str, output: str, force: bool):
     table = Table(title="生成的文件", show_header=True)
     table.add_column("文件", style="cyan")
     table.add_column("说明")
-    table.add_row("llm.txt", "AI 协作规则文档")
+    table.add_row("CONTRIBUTING_AI.md", "AI 协作规则文档")
+    table.add_row("llms.txt", "项目上下文文档（已集成协作规则引用）")
     table.add_row("project.yaml", "项目配置 (可编辑)")
     table.add_row("docs/CONTEXT.md", "当前上下文")
     table.add_row("docs/DECISIONS.md", "决策记录")
@@ -109,28 +111,51 @@ def init(name: str, domain: str, output: str, force: bool):
 
 @main.command()
 @click.option("--config", "-c", required=True, help="YAML 配置文件路径")
-@click.option("--output", "-o", default="llm.txt", help="输出文件路径")
-def generate(config: str, output: str):
-    """从配置文件生成 llm.txt
+@click.option("--output", "-o", default="CONTRIBUTING_AI.md", help="输出文件路径")
+@click.option("--no-llmstxt", is_flag=True, help="不集成 llms.txt")
+def generate(config: str, output: str, no_llmstxt: bool):
+    """从配置文件生成 AI 协作规则文档并集成 llms.txt
     
     Examples:
     
-        llmcontext generate -c project.yaml -o llm.txt
+        llmcontext generate -c project.yaml -o CONTRIBUTING_AI.md
         
-        llmcontext generate -c my-config.yaml
+        llmcontext generate -c my-config.yaml --no-llmstxt
     """
     config_path = Path(config)
     output_path = Path(output)
+    project_root = config_path.parent
     
     if not config_path.exists():
         console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
         raise SystemExit(1)
     
-    with console.status("[bold green]正在生成 llm.txt..."):
+    with console.status("[bold green]正在生成协作规则文档..."):
         try:
-            generator = LLMContextGenerator.from_file(config_path)
+            generator = LLMContextGenerator.from_file(config_path, project_root)
             content = generator.generate()
             output_path.write_text(content, encoding="utf-8")
+            
+            # 集成 llms.txt（除非指定不集成）
+            if not no_llmstxt:
+                project_config = generator.config
+                project_name = project_config.get("project", {}).get("name", "Project")
+                project_desc = project_config.get("project", {}).get("description", "AI-assisted development project")
+                
+                updated, llmstxt_path = LLMsTxtManager.ensure_integration(
+                    project_root,
+                    project_name,
+                    project_desc,
+                    output_path
+                )
+                
+                if updated:
+                    if llmstxt_path and llmstxt_path.exists():
+                        console.print(f"[green]✅ 已更新:[/green] {llmstxt_path}")
+                    else:
+                        console.print(f"[green]✅ 已创建:[/green] {llmstxt_path}")
+                else:
+                    console.print(f"[dim]ℹ️  llms.txt 已包含协作规则引用[/dim]")
         except Exception as e:
             console.print(f"[red]错误:[/red] {e}")
             raise SystemExit(1)
@@ -323,10 +348,20 @@ def upgrade(config: str, dry_run: bool, force: bool):
     with open(config_path, "w", encoding="utf-8") as f:
         yaml.dump(merged, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
     
-    # 重新生成 llm.txt
-    llm_txt_path = config_path.parent / "llm.txt"
+    # 重新生成协作规则文档并集成 llms.txt
+    contributing_ai_path = config_path.parent / "CONTRIBUTING_AI.md"
     generator = LLMContextGenerator(merged, config_path.parent)
-    llm_txt_path.write_text(generator.generate(), encoding="utf-8")
+    contributing_ai_path.write_text(generator.generate(), encoding="utf-8")
+    
+    # 集成 llms.txt
+    project_name = merged.get("project", {}).get("name", "Project")
+    project_desc = merged.get("project", {}).get("description", "AI-assisted development project")
+    LLMsTxtManager.ensure_integration(
+        config_path.parent,
+        project_name,
+        project_desc,
+        contributing_ai_path
+    )
     
     # 成功提示
     console.print()

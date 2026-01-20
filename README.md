@@ -8,7 +8,7 @@
 
 将 Vibe Development 哲学和 LLM 协作协议抽象为可配置、可复用的框架，支持快速在不同领域部署工程化的人机协作流程。
 
-> 本项目自身也使用 llm.txt 进行开发（元实现）
+> 本项目自身也使用生成的协作规则进行开发（元实现），并支持与 [llmstxt.org](https://llmstxt.org) 标准无缝集成
 
 ---
 
@@ -103,25 +103,37 @@ llmcontext init -n "MyDataProject" -d data -o ./my-data-project
 
 ```
 my-project/
-├── llm.txt                    # AI 协作规则文档
-├── project.yaml               # 项目配置 (可编辑)
+├── CONTRIBUTING_AI.md         # AI 协作规则文档
+├── llms.txt                   # 项目上下文文档（已集成协作规则引用）
+├── project.yaml                # 项目配置 (可编辑)
 └── docs/
-    ├── CONTEXT.md             # 当前上下文 (每次对话更新)
-    ├── DECISIONS.md           # 决策记录
-    ├── CHANGELOG.md           # 变更日志
-    ├── ROADMAP.md             # 路线图 + 迭代建议池
-    └── QA_TEST_CASES.md       # 产品QA测试用例
+    ├── CONTEXT.md              # 当前上下文 (每次对话更新)
+    ├── DECISIONS.md            # 决策记录
+    ├── CHANGELOG.md            # 变更日志
+    ├── ROADMAP.md              # 路线图 + 迭代建议池
+    └── QA_TEST_CASES.md        # 产品QA测试用例
 ```
+
+> **💡 llms.txt 集成**：工具会自动检测项目中是否已有 `llms.txt` 文件。如果存在，会在其中添加 AI Collaboration 章节引用协作规则；如果不存在，会创建一个符合 [llmstxt.org](https://llmstxt.org) 标准的 `llms.txt` 文件。
 
 ### 文档体系说明
 
 项目初始化后会生成一套完整的文档体系，每个文档都有明确的用途和更新时机：
 
-#### 📄 `llm.txt` - AI 协作规则文档
+#### 📄 `CONTRIBUTING_AI.md` - AI 协作规则文档
 - **用途**: 项目的顶层协作规则，定义 AI 与开发者的协作方式
 - **内容**: 包含核心理念、角色定义、决策分级、流程协议等完整协议
 - **更新时机**: 当协作方式演进时（通过 `llmcontext generate` 重新生成）
 - **特点**: 由 `project.yaml` 配置自动生成，是 AI 理解项目规则的主要依据
+- **与 llms.txt 的关系**: 在 `llms.txt` 中通过引用链接指向此文档
+
+#### 📄 `llms.txt` - 项目上下文文档（可选）
+- **用途**: 符合 [llmstxt.org](https://llmstxt.org) 标准的项目上下文文档
+- **内容**: 项目概述、快速开始、文档索引等
+- **生成方式**: 
+  - 如果项目已存在 `llms.txt`，工具会自动在其中添加 AI Collaboration 章节引用
+  - 如果不存在，工具会创建一个新的 `llms.txt` 文件
+- **特点**: 与 `CONTRIBUTING_AI.md` 互补，前者描述"项目是什么"，后者定义"如何协作"
 
 #### 📝 `docs/CONTEXT.md` - 当前开发上下文
 - **用途**: 记录当前开发进度、正在进行的工作、待解决的问题
@@ -205,8 +217,14 @@ my-project/
 ### 自定义后重新生成
 
 ```bash
-# 编辑 project.yaml 后重新生成
-llmcontext generate -c project.yaml -o llm.txt
+# 编辑 project.yaml 后重新生成（默认输出 CONTRIBUTING_AI.md 并集成 llms.txt）
+llmcontext generate -c project.yaml
+
+# 指定输出文件
+llmcontext generate -c project.yaml -o CONTRIBUTING_AI.md
+
+# 不集成 llms.txt
+llmcontext generate -c project.yaml --no-llmstxt
 
 # 验证配置
 llmcontext validate -c project.yaml
@@ -214,7 +232,7 @@ llmcontext validate -c project.yaml
 
 ---
 
-## 生成的 llm.txt 包含章节
+## 生成的 CONTRIBUTING_AI.md 包含章节
 
 | 章节 | 说明 |
 |------|------|
@@ -235,7 +253,7 @@ llmcontext validate -c project.yaml
 | Prompt 工程最佳实践 | 有效提问模板、高价值引导词 |
 | 符号学标注系统 | 统一的状态/优先级符号 |
 | 已确认决策汇总 | 项目决策记录表 |
-| 文档迭代日志 | llm.txt 自身版本历史 |
+| 文档迭代日志 | CONTRIBUTING_AI.md 自身版本历史 |
 
 ---
 
@@ -245,7 +263,7 @@ llmcontext validate -c project.yaml
 llmcontext --help                              # 查看帮助
 llmcontext --version                           # 查看版本
 llmcontext init -n <name> -d <domain> -o <dir> # 初始化项目
-llmcontext generate -c <config> -o <output>    # 生成 llm.txt
+llmcontext generate -c <config> -o <output>    # 生成协作规则文档（默认集成 llms.txt）
 llmcontext validate -c <config>                # 验证配置
 llmcontext upgrade                             # 升级协议到最新版本
 llmcontext domains                             # 列出支持的领域

@@ -9,6 +9,7 @@ from datetime import datetime
 
 from .generator import LLMContextGenerator
 from .templates import TemplateManager
+from .llmstxt import LLMsTxtManager
 
 
 class Project:
@@ -103,12 +104,28 @@ class Project:
             )
 
     def _generate_llm_txt(self):
-        """生成 llm.txt"""
+        """生成协作规则文档（CONTRIBUTING_AI.md）并集成 llms.txt"""
         generator = LLMContextGenerator(self.config, self.output_dir)
         content = generator.generate()
         
-        llm_txt_path = self.output_dir / "llm.txt"
-        llm_txt_path.write_text(content, encoding="utf-8")
+        # 输出为 CONTRIBUTING_AI.md
+        contributing_ai_path = self.output_dir / "CONTRIBUTING_AI.md"
+        contributing_ai_path.write_text(content, encoding="utf-8")
+        
+        # 集成 llms.txt
+        project_name = self.config.get("project", {}).get("name", "Project")
+        project_desc = self.config.get("project", {}).get("description", "AI-assisted development project")
+        
+        updated, llmstxt_path = LLMsTxtManager.ensure_integration(
+            self.output_dir,
+            project_name,
+            project_desc,
+            contributing_ai_path
+        )
+        
+        # 保存 llms.txt 路径到配置（用于后续更新）
+        if llmstxt_path:
+            self.config.setdefault("_meta", {})["llmstxt_path"] = str(llmstxt_path)
 
     def _create_doc_templates(self):
         """创建文档模板"""
@@ -212,5 +229,5 @@ class Project:
         (self.docs_dir / "QA_TEST_CASES.md").write_text(qa_content, encoding="utf-8")
 
     def regenerate(self):
-        """重新生成 llm.txt"""
+        """重新生成协作规则文档并更新 llms.txt"""
         self._generate_llm_txt()
