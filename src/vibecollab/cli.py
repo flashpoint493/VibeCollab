@@ -33,12 +33,13 @@ def deep_merge(base: dict, override: dict) -> dict:
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name="llmcontext")
+@click.version_option(version=__version__, prog_name="vibecollab")
 def main():
-    """LLMContext - AI 协作规则文档生成器
+    """VibeCollab - AI 协作协议生成器
     
-    从 YAML 配置生成标准化的 llm.txt 文档，
+    从 YAML 配置生成标准化的 AI 协作协议文档，
     支持 Vibe Development 哲学的人机协作工程化部署。
+    自动集成 llms.txt 标准。
     """
     pass
 
@@ -58,9 +59,9 @@ def init(name: str, domain: str, output: str, force: bool):
     
     Examples:
     
-        llmcontext init -n "MyProject" -d web -o ./my-project
+        vibecollab init -n "MyProject" -d web -o ./my-project
         
-        llmcontext init -n "GameProject" -d game -o ./game --force
+        vibecollab init -n "GameProject" -d game -o ./game --force
     """
     output_path = Path(output)
     
@@ -105,7 +106,7 @@ def init(name: str, domain: str, output: str, force: bool):
     console.print("[bold]下一步:[/bold]")
     console.print(f"  1. cd {output}")
     console.print("  2. 编辑 project.yaml 自定义配置")
-    console.print("  3. llmcontext generate -c project.yaml  # 重新生成")
+    console.print("  3. vibecollab generate -c project.yaml  # 重新生成")
     console.print("  4. 开始你的 Vibe Development 之旅!")
 
 
@@ -118,9 +119,9 @@ def generate(config: str, output: str, no_llmstxt: bool):
     
     Examples:
     
-        llmcontext generate -c project.yaml -o CONTRIBUTING_AI.md
+        vibecollab generate -c project.yaml -o CONTRIBUTING_AI.md
         
-        llmcontext generate -c my-config.yaml --no-llmstxt
+        vibecollab generate -c my-config.yaml --no-llmstxt
     """
     config_path = Path(config)
     output_path = Path(output)
@@ -171,7 +172,7 @@ def validate(config: str):
     
     Examples:
     
-        llmcontext validate -c project.yaml
+        vibecollab validate -c project.yaml
     """
     config_path = Path(config)
     
@@ -245,9 +246,9 @@ def export_template(template: str, output: str):
     
     Examples:
     
-        llmcontext export-template -t default -o my-project.yaml
+        vibecollab export-template -t default -o my-project.yaml
         
-        llmcontext export-template -t game -o game-project.yaml
+        vibecollab export-template -t game -o game-project.yaml
     """
     tm = TemplateManager()
     output_path = Path(output)
@@ -258,7 +259,7 @@ def export_template(template: str, output: str):
         console.print(f"[green]✅ 已导出模板:[/green] {output_path}")
     except FileNotFoundError:
         console.print(f"[red]错误:[/red] 模板不存在: {template}")
-        console.print("[dim]使用 'llmcontext templates' 查看可用模板[/dim]")
+        console.print("[dim]使用 'vibecollab templates' 查看可用模板[/dim]")
         raise SystemExit(1)
 
 
@@ -273,11 +274,11 @@ def upgrade(config: str, dry_run: bool, force: bool):
     
     Examples:
     
-        llmcontext upgrade                    # 升级当前目录的项目
+        vibecollab upgrade                    # 升级当前目录的项目
         
-        llmcontext upgrade -c project.yaml    # 指定配置文件
+        vibecollab upgrade -c project.yaml    # 指定配置文件
         
-        llmcontext upgrade --dry-run          # 预览变更
+        vibecollab upgrade --dry-run          # 预览变更
     """
     config_path = Path(config)
     

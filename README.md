@@ -1,10 +1,10 @@
-# LLMContext
+# VibeCollab
 
-[![PyPI version](https://badge.fury.io/py/llm-txt-generator.svg)](https://badge.fury.io/py/llm-txt-generator)
+[![PyPI version](https://badge.fury.io/py/vibe-collab.svg)](https://badge.fury.io/py/vibe-collab)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**从 YAML 配置生成标准化的 AI 协作规则文档 (llm.txt)**
+**从 YAML 配置生成标准化的 AI 协作协议，并自动集成 llms.txt 标准**
 
 将 Vibe Development 哲学和 LLM 协作协议抽象为可配置、可复用的框架，支持快速在不同领域部署工程化的人机协作流程。
 
@@ -16,9 +16,9 @@
 
 ```mermaid
 flowchart TD
-    A[1. 安装 llm-txt-generator<br/>pip install] --> B[2. 初始化项目<br/>选择领域模板]
+    A[1. 安装 vibe-collab<br/>pip install] --> B[2. 初始化项目<br/>选择领域模板]
     B --> C[生成项目结构]
-    C --> D1[llm.txt<br/>协作规则]
+    C --> D1[CONTRIBUTING_AI.md<br/>协作规则]
     C --> D2[project.yaml<br/>配置文件]
     C --> D3[docs/<br/>CONTEXT.md CHANGELOG.md]
     
@@ -28,7 +28,7 @@ flowchart TD
     E1 --> F[对话生命周期]
     E2 --> F
     
-    F --> G1[对话开始<br/>• 读 llm.txt<br/>• 读 CONTEXT<br/>• 确认目标]
+    F --> G1[对话开始<br/>• 读 CONTRIBUTING_AI.md<br/>• 读 CONTEXT<br/>• 确认目标]
     G1 --> G2[协作开发<br/>• 需求澄清<br/>• 决策分级<br/>• 代码实现]
     G2 --> G3[对话结束<br/>• 更新 CONTEXT.md<br/>• 更新 CHANGELOG<br/>• git commit]
     
@@ -36,7 +36,7 @@ flowchart TD
     G3 --> H2{配置变更时}
     
     H1 --> I1[QA 验收测试]
-    H2 --> I2[重新生成 llm.txt]
+    H2 --> I2[重新生成 CONTRIBUTING_AI.md]
     
     I1 --> J[里程碑发布]
     I2 --> J
@@ -61,14 +61,14 @@ flowchart TD
 - **领域扩展**: 支持 game/web/data 等领域的定制扩展
 - **钩子机制**: 在对话流程节点自动注入上下文
 - **Cursor Skill**: 可作为 IDE Skill 使用，提供结构化协作流程
-- **自举实现**: 本项目使用自身生成的 llm.txt 进行开发
+- **自举实现**: 本项目使用自身生成的协作协议进行开发
 
 ---
 
 ## 安装
 
 ```bash
-pip install llm-txt-generator
+pip install vibe-collab
 ```
 
 或从源码安装：
@@ -87,16 +87,16 @@ pip install -e .
 
 ```bash
 # 通用项目
-llmcontext init -n "MyProject" -d generic -o ./my-project
+vibecollab init -n "MyProject" -d generic -o ./my-project
 
 # 游戏项目（含 GM 命令注入）
-llmcontext init -n "MyGame" -d game -o ./my-game
+vibecollab init -n "MyGame" -d game -o ./my-game
 
 # Web 项目（含 API 文档注入）
-llmcontext init -n "MyWebApp" -d web -o ./my-webapp
+vibecollab init -n "MyWebApp" -d web -o ./my-webapp
 
 # 数据项目（含数据处理流程）
-llmcontext init -n "MyDataProject" -d data -o ./my-data-project
+vibecollab init -n "MyDataProject" -d data -o ./my-data-project
 ```
 
 ### 生成的项目结构
@@ -123,7 +123,7 @@ my-project/
 #### 📄 `CONTRIBUTING_AI.md` - AI 协作规则文档
 - **用途**: 项目的顶层协作规则，定义 AI 与开发者的协作方式
 - **内容**: 包含核心理念、角色定义、决策分级、流程协议等完整协议
-- **更新时机**: 当协作方式演进时（通过 `llmcontext generate` 重新生成）
+- **更新时机**: 当协作方式演进时（通过 `vibecollab generate` 重新生成）
 - **特点**: 由 `project.yaml` 配置自动生成，是 AI 理解项目规则的主要依据
 - **与 llms.txt 的关系**: 在 `llms.txt` 中通过引用链接指向此文档
 
@@ -212,22 +212,22 @@ my-project/
   - 里程碑定义
   - 领域扩展配置
 - **更新时机**: 需要调整协作规则时
-- **特点**: 修改后通过 `llmcontext generate` 重新生成 `llm.txt`
+- **特点**: 修改后通过 `vibecollab generate` 重新生成 `CONTRIBUTING_AI.md`
 
 ### 自定义后重新生成
 
 ```bash
 # 编辑 project.yaml 后重新生成（默认输出 CONTRIBUTING_AI.md 并集成 llms.txt）
-llmcontext generate -c project.yaml
+vibecollab generate -c project.yaml
 
 # 指定输出文件
-llmcontext generate -c project.yaml -o CONTRIBUTING_AI.md
+vibecollab generate -c project.yaml -o CONTRIBUTING_AI.md
 
 # 不集成 llms.txt
-llmcontext generate -c project.yaml --no-llmstxt
+vibecollab generate -c project.yaml --no-llmstxt
 
 # 验证配置
-llmcontext validate -c project.yaml
+vibecollab validate -c project.yaml
 ```
 
 ---
@@ -260,33 +260,33 @@ llmcontext validate -c project.yaml
 ## CLI 命令
 
 ```bash
-llmcontext --help                              # 查看帮助
-llmcontext --version                           # 查看版本
-llmcontext init -n <name> -d <domain> -o <dir> # 初始化项目
-llmcontext generate -c <config> -o <output>    # 生成协作规则文档（默认集成 llms.txt）
-llmcontext validate -c <config>                # 验证配置
-llmcontext upgrade                             # 升级协议到最新版本
-llmcontext domains                             # 列出支持的领域
-llmcontext templates                           # 列出可用模板
+vibecollab --help                              # 查看帮助
+vibecollab --version                           # 查看版本
+vibecollab init -n <name> -d <domain> -o <dir> # 初始化项目
+vibecollab generate -c <config> -o <output>    # 生成协作规则文档（默认集成 llms.txt）
+vibecollab validate -c <config>                # 验证配置
+vibecollab upgrade                             # 升级协议到最新版本
+vibecollab domains                             # 列出支持的领域
+vibecollab templates                           # 列出可用模板
 ```
 
 ---
 
 ## 协议版本升级
 
-当 llmcontext 包有新版本时，已有项目可以无缝升级：
+当 vibecollab 包有新版本时，已有项目可以无缝升级：
 
 ```bash
 # 升级当前项目的协议
-pip install --upgrade llm-txt-generator
+pip install --upgrade vibe-collab
 cd your-project
-llmcontext upgrade
+vibecollab upgrade
 
 # 预览变更（不实际修改）
-llmcontext upgrade --dry-run
+vibecollab upgrade --dry-run
 
 # 指定配置文件
-llmcontext upgrade -c project.yaml
+vibecollab upgrade -c project.yaml
 ```
 
 **升级原理**：
@@ -294,7 +294,7 @@ llmcontext upgrade -c project.yaml
 ```mermaid
 flowchart LR
     A[用户配置<br/>project.yaml] --> C[智能合并<br/>重新生成]
-    B[最新模板<br/>llmcontext 包] --> C
+    B[最新模板<br/>vibecollab 包] --> C
     
     A1[• 项目名称] -.保留.-> C
     A2[• 自定义角色] -.保留.-> C
@@ -304,7 +304,7 @@ flowchart LR
     B2[• Bug 修复] --> C
     B3[• 最佳实践更新] --> C
     
-    C --> D[llm.txt]
+    C --> D[CONTRIBUTING_AI.md]
     
     A --> A1
     A --> A2
@@ -428,17 +428,17 @@ domain_extensions:
 
 ## Cursor Skill 使用
 
-本项目包含 Cursor IDE Skill，位于 `.cursor/skills/llmcontext/`：
+本项目包含 Cursor IDE Skill，位于 `.cursor/skills/vibecollab/`：
 
 ```bash
 # 复制到你的项目
-cp -r .cursor/skills/llmcontext your-project/.cursor/skills/
+cp -r .cursor/skills/vibecollab your-project/.cursor/skills/
 
-# 或解压 dist/llmcontext-skill.zip
+# 或解压 dist/vibecollab-skill.zip
 ```
 
 Skill 会在对话中自动：
-1. 读取 llm.txt 和 CONTEXT.md 恢复上下文
+1. 读取 CONTRIBUTING_AI.md 和 CONTEXT.md 恢复上下文
 2. 遵循决策分级制度
 3. 对话结束时更新文档并 git commit
 
@@ -450,7 +450,7 @@ Skill 会在对话中自动：
 
 ```
 继续项目开发。
-请先读取 llm.txt 和 docs/CONTEXT.md 恢复上下文。
+请先读取 CONTRIBUTING_AI.md 和 docs/CONTEXT.md 恢复上下文。
 本次对话目标: {你的目标}
 ```
 
@@ -477,10 +477,10 @@ Skill 会在对话中自动：
 
 ```
 LLMContextGenerator/
-├── llm.txt                      # 本项目的协作规则（自举）
+├── CONTRIBUTING_AI.md           # 本项目的协作规则（自举）
 ├── project.yaml                 # 本项目的配置
 ├── pyproject.toml               # 包配置
-├── src/llmcontext/
+├── src/vibecollab/
 │   ├── cli.py                   # CLI 命令
 │   ├── generator.py             # 文档生成器
 │   ├── extension.py             # 扩展处理器
@@ -492,7 +492,7 @@ LLMContextGenerator/
 ├── schema/
 │   ├── project.schema.yaml      # 项目配置 Schema
 │   └── extension.schema.yaml    # 扩展机制 Schema
-├── .cursor/skills/llmcontext/    # Cursor Skill
+├── .cursor/skills/vibecollab/    # Cursor Skill
 ├── docs/
 │   ├── CONTEXT.md
 │   └── CHANGELOG.md
@@ -510,11 +510,11 @@ pip install -e ".[dev]"
 # 运行测试
 pytest
 
-# 重新生成本项目的 llm.txt
-python -c "from llmcontext import LLMContextGenerator; import yaml; from pathlib import Path; \
+# 重新生成本项目的协作规则文档
+python -c "from vibecollab import LLMContextGenerator; import yaml; from pathlib import Path; \
   config = yaml.safe_load(open('project.yaml', encoding='utf-8')); \
   g = LLMContextGenerator(config, Path('.')); \
-  Path('llm.txt').write_text(g.generate(), encoding='utf-8')"
+  Path('CONTRIBUTING_AI.md').write_text(g.generate(), encoding='utf-8')"
 ```
 
 ---
@@ -525,4 +525,4 @@ MIT
 
 ---
 
-*本框架源自游戏开发实践，用 llm.txt 来开发 llm.txt 生成器。*
+*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。*

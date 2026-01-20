@@ -7,7 +7,7 @@ from click.testing import CliRunner
 from pathlib import Path
 import tempfile
 
-from llmcontext.cli import main
+from vibecollab.cli import main
 
 
 class TestCLI:
@@ -20,7 +20,7 @@ class TestCLI:
         """测试版本命令"""
         result = self.runner.invoke(main, ["--version"])
         assert result.exit_code == 0
-        assert "llmcontext" in result.output and "version" in result.output
+        assert "vibecollab" in result.output and "version" in result.output
 
     def test_domains(self):
         """测试列出领域"""

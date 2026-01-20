@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import yaml
 
-from llmcontext import LLMContextGenerator, Project
+from vibecollab import LLMContextGenerator, Project
 
 
 class TestLLMContextGenerator:

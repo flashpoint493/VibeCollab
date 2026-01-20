@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "llm-txt-generator"
+name = "vibe-collab"
 version = "0.3.0"
-description = "从 YAML 配置生成标准化的 AI 协作规则文档 (llm.txt)"
+description = "Generate AI collaboration protocols with Vibe Development philosophy"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.8"
 authors = [
-    { name = "LLMContextGenerator Contributors" }
+    { name = "VibeCollab Contributors" }
 ]
 keywords = [
     "llm",
@@ -52,15 +52,15 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/flashpoint493/LLMTXTGenerator"
-Repository = "https://github.com/flashpoint493/LLMTXTGenerator"
-Documentation = "https://github.com/flashpoint493/LLMTXTGenerator#readme"
+Homepage = "https://github.com/flashpoint493/VibeCollab"
+Repository = "https://github.com/flashpoint493/VibeCollab"
+Documentation = "https://github.com/flashpoint493/VibeCollab#readme"
 
 [project.scripts]
-llmcontext = "llmcontext.cli:main"
+vibecollab = "vibecollab.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/llmcontext"]
+packages = ["src/vibecollab"]
 
 [tool.hatch.build.targets.sdist]
 include = [
