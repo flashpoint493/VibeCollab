@@ -74,8 +74,8 @@ pip install vibe-collab
 或从源码安装：
 
 ```bash
-git clone https://github.com/flashpoint493/LLMTXTGenerator.git
-cd LLMTXTGenerator
+git clone https://github.com/flashpoint493/VibeCollab.git
+cd VibeCollab
 pip install -e .
 ```
 
@@ -476,7 +476,7 @@ Skill 会在对话中自动：
 ## 项目结构
 
 ```
-LLMContextGenerator/
+VibeCollab/
 ├── CONTRIBUTING_AI.md           # 本项目的协作规则（自举）
 ├── project.yaml                 # 本项目的配置
 ├── pyproject.toml               # 包配置
