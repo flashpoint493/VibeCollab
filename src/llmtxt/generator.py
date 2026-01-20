@@ -85,20 +85,21 @@ class LLMTxtGenerator:
         self._add_decision_levels()
         self._add_task_unit()
         self._add_dialogue_protocol()
-        self._add_iteration_protocols()  # 新增：迭代相关协议
-        self._add_qa_protocol()  # 新增：QA验收协议
+        self._add_requirement_clarification()  # 新增：需求澄清协议
+        self._add_iteration_protocols()
+        self._add_qa_protocol()
         self._add_git_workflow()
         self._add_testing()
         self._add_milestone()
         self._add_iteration()
         self._add_documentation()
-        self._add_prompt_engineering()  # 新增：Prompt工程最佳实践
+        self._add_prompt_engineering()
         self._add_symbology()
-        self._add_decisions_summary()  # 新增：已确认决策汇总
+        self._add_decisions_summary()
         self._add_extension_sections()
         self._add_quick_reference()
-        self._add_changelog()  # 新增：文档迭代日志
-        self._add_git_history_reference()  # 新增：Git历史参考
+        self._add_changelog()
+        self._add_git_history_reference()
         self._add_footer()
 
         return "\n".join(self.sections)
@@ -321,6 +322,106 @@ class LLMTxtGenerator:
             content += f"{line}\n       ↓\n"
 
         content = content.rstrip("       ↓\n") + "\n```\n"
+        self.sections.append(content)
+
+    def _add_requirement_clarification(self):
+        """添加需求澄清协议章节"""
+        req_clarify = self.config.get("requirement_clarification", {})
+        
+        if not req_clarify.get("enabled", True):
+            return
+        
+        content = """## 4.2.3 需求澄清协议（重要）
+
+> **用户提出需求时可能是自然无意识的，AI 必须将模糊描述转化为结构化需求**
+
+**触发条件**: 用户提出的需求存在以下情况
+- 描述模糊或不完整
+- 缺少具体的验收标准
+- 可能有多种理解方式
+- 涉及 S/A 级决策
+
+**澄清流程**:
+```
+1. [AI] 识别用户意图，提取关键信息
+2. [AI] 转化为结构化需求描述
+3. [AI] 列出假设和待确认项
+4. [人] 确认/修正/补充
+5. [AI] 形成最终需求文档
+```
+
+**结构化需求模板**:
+
+```markdown
+## 需求: {需求标题}
+
+**原始描述**: 
+> {用户原话}
+
+**需求分析**:
+- 目标: {要达成什么}
+- 场景: {在什么情况下使用}
+- 用户: {谁会使用}
+
+**功能要求**:
+1. {具体功能点1}
+2. {具体功能点2}
+
+**验收标准**:
+- [ ] {可验证的标准1}
+- [ ] {可验证的标准2}
+
+**待确认项**:
+- [ ] {需要用户确认的假设1}
+- [ ] {需要用户确认的假设2}
+
+**决策等级**: {S/A/B/C}
+**预估复杂度**: {高/中/低}
+```
+
+**快速澄清问句**:
+- "你希望达到什么效果？"
+- "有没有参考案例？"
+- "这个功能谁会用？在什么场景下用？"
+- "如何验证这个功能是否完成？"
+- "有时间或资源约束吗？"
+
+**示例**:
+
+用户说: "加个导出功能"
+
+AI 澄清后:
+```markdown
+## 需求: 数据导出功能
+
+**原始描述**: 
+> 加个导出功能
+
+**需求分析**:
+- 目标: 将系统数据导出为文件，便于备份或分享
+- 场景: 用户需要离线查看或迁移数据时
+- 用户: 所有用户
+
+**功能要求**:
+1. 支持导出为 JSON 格式
+2. 支持导出为 CSV 格式（如有表格数据）
+3. 导出文件包含时间戳命名
+
+**验收标准**:
+- [ ] 点击导出按钮后生成文件
+- [ ] 文件可被其他工具正常打开
+- [ ] 导出内容完整无丢失
+
+**待确认项**:
+- [ ] 需要导出哪些数据？全部还是部分？
+- [ ] 是否需要导出格式选择？
+- [ ] 文件大小有限制吗？
+
+**决策等级**: B
+**预估复杂度**: 中
+```
+
+"""
         self.sections.append(content)
 
     def _add_iteration_protocols(self):

@@ -148,6 +148,19 @@ dialogue_protocol:
       actor: "ai"
       action: "Git 提交记录"
 
+requirement_clarification:
+  enabled: true
+  trigger_conditions:
+    - "描述模糊或不完整"
+    - "缺少具体验收标准"
+    - "可能有多种理解方式"
+    - "涉及 S/A 级决策"
+  clarification_questions:
+    - "你希望达到什么效果？"
+    - "有没有参考案例？"
+    - "这个功能谁会用？在什么场景下用？"
+    - "如何验证这个功能是否完成？"
+
 git_workflow:
   branches:
     main: "master"
