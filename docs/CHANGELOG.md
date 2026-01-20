@@ -52,7 +52,7 @@
 
 ### 对话7: 封装 Cursor Skill [FEAT]
 
-- 创建 `.codebuddy/skills/llmtxt/SKILL.md`
+- 创建 `.cursor/skills/llmtxt/SKILL.md`
 - 添加 references/project_template.yaml
 - 添加 assets/CONTEXT_TEMPLATE.md、CHANGELOG_TEMPLATE.md
 - 打包为 llmtxt-skill.zip

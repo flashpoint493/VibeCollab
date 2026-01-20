@@ -466,7 +466,7 @@ git tag -a v0.1.0 -m "Phase 1: 核心原型完成"
 | `docs/ROADMAP.md` | **路线图+迭代建议** | **里程碑规划/QA反馈时** |
 | `docs/CICD.md` | **构建打包指南** | **打包流程变更时** |
 | `README.md` | 项目概览 | 里程碑完成时 |
-| `.codebuddy/rules/*.md` | AI 开发技能规则 | 积累最佳实践时 |
+| `.cursor/rules/*.md` | AI 开发技能规则 | 积累最佳实践时 |
 
 ## 5.2 上下文恢复协议
 

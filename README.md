@@ -309,11 +309,11 @@ domain_extensions:
 
 ## Cursor Skill 使用
 
-本项目包含 Cursor IDE Skill，位于 `.codebuddy/skills/llmtxt/`：
+本项目包含 Cursor IDE Skill，位于 `.cursor/skills/llmtxt/`：
 
 ```bash
 # 复制到你的项目
-cp -r .codebuddy/skills/llmtxt your-project/.codebuddy/skills/
+cp -r .cursor/skills/llmtxt your-project/.cursor/skills/
 
 # 或解压 dist/llmtxt-skill.zip
 ```
@@ -373,7 +373,7 @@ LLMTXTGenerator/
 ├── schema/
 │   ├── project.schema.yaml      # 项目配置 Schema
 │   └── extension.schema.yaml    # 扩展机制 Schema
-├── .codebuddy/skills/llmtxt/    # Cursor Skill
+├── .cursor/skills/llmtxt/    # Cursor Skill
 ├── docs/
 │   ├── CONTEXT.md
 │   └── CHANGELOG.md
