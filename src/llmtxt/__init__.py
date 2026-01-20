@@ -12,5 +12,14 @@ __author__ = "LLMTXTGenerator Contributors"
 
 from .generator import LLMTxtGenerator
 from .project import Project
+from .extension import ExtensionProcessor, Extension, Hook, Context
 
-__all__ = ["LLMTxtGenerator", "Project", "__version__"]
+__all__ = [
+    "LLMTxtGenerator",
+    "Project",
+    "ExtensionProcessor",
+    "Extension",
+    "Hook",
+    "Context",
+    "__version__",
+]

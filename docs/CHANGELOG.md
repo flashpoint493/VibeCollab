@@ -1,40 +1,44 @@
 # LLMTXTGenerator 变更日志
 
-## [Unreleased]
+## 2026-01-20
 
-### 2026-01-20 对话4: 文档同步
-- **[DOC]** 更新 README 同步最新扩展机制
-- 补充扩展机制章节：钩子、上下文类型
-- 完善配置示例和项目结构说明
+### 对话5: 实现扩展钩子处理 [DEV]
 
-### 2026-01-20 对话3: 扩展机制重设计
-- **[DESIGN]** 重新定义扩展机制：钩子 + 上下文注入 + 引用文档
-- **[DESIGN]** 定义钩子触发点：dialogue/qa/dev/build/milestone
-- **[DESIGN]** 定义上下文类型：reference/template/computed/file_list
-- 新增 `schema/extension.schema.yaml` 扩展机制 Schema
-- 重构三个领域扩展：game/web/data
-- 本项目自身使用 llm.txt（元实现）
+**新增**:
+- `src/llmtxt/extension.py` - 扩展处理器模块
+  - `ExtensionProcessor` 类：钩子管理、条件评估、上下文解析
+  - `Hook` / `Context` / `Extension` 数据类
+  - 支持条件表达式：`files.exists()`, `project.has_feature()`, `project.domain ==`
+  - 支持上下文类型：reference, template, file_list, computed
+- `tests/test_extension.py` - 13 个单元测试
 
-### 2026-01-20 对话2: Python 包重构
-- **[FEAT]** 重构为标准 Python 包结构
-- **[FEAT]** 添加 Click + Rich CLI 工具
-- 命令：`llmtxt init/generate/validate/domains/templates`
-- 添加 pytest 单元测试
+**修改**:
+- `src/llmtxt/generator.py`
+  - 集成 ExtensionProcessor
+  - 新增 `_add_extension_sections()` 渲染扩展章节
+  - `from_file()` 支持 project_root 参数
+- `src/llmtxt/project.py`
+  - 修复 `_merge_extension()` None 值处理
+- `src/llmtxt/__init__.py`
+  - 导出 ExtensionProcessor, Extension, Hook, Context
+
+**测试**: 24 passed
+
+---
+
+### 对话4: 文档同步 [DOC]
+- 更新 README 同步扩展机制设计
+
+### 对话3: 扩展机制重设计 [DESIGN]
+- 重新定义扩展 = 流程钩子 + 上下文注入
+- 新增 extension.schema.yaml
+- 重构 game/web/data 领域扩展
+
+### 对话2: Python 包重构 [FEAT]
+- 重构为标准包结构
+- 添加 CLI (Click + Rich)
 - 准备 PyPI 发布
 
-### 2026-01-20 对话1: 项目初始化
-- **[ARCH]** 从游戏领域 llm.txt 抽象核心协作协议
-- **[ARCH]** 设计 YAML Schema 配置驱动
-- 分离 UnitTest 和 ProductQA 测试体系
-- 创建 game/web/data 领域扩展模板
-
----
-
-## [0.1.0] - 2026-01-20
-
-初始版本，核心功能：
-- YAML 配置生成 llm.txt
-- 多领域扩展支持
-- CLI 工具
-
----
+### 对话1: 项目初始化 [ARCH]
+- 从游戏 llm.txt 抽象核心协议
+- 设计 YAML Schema
