@@ -1,0 +1,424 @@
+# LLM Collaboration Protocol - 项目配置模板
+# 使用此模板配置你的项目，然后通过生成器生成 llm.txt
+
+# ============================================
+# 项目基本信息
+# ============================================
+project:
+  name: "MyProject"
+  version: "v1.0"
+  domain: "generic"  # game/web/mobile/data/infra/generic
+  description: "项目描述"
+
+# ============================================
+# 核心理念
+# ============================================
+philosophy:
+  vibe_development:
+    enabled: true
+    principles:
+      - "AI 不是执行者，而是协作伙伴"
+      - "不急于产出代码，先对齐理解"
+      - "每个决策都是共同思考的结果"
+      - "对话本身就是设计过程的一部分"
+  decision_quality:
+    target_rate: 0.9
+    critical_tolerance: 0
+  long_term_dialogue: true
+
+# ============================================
+# 职能角色定义
+# ============================================
+roles:
+  - code: "DESIGN"
+    name: "产品设计"
+    focus: ["需求", "体验", "交互"]
+    triggers: ["设计", "需求", "产品"]
+    is_gatekeeper: false
+
+  - code: "ARCH"
+    name: "架构"
+    focus: ["底层结构", "性能", "可扩展性"]
+    triggers: ["架构", "底层", "重构"]
+    is_gatekeeper: false
+
+  - code: "DEV"
+    name: "开发"
+    focus: ["具体实现", "Bug修复"]
+    triggers: ["开发", "实现", "代码"]
+    is_gatekeeper: false
+
+  - code: "PM"
+    name: "项目管理"
+    focus: ["里程碑", "优先级", "进度"]
+    triggers: ["规划", "排期", "优先级"]
+    is_gatekeeper: false
+
+  - code: "QA"
+    name: "产品质量保证"
+    focus: ["验收测试", "用户体验验证", "边界情况"]
+    triggers: ["验收", "体验测试", "功能验证"]
+    is_gatekeeper: true
+
+  - code: "TEST"
+    name: "单元测试"
+    focus: ["代码测试", "覆盖率", "自动化测试"]
+    triggers: ["单元测试", "测试用例", "coverage"]
+    is_gatekeeper: false
+
+# ============================================
+# 决策分级
+# ============================================
+decision_levels:
+  - level: "S"
+    name: "战略决策"
+    scope: "整体方向、核心功能"
+    review:
+      required: true
+      mode: "sync"
+      human_confirm: true
+
+  - level: "A"
+    name: "架构决策"
+    scope: "系统设计、数据结构"
+    review:
+      required: true
+      mode: "async"
+      human_confirm: true
+
+  - level: "B"
+    name: "实现决策"
+    scope: "具体方案选择"
+    review:
+      required: false
+      mode: "auto"
+      human_confirm: false
+
+  - level: "C"
+    name: "细节决策"
+    scope: "参数、命名、格式"
+    review:
+      required: false
+      mode: "none"
+      human_confirm: false
+
+# ============================================
+# 任务单元
+# ============================================
+task_unit:
+  id_pattern: "TASK-{role}-{seq}"
+  statuses:
+    - "TODO"
+    - "IN_PROGRESS"
+    - "REVIEW"
+    - "DONE"
+  required_fields:
+    - "id"
+    - "role"
+    - "feature"
+    - "dependencies"
+    - "output"
+    - "status"
+    - "dialogue_rounds"
+
+# ============================================
+# 对话流程协议
+# ============================================
+dialogue_protocol:
+  on_start:
+    read_files:
+      - "docs/CONTEXT.md"
+      - "llm.txt"
+    actions:
+      - "了解当前进度"
+      - "确认用户本次对话目标"
+
+  on_end:
+    update_files:
+      - "docs/CONTEXT.md"
+      - "docs/CHANGELOG.md"
+    git_commit: true
+
+  standard_flow:
+    - step: 1
+      actor: "human"
+      action: "提出需求/问题"
+    - step: 2
+      actor: "ai"
+      action: "识别角色，分析问题"
+    - step: 3
+      actor: "ai"
+      action: "S/A级决策请求确认，B/C级自主执行"
+      condition: "decision_level in [S, A]"
+    - step: 4
+      actor: "ai"
+      action: "执行任务，输出结果"
+    - step: 5
+      actor: "ai"
+      action: "更新测试用例（如为功能开发）"
+      condition: "task_type == feature"
+    - step: 6
+      actor: "ai"
+      action: "总结进展，提示下一步"
+    - step: 7
+      actor: "human"
+      action: "确认/修正/继续"
+    - step: 8
+      actor: "ai"
+      action: "Git 提交记录"
+
+# ============================================
+# Git 工作流
+# ============================================
+git_workflow:
+  branches:
+    main: "main"
+    dev: "dev"
+    feature_prefix: "feature/"
+    fix_prefix: "fix/"
+    design_prefix: "design/"
+    refactor_prefix: "refactor/"
+
+  commit_prefixes:
+    - prefix: "[DESIGN]"
+      description: "设计文档变更"
+      roles: ["DESIGN"]
+    - prefix: "[ARCH]"
+      description: "架构调整"
+      roles: ["ARCH"]
+    - prefix: "[FEAT]"
+      description: "新功能"
+      roles: ["DEV"]
+    - prefix: "[FIX]"
+      description: "Bug修复"
+      roles: ["DEV", "QA"]
+    - prefix: "[CONFIG]"
+      description: "配置调整（不改逻辑）"
+      roles: ["DEV"]
+    - prefix: "[REFACTOR]"
+      description: "重构"
+      roles: ["ARCH", "DEV"]
+    - prefix: "[DOC]"
+      description: "文档更新"
+      roles: ["PM", "DESIGN"]
+    - prefix: "[TEST]"
+      description: "测试相关"
+      roles: ["TEST", "QA"]
+    - prefix: "[VIBE]"
+      description: "协作流程更新"
+      roles: ["PM"]
+
+  commit_required: true
+
+# ============================================
+# 测试体系
+# ============================================
+testing:
+  # 单元测试（开发者视角 - 代码正确性）
+  unit_test:
+    enabled: true
+    framework: "jest"  # jest/pytest/mocha/go-test/...
+    coverage_target: 0.8
+    patterns:
+      - "**/*.test.ts"
+      - "**/*.spec.ts"
+    run_on:
+      - "pre-commit"
+      - "ci"
+    required_for_merge: true
+
+  # 产品QA（用户视角 - 功能验收）
+  product_qa:
+    enabled: true
+    test_case_file: "docs/QA_TEST_CASES.md"
+    case_id_pattern: "TC-{module}-{seq}"
+    required_fields:
+      - "id"
+      - "feature"
+      - "precondition"
+      - "steps"
+      - "expected"
+      - "status"
+    statuses:
+      - symbol: "🟢"
+        meaning: "PASS"
+      - symbol: "🟡"
+        meaning: "PARTIAL"
+      - symbol: "🔴"
+        meaning: "FAIL"
+      - symbol: "⚪"
+        meaning: "SKIP"
+
+# ============================================
+# 里程碑
+# ============================================
+milestone:
+  lifecycle:
+    - phase: "feature_dev"
+      description: "特性开发期"
+      exit_criteria:
+        - "所有计划特性完成"
+        - "快速验收通过"
+
+    - phase: "feature_freeze"
+      description: "特性冻结"
+      exit_criteria:
+        - "不再添加新功能"
+        - "构建成功"
+
+    - phase: "bug_fix"
+      description: "Bug 修复期"
+      exit_criteria:
+        - "P0/P1 问题清零"
+        - "测试通过率达标"
+
+    - phase: "acceptance"
+      description: "里程碑验收"
+      exit_criteria:
+        - "QA 全量测试通过"
+        - "单元测试覆盖率达标"
+        - "已知问题清零或标记延后"
+
+    - phase: "retrospective"
+      description: "版本回顾"
+      exit_criteria:
+        - "回顾测试表现"
+        - "收集用户反馈"
+        - "补充新需求到下一阶段"
+
+  tag_pattern: "v{major}.{minor}.{patch}"
+  roadmap_file: "docs/ROADMAP.md"
+  bug_priority:
+    - level: "P0"
+      description: "崩溃/阻断"
+    - level: "P1"
+      description: "功能异常"
+    - level: "P2"
+      description: "体验问题"
+    - level: "P3"
+      description: "优化建议"
+
+# ============================================
+# 迭代管理
+# ============================================
+iteration:
+  suggestion_pool:
+    file: "docs/ROADMAP.md"
+    section: "迭代建议池"
+    categories:
+      - symbol: "✅"
+        meaning: "纳入当前里程碑"
+      - symbol: "⏳"
+        meaning: "延后到下个里程碑"
+      - symbol: "❌"
+        meaning: "拒绝（不符合方向）"
+      - symbol: "🔄"
+        meaning: "合并其他迭代"
+
+  config_level_iteration:
+    enabled: true
+    commit_prefix: "[CONFIG]"
+    skip_pm_review: true
+    examples:
+      - "数值参数调整"
+      - "配置文件修改"
+      - "样式/主题变更"
+
+  review_dimensions:
+    - "与当前任务的依赖/冲突关系"
+    - "对用户体验的影响程度"
+    - "开发成本和技术复杂度"
+    - "里程碑剩余时间约束"
+
+# ============================================
+# 文档体系
+# ============================================
+documentation:
+  key_files:
+    - path: "llm.txt"
+      purpose: "AI 协作规则，顶层指导"
+      update_trigger: "协作方式演进时"
+
+    - path: "docs/CONTEXT.md"
+      purpose: "当前开发上下文"
+      update_trigger: "每次对话结束时"
+
+    - path: "docs/DECISIONS.md"
+      purpose: "重要决策记录"
+      update_trigger: "每次 S/A 级决策后"
+
+    - path: "docs/CHANGELOG.md"
+      purpose: "版本变更日志"
+      update_trigger: "每次有效对话后"
+
+    - path: "docs/QA_TEST_CASES.md"
+      purpose: "产品QA测试用例"
+      update_trigger: "每个功能完成时"
+
+    - path: "docs/ROADMAP.md"
+      purpose: "路线图+迭代建议"
+      update_trigger: "里程碑规划/反馈时"
+
+  context_file: "docs/CONTEXT.md"
+  changelog_file: "docs/CHANGELOG.md"
+  decisions_file: "docs/DECISIONS.md"
+
+# ============================================
+# 符号学标注系统
+# ============================================
+symbology:
+  decision_status:
+    - symbol: "PENDING"
+      meaning: "待确认"
+    - symbol: "CONFIRMED"
+      meaning: "已确认"
+    - symbol: "REVISED"
+      meaning: "已修订"
+
+  task_status:
+    - symbol: "TODO"
+      meaning: "待开始"
+    - symbol: "IN_PROGRESS"
+      meaning: "进行中"
+    - symbol: "REVIEW"
+      meaning: "待审核"
+    - symbol: "DONE"
+      meaning: "已完成"
+
+  test_status:
+    - symbol: "🟢"
+      meaning: "通过"
+    - symbol: "🟡"
+      meaning: "部分通过"
+    - symbol: "🔴"
+      meaning: "未通过"
+    - symbol: "⚪"
+      meaning: "跳过"
+
+  priority:
+    - symbol: "P0"
+      meaning: "最高优先级/阻断"
+    - symbol: "P1"
+      meaning: "高优先级"
+    - symbol: "P2"
+      meaning: "中优先级"
+    - symbol: "P3"
+      meaning: "低优先级"
+
+# ============================================
+# 领域扩展 (Domain Extensions)
+# 在此添加特定领域的扩展配置
+# ============================================
+domain_extensions:
+  # 示例：游戏领域扩展
+  # game:
+  #   gm_console:
+  #     enabled: true
+  #     trigger_key: "/"
+  #     commands: [...]
+  #   
+  # 示例：Web领域扩展
+  # web:
+  #   api_docs:
+  #     format: "openapi"
+  #     file: "docs/api.yaml"

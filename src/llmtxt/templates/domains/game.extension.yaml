@@ -1,0 +1,60 @@
+# 游戏领域扩展配置
+# 在 default.project.yaml 的基础上添加游戏特有配置
+
+# 覆盖基础角色，添加游戏特有角色
+roles_override:
+  - code: "DESIGN"
+    name: "游戏策划"
+    focus: ["玩法", "体验", "平衡", "叙事"]
+    triggers: ["策划", "设计", "玩法"]
+
+  - code: "ART"
+    name: "美术指导"
+    focus: ["风格", "资产规范", "视觉反馈"]
+    triggers: ["美术", "视觉", "风格"]
+
+# 游戏特有扩展
+domain_extensions:
+  game:
+    # GM 控制台
+    gm_console:
+      enabled: true
+      trigger_key: "/"
+      commands:
+        - name: "god"
+          description: "切换无敌模式"
+        - name: "tp"
+          args: ["x", "y", "z"]
+          description: "传送到指定位置"
+        - name: "give"
+          args: ["item_id", "amount"]
+          description: "给予物品"
+        - name: "clear"
+          description: "清空背包"
+        - name: "refill"
+          description: "补满资源"
+
+    # 游戏设计文档
+    design_docs:
+      gdd_pattern: "docs/GDD_*.md"
+      balance_sheet: "docs/BALANCE.md"
+
+    # 构建配置
+    build:
+      dev_command: "npm run dev"
+      build_command: "npm run build"
+      dist_folder: "dist/"
+      test_entry: "dist/index.html"
+
+    # QA 扩展：GM 快捷测试
+    qa_extensions:
+      gm_test_template: |
+        ## 🎮 GM 快速测试
+        
+        **测试目标**: {功能名称}
+        
+        **GM 快捷步骤**:
+        1. 按 `/` 打开控制台
+        2. 输入: `{GM命令}`
+        3. {后续操作}
+        4. 预期: {预期效果}

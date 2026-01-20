@@ -1,4 +1,8 @@
-# LLMTXTGenerator
+# LLMTxt
+
+[![PyPI version](https://badge.fury.io/py/llmtxt.svg)](https://badge.fury.io/py/llmtxt)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **从 YAML 配置生成标准化的 AI 协作规则文档 (llm.txt)**
 
@@ -6,37 +10,46 @@
 
 ---
 
-## 快速开始
-
-### 1. 安装依赖
+## 安装
 
 ```bash
-pip install -r requirements.txt
+pip install llmtxt
 ```
 
-### 2. 初始化新项目
+或从源码安装：
+
+```bash
+git clone https://github.com/user/llmtxt.git
+cd llmtxt
+pip install -e .
+```
+
+---
+
+## 快速开始
+
+### 初始化新项目
 
 ```bash
 # 通用项目
-python init_project.py -n "MyProject" -d generic -o ./my-project
+llmtxt init -n "MyProject" -d generic -o ./my-project
 
 # 游戏项目
-python init_project.py -n "MyGame" -d game -o ./my-game
+llmtxt init -n "MyGame" -d game -o ./my-game
 
 # Web 项目
-python init_project.py -n "MyWebApp" -d web -o ./my-webapp
+llmtxt init -n "MyWebApp" -d web -o ./my-webapp
 
 # 数据工程项目
-python init_project.py -n "MyDataPipeline" -d data -o ./my-data
+llmtxt init -n "MyDataPipeline" -d data -o ./my-data
 ```
 
-### 3. 生成的项目结构
+### 生成的项目结构
 
 ```
 my-project/
 ├── llm.txt                    # AI 协作规则文档
 ├── project.yaml               # 项目配置 (可编辑)
-├── llm_txt_generator.py       # 生成器副本
 └── docs/
     ├── CONTEXT.md             # 当前上下文 (每次对话更新)
     ├── DECISIONS.md           # 决策记录
@@ -45,11 +58,41 @@ my-project/
     └── QA_TEST_CASES.md       # 测试用例
 ```
 
-### 4. 自定义配置后重新生成
+### 自定义配置后重新生成
 
 ```bash
 # 编辑 project.yaml 后
-python llm_txt_generator.py -c project.yaml -o llm.txt
+llmtxt generate -c project.yaml -o llm.txt
+
+# 验证配置
+llmtxt validate -c project.yaml
+```
+
+---
+
+## CLI 命令
+
+```bash
+# 查看帮助
+llmtxt --help
+
+# 初始化项目
+llmtxt init -n <name> -d <domain> -o <output>
+
+# 生成 llm.txt
+llmtxt generate -c <config> -o <output>
+
+# 验证配置
+llmtxt validate -c <config>
+
+# 列出支持的领域
+llmtxt domains
+
+# 列出可用模板
+llmtxt templates
+
+# 导出模板
+llmtxt export-template -t <template> -o <output>
 ```
 
 ---
@@ -86,6 +129,19 @@ python llm_txt_generator.py -c project.yaml -o llm.txt
 
 ---
 
+## 支持的领域
+
+| 领域 | 说明 | 特有配置 |
+|------|------|---------|
+| `generic` | 通用项目 | 基础配置 |
+| `game` | 游戏开发 | GM 控制台、GDD 文档 |
+| `web` | Web 应用 | API 文档、部署环境 |
+| `data` | 数据工程 | ETL 管道、数据质量 |
+| `mobile` | 移动应用 | 平台适配、发布流程 |
+| `infra` | 基础设施 | IaC、监控告警 |
+
+---
+
 ## 配置说明
 
 ### 项目配置结构 (`project.yaml`)
@@ -95,16 +151,15 @@ python llm_txt_generator.py -c project.yaml -o llm.txt
 project:
   name: "MyProject"
   version: "v1.0"
-  domain: "web"  # generic/game/web/data/mobile/infra
+  domain: "web"
 
 # 核心理念
 philosophy:
   vibe_development:
     enabled: true
-    principles: [...]
-  decision_quality:
-    target_rate: 0.9
-    critical_tolerance: 0
+    principles:
+      - "AI 不是执行者，而是协作伙伴"
+      - "不急于产出代码，先对齐理解"
 
 # 职能角色
 roles:
@@ -133,31 +188,12 @@ testing:
     enabled: true
     test_case_file: "docs/QA_TEST_CASES.md"
 
-# 里程碑
-milestone:
-  lifecycle:
-    - phase: "feature_dev"
-      description: "特性开发期"
-    - phase: "bug_fix"
-      description: "Bug 修复期"
-    - phase: "acceptance"
-      description: "里程碑验收"
-
-# 领域扩展 (可选)
+# 领域扩展
 domain_extensions:
   web:
     api_docs:
       format: "openapi"
 ```
-
-### 支持的领域
-
-| 领域 | 说明 | 特有配置 |
-|------|------|---------|
-| `generic` | 通用项目 | 基础配置 |
-| `game` | 游戏开发 | GM 控制台、GDD 文档 |
-| `web` | Web 应用 | API 文档、部署环境 |
-| `data` | 数据工程 | ETL 管道、数据质量 |
 
 ---
 
@@ -190,41 +226,33 @@ domain_extensions:
 
 ---
 
-## 目录结构
-
-```
-LLMTXTGenerator/
-├── init_project.py              # 项目初始化脚本
-├── requirements.txt             # Python 依赖
-├── schema/
-│   └── project.schema.yaml      # YAML Schema 定义
-├── generator/
-│   └── llm_txt_generator.py     # 文档生成器
-├── templates/
-│   ├── default.project.yaml     # 默认项目模板
-│   └── domains/
-│       ├── game.extension.yaml  # 游戏领域扩展
-│       ├── web.extension.yaml   # Web 领域扩展
-│       └── data.extension.yaml  # 数据工程扩展
-└── docs/
-    ├── CONTEXT.md               # 本项目上下文
-    └── CHANGELOG.md             # 本项目变更日志
-```
-
----
-
 ## 扩展指南
 
 ### 添加新领域
 
-1. 创建 `templates/domains/{domain}.extension.yaml`
+1. 创建 `src/llmtxt/templates/domains/{domain}.extension.yaml`
 2. 定义 `roles_override` 覆盖或添加角色
 3. 定义 `domain_extensions.{domain}` 添加特有配置
-4. 在 `init_project.py` 的 `DOMAINS` 列表中添加新领域
 
 ### 自定义生成模板
 
-修改 `generator/llm_txt_generator.py` 中对应的 `_add_*` 方法。
+修改 `src/llmtxt/generator.py` 中对应的 `_add_*` 方法。
+
+---
+
+## 开发
+
+```bash
+# 安装开发依赖
+pip install -e ".[dev]"
+
+# 运行测试
+pytest
+
+# 代码格式化
+black src tests
+ruff check src tests
+```
 
 ---
 
@@ -246,12 +274,6 @@ LLMTXTGenerator/
 - 🟡 部分通过
 - 🔴 未通过
 - ⚪ 跳过
-
-### Bug 优先级
-- `P0` - 崩溃/阻断
-- `P1` - 功能异常
-- `P2` - 体验问题
-- `P3` - 优化建议
 
 ---
 

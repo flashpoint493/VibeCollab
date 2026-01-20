@@ -1,17 +1,11 @@
-#!/usr/bin/env python3
 """
-LLM.TXT Generator
-从 YAML 配置文件生成标准化的 llm.txt 协作文档
-
-Usage:
-    python llm_txt_generator.py --config project.yaml --output llm.txt
+LLMTxt Generator - 文档生成器
 """
 
-import argparse
 import yaml
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 
 class LLMTxtGenerator:
@@ -21,8 +15,46 @@ class LLMTxtGenerator:
         self.config = config
         self.sections: List[str] = []
 
+    @classmethod
+    def from_file(cls, path: Path) -> "LLMTxtGenerator":
+        """从文件加载配置"""
+        with open(path, "r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+        return cls(config)
+
+    def validate(self) -> List[str]:
+        """验证配置，返回错误列表"""
+        errors = []
+        
+        # 检查必需字段
+        if "project" not in self.config:
+            errors.append("缺少 'project' 配置")
+        else:
+            project = self.config["project"]
+            if "name" not in project:
+                errors.append("缺少 'project.name'")
+        
+        # 检查角色定义
+        roles = self.config.get("roles", [])
+        for i, role in enumerate(roles):
+            if "code" not in role:
+                errors.append(f"角色 {i} 缺少 'code'")
+            if "name" not in role:
+                errors.append(f"角色 {i} 缺少 'name'")
+        
+        # 检查决策级别
+        levels = self.config.get("decision_levels", [])
+        valid_levels = {"S", "A", "B", "C"}
+        for level in levels:
+            if level.get("level") not in valid_levels:
+                errors.append(f"无效的决策级别: {level.get('level')}")
+        
+        return errors
+
     def generate(self) -> str:
         """生成完整的 llm.txt 文档"""
+        self.sections = []
+        
         self._add_header()
         self._add_philosophy()
         self._add_roles()
@@ -67,13 +99,14 @@ class LLMTxtGenerator:
             for principle in vibe.get("principles", []):
                 content += f"- {principle}\n"
 
+        target_rate = decision_quality.get('target_rate', 0.9)
         content += f"""
 ## 1.2 决策质量观
 
-> **大量决策，{int(decision_quality.get('target_rate', 0.9) * 100)}% 正确率，关键决策零失误**
+> **大量决策，{int(target_rate * 100)}% 正确率，关键决策零失误**
 
 项目是一系列决策的集合：
-- 只有做对 {int(decision_quality.get('target_rate', 0.9) * 100)}% 以上的决策，项目才有望成功
+- 只有做对 {int(target_rate * 100)}% 以上的决策，项目才有望成功
 - 关键决策容错数: {decision_quality.get('critical_tolerance', 0)}
 - 因此每个 S/A 级决策都需要 **人机共同 Review**
 """
@@ -116,9 +149,8 @@ class LLMTxtGenerator:
 
         # 找出守门人角色
         gatekeepers = [r for r in roles if r.get("is_gatekeeper", False)]
-        if gatekeepers:
-            for gk in gatekeepers:
-                content += f"""
+        for gk in gatekeepers:
+            content += f"""
 ## 2.2 {gk.get('code', '')} 角色的特殊地位
 
 > **{gk.get('code', '')} 是每个功能的最后守门人，无验收则不算完成**
@@ -203,7 +235,8 @@ class LLMTxtGenerator:
             if field != "id":
                 content += f"├── {field}\n"
 
-        content += f"""└── 状态: {' / '.join(task_unit.get('statuses', ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE']))}
+        statuses = task_unit.get('statuses', ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'])
+        content += f"""└── 状态: {' / '.join(statuses)}
 ```
 """
         self.sections.append(content)
@@ -310,6 +343,10 @@ Git 历史不仅是代码版本，更是**设计思维的演进记录**。
 
         # 单元测试
         if unit_test.get("enabled", True):
+            coverage = unit_test.get('coverage_target', 0.8)
+            patterns = unit_test.get('patterns', ['**/*.test.ts'])
+            run_on = unit_test.get('run_on', ['pre-commit', 'ci'])
+            
             content += f"""## 5.1 单元测试 (Unit Test)
 
 > **开发者视角：验证代码逻辑正确性**
@@ -317,9 +354,9 @@ Git 历史不仅是代码版本，更是**设计思维的演进记录**。
 | 配置项 | 值 |
 |-------|-----|
 | 测试框架 | {unit_test.get('framework', 'jest')} |
-| 覆盖率目标 | {int(unit_test.get('coverage_target', 0.8) * 100)}% |
-| 文件模式 | {', '.join(unit_test.get('patterns', ['**/*.test.ts']))} |
-| 运行时机 | {', '.join(unit_test.get('run_on', ['pre-commit', 'ci']))} |
+| 覆盖率目标 | {int(coverage * 100)}% |
+| 文件模式 | {', '.join(patterns)} |
+| 运行时机 | {', '.join(run_on)} |
 
 **单元测试原则**:
 - 每个模块应有对应的测试文件
@@ -386,16 +423,15 @@ Git 历史不仅是代码版本，更是**设计思维的演进记录**。
 │                   里程碑生命周期                          │
 ├─────────────────────────────────────────────────────────┤
 """
-        for phase in lifecycle:
-            content += f"""│  {lifecycle.index(phase) + 1}. {phase.get('phase', '')} - {phase.get('description', '')}
+        for i, phase in enumerate(lifecycle):
+            content += f"""│  {i + 1}. {phase.get('phase', '')} - {phase.get('description', '')}
 """
             for criteria in phase.get("exit_criteria", []):
                 content += f"│     └── {criteria}\n"
-            content += "├─────────────────────────────────────────────────────────┤\n"
+            if i < len(lifecycle) - 1:
+                content += "├─────────────────────────────────────────────────────────┤\n"
 
-        content = content.rstrip("├─────────────────────────────────────────────────────────┤\n")
-        content += """
-└─────────────────────────────────────────────────────────┘
+        content += """└─────────────────────────────────────────────────────────┘
 ```
 """
 
@@ -409,11 +445,12 @@ Git 历史不仅是代码版本，更是**设计思维的演进记录**。
             for p in priorities:
                 content += f"| {p.get('level', '')} | {p.get('description', '')} |\n"
 
+        tag_pattern = milestone.get('tag_pattern', 'v{major}.{minor}.{patch}')
         content += f"""
 ### 里程碑 Tag
 
 ```bash
-git tag -a {milestone.get('tag_pattern', 'v{major}.{minor}.{patch}')} -m "描述"
+git tag -a {tag_pattern} -m "描述"
 ```
 
 ---
@@ -478,22 +515,26 @@ git tag -a {milestone.get('tag_pattern', 'v{major}.{minor}.{patch}')} -m "描述
         for f in key_files:
             content += f"| `{f.get('path', '')}` | {f.get('purpose', '')} | {f.get('update_trigger', '')} |\n"
 
+        context_file = docs.get('context_file', 'docs/CONTEXT.md')
+        decisions_file = docs.get('decisions_file', 'docs/DECISIONS.md')
+        changelog_file = docs.get('changelog_file', 'docs/CHANGELOG.md')
+
         content += f"""
 ## 8.2 上下文恢复协议
 
 当开启新对话时，AI 应：
 1. 读取 `llm.txt` 了解协作规则
-2. 读取 `{docs.get('context_file', 'docs/CONTEXT.md')}` 恢复当前状态
-3. 读取 `{docs.get('decisions_file', 'docs/DECISIONS.md')}` 了解已确认和待定决策
+2. 读取 `{context_file}` 恢复当前状态
+3. 读取 `{decisions_file}` 了解已确认和待定决策
 4. 运行 `git log --oneline -10` 了解最近进展
 5. 询问用户本次对话目标
 
 ## 8.3 上下文保存协议
 
 每次对话结束时，AI 应：
-1. 更新 `{docs.get('context_file', 'docs/CONTEXT.md')}` 保存当前状态
-2. 更新 `{docs.get('changelog_file', 'docs/CHANGELOG.md')}` 记录本次产出
-3. 如有新决策，更新 `{docs.get('decisions_file', 'docs/DECISIONS.md')}`
+1. 更新 `{context_file}` 保存当前状态
+2. 更新 `{changelog_file}` 记录本次产出
+3. 如有新决策，更新 `{decisions_file}`
 4. **必须执行 git commit** 记录本次对话产出
 
 ---
@@ -504,13 +545,17 @@ git tag -a {milestone.get('tag_pattern', 'v{major}.{minor}.{patch}')} -m "描述
         """添加符号学标注系统章节"""
         symbology = self.config.get("symbology", {})
 
+        if not symbology:
+            return
+
         content = """# 九、符号学标注系统
 
 本协议使用统一的符号体系确保沟通一致性：
 
 """
         for category, symbols in symbology.items():
-            content += f"## {category.replace('_', ' ').title()}\n\n"
+            title = category.replace('_', ' ').title()
+            content += f"## {title}\n\n"
             content += "| 符号 | 含义 |\n|------|------|\n"
             for s in symbols:
                 content += f"| `{s.get('symbol', '')}` | {s.get('meaning', '')} |\n"
@@ -522,6 +567,7 @@ git tag -a {milestone.get('tag_pattern', 'v{major}.{minor}.{patch}')} -m "描述
     def _add_quick_reference(self):
         """添加快速参考章节"""
         docs = self.config.get("documentation", {})
+        context_file = docs.get('context_file', 'docs/CONTEXT.md')
 
         content = f"""# 十、快速参考
 
@@ -529,14 +575,14 @@ git tag -a {milestone.get('tag_pattern', 'v{major}.{minor}.{patch}')} -m "描述
 
 ```
 继续项目开发。
-请先读取 llm.txt 和 {docs.get('context_file', 'docs/CONTEXT.md')} 恢复上下文。
+请先读取 llm.txt 和 {context_file} 恢复上下文。
 本次对话目标: {{你的目标}}
 ```
 
 ## 结束对话前说
 
 ```
-请更新 {docs.get('context_file', 'docs/CONTEXT.md')} 保存当前进度。
+请更新 {context_file} 保存当前进度。
 总结本次对话的决策和产出。
 然后 git commit 记录本次对话。
 ```
@@ -561,35 +607,3 @@ git tag -a {milestone.get('tag_pattern', 'v{major}.{minor}.{patch}')} -m "描述
 *生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
 *最珍贵的不是结果，而是我们共同思考的旅程。*
 """)
-
-
-def main():
-    parser = argparse.ArgumentParser(description="LLM.TXT Generator")
-    parser.add_argument("--config", "-c", required=True, help="YAML 配置文件路径")
-    parser.add_argument("--output", "-o", default="llm.txt", help="输出文件路径")
-    args = parser.parse_args()
-
-    # 读取配置
-    config_path = Path(args.config)
-    if not config_path.exists():
-        print(f"错误: 配置文件不存在: {config_path}")
-        return 1
-
-    with open(config_path, "r", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
-
-    # 生成文档
-    generator = LLMTxtGenerator(config)
-    content = generator.generate()
-
-    # 输出
-    output_path = Path(args.output)
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(content)
-
-    print(f"✅ 已生成: {output_path}")
-    return 0
-
-
-if __name__ == "__main__":
-    exit(main())
