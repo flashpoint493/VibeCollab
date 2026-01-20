@@ -1,45 +1,41 @@
 # LLMTXTGenerator 当前上下文
 
 ## 当前状态
-- **阶段**: Phase 1 - 本地测试准备
-- **进度**: 清理完成，本地安装成功
-- **下一步**: 用户在其他文件夹测试，收集反馈
+- **阶段**: Phase 1 - Skill 封装完成
+- **进度**: 创建 Cursor Skill，本地安装成功
+- **下一步**: 在其他项目测试 Skill
 
 ## 最近对话 (2026-01-20)
 
-### 对话6: 清理重复模板，准备发布
-- 删除根目录 `templates/`（保留 `src/llmtxt/templates/`）
-- 升级版本号 0.1.0 → 0.1.1
-- 构建成功：`llmtxt-0.1.1-py3-none-any.whl`
-- 本地安装：`pip install -e .`
-- 暂不发布 PyPI，先本地测试
+### 对话7: 封装 Cursor Skill
+- 创建 `.codebuddy/skills/llmtxt/SKILL.md`
+- 添加参考模板 `references/project_template.yaml`
+- 添加资源模板 `assets/CONTEXT_TEMPLATE.md`, `assets/CHANGELOG_TEMPLATE.md`
+- 打包为 `dist/llmtxt-skill.zip`
+
+### 对话6: 清理重复模板
+- 删除根目录 `templates/`
+- 升级至 v0.1.1，本地安装
 
 ### 对话5: 实现扩展钩子处理
-- 新增 `extension.py` 扩展处理器
-- 24 个测试全部通过
+- 新增 `extension.py`，24 个测试通过
 
-## 本地测试命令
+## 使用方式
 
+### CLI 工具
 ```bash
-# 查看帮助
-llmtxt --help
-
-# 初始化新项目
-llmtxt init -n "MyProject" -d game -o ./my-project
-
-# 从配置生成文档
+llmtxt init -n "项目名" -d game -o ./my-project
 llmtxt generate -c project.yaml -o llm.txt
-
-# 验证配置
-llmtxt validate -c project.yaml
-
-# 查看可用领域
-llmtxt domains
 ```
 
+### Cursor Skill
+1. 解压 `dist/llmtxt-skill.zip` 到项目 `.codebuddy/skills/`
+2. 或直接复制 `.codebuddy/skills/llmtxt/` 目录
+
 ## 待完成事项
-- [ ] 根据测试反馈迭代
+- [ ] 在其他项目测试 Skill 效果
+- [ ] 根据反馈迭代
 - [ ] 发布 PyPI
 
 ---
-*最后更新: 2026-01-20 对话6*
+*最后更新: 2026-01-20 对话7*

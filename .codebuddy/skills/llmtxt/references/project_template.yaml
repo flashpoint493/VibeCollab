@@ -1,0 +1,125 @@
+# LLMTxt 项目配置模板
+# 用于快速生成 llm.txt
+
+project:
+  name: "项目名称"
+  version: "v1.0"
+  domain: "generic"  # generic | game | web | data
+
+# 核心理念
+philosophy:
+  vibe_development:
+    enabled: true
+    principles:
+      - "AI 不是执行者，而是协作伙伴"
+      - "不急于产出代码，先对齐理解"
+      - "每个决策都是共同思考的结果"
+      - "对话本身就是设计过程的一部分"
+  decision_quality:
+    target_rate: 0.9
+    critical_tolerance: 0
+  long_term_dialogue: true
+
+# 职能角色
+roles:
+  - code: "ARCH"
+    name: "架构师"
+    focus: ["系统设计", "模块划分", "技术选型"]
+    triggers: ["架构", "设计", "模块"]
+  - code: "DEV"
+    name: "开发者"
+    focus: ["实现", "调试", "优化"]
+    triggers: ["开发", "实现", "代码"]
+  - code: "QA"
+    name: "质量保证"
+    focus: ["测试", "验收", "质量"]
+    triggers: ["测试", "验证", "QA"]
+    is_gatekeeper: true
+  - code: "PM"
+    name: "项目经理"
+    focus: ["规划", "优先级", "发布"]
+    triggers: ["规划", "发布", "里程碑"]
+
+# 决策分级
+decision_levels:
+  - level: "S"
+    name: "战略决策"
+    scope: "核心架构、技术路线"
+    review:
+      required: true
+      mode: "sync"
+  - level: "A"
+    name: "架构决策"
+    scope: "模块设计、接口定义"
+    review:
+      required: true
+      mode: "async"
+  - level: "B"
+    name: "实现决策"
+    scope: "具体实现方案"
+    review:
+      required: false
+      mode: "auto"
+  - level: "C"
+    name: "细节决策"
+    scope: "命名、格式"
+    review:
+      required: false
+      mode: "auto"
+
+# 对话协议
+dialogue_protocol:
+  on_start:
+    read_files:
+      - "llm.txt"
+      - "docs/CONTEXT.md"
+    actions:
+      - "确认用户本次对话目标"
+  on_end:
+    update_files:
+      - "docs/CONTEXT.md"
+      - "docs/CHANGELOG.md"
+    git_commit: true
+
+# Git 工作流
+git_workflow:
+  branches:
+    main: "main"
+    dev: "dev"
+    feature_prefix: "feature/"
+    fix_prefix: "fix/"
+  commit_prefixes:
+    - prefix: "[ARCH]"
+      description: "架构调整"
+    - prefix: "[FEAT]"
+      description: "新功能"
+    - prefix: "[FIX]"
+      description: "Bug修复"
+    - prefix: "[DOC]"
+      description: "文档更新"
+    - prefix: "[TEST]"
+      description: "测试相关"
+  commit_required: true
+
+# 测试体系
+testing:
+  unit_test:
+    enabled: true
+    framework: "pytest"
+    coverage_target: 0.8
+  product_qa:
+    enabled: true
+    test_case_file: "docs/QA_TEST_CASES.md"
+
+# 文档管理
+documentation:
+  context_file: "docs/CONTEXT.md"
+  changelog_file: "docs/CHANGELOG.md"
+  decisions_file: "docs/DECISIONS.md"
+  key_files:
+    - path: "llm.txt"
+      purpose: "协作规则"
+      update_trigger: "协作方式演进时"
+    - path: "docs/CONTEXT.md"
+      purpose: "当前上下文"
+      update_trigger: "每次对话结束"
