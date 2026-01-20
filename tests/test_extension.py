@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import os
 
-from llmtxt.extension import ExtensionProcessor, Extension, Hook, Context
+from llmcontext.extension import ExtensionProcessor, Extension, Hook, Context
 
 
 class TestExtensionProcessor:

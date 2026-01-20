@@ -1,5 +1,5 @@
 """
-Tests for LLMTxt Generator
+Tests for LLMContext Generator
 """
 
 import pytest
@@ -7,10 +7,10 @@ from pathlib import Path
 import tempfile
 import yaml
 
-from llmtxt import LLMTxtGenerator, Project
+from llmcontext import LLMContextGenerator, Project
 
 
-class TestLLMTxtGenerator:
+class TestLLMContextGenerator:
     """Generator 测试"""
 
     def test_generate_basic(self):
@@ -50,7 +50,7 @@ class TestLLMTxtGenerator:
             ]
         }
         
-        generator = LLMTxtGenerator(config)
+        generator = LLMContextGenerator(config)
         content = generator.generate()
         
         assert "TestProject" in content
@@ -60,7 +60,7 @@ class TestLLMTxtGenerator:
     def test_validate_missing_project(self):
         """测试验证：缺少 project"""
         config = {}
-        generator = LLMTxtGenerator(config)
+        generator = LLMContextGenerator(config)
         errors = generator.validate()
         
         assert len(errors) > 0
@@ -74,7 +74,7 @@ class TestLLMTxtGenerator:
                 {"level": "X", "name": "Invalid"}
             ]
         }
-        generator = LLMTxtGenerator(config)
+        generator = LLMContextGenerator(config)
         errors = generator.validate()
         
         assert any("决策级别" in e or "level" in e.lower() for e in errors)

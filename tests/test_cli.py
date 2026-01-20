@@ -1,5 +1,5 @@
 """
-Tests for LLMTxt CLI
+Tests for LLMContext CLI
 """
 
 import pytest
@@ -7,7 +7,7 @@ from click.testing import CliRunner
 from pathlib import Path
 import tempfile
 
-from llmtxt.cli import main
+from llmcontext.cli import main
 
 
 class TestCLI:
@@ -20,7 +20,7 @@ class TestCLI:
         """测试版本命令"""
         result = self.runner.invoke(main, ["--version"])
         assert result.exit_code == 0
-        assert "llmtxt" in result.output and "version" in result.output
+        assert "llmcontext" in result.output and "version" in result.output
 
     def test_domains(self):
         """测试列出领域"""

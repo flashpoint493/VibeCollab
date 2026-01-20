@@ -1,7 +1,7 @@
-# LLMTXTGenerator 项目配置
+# LLMContextGenerator 项目配置
 
 project:
-  name: "LLMTXTGenerator"
+  name: "LLMContextGenerator"
   version: "v0.1.1"
   domain: "generic"
   description: "从 YAML 配置生成标准化的 AI 协作规则文档 (llm.txt)"
@@ -323,7 +323,7 @@ build:
 
 quick_acceptance:
   enabled: true
-  start_command: "llmtxt --help"
+  start_command: "llmcontext --help"
   reply_formats:
     pass: "V"
     issue: "! 问题:"

@@ -1,6 +1,6 @@
-# LLMTxt
+# LLMContext
 
-[![PyPI version](https://badge.fury.io/py/llmtxt.svg)](https://badge.fury.io/py/llmtxt)
+[![PyPI version](https://badge.fury.io/py/llmcontext.svg)](https://badge.fury.io/py/llmcontext)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -16,17 +16,17 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           LLMTxt 使用流程                                    │
+│                           LLMContext 使用流程                                    │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────┐
-│  1. 安装 llmtxt   │
+│  1. 安装 llmcontext   │
 │  pip install     │
 └────────┬─────────┘
          │
          ▼
 ┌──────────────────┐     ┌─────────────────────────────────────────┐
-│  2. 初始化项目    │     │  llmtxt init -n "项目" -d game -o ./    │
+│  2. 初始化项目    │     │  llmcontext init -n "项目" -d game -o ./    │
 │                  │────▶│                                         │
 │  选择领域模板     │     │  领域: generic | game | web | data      │
 └────────┬─────────┘     └─────────────────────────────────────────┘
@@ -94,14 +94,14 @@
 ## 安装
 
 ```bash
-pip install llmtxt
+pip install llmcontext
 ```
 
 或从源码安装：
 
 ```bash
-git clone https://github.com/user/llmtxt.git
-cd llmtxt
+git clone https://github.com/user/llmcontext.git
+cd llmcontext
 pip install -e .
 ```
 
@@ -113,13 +113,13 @@ pip install -e .
 
 ```bash
 # 通用项目
-llmtxt init -n "MyProject" -d generic -o ./my-project
+llmcontext init -n "MyProject" -d generic -o ./my-project
 
 # 游戏项目（含 GM 命令注入）
-llmtxt init -n "MyGame" -d game -o ./my-game
+llmcontext init -n "MyGame" -d game -o ./my-game
 
 # Web 项目（含 API 文档注入）
-llmtxt init -n "MyWebApp" -d web -o ./my-webapp
+llmcontext init -n "MyWebApp" -d web -o ./my-webapp
 ```
 
 ### 生成的项目结构
@@ -140,10 +140,10 @@ my-project/
 
 ```bash
 # 编辑 project.yaml 后重新生成
-llmtxt generate -c project.yaml -o llm.txt
+llmcontext generate -c project.yaml -o llm.txt
 
 # 验证配置
-llmtxt validate -c project.yaml
+llmcontext validate -c project.yaml
 ```
 
 ---
@@ -175,40 +175,40 @@ llmtxt validate -c project.yaml
 ## CLI 命令
 
 ```bash
-llmtxt --help                              # 查看帮助
-llmtxt --version                           # 查看版本
-llmtxt init -n <name> -d <domain> -o <dir> # 初始化项目
-llmtxt generate -c <config> -o <output>    # 生成 llm.txt
-llmtxt validate -c <config>                # 验证配置
-llmtxt upgrade                             # 升级协议到最新版本
-llmtxt domains                             # 列出支持的领域
-llmtxt templates                           # 列出可用模板
+llmcontext --help                              # 查看帮助
+llmcontext --version                           # 查看版本
+llmcontext init -n <name> -d <domain> -o <dir> # 初始化项目
+llmcontext generate -c <config> -o <output>    # 生成 llm.txt
+llmcontext validate -c <config>                # 验证配置
+llmcontext upgrade                             # 升级协议到最新版本
+llmcontext domains                             # 列出支持的领域
+llmcontext templates                           # 列出可用模板
 ```
 
 ---
 
 ## 协议版本升级
 
-当 llmtxt 包有新版本时，已有项目可以无缝升级：
+当 llmcontext 包有新版本时，已有项目可以无缝升级：
 
 ```bash
 # 升级当前项目的协议
-pip install --upgrade llmtxt
+pip install --upgrade llmcontext
 cd your-project
-llmtxt upgrade
+llmcontext upgrade
 
 # 预览变更（不实际修改）
-llmtxt upgrade --dry-run
+llmcontext upgrade --dry-run
 
 # 指定配置文件
-llmtxt upgrade -c project.yaml
+llmcontext upgrade -c project.yaml
 ```
 
 **升级原理**：
 ```
 ┌─────────────────┐     ┌─────────────────┐
 │  用户配置        │     │  最新模板        │
-│  (project.yaml) │     │  (llmtxt 包)    │
+│  (project.yaml) │     │  (llmcontext 包)    │
 │                 │     │                 │
 │ • 项目名称 ────────────────▶ 保留        │
 │ • 自定义角色 ───────────────▶ 保留        │
@@ -309,13 +309,13 @@ domain_extensions:
 
 ## Cursor Skill 使用
 
-本项目包含 Cursor IDE Skill，位于 `.cursor/skills/llmtxt/`：
+本项目包含 Cursor IDE Skill，位于 `.cursor/skills/llmcontext/`：
 
 ```bash
 # 复制到你的项目
-cp -r .cursor/skills/llmtxt your-project/.cursor/skills/
+cp -r .cursor/skills/llmcontext your-project/.cursor/skills/
 
-# 或解压 dist/llmtxt-skill.zip
+# 或解压 dist/llmcontext-skill.zip
 ```
 
 Skill 会在对话中自动：
@@ -357,11 +357,11 @@ Skill 会在对话中自动：
 ## 项目结构
 
 ```
-LLMTXTGenerator/
+LLMContextGenerator/
 ├── llm.txt                      # 本项目的协作规则（自举）
 ├── project.yaml                 # 本项目的配置
 ├── pyproject.toml               # 包配置
-├── src/llmtxt/
+├── src/llmcontext/
 │   ├── cli.py                   # CLI 命令
 │   ├── generator.py             # 文档生成器
 │   ├── extension.py             # 扩展处理器
@@ -373,7 +373,7 @@ LLMTXTGenerator/
 ├── schema/
 │   ├── project.schema.yaml      # 项目配置 Schema
 │   └── extension.schema.yaml    # 扩展机制 Schema
-├── .cursor/skills/llmtxt/    # Cursor Skill
+├── .cursor/skills/llmcontext/    # Cursor Skill
 ├── docs/
 │   ├── CONTEXT.md
 │   └── CHANGELOG.md
@@ -392,9 +392,9 @@ pip install -e ".[dev]"
 pytest
 
 # 重新生成本项目的 llm.txt
-python -c "from llmtxt import LLMTxtGenerator; import yaml; from pathlib import Path; \
+python -c "from llmcontext import LLMContextGenerator; import yaml; from pathlib import Path; \
   config = yaml.safe_load(open('project.yaml', encoding='utf-8')); \
-  g = LLMTxtGenerator(config, Path('.')); \
+  g = LLMContextGenerator(config, Path('.')); \
   Path('llm.txt').write_text(g.generate(), encoding='utf-8')"
 ```
 

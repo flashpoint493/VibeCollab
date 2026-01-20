@@ -1,5 +1,5 @@
 """
-LLMTxt Project - 项目管理
+LLMContext Project - 项目管理
 """
 
 import yaml
@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from .generator import LLMTxtGenerator
+from .generator import LLMContextGenerator
 from .templates import TemplateManager
 
 
@@ -104,7 +104,7 @@ class Project:
 
     def _generate_llm_txt(self):
         """生成 llm.txt"""
-        generator = LLMTxtGenerator(self.config, self.output_dir)
+        generator = LLMContextGenerator(self.config, self.output_dir)
         content = generator.generate()
         
         llm_txt_path = self.output_dir / "llm.txt"

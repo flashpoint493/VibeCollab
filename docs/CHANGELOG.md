@@ -1,10 +1,10 @@
-# LLMTXTGenerator 变更日志
+# LLMContextGenerator 变更日志
 
 ## v0.2.0 (2026-01-20)
 
 ### 新功能
 - **需求澄清协议**: 将用户模糊需求自动转化为结构化描述
-- **upgrade 命令**: `llmtxt upgrade` 无缝升级协议到最新版本，保留用户配置
+- **upgrade 命令**: `llmcontext upgrade` 无缝升级协议到最新版本，保留用户配置
 - **Git 初始化约束**: 协议层强制新项目初始化 Git 仓库
 - **使用流程图**: README 添加完整工作流程图
 
@@ -52,10 +52,10 @@
 
 ### 对话7: 封装 Cursor Skill [FEAT]
 
-- 创建 `.cursor/skills/llmtxt/SKILL.md`
+- 创建 `.cursor/skills/llmcontext/SKILL.md`
 - 添加 references/project_template.yaml
 - 添加 assets/CONTEXT_TEMPLATE.md、CHANGELOG_TEMPLATE.md
-- 打包为 llmtxt-skill.zip
+- 打包为 llmcontext-skill.zip
 
 ---
 

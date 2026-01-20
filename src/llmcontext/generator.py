@@ -1,5 +1,5 @@
 """
-LLMTxt Generator - 文档生成器
+LLMContext Generator - 文档生成器
 """
 
 import yaml
@@ -10,7 +10,7 @@ from typing import Dict, Any, List, Optional
 from .extension import ExtensionProcessor
 
 
-class LLMTxtGenerator:
+class LLMContextGenerator:
     """LLM.TXT 文档生成器"""
 
     def __init__(self, config: Dict[str, Any], project_root: Optional[Path] = None):
@@ -39,7 +39,7 @@ class LLMTxtGenerator:
                 self.extension_processor.load_from_config(ext_data)
 
     @classmethod
-    def from_file(cls, path: Path, project_root: Optional[Path] = None) -> "LLMTxtGenerator":
+    def from_file(cls, path: Path, project_root: Optional[Path] = None) -> "LLMContextGenerator":
         """从文件加载配置"""
         with open(path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)

@@ -1,4 +1,4 @@
-# LLMTXTGenerator 当前上下文
+# LLMContextGenerator 当前上下文
 
 ## 当前状态
 - **版本**: v0.1.1
@@ -18,7 +18,7 @@
 - 使用项目自身生成器重新生成 `llm.txt`
 - 新增 `project.yaml` 项目配置文件
 - README 补充完整章节列表、Cursor Skill 使用说明
-- 重新构建 llmtxt-0.1.1 包
+- 重新构建 llmcontext-0.1.1 包
 
 ### 对话8: 补充遗漏章节
 根据 llm_example.txt，补充：

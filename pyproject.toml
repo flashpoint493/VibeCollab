@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "llmtxt"
+name = "llmcontext"
 version = "0.2.0"
 description = "从 YAML 配置生成标准化的 AI 协作规则文档 (llm.txt)"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.8"
 authors = [
-    { name = "LLMTXTGenerator Contributors" }
+    { name = "LLMContextGenerator Contributors" }
 ]
 keywords = [
     "llm",
@@ -52,15 +52,15 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/user/llmtxt"
-Repository = "https://github.com/user/llmtxt"
-Documentation = "https://github.com/user/llmtxt#readme"
+Homepage = "https://github.com/user/llmcontext"
+Repository = "https://github.com/user/llmcontext"
+Documentation = "https://github.com/user/llmcontext#readme"
 
 [project.scripts]
-llmtxt = "llmtxt.cli:main"
+llmcontext = "llmcontext.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/llmtxt"]
+packages = ["src/llmcontext"]
 
 [tool.hatch.build.targets.sdist]
 include = [

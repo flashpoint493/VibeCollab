@@ -1,4 +1,4 @@
-# LLMTXTGenerator AI 协作开发规则
+# LLMContextGenerator AI 协作开发规则
 ## LLM Collaboration Protocol v0.1.1
 
 ---
@@ -367,7 +367,7 @@ AI 澄清后:
 ```markdown
 ## 🧪 快速验收
 
-**启动**: `llmtxt --help`
+**启动**: `llmcontext --help`
 
 **验收项**:
 - [ ] 功能A: {操作} → {预期}

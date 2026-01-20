@@ -1,5 +1,5 @@
 """
-LLMTxt Extension - 扩展机制处理器
+LLMContext Extension - 扩展机制处理器
 
 扩展 = 流程钩子 + 上下文注入 + 引用文档
 """

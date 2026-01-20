@@ -1,5 +1,5 @@
 """
-LLMTxt Templates - 模板管理
+LLMContext Templates - 模板管理
 """
 
 import yaml
@@ -24,7 +24,7 @@ class TemplateManager:
         try:
             # Python 3.9+
             import importlib.resources as pkg_resources
-            ref = pkg_resources.files("llmtxt") / "templates"
+            ref = pkg_resources.files("llmcontext") / "templates"
             return Path(str(ref))
         except (ImportError, TypeError, AttributeError):
             pass

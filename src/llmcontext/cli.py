@@ -1,5 +1,5 @@
 """
-LLMTxt CLI - 命令行接口
+LLMContext CLI - 命令行接口
 """
 
 import click
@@ -11,7 +11,7 @@ from rich import print as rprint
 import yaml
 
 from . import __version__
-from .generator import LLMTxtGenerator
+from .generator import LLMContextGenerator
 from .project import Project
 from .templates import TemplateManager
 
@@ -32,9 +32,9 @@ def deep_merge(base: dict, override: dict) -> dict:
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name="llmtxt")
+@click.version_option(version=__version__, prog_name="llmcontext")
 def main():
-    """LLMTxt - AI 协作规则文档生成器
+    """LLMContext - AI 协作规则文档生成器
     
     从 YAML 配置生成标准化的 llm.txt 文档，
     支持 Vibe Development 哲学的人机协作工程化部署。
@@ -57,9 +57,9 @@ def init(name: str, domain: str, output: str, force: bool):
     
     Examples:
     
-        llmtxt init -n "MyProject" -d web -o ./my-project
+        llmcontext init -n "MyProject" -d web -o ./my-project
         
-        llmtxt init -n "GameProject" -d game -o ./game --force
+        llmcontext init -n "GameProject" -d game -o ./game --force
     """
     output_path = Path(output)
     
@@ -103,7 +103,7 @@ def init(name: str, domain: str, output: str, force: bool):
     console.print("[bold]下一步:[/bold]")
     console.print(f"  1. cd {output}")
     console.print("  2. 编辑 project.yaml 自定义配置")
-    console.print("  3. llmtxt generate -c project.yaml  # 重新生成")
+    console.print("  3. llmcontext generate -c project.yaml  # 重新生成")
     console.print("  4. 开始你的 Vibe Development 之旅!")
 
 
@@ -115,9 +115,9 @@ def generate(config: str, output: str):
     
     Examples:
     
-        llmtxt generate -c project.yaml -o llm.txt
+        llmcontext generate -c project.yaml -o llm.txt
         
-        llmtxt generate -c my-config.yaml
+        llmcontext generate -c my-config.yaml
     """
     config_path = Path(config)
     output_path = Path(output)
@@ -128,7 +128,7 @@ def generate(config: str, output: str):
     
     with console.status("[bold green]正在生成 llm.txt..."):
         try:
-            generator = LLMTxtGenerator.from_file(config_path)
+            generator = LLMContextGenerator.from_file(config_path)
             content = generator.generate()
             output_path.write_text(content, encoding="utf-8")
         except Exception as e:
@@ -146,7 +146,7 @@ def validate(config: str):
     
     Examples:
     
-        llmtxt validate -c project.yaml
+        llmcontext validate -c project.yaml
     """
     config_path = Path(config)
     
@@ -156,7 +156,7 @@ def validate(config: str):
     
     with console.status("[bold green]正在验证配置..."):
         try:
-            generator = LLMTxtGenerator.from_file(config_path)
+            generator = LLMContextGenerator.from_file(config_path)
             errors = generator.validate()
         except Exception as e:
             console.print(f"[red]错误:[/red] 解析失败: {e}")
@@ -220,9 +220,9 @@ def export_template(template: str, output: str):
     
     Examples:
     
-        llmtxt export-template -t default -o my-project.yaml
+        llmcontext export-template -t default -o my-project.yaml
         
-        llmtxt export-template -t game -o game-project.yaml
+        llmcontext export-template -t game -o game-project.yaml
     """
     tm = TemplateManager()
     output_path = Path(output)
@@ -233,7 +233,7 @@ def export_template(template: str, output: str):
         console.print(f"[green]✅ 已导出模板:[/green] {output_path}")
     except FileNotFoundError:
         console.print(f"[red]错误:[/red] 模板不存在: {template}")
-        console.print("[dim]使用 'llmtxt templates' 查看可用模板[/dim]")
+        console.print("[dim]使用 'llmcontext templates' 查看可用模板[/dim]")
         raise SystemExit(1)
 
 
@@ -248,11 +248,11 @@ def upgrade(config: str, dry_run: bool, force: bool):
     
     Examples:
     
-        llmtxt upgrade                    # 升级当前目录的项目
+        llmcontext upgrade                    # 升级当前目录的项目
         
-        llmtxt upgrade -c project.yaml    # 指定配置文件
+        llmcontext upgrade -c project.yaml    # 指定配置文件
         
-        llmtxt upgrade --dry-run          # 预览变更
+        llmcontext upgrade --dry-run          # 预览变更
     """
     config_path = Path(config)
     
@@ -325,7 +325,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
     
     # 重新生成 llm.txt
     llm_txt_path = config_path.parent / "llm.txt"
-    generator = LLMTxtGenerator(merged, config_path.parent)
+    generator = LLMContextGenerator(merged, config_path.parent)
     llm_txt_path.write_text(generator.generate(), encoding="utf-8")
     
     # 成功提示
@@ -354,7 +354,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
 def version_info():
     """显示版本和协议信息"""
     console.print(Panel.fit(
-        f"[bold]LLMTxt[/bold] v{__version__}\n\n"
+        f"[bold]LLMContext[/bold] v{__version__}\n\n"
         f"[dim]协议版本:[/dim] 1.0\n"
         f"[dim]支持领域:[/dim] {', '.join(DOMAINS)}\n"
         f"[dim]Python:[/dim] 3.8+",
