@@ -12,6 +12,16 @@
 
 ---
 
+## 特性
+
+- **完整协议覆盖**: 决策分级、迭代管理、QA验收、Prompt工程最佳实践
+- **领域扩展**: 支持 game/web/data 等领域的定制扩展
+- **钩子机制**: 在对话流程节点自动注入上下文
+- **Cursor Skill**: 可作为 IDE Skill 使用，提供结构化协作流程
+- **自举实现**: 本项目使用自身生成的 llm.txt 进行开发
+
+---
+
 ## 安装
 
 ```bash
@@ -36,14 +46,11 @@ pip install -e .
 # 通用项目
 llmtxt init -n "MyProject" -d generic -o ./my-project
 
-# 游戏项目
+# 游戏项目（含 GM 命令注入）
 llmtxt init -n "MyGame" -d game -o ./my-game
 
-# Web 项目
+# Web 项目（含 API 文档注入）
 llmtxt init -n "MyWebApp" -d web -o ./my-webapp
-
-# 数据工程项目
-llmtxt init -n "MyDataPipeline" -d data -o ./my-data
 ```
 
 ### 生成的项目结构
@@ -56,8 +63,8 @@ my-project/
     ├── CONTEXT.md             # 当前上下文 (每次对话更新)
     ├── DECISIONS.md           # 决策记录
     ├── CHANGELOG.md           # 变更日志
-    ├── ROADMAP.md             # 路线图
-    └── QA_TEST_CASES.md       # 测试用例
+    ├── ROADMAP.md             # 路线图 + 迭代建议池
+    └── QA_TEST_CASES.md       # 产品QA测试用例
 ```
 
 ### 自定义后重新生成
@@ -72,16 +79,39 @@ llmtxt validate -c project.yaml
 
 ---
 
+## 生成的 llm.txt 包含章节
+
+| 章节 | 说明 |
+|------|------|
+| 核心理念 | Vibe Development 哲学、决策质量观 |
+| 职能角色定义 | 可自定义的角色体系 (DESIGN/ARCH/DEV/PM/QA/TEST) |
+| 决策分级制度 | S/A/B/C 四级决策及 Review 要求 |
+| 开发流程协议 | 对话开始/结束时的强制流程 |
+| 迭代建议管理协议 | QA 建议 → PM 评审 → 纳入/延后/拒绝 |
+| 版本回顾协议 | 里程碑验收后的回顾流程 |
+| 构建打包协议 | 全量验收前的 CheckList |
+| 配置级迭代协议 | 无需审批的快速配置修改 |
+| QA 验收协议 | 测试用例要素、快速验收模板 |
+| Git 协作规范 | 分支策略、Commit 前缀 |
+| 测试体系 | Unit Test + Product QA 双轨 |
+| 里程碑定义 | 生命周期、Bug 优先级 |
+| Prompt 工程最佳实践 | 有效提问模板、高价值引导词 |
+| 符号学标注系统 | 统一的状态/优先级符号 |
+| 已确认决策汇总 | 项目决策记录表 |
+| 文档迭代日志 | llm.txt 自身版本历史 |
+
+---
+
 ## CLI 命令
 
 ```bash
 llmtxt --help                              # 查看帮助
+llmtxt --version                           # 查看版本
 llmtxt init -n <name> -d <domain> -o <dir> # 初始化项目
 llmtxt generate -c <config> -o <output>    # 生成 llm.txt
 llmtxt validate -c <config>                # 验证配置
 llmtxt domains                             # 列出支持的领域
 llmtxt templates                           # 列出可用模板
-llmtxt export-template -t <name> -o <file> # 导出模板
 ```
 
 ---
@@ -119,124 +149,59 @@ llmtxt export-template -t <name> -o <file> # 导出模板
 
 ## 扩展机制
 
-### 扩展的本质
-
 > **扩展 = 流程钩子 + 上下文注入 + 引用文档**
 
-扩展不是静态配置，而是在特定流程节点注入上下文：
-
 ```yaml
-hooks:
-  # QA 列测试用例时，自动注入 GM 命令
-  - trigger: "qa.list_test_cases"
-    action: "inject_context"
-    context_id: "gm_commands"
-    condition: "files.exists('docs/GM_COMMANDS.md')"
-
-contexts:
-  gm_commands:
-    type: "reference"              # 引用外部文档
-    source: "docs/GM_COMMANDS.md"  # 避免扩展膨胀
-```
-
-### 钩子触发点
-
-| 触发点 | 时机 | 用途 |
-|-------|------|------|
-| `dialogue.start` | 对话开始 | 注入领域上下文 |
-| `dialogue.end` | 对话结束 | 额外更新文件 |
-| `qa.list_test_cases` | QA 列测试用例 | 注入测试辅助工具 |
-| `dev.feature_complete` | 功能完成 | 提供验收模板 |
-| `build.pre` | 构建前 | 检查清单 |
-| `build.post` | 构建后 | 部署指引 |
-
-### 上下文类型
-
-| 类型 | 说明 | 适用场景 |
-|-----|------|---------|
-| `reference` | 引用外部文档 | 内容多时，避免膨胀 |
-| `template` | 内联模板 | 内容短，直接嵌入 |
-| `computed` | 动态计算 | 需要运行时数据 |
-| `file_list` | 文件列表 | 列出匹配的文件 |
-
----
-
-## 支持的领域
-
-| 领域 | 说明 | 扩展内容 |
-|------|------|---------|
-| `generic` | 通用项目 | 基础配置 |
-| `game` | 游戏开发 | GM 命令注入、测试模板 |
-| `web` | Web 应用 | API 文档注入、部署指南 |
-| `data` | 数据工程 | 数据质量检查、管道清单 |
-| `mobile` | 移动应用 | (规划中) |
-| `infra` | 基础设施 | (规划中) |
-
----
-
-## 配置结构
-
-### 项目配置 (`project.yaml`)
-
-```yaml
-project:
-  name: "MyProject"
-  version: "v1.0"
-  domain: "web"
-
-philosophy:
-  vibe_development:
-    enabled: true
-    principles:
-      - "AI 不是执行者，而是协作伙伴"
-
-roles:
-  - code: "DEV"
-    name: "开发"
-    focus: ["实现", "Bug修复"]
-    is_gatekeeper: false
-
-decision_levels:
-  - level: "S"
-    name: "战略决策"
-    review:
-      required: true
-      mode: "sync"
-
-testing:
-  unit_test:
-    enabled: true
-    framework: "jest"
-    coverage_target: 0.8
-  product_qa:
-    enabled: true
-    test_case_file: "docs/QA_TEST_CASES.md"
-```
-
-### 领域扩展 (`domains/*.extension.yaml`)
-
-```yaml
-roles_override:
-  - code: "DESIGN"
-    name: "游戏策划"
-    focus: ["玩法", "体验", "平衡"]
-
 domain_extensions:
   game:
     hooks:
       - trigger: "qa.list_test_cases"
         action: "inject_context"
         context_id: "gm_commands"
+        condition: "files.exists('docs/GM_COMMANDS.md')"
     
     contexts:
       gm_commands:
         type: "reference"
         source: "docs/GM_COMMANDS.md"
-    
-    additional_files:
-      - path: "docs/GM_COMMANDS.md"
-        purpose: "GM 控制台命令"
 ```
+
+### 钩子触发点
+
+| 触发点 | 时机 |
+|-------|------|
+| `dialogue.start` | 对话开始 |
+| `dialogue.end` | 对话结束 |
+| `qa.list_test_cases` | QA 列测试用例 |
+| `dev.feature_complete` | 功能完成 |
+| `build.pre` / `build.post` | 构建前后 |
+
+### 上下文类型
+
+| 类型 | 说明 |
+|-----|------|
+| `reference` | 引用外部文档 |
+| `template` | 内联模板 |
+| `computed` | 动态计算 |
+| `file_list` | 文件列表 |
+
+---
+
+## Cursor Skill 使用
+
+本项目包含 Cursor IDE Skill，位于 `.codebuddy/skills/llmtxt/`：
+
+```bash
+# 复制到你的项目
+cp -r .codebuddy/skills/llmtxt your-project/.codebuddy/skills/
+
+# 或解压 dist/llmtxt-skill.zip
+```
+
+Skill 会在对话中自动：
+1. 读取 llm.txt 和 CONTEXT.md 恢复上下文
+2. 遵循决策分级制度
+3. 对话结束时更新文档并 git commit
 
 ---
 
@@ -269,6 +234,34 @@ domain_extensions:
 
 ---
 
+## 项目结构
+
+```
+LLMTXTGenerator/
+├── llm.txt                      # 本项目的协作规则（自举）
+├── project.yaml                 # 本项目的配置
+├── pyproject.toml               # 包配置
+├── src/llmtxt/
+│   ├── cli.py                   # CLI 命令
+│   ├── generator.py             # 文档生成器
+│   ├── extension.py             # 扩展处理器
+│   ├── project.py               # 项目管理
+│   ├── templates.py             # 模板管理
+│   └── templates/
+│       ├── default.project.yaml
+│       └── domains/             # 领域扩展
+├── schema/
+│   ├── project.schema.yaml      # 项目配置 Schema
+│   └── extension.schema.yaml    # 扩展机制 Schema
+├── .codebuddy/skills/llmtxt/    # Cursor Skill
+├── docs/
+│   ├── CONTEXT.md
+│   └── CHANGELOG.md
+└── tests/
+```
+
+---
+
 ## 开发
 
 ```bash
@@ -278,34 +271,11 @@ pip install -e ".[dev]"
 # 运行测试
 pytest
 
-# 代码格式化
-black src tests
-ruff check src tests
-```
-
----
-
-## 项目结构
-
-```
-LLMTXTGenerator/
-├── llm.txt                      # 本项目的协作规则（元实现）
-├── pyproject.toml               # 包配置
-├── src/llmtxt/
-│   ├── cli.py                   # CLI 命令
-│   ├── generator.py             # 文档生成器
-│   ├── project.py               # 项目管理
-│   ├── templates.py             # 模板管理
-│   └── templates/
-│       ├── default.project.yaml
-│       └── domains/             # 领域扩展
-├── schema/
-│   ├── project.schema.yaml      # 项目配置 Schema
-│   └── extension.schema.yaml    # 扩展机制 Schema
-├── docs/
-│   ├── CONTEXT.md               # 当前开发上下文
-│   └── CHANGELOG.md             # 变更日志
-└── tests/
+# 重新生成本项目的 llm.txt
+python -c "from llmtxt import LLMTxtGenerator; import yaml; from pathlib import Path; \
+  config = yaml.safe_load(open('project.yaml', encoding='utf-8')); \
+  g = LLMTxtGenerator(config, Path('.')); \
+  Path('llm.txt').write_text(g.generate(), encoding='utf-8')"
 ```
 
 ---
