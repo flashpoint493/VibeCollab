@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "llmcontext"
+name = "llm-txt-generator"
 version = "0.2.0"
 description = "从 YAML 配置生成标准化的 AI 协作规则文档 (llm.txt)"
 readme = "README.md"
