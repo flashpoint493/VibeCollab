@@ -52,9 +52,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/user/llmcontext"
-Repository = "https://github.com/user/llmcontext"
-Documentation = "https://github.com/user/llmcontext#readme"
+Homepage = "https://github.com/flashpoint493/LLMTXTGenerator"
+Repository = "https://github.com/flashpoint493/LLMTXTGenerator"
+Documentation = "https://github.com/flashpoint493/LLMTXTGenerator#readme"
 
 [project.scripts]
 llmcontext = "llmcontext.cli:main"
