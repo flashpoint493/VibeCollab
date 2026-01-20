@@ -14,8 +14,6 @@
 
 ## 工作流程图
 
-> **提示**：如果您的 Markdown 预览器不支持 Mermaid 图表，请在 [GitHub](https://github.com/flashpoint493/LLMTXTGenerator) 上查看完整渲染效果。
-
 ```mermaid
 flowchart TD
     A[1. 安装 llm-txt-generator<br/>pip install] --> B[2. 初始化项目<br/>选择领域模板]
@@ -185,8 +183,6 @@ llmcontext upgrade -c project.yaml
 ```
 
 **升级原理**：
-
-> **提示**：如果您的 Markdown 预览器不支持 Mermaid 图表，请在 [GitHub](https://github.com/flashpoint493/LLMTXTGenerator) 上查看完整渲染效果。
 
 ```mermaid
 flowchart LR
