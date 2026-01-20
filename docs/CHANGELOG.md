@@ -2,29 +2,36 @@
 
 ## 2026-01-20
 
-### 对话7: 封装 Cursor Skill [FEAT]
+### 对话8: 补充遗漏章节 [FEAT]
 
-**新增**:
-- `.codebuddy/skills/llmtxt/SKILL.md` - Skill 定义
-- `references/project_template.yaml` - 项目配置模板
-- `assets/CONTEXT_TEMPLATE.md` - 上下文模板
-- `assets/CHANGELOG_TEMPLATE.md` - 变更日志模板
-- `dist/llmtxt-skill.zip` - 可分发的 Skill 包
+根据 llm_example.txt 原始游戏案例，补充遗漏的重要章节：
+
+**generator.py 新增方法**:
+- `_add_iteration_protocols()` - 迭代建议管理、版本回顾、构建打包、配置级迭代
+- `_add_qa_protocol()` - QA 验收协议、快速验收模板
+- `_add_prompt_engineering()` - Prompt 工程最佳实践
+- `_add_decisions_summary()` - 已确认决策汇总
+- `_add_changelog()` - 文档迭代日志
+- `_add_git_history_reference()` - Git 历史参考
+
+**default.project.yaml 新增配置**:
+- `version_review` - 版本回顾配置
+- `build` - 构建配置
+- `quick_acceptance` - 快速验收配置
+- `prompt_engineering` - Prompt 工程配置
+- `confirmed_decisions` - 已确认决策列表
+- `llm_txt_changelog` - 文档迭代日志
+
+**SKILL.md 同步更新**:
+- 补充重要协议章节
+- 添加 Prompt 工程最佳实践
 
 ---
+
+### 对话7: 封装 Cursor Skill [FEAT]
 
 ### 对话6: 清理重复模板 [REFACTOR]
 
-- 删除 `templates/` 目录
-- 版本升级至 0.1.1
-
----
-
 ### 对话5: 实现扩展钩子处理 [DEV]
 
-- 新增 `extension.py` 扩展处理器
-- 24 个测试通过
-
----
-
-### 对话4-1: 项目初始化到文档同步
+### 对话1-4: 项目初始化到文档同步
