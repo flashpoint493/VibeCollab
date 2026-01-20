@@ -1,8 +1,23 @@
 # LLMTXTGenerator 变更日志
 
-## 2026-01-20
+## v0.2.0 (2026-01-20)
 
-### 对话10: 新增需求澄清协议 [FEAT]
+### 新功能
+- **需求澄清协议**: 将用户模糊需求自动转化为结构化描述
+- **upgrade 命令**: `llmtxt upgrade` 无缝升级协议到最新版本，保留用户配置
+- **Git 初始化约束**: 协议层强制新项目初始化 Git 仓库
+- **使用流程图**: README 添加完整工作流程图
+
+### 改进
+- README 补充完整章节列表、Cursor Skill 说明
+- SKILL.md 同步所有协议更新
+- project_template.yaml 新增需求澄清、快速验收、构建配置
+
+---
+
+## v0.1.1 (2026-01-20)
+
+### 对话10: 需求澄清协议 [FEAT]
 
 **generator.py**:
 - 新增 `_add_requirement_clarification()` 方法
@@ -13,11 +28,6 @@
 - 功能要求 → 验收标准
 - 待确认项 → 决策等级
 
-**配置新增**:
-- `requirement_clarification.enabled`
-- `requirement_clarification.trigger_conditions`
-- `requirement_clarification.clarification_questions`
-
 ---
 
 ### 对话9: llm.txt 自更新 + README 更新 [VIBE] [DOC]
@@ -25,13 +35,10 @@
 - 新增 `project.yaml` - 项目自身配置
 - `llm.txt` 使用生成器自更新，包含全部章节
 - README 补充完整章节列表、Cursor Skill 说明
-- 重新构建 llmtxt-0.1.1 包
 
 ---
 
 ### 对话8: 补充遗漏章节 [FEAT]
-
-根据 llm_example.txt 原始游戏案例，补充遗漏的重要章节：
 
 **generator.py 新增方法**:
 - `_add_iteration_protocols()` - 迭代建议管理、版本回顾、构建打包、配置级迭代
@@ -40,10 +47,6 @@
 - `_add_decisions_summary()` - 已确认决策汇总
 - `_add_changelog()` - 文档迭代日志
 - `_add_git_history_reference()` - Git 历史参考
-
-**default.project.yaml 新增配置**:
-- `version_review` / `build` / `quick_acceptance`
-- `prompt_engineering` / `confirmed_decisions` / `llm_txt_changelog`
 
 ---
 
@@ -60,7 +63,6 @@
 
 - 删除根目录 `templates/`（保留包内）
 - 更新 pyproject.toml 构建配置
-- 升级至 v0.1.1
 
 ---
 
