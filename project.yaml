@@ -1,0 +1,417 @@
+# LLMTXTGenerator 项目配置
+
+project:
+  name: "LLMTXTGenerator"
+  version: "v0.1.1"
+  domain: "generic"
+  description: "从 YAML 配置生成标准化的 AI 协作规则文档 (llm.txt)"
+
+philosophy:
+  vibe_development:
+    enabled: true
+    principles:
+      - "AI 不是执行者，而是协作伙伴"
+      - "不急于产出代码，先对齐理解"
+      - "每个决策都是共同思考的结果"
+      - "对话本身就是设计过程的一部分"
+  decision_quality:
+    target_rate: 0.9
+    critical_tolerance: 0
+  long_term_dialogue: true
+
+roles:
+  - code: "DESIGN"
+    name: "协议设计"
+    focus: ["Schema设计", "协议演进", "用户体验"]
+    triggers: ["设计", "协议", "Schema"]
+    is_gatekeeper: false
+
+  - code: "ARCH"
+    name: "架构"
+    focus: ["模块结构", "扩展机制", "性能"]
+    triggers: ["架构", "重构", "模块"]
+    is_gatekeeper: false
+
+  - code: "DEV"
+    name: "开发"
+    focus: ["功能实现", "Bug修复"]
+    triggers: ["开发", "实现", "代码"]
+    is_gatekeeper: false
+
+  - code: "PM"
+    name: "项目管理"
+    focus: ["里程碑", "发布", "优先级"]
+    triggers: ["规划", "发布", "里程碑"]
+    is_gatekeeper: false
+
+  - code: "QA"
+    name: "产品质量保证"
+    focus: ["验收测试", "用户体验验证"]
+    triggers: ["验收", "体验测试"]
+    is_gatekeeper: true
+
+  - code: "TEST"
+    name: "单元测试"
+    focus: ["pytest", "覆盖率"]
+    triggers: ["单元测试", "pytest"]
+    is_gatekeeper: false
+
+decision_levels:
+  - level: "S"
+    name: "战略决策"
+    scope: "协议设计、核心概念"
+    review:
+      required: true
+      mode: "sync"
+      human_confirm: true
+
+  - level: "A"
+    name: "架构决策"
+    scope: "Schema结构、扩展机制"
+    review:
+      required: true
+      mode: "async"
+      human_confirm: true
+
+  - level: "B"
+    name: "实现决策"
+    scope: "具体实现方案"
+    review:
+      required: false
+      mode: "auto"
+      human_confirm: false
+
+  - level: "C"
+    name: "细节决策"
+    scope: "命名、格式"
+    review:
+      required: false
+      mode: "none"
+      human_confirm: false
+
+task_unit:
+  id_pattern: "TASK-{role}-{seq}"
+  statuses:
+    - "TODO"
+    - "IN_PROGRESS"
+    - "REVIEW"
+    - "DONE"
+  required_fields:
+    - "id"
+    - "role"
+    - "feature"
+    - "dependencies"
+    - "output"
+    - "status"
+    - "dialogue_rounds"
+
+dialogue_protocol:
+  on_start:
+    read_files:
+      - "docs/CONTEXT.md"
+      - "llm.txt"
+    actions:
+      - "了解当前进度"
+      - "确认用户本次对话目标"
+
+  on_end:
+    update_files:
+      - "docs/CONTEXT.md"
+      - "docs/CHANGELOG.md"
+    git_commit: true
+
+  standard_flow:
+    - step: 1
+      actor: "human"
+      action: "提出需求/问题"
+    - step: 2
+      actor: "ai"
+      action: "识别角色，分析问题"
+    - step: 3
+      actor: "ai"
+      action: "S/A级决策请求确认，B/C级自主执行"
+      condition: "decision_level in [S, A]"
+    - step: 4
+      actor: "ai"
+      action: "执行任务，输出结果"
+    - step: 5
+      actor: "ai"
+      action: "更新测试用例（如为功能开发）"
+      condition: "task_type == feature"
+    - step: 6
+      actor: "ai"
+      action: "总结进展，提示下一步"
+    - step: 7
+      actor: "human"
+      action: "确认/修正/继续"
+    - step: 8
+      actor: "ai"
+      action: "Git 提交记录"
+
+git_workflow:
+  branches:
+    main: "master"
+    dev: "dev"
+    feature_prefix: "feature/"
+    fix_prefix: "fix/"
+
+  commit_prefixes:
+    - prefix: "[DESIGN]"
+      description: "协议/Schema设计变更"
+      roles: ["DESIGN"]
+    - prefix: "[ARCH]"
+      description: "架构调整"
+      roles: ["ARCH"]
+    - prefix: "[FEAT]"
+      description: "新功能"
+      roles: ["DEV"]
+    - prefix: "[FIX]"
+      description: "Bug修复"
+      roles: ["DEV", "QA"]
+    - prefix: "[CONFIG]"
+      description: "配置调整"
+      roles: ["DEV"]
+    - prefix: "[REFACTOR]"
+      description: "重构"
+      roles: ["ARCH", "DEV"]
+    - prefix: "[DOC]"
+      description: "文档更新"
+      roles: ["PM", "DESIGN"]
+    - prefix: "[TEST]"
+      description: "测试相关"
+      roles: ["TEST", "QA"]
+    - prefix: "[VIBE]"
+      description: "协作流程更新"
+      roles: ["PM"]
+
+  commit_required: true
+
+testing:
+  unit_test:
+    enabled: true
+    framework: "pytest"
+    coverage_target: 0.8
+    patterns:
+      - "tests/test_*.py"
+    run_on:
+      - "pre-commit"
+    required_for_merge: true
+
+  product_qa:
+    enabled: true
+    test_case_file: "docs/QA_TEST_CASES.md"
+    case_id_pattern: "TC-{module}-{seq}"
+    required_fields:
+      - "id"
+      - "feature"
+      - "precondition"
+      - "steps"
+      - "expected"
+      - "status"
+    statuses:
+      - symbol: "PASS"
+        meaning: "通过"
+      - symbol: "PARTIAL"
+        meaning: "部分通过"
+      - symbol: "FAIL"
+        meaning: "未通过"
+      - symbol: "SKIP"
+        meaning: "跳过"
+
+milestone:
+  lifecycle:
+    - phase: "feature_dev"
+      description: "特性开发期"
+      exit_criteria:
+        - "所有计划特性完成"
+        - "快速验收通过"
+
+    - phase: "feature_freeze"
+      description: "特性冻结"
+      exit_criteria:
+        - "不再添加新功能"
+        - "构建成功"
+
+    - phase: "bug_fix"
+      description: "Bug 修复期"
+      exit_criteria:
+        - "P0/P1 问题清零"
+        - "测试通过率达标"
+
+    - phase: "acceptance"
+      description: "里程碑验收"
+      exit_criteria:
+        - "QA 全量测试通过"
+        - "单元测试覆盖率达标"
+
+    - phase: "retrospective"
+      description: "版本回顾"
+      exit_criteria:
+        - "回顾测试表现"
+        - "收集用户反馈"
+
+  tag_pattern: "v{major}.{minor}.{patch}"
+  roadmap_file: "docs/ROADMAP.md"
+  bug_priority:
+    - level: "P0"
+      description: "崩溃/阻断"
+    - level: "P1"
+      description: "功能异常"
+    - level: "P2"
+      description: "体验问题"
+    - level: "P3"
+      description: "优化建议"
+
+iteration:
+  suggestion_pool:
+    file: "docs/ROADMAP.md"
+    section: "迭代建议池"
+    categories:
+      - symbol: "V"
+        meaning: "纳入当前里程碑"
+      - symbol: "..."
+        meaning: "延后到下个里程碑"
+      - symbol: "X"
+        meaning: "拒绝"
+      - symbol: "~"
+        meaning: "合并其他迭代"
+
+  config_level_iteration:
+    enabled: true
+    commit_prefix: "[CONFIG]"
+    skip_pm_review: true
+    examples:
+      - "数值参数调整"
+      - "配置文件修改"
+      - "模板内容更新"
+
+  review_dimensions:
+    - "与当前任务的依赖/冲突关系"
+    - "对用户体验的影响程度"
+    - "开发成本和技术复杂度"
+    - "里程碑剩余时间约束"
+
+version_review:
+  enabled: true
+  timing: "里程碑验收完成后"
+  review_items:
+    - "测试表现（通过率、问题分布）"
+    - "用户体验反馈"
+    - "技术债务"
+    - "迭代建议池"
+
+build:
+  enabled: true
+  command: "python -m build"
+  dist_entry: "dist/*.whl"
+  timing:
+    - "里程碑全量验收前"
+    - "准备发布 PyPI"
+
+quick_acceptance:
+  enabled: true
+  start_command: "llmtxt --help"
+  reply_formats:
+    pass: "V"
+    issue: "! 问题:"
+    skip: "跳过"
+
+prompt_engineering:
+  enabled: true
+  role_templates:
+    DESIGN: |
+      [DESIGN] 我想讨论{协议/Schema}的设计
+      当前想法是: {描述}
+      主要顾虑: {顾虑}
+      请从可扩展性和易用性角度分析
+    ARCH: |
+      [ARCH] 我需要设计{模块}的架构
+      需求: {功能需求}
+      约束: {兼容性约束}
+      请给出2-3个方案对比
+    DEV: |
+      [DEV] 请实现{功能}
+      输入: {输入描述}
+      输出: {期望输出}
+      相关文件: {文件路径}
+
+confirmed_decisions:
+  - id: "001"
+    title: "YAML 配置驱动"
+    choice: "YAML + Jinja2 模板"
+    reason: "可读性强，易于扩展"
+  - id: "002"
+    title: "扩展机制"
+    choice: "钩子 + 上下文注入"
+    reason: "解耦核心和领域特定逻辑"
+  - id: "003"
+    title: "CLI 框架"
+    choice: "Click"
+    reason: "轻量、Pythonic"
+
+llm_txt_changelog:
+  - version: "v0.1.0"
+    date: "2026-01-19"
+    changes: "初始版本"
+  - version: "v0.1.1"
+    date: "2026-01-20"
+    changes: "补充遗漏章节，完善协议完整性"
+
+documentation:
+  key_files:
+    - path: "llm.txt"
+      purpose: "AI 协作规则"
+      update_trigger: "协作方式演进时"
+
+    - path: "docs/CONTEXT.md"
+      purpose: "当前开发上下文"
+      update_trigger: "每次对话结束时"
+
+    - path: "docs/CHANGELOG.md"
+      purpose: "版本变更日志"
+      update_trigger: "每次有效对话后"
+
+  context_file: "docs/CONTEXT.md"
+  changelog_file: "docs/CHANGELOG.md"
+  decisions_file: "docs/DECISIONS.md"
+
+symbology:
+  decision_status:
+    - symbol: "PENDING"
+      meaning: "待确认"
+    - symbol: "CONFIRMED"
+      meaning: "已确认"
+    - symbol: "REVISED"
+      meaning: "已修订"
+
+  task_status:
+    - symbol: "TODO"
+      meaning: "待开始"
+    - symbol: "IN_PROGRESS"
+      meaning: "进行中"
+    - symbol: "REVIEW"
+      meaning: "待审核"
+    - symbol: "DONE"
+      meaning: "已完成"
+
+  test_status:
+    - symbol: "PASS"
+      meaning: "通过"
+    - symbol: "PARTIAL"
+      meaning: "部分通过"
+    - symbol: "FAIL"
+      meaning: "未通过"
+    - symbol: "SKIP"
+      meaning: "跳过"
+
+  priority:
+    - symbol: "P0"
+      meaning: "最高优先级"
+    - symbol: "P1"
+      meaning: "高优先级"
+    - symbol: "P2"
+      meaning: "中优先级"
+    - symbol: "P3"
+      meaning: "低优先级"
+
+domain_extensions: {}
