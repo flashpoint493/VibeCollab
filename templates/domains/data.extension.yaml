@@ -1,0 +1,63 @@
+# 数据工程领域扩展配置
+
+# 数据工程特有角色
+roles_override:
+  - code: "DESIGN"
+    name: "数据产品"
+    focus: ["数据需求", "指标定义", "报表设计"]
+    triggers: ["需求", "指标", "报表"]
+
+  - code: "DE"
+    name: "数据工程"
+    focus: ["ETL", "数据管道", "数据仓库"]
+    triggers: ["ETL", "管道", "仓库", "调度"]
+
+  - code: "DA"
+    name: "数据分析"
+    focus: ["数据探索", "可视化", "洞察"]
+    triggers: ["分析", "可视化", "报告"]
+
+  - code: "ML"
+    name: "机器学习"
+    focus: ["模型", "特征工程", "训练"]
+    triggers: ["模型", "ML", "特征"]
+
+# 数据工程特有扩展
+domain_extensions:
+  data:
+    # 数据管道
+    pipeline:
+      orchestrator: "airflow"  # airflow/dagster/prefect
+      dag_folder: "dags/"
+      schedule_file: "config/schedules.yaml"
+
+    # 数据仓库
+    warehouse:
+      type: "snowflake"  # snowflake/bigquery/redshift/clickhouse
+      schema_folder: "schemas/"
+      dbt_project: "dbt/"
+
+    # 数据质量
+    data_quality:
+      tool: "great_expectations"
+      expectations_folder: "tests/expectations/"
+      validation_on: ["ingestion", "transformation"]
+
+    # Notebook 管理
+    notebooks:
+      folder: "notebooks/"
+      naming_convention: "{YYYYMMDD}_{topic}_{author}.ipynb"
+
+    # 单元测试扩展
+    unit_test:
+      framework: "pytest"
+      patterns:
+        - "tests/unit/*.py"
+        - "tests/integration/*.py"
+      data_fixtures: "tests/fixtures/"
+
+    # QA 扩展：数据验证
+    qa_extensions:
+      data_validation_tool: "great_expectations"
+      sample_size: 1000
+      validation_report: "docs/DATA_QUALITY_REPORT.md"
