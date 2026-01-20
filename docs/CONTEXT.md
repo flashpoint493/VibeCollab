@@ -1,41 +1,38 @@
 # LLMTXTGenerator 当前上下文
 
 ## 当前状态
-- **阶段**: Phase 1 - Skill 封装完成
-- **进度**: 创建 Cursor Skill，本地安装成功
-- **下一步**: 在其他项目测试 Skill
+- **阶段**: Phase 1 - 完整协议补充完成
+- **进度**: 补充遗漏章节，生成器和模板更新
+- **下一步**: 本地测试验证
 
 ## 最近对话 (2026-01-20)
 
+### 对话8: 补充遗漏章节
+根据 llm_example.txt 原始案例，补充了以下遗漏章节：
+- 4.3 迭代建议管理协议
+- 4.4 版本回顾协议
+- 4.5 构建打包协议
+- 4.6 配置级迭代协议（完善）
+- 4.7 QA 验收协议
+- 4.8 快速验收回复模板
+- Prompt 工程最佳实践
+- 已确认决策汇总
+- 本文档迭代日志
+- Git 提交历史参考
+
+**文件变更**:
+- `src/llmtxt/generator.py` - 新增 6 个生成方法
+- `src/llmtxt/templates/default.project.yaml` - 新增配置项
+- `.codebuddy/skills/llmtxt/SKILL.md` - 同步完整协议
+
 ### 对话7: 封装 Cursor Skill
-- 创建 `.codebuddy/skills/llmtxt/SKILL.md`
-- 添加参考模板 `references/project_template.yaml`
-- 添加资源模板 `assets/CONTEXT_TEMPLATE.md`, `assets/CHANGELOG_TEMPLATE.md`
-- 打包为 `dist/llmtxt-skill.zip`
-
 ### 对话6: 清理重复模板
-- 删除根目录 `templates/`
-- 升级至 v0.1.1，本地安装
-
 ### 对话5: 实现扩展钩子处理
-- 新增 `extension.py`，24 个测试通过
-
-## 使用方式
-
-### CLI 工具
-```bash
-llmtxt init -n "项目名" -d game -o ./my-project
-llmtxt generate -c project.yaml -o llm.txt
-```
-
-### Cursor Skill
-1. 解压 `dist/llmtxt-skill.zip` 到项目 `.codebuddy/skills/`
-2. 或直接复制 `.codebuddy/skills/llmtxt/` 目录
 
 ## 待完成事项
-- [ ] 在其他项目测试 Skill 效果
-- [ ] 根据反馈迭代
+- [ ] 本地测试完整生成效果
+- [ ] 验证新章节在 llm.txt 中正确渲染
 - [ ] 发布 PyPI
 
 ---
-*最后更新: 2026-01-20 对话7*
+*最后更新: 2026-01-20 对话8*
