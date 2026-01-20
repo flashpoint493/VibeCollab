@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "llm-txt-generator"
-version = "0.2.1"
+version = "0.2.2"
 description = "从 YAML 配置生成标准化的 AI 协作规则文档 (llm.txt)"
 readme = "README.md"
 license = "MIT"
