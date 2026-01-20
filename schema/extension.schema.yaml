@@ -1,0 +1,156 @@
+# 扩展机制 Schema 定义
+# 扩展 = 流程钩子 + 上下文注入 + 引用文档
+
+extension:
+  type: object
+  description: 领域扩展定义
+  properties:
+    
+    # ============================================
+    # 钩子定义：在什么时机触发什么动作
+    # ============================================
+    hooks:
+      type: array
+      description: 流程钩子列表
+      items:
+        type: object
+        required: [trigger, action]
+        properties:
+          trigger:
+            type: string
+            description: 触发点标识
+            enum:
+              # 对话生命周期
+              - "dialogue.start"           # 对话开始
+              - "dialogue.end"             # 对话结束
+              # QA 流程
+              - "qa.list_test_cases"       # 列出测试用例时
+              - "qa.acceptance"            # 验收测试时
+              # 开发流程
+              - "dev.feature_complete"     # 功能完成时
+              - "dev.before_implement"     # 实现前
+              # 构建流程
+              - "build.pre"                # 构建前
+              - "build.post"               # 构建后
+              # 里程碑
+              - "milestone.review"         # 里程碑回顾
+              - "milestone.planning"       # 里程碑规划
+          
+          action:
+            type: string
+            description: 执行动作
+            enum:
+              - "inject_context"           # 注入上下文
+              - "append_checklist"         # 追加检查项
+              - "require_file_read"        # 要求读取文件
+              - "update_file"              # 更新文件
+          
+          context_id:
+            type: string
+            description: 关联的上下文ID（action=inject_context时必填）
+          
+          condition:
+            type: string
+            description: 触发条件表达式
+            examples:
+              - "project.domain == 'game'"
+              - "project.has_feature('gm_console')"
+              - "files.exists('docs/GM_COMMANDS.md')"
+          
+          priority:
+            type: integer
+            default: 0
+            description: 执行优先级（越大越先）
+
+    # ============================================
+    # 上下文定义：注入什么内容
+    # ============================================
+    contexts:
+      type: object
+      description: 上下文字典，key 为 context_id
+      additionalProperties:
+        type: object
+        required: [type]
+        properties:
+          type:
+            type: string
+            enum:
+              - "reference"    # 引用外部文档
+              - "template"     # 内联模板
+              - "computed"     # 动态计算
+              - "file_list"    # 文件列表
+          
+          # type=reference 时
+          source:
+            type: string
+            description: 引用的文档路径
+          section:
+            type: string
+            description: 只引用文档的特定章节
+          inline_if_short:
+            type: boolean
+            default: true
+            description: 内容较短时内联显示
+          
+          # type=template 时
+          content:
+            type: string
+            description: 模板内容，支持 {variable} 占位符
+          
+          # type=computed 时
+          from:
+            type: string
+            description: 数据来源路径
+          transform:
+            type: string
+            description: 转换表达式
+
+    # ============================================
+    # 额外文件：领域特定文档
+    # ============================================
+    additional_files:
+      type: array
+      description: 领域需要的额外文档文件
+      items:
+        type: object
+        properties:
+          path:
+            type: string
+          purpose:
+            type: string
+          template:
+            type: string
+            description: 文件模板内容或模板文件路径
+
+    # ============================================
+    # 角色覆盖/追加
+    # ============================================
+    roles_override:
+      type: array
+      description: 覆盖或追加角色定义
+      items:
+        $ref: "#/definitions/role"
+
+# ============================================
+# 公共定义
+# ============================================
+definitions:
+  role:
+    type: object
+    required: [code, name]
+    properties:
+      code:
+        type: string
+      name:
+        type: string
+      focus:
+        type: array
+        items:
+          type: string
+      triggers:
+        type: array
+        items:
+          type: string
+      is_gatekeeper:
+        type: boolean
+        default: false

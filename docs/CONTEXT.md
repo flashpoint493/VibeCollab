@@ -1,47 +1,50 @@
 # LLMTXTGenerator 当前上下文
 
 ## 当前状态
-- **阶段**: Phase 1 - 核心框架完成
-- **进度**: 初始架构建立完成
-- **下一步**: 测试生成器，完善领域扩展
+- **阶段**: Phase 1 - 核心框架 + 扩展机制重构
+- **进度**: 扩展机制重新设计完成
+- **下一步**: 实现扩展机制的代码支持
 
-## 本次对话目标
-将游戏行业的 llm.txt 抽象成可复用的生成器框架
+## 本次对话成果
 
-## 已完成事项
-- [x] 分析原始 llm.txt 核心模块
-- [x] 设计 YAML Schema (`schema/project.schema.yaml`)
-- [x] 创建默认模板 (`templates/default.project.yaml`)
-- [x] 实现生成器 (`generator/llm_txt_generator.py`)
-- [x] 创建领域扩展 (game/web/data)
-- [x] 创建项目初始化脚本 (`init_project.py`)
-- [x] 初始化 Git 仓库
+### 决策
+- **[DESIGN] 扩展机制重设计** (S级，已确认)
+  - 扩展 = 流程钩子 + 上下文注入 + 引用文档
+  - 不是静态配置说明，而是流程节点的上下文增强
+  - 支持引用外部文档，避免扩展内容膨胀
 
-## 核心抽象
+### 产出
+1. **llm.txt** - 本项目自身的协作规则（元实现）
+2. **schema/extension.schema.yaml** - 扩展机制 Schema
+3. **重构三个领域扩展**:
+   - `game.extension.yaml` - 游戏领域（GM命令注入、测试模板）
+   - `web.extension.yaml` - Web领域（API文档注入、部署指南）
+   - `data.extension.yaml` - 数据领域（数据质量检查）
 
-### 原始文档模块 → YAML 配置映射
+### 扩展机制核心概念
 
-| 原始章节 | 抽象为 | YAML 路径 |
-|---------|--------|-----------|
-| 核心理念 | philosophy | `philosophy.*` |
-| 职能角色 | roles | `roles[]` |
-| 决策分级 | decision_levels | `decision_levels[]` |
-| 任务单元 | task_unit | `task_unit.*` |
-| 对话流程 | dialogue_protocol | `dialogue_protocol.*` |
-| Git工作流 | git_workflow | `git_workflow.*` |
-| QA验收 | testing.product_qa | `testing.product_qa.*` |
-| (新增)单元测试 | testing.unit_test | `testing.unit_test.*` |
-| 里程碑 | milestone | `milestone.*` |
-| 迭代管理 | iteration | `iteration.*` |
-| 文档体系 | documentation | `documentation.*` |
-| 符号系统 | symbology | `symbology.*` |
-| 领域扩展 | domain_extensions | `domain_extensions.{domain}.*` |
+```
+钩子 (Hook)
+  ├── trigger: 触发点 (qa.list_test_cases, dev.feature_complete, ...)
+  ├── action: 动作 (inject_context, append_checklist, ...)
+  ├── context_id: 关联上下文
+  └── condition: 触发条件
 
-## 下一步计划
-1. 测试生成器是否正常工作
-2. 完善 schema 的 JSON Schema 验证
-3. 添加更多领域扩展 (mobile/infra)
-4. 添加 CLI 更友好的交互
+上下文 (Context)
+  ├── type: reference  → 引用外部文档
+  ├── type: template   → 内联模板
+  ├── type: computed   → 动态计算
+  └── type: file_list  → 文件列表
+```
+
+## 待完成事项
+- [ ] 在 generator.py 中实现扩展钩子处理
+- [ ] 在生成的 llm.txt 中体现扩展内容
+- [ ] 添加扩展机制的单元测试
+- [ ] 完善 mobile/infra 领域扩展
+
+## 技术债务
+- templates/ 和 src/llmtxt/templates/ 存在重复，需要统一
 
 ---
 *最后更新: 2026-01-20*

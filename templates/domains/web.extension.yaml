@@ -1,6 +1,7 @@
-# Web 应用领域扩展配置
+# Web 应用领域扩展
+# 扩展 = 流程钩子 + 上下文注入 + 引用文档
 
-# Web 特有角色调整
+# 角色覆盖
 roles_override:
   - code: "DESIGN"
     name: "产品设计"
@@ -17,44 +18,113 @@ roles_override:
     focus: ["API", "数据库", "服务架构"]
     triggers: ["后端", "接口", "服务"]
 
-# Web 特有扩展
+# 领域扩展
 domain_extensions:
   web:
-    # API 文档
-    api_docs:
-      format: "openapi"
-      file: "docs/api.yaml"
-      auto_generate: true
+    
+    # ========== 钩子定义 ==========
+    hooks:
+      # QA 测试时注入 API 文档
+      - trigger: "qa.list_test_cases"
+        action: "inject_context"
+        context_id: "api_docs"
+        condition: "files.exists('docs/api.yaml') or files.exists('docs/api.md')"
+      
+      # 功能完成时检查 API 文档更新
+      - trigger: "dev.feature_complete"
+        action: "append_checklist"
+        context_id: "api_update_check"
+        condition: "feature.has_api_change"
+      
+      # 构建前检查
+      - trigger: "build.pre"
+        action: "append_checklist"
+        context_id: "build_checklist"
+      
+      # 部署后检查
+      - trigger: "build.post"
+        action: "inject_context"
+        context_id: "deploy_guide"
 
-    # 部署配置
-    deployment:
-      environments:
-        - name: "dev"
-          url_pattern: "dev.example.com"
-        - name: "staging"
-          url_pattern: "staging.example.com"
-        - name: "prod"
-          url_pattern: "example.com"
+    # ========== 上下文定义 ==========
+    contexts:
+      # API 文档引用
+      api_docs:
+        type: "reference"
+        source: "docs/api.yaml"
+        fallback: "docs/api.md"
+        description: "API 接口文档"
+      
+      # API 更新检查
+      api_update_check:
+        type: "template"
+        content: |
+          ## API 变更检查
+          - [ ] 接口是否有变更？
+          - [ ] API 文档是否已更新？
+          - [ ] 是否需要版本号变更？
+      
+      # 构建检查清单
+      build_checklist:
+        type: "template"
+        content: |
+          ## 构建检查
+          - [ ] `{lint_command}` 无错误
+          - [ ] `{test_command}` 测试通过
+          - [ ] `{build_command}` 构建成功
+      
+      # 部署指南
+      deploy_guide:
+        type: "reference"
+        source: "docs/DEPLOY.md"
+        inline_if_short: true
 
-    # 前端构建
-    frontend:
-      framework: "react"  # react/vue/next/nuxt
+    # ========== 额外文件 ==========
+    additional_files:
+      - path: "docs/api.md"
+        purpose: "API 接口文档"
+        template: |
+          # API 接口文档
+          
+          ## Base URL
+          
+          - Dev: `http://localhost:3000/api`
+          - Prod: `https://api.example.com`
+          
+          ## 接口列表
+          
+          ### GET /endpoint
+          
+          **描述**: 
+          
+          **参数**:
+          
+          **响应**:
+          
+          ```json
+          {}
+          ```
+      
+      - path: "docs/DEPLOY.md"
+        purpose: "部署指南"
+        template: |
+          # 部署指南
+          
+          ## 环境
+          
+          | 环境 | URL | 说明 |
+          |------|-----|------|
+          | dev | localhost:3000 | 本地开发 |
+          | staging | staging.example.com | 预发布 |
+          | prod | example.com | 生产 |
+          
+          ## 部署步骤
+          
+          (待填写)
+
+    # ========== 配置项 ==========
+    config:
+      lint_command: "npm run lint"
+      test_command: "npm run test"
       build_command: "npm run build"
       dev_command: "npm run dev"
-      lint_command: "npm run lint"
-
-    # 后端服务
-    backend:
-      framework: "express"  # express/fastify/nest/django/flask
-      start_command: "npm run start"
-      test_command: "npm run test"
-
-    # 数据库迁移
-    database:
-      migration_tool: "prisma"
-      migration_command: "npx prisma migrate dev"
-
-    # QA 扩展：API 测试
-    qa_extensions:
-      api_test_tool: "postman"
-      collection_file: "tests/api.postman_collection.json"

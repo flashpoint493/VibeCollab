@@ -1,6 +1,7 @@
-# 数据工程领域扩展配置
+# 数据工程领域扩展
+# 扩展 = 流程钩子 + 上下文注入 + 引用文档
 
-# 数据工程特有角色
+# 角色覆盖
 roles_override:
   - code: "DESIGN"
     name: "数据产品"
@@ -22,42 +23,95 @@ roles_override:
     focus: ["模型", "特征工程", "训练"]
     triggers: ["模型", "ML", "特征"]
 
-# 数据工程特有扩展
+# 领域扩展
 domain_extensions:
   data:
-    # 数据管道
-    pipeline:
-      orchestrator: "airflow"  # airflow/dagster/prefect
-      dag_folder: "dags/"
-      schedule_file: "config/schedules.yaml"
+    
+    # ========== 钩子定义 ==========
+    hooks:
+      # QA 测试时注入数据质量检查
+      - trigger: "qa.list_test_cases"
+        action: "inject_context"
+        context_id: "data_quality_checks"
+        condition: "files.exists('tests/expectations/')"
+      
+      # 功能完成时检查数据文档
+      - trigger: "dev.feature_complete"
+        action: "append_checklist"
+        context_id: "data_doc_check"
+        condition: "feature.type in ['etl', 'pipeline', 'model']"
+      
+      # 管道部署前检查
+      - trigger: "build.pre"
+        action: "inject_context"
+        context_id: "pipeline_checklist"
+        condition: "project.has_feature('pipeline')"
 
-    # 数据仓库
-    warehouse:
-      type: "snowflake"  # snowflake/bigquery/redshift/clickhouse
-      schema_folder: "schemas/"
-      dbt_project: "dbt/"
+    # ========== 上下文定义 ==========
+    contexts:
+      # 数据质量检查
+      data_quality_checks:
+        type: "reference"
+        source: "docs/DATA_QUALITY.md"
+        description: "数据质量规则和验证"
+      
+      # 数据文档检查
+      data_doc_check:
+        type: "template"
+        content: |
+          ## 数据文档检查
+          - [ ] Schema 是否已文档化？
+          - [ ] 数据字典是否更新？
+          - [ ] 数据血缘是否记录？
+          - [ ] 数据质量规则是否定义？
+      
+      # 管道部署清单
+      pipeline_checklist:
+        type: "template"
+        content: |
+          ## 管道部署检查
+          - [ ] 单元测试通过
+          - [ ] 集成测试通过
+          - [ ] 数据质量验证通过
+          - [ ] 调度配置正确
+          - [ ] 监控告警配置
+          - [ ] 回滚方案准备
 
-    # 数据质量
-    data_quality:
-      tool: "great_expectations"
-      expectations_folder: "tests/expectations/"
-      validation_on: ["ingestion", "transformation"]
+    # ========== 额外文件 ==========
+    additional_files:
+      - path: "docs/DATA_QUALITY.md"
+        purpose: "数据质量规则"
+        template: |
+          # 数据质量规则
+          
+          ## 通用规则
+          
+          | 规则 | 说明 | 阈值 |
+          |------|------|------|
+          | 完整性 | 非空率 | > 99% |
+          | 唯一性 | 主键唯一 | 100% |
+          | 时效性 | 数据延迟 | < 1h |
+          
+          ## 表级规则
+          
+          (按表添加)
+      
+      - path: "docs/DATA_DICTIONARY.md"
+        purpose: "数据字典"
+        template: |
+          # 数据字典
+          
+          ## 表清单
+          
+          | 表名 | 说明 | Owner |
+          |------|------|-------|
+          
+          ## 字段说明
+          
+          (按表添加)
 
-    # Notebook 管理
-    notebooks:
-      folder: "notebooks/"
-      naming_convention: "{YYYYMMDD}_{topic}_{author}.ipynb"
-
-    # 单元测试扩展
-    unit_test:
-      framework: "pytest"
-      patterns:
-        - "tests/unit/*.py"
-        - "tests/integration/*.py"
-      data_fixtures: "tests/fixtures/"
-
-    # QA 扩展：数据验证
-    qa_extensions:
-      data_validation_tool: "great_expectations"
-      sample_size: 1000
-      validation_report: "docs/DATA_QUALITY_REPORT.md"
+    # ========== 配置项 ==========
+    config:
+      test_command: "pytest tests/"
+      dq_tool: "great_expectations"
+      orchestrator: "airflow"
