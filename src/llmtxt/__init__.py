@@ -7,7 +7,7 @@ Usage:
     llmtxt validate -c project.yaml
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "LLMTXTGenerator Contributors"
 
 from .generator import LLMTxtGenerator

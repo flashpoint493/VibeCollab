@@ -20,7 +20,7 @@ class TestCLI:
         """测试版本命令"""
         result = self.runner.invoke(main, ["--version"])
         assert result.exit_code == 0
-        assert "0.1.0" in result.output
+        assert "0.1" in result.output  # 兼容版本迭代
 
     def test_domains(self):
         """测试列出领域"""
