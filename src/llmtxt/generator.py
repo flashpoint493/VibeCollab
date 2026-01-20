@@ -295,6 +295,11 @@ class LLMTxtGenerator:
 
         content += """```
 
+**项目初始化约束**：
+- 如果是新项目且没有 `.git` 目录，必须执行 `git init` 初始化 Git 仓库
+- 初始化后立即执行首次提交：`git add -A && git commit -m "init: 项目初始化"`
+- Git 是协作记录的基础，没有 Git 无法进行有效的版本追踪
+
 ### 4.2.1 对话结束时（强制）
 
 > **每次对话结束前，AI 必须保存当前状态**
