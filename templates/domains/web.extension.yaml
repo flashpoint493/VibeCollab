@@ -1,0 +1,60 @@
+# Web 应用领域扩展配置
+
+# Web 特有角色调整
+roles_override:
+  - code: "DESIGN"
+    name: "产品设计"
+    focus: ["需求", "用户体验", "交互设计", "原型"]
+    triggers: ["产品", "设计", "需求", "PRD"]
+
+  - code: "FE"
+    name: "前端开发"
+    focus: ["UI实现", "交互逻辑", "性能优化"]
+    triggers: ["前端", "页面", "组件"]
+
+  - code: "BE"
+    name: "后端开发"
+    focus: ["API", "数据库", "服务架构"]
+    triggers: ["后端", "接口", "服务"]
+
+# Web 特有扩展
+domain_extensions:
+  web:
+    # API 文档
+    api_docs:
+      format: "openapi"
+      file: "docs/api.yaml"
+      auto_generate: true
+
+    # 部署配置
+    deployment:
+      environments:
+        - name: "dev"
+          url_pattern: "dev.example.com"
+        - name: "staging"
+          url_pattern: "staging.example.com"
+        - name: "prod"
+          url_pattern: "example.com"
+
+    # 前端构建
+    frontend:
+      framework: "react"  # react/vue/next/nuxt
+      build_command: "npm run build"
+      dev_command: "npm run dev"
+      lint_command: "npm run lint"
+
+    # 后端服务
+    backend:
+      framework: "express"  # express/fastify/nest/django/flask
+      start_command: "npm run start"
+      test_command: "npm run test"
+
+    # 数据库迁移
+    database:
+      migration_tool: "prisma"
+      migration_command: "npx prisma migrate dev"
+
+    # QA 扩展：API 测试
+    qa_extensions:
+      api_test_tool: "postman"
+      collection_file: "tests/api.postman_collection.json"

@@ -1,0 +1,373 @@
+# LLM Collaboration Protocol Schema v1.0
+# 项目配置的 YAML Schema 定义
+
+project:
+  type: object
+  required: [name, version, domain]
+  properties:
+    name:
+      type: string
+      description: 项目名称
+    version:
+      type: string
+      pattern: "^v\\d+\\.\\d+$"
+      description: 协议版本
+    domain:
+      type: string
+      description: 业务领域标识 (game/web/mobile/data/infra/...)
+    description:
+      type: string
+      description: 项目简述
+
+# ============================================
+# 一、核心理念 (Philosophy)
+# ============================================
+philosophy:
+  type: object
+  properties:
+    vibe_development:
+      type: object
+      description: Vibe Development 哲学配置
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        principles:
+          type: array
+          items:
+            type: string
+          description: 核心原则列表
+    decision_quality:
+      type: object
+      properties:
+        target_rate:
+          type: number
+          minimum: 0.8
+          maximum: 1.0
+          default: 0.9
+          description: 决策正确率目标
+        critical_tolerance:
+          type: integer
+          default: 0
+          description: 关键决策容错数
+    long_term_dialogue:
+      type: boolean
+      default: true
+      description: 是否启用长期对话工程模式
+
+# ============================================
+# 二、职能角色定义 (Roles)
+# ============================================
+roles:
+  type: array
+  items:
+    type: object
+    required: [code, name, focus]
+    properties:
+      code:
+        type: string
+        pattern: "^[A-Z]+$"
+        description: 角色代号 (如 DESIGN, ARCH, DEV)
+      name:
+        type: string
+        description: 角色名称
+      focus:
+        type: array
+        items:
+          type: string
+        description: 关注领域
+      triggers:
+        type: array
+        items:
+          type: string
+        description: 触发关键词
+      is_gatekeeper:
+        type: boolean
+        default: false
+        description: 是否为守门人角色 (如 QA)
+
+# ============================================
+# 三、决策分级 (Decision Levels)
+# ============================================
+decision_levels:
+  type: array
+  items:
+    type: object
+    required: [level, name, scope, review]
+    properties:
+      level:
+        type: string
+        enum: [S, A, B, C]
+        description: 决策等级
+      name:
+        type: string
+        description: 决策类型名称
+      scope:
+        type: string
+        description: 影响范围描述
+      review:
+        type: object
+        properties:
+          required:
+            type: boolean
+          mode:
+            type: string
+            enum: [sync, async, auto, none]
+          human_confirm:
+            type: boolean
+
+# ============================================
+# 四、任务单元 (Task Unit)
+# ============================================
+task_unit:
+  type: object
+  properties:
+    id_pattern:
+      type: string
+      default: "TASK-{role}-{seq}"
+      description: 任务ID模式
+    statuses:
+      type: array
+      items:
+        type: string
+      default: [TODO, IN_PROGRESS, REVIEW, DONE]
+    required_fields:
+      type: array
+      items:
+        type: string
+      default: [id, role, feature, dependencies, output, status]
+
+# ============================================
+# 五、对话流程 (Dialogue Protocol)
+# ============================================
+dialogue_protocol:
+  type: object
+  properties:
+    on_start:
+      type: object
+      description: 对话开始时的强制操作
+      properties:
+        read_files:
+          type: array
+          items:
+            type: string
+          description: 必须读取的文件列表
+        actions:
+          type: array
+          items:
+            type: string
+    on_end:
+      type: object
+      description: 对话结束时的强制操作
+      properties:
+        update_files:
+          type: array
+          items:
+            type: string
+        git_commit:
+          type: boolean
+          default: true
+    standard_flow:
+      type: array
+      items:
+        type: object
+        properties:
+          step:
+            type: integer
+          actor:
+            type: string
+            enum: [human, ai]
+          action:
+            type: string
+          condition:
+            type: string
+
+# ============================================
+# 六、Git 工作流 (Git Workflow)
+# ============================================
+git_workflow:
+  type: object
+  properties:
+    branches:
+      type: object
+      properties:
+        main:
+          type: string
+          description: 主分支名称
+        dev:
+          type: string
+        feature_prefix:
+          type: string
+          default: "feature/"
+        fix_prefix:
+          type: string
+          default: "fix/"
+    commit_prefixes:
+      type: array
+      items:
+        type: object
+        properties:
+          prefix:
+            type: string
+          description:
+            type: string
+          roles:
+            type: array
+            items:
+              type: string
+    commit_required:
+      type: boolean
+      default: true
+      description: 每次对话是否必须 commit
+
+# ============================================
+# 七、测试体系 (Testing)
+# ============================================
+testing:
+  type: object
+  properties:
+    # 7.1 单元测试 (开发者视角)
+    unit_test:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        framework:
+          type: string
+          description: 测试框架 (jest/pytest/mocha/...)
+        coverage_target:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.8
+        patterns:
+          type: array
+          items:
+            type: string
+          description: 测试文件匹配模式
+        run_on:
+          type: array
+          items:
+            type: string
+            enum: [pre-commit, pre-push, ci, manual]
+    # 7.2 产品QA (用户视角)
+    product_qa:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        test_case_file:
+          type: string
+          default: "docs/QA_TEST_CASES.md"
+        case_id_pattern:
+          type: string
+          default: "TC-{module}-{seq}"
+        required_fields:
+          type: array
+          items:
+            type: string
+          default: [id, feature, precondition, steps, expected, status]
+        statuses:
+          type: array
+          items:
+            type: string
+          default: [PASS, PARTIAL, FAIL, SKIP]
+
+# ============================================
+# 八、里程碑 (Milestone)
+# ============================================
+milestone:
+  type: object
+  properties:
+    lifecycle:
+      type: array
+      items:
+        type: object
+        properties:
+          phase:
+            type: string
+          description:
+            type: string
+          exit_criteria:
+            type: array
+            items:
+              type: string
+    tag_pattern:
+      type: string
+      default: "v{major}.{minor}.{patch}"
+    roadmap_file:
+      type: string
+      default: "docs/ROADMAP.md"
+
+# ============================================
+# 九、迭代管理 (Iteration)
+# ============================================
+iteration:
+  type: object
+  properties:
+    suggestion_pool:
+      type: object
+      properties:
+        file:
+          type: string
+          default: "docs/ROADMAP.md"
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              symbol:
+                type: string
+              meaning:
+                type: string
+          default:
+            - symbol: "✅"
+              meaning: "纳入当前里程碑"
+            - symbol: "⏳"
+              meaning: "延后到下个里程碑"
+            - symbol: "❌"
+              meaning: "拒绝"
+            - symbol: "🔄"
+              meaning: "合并其他迭代"
+    config_level_iteration:
+      type: object
+      description: 配置级迭代（仅改数值不改逻辑）
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        commit_prefix:
+          type: string
+          default: "[CONFIG]"
+        skip_pm_review:
+          type: boolean
+          default: true
+
+# ============================================
+# 十、文档体系 (Documentation)
+# ============================================
+documentation:
+  type: object
+  properties:
+    key_files:
+      type: array
+      items:
+        type: object
+        properties:
+          path:
+            type: string
+          purpose:
+            type: string
+          update_trigger:
+            type: string
+    context_file:
+      type: string
+      default: "docs/CONTEXT.md"
+    changelog_file:
+      type: string
+      default: "docs/CHANGELOG.md"
+    decisions_file:
+      type: string
+      default: "docs/DECISIONS.md"
