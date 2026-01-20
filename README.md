@@ -1,6 +1,6 @@
 # LLMContext
 
-[![PyPI version](https://badge.fury.io/py/llmcontext.svg)](https://badge.fury.io/py/llmcontext)
+[![PyPI version](https://badge.fury.io/py/llm-txt-generator.svg)](https://badge.fury.io/py/llm-txt-generator)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -94,14 +94,14 @@
 ## 安装
 
 ```bash
-pip install llmcontext
+pip install llm-txt-generator
 ```
 
 或从源码安装：
 
 ```bash
-git clone https://github.com/user/llmcontext.git
-cd llmcontext
+git clone https://github.com/flashpoint493/LLMTXTGenerator.git
+cd LLMTXTGenerator
 pip install -e .
 ```
 
@@ -120,6 +120,9 @@ llmcontext init -n "MyGame" -d game -o ./my-game
 
 # Web 项目（含 API 文档注入）
 llmcontext init -n "MyWebApp" -d web -o ./my-webapp
+
+# 数据项目（含数据处理流程）
+llmcontext init -n "MyDataProject" -d data -o ./my-data-project
 ```
 
 ### 生成的项目结构
@@ -157,6 +160,7 @@ llmcontext validate -c project.yaml
 | 决策分级制度 | S/A/B/C 四级决策及 Review 要求 |
 | 开发流程协议 | 对话开始/结束时的强制流程 |
 | **需求澄清协议** | **模糊需求 → 结构化描述转化** |
+| **任务单元管理** | **对话任务单元定义、状态流转、依赖管理** ⭐ |
 | 迭代建议管理协议 | QA 建议 → PM 评审 → 纳入/延后/拒绝 |
 | 版本回顾协议 | 里程碑验收后的回顾流程 |
 | 构建打包协议 | 全量验收前的 CheckList |
@@ -193,7 +197,7 @@ llmcontext templates                           # 列出可用模板
 
 ```bash
 # 升级当前项目的协议
-pip install --upgrade llmcontext
+pip install --upgrade llm-txt-generator
 cd your-project
 llmcontext upgrade
 
@@ -206,26 +210,26 @@ llmcontext upgrade -c project.yaml
 
 **升级原理**：
 ```
-┌─────────────────┐     ┌─────────────────┐
-│  用户配置        │     │  最新模板        │
-│  (project.yaml) │     │  (llmcontext 包)    │
-│                 │     │                 │
-│ • 项目名称 ────────────────▶ 保留        │
-│ • 自定义角色 ───────────────▶ 保留        │
-│ • 已确认决策 ───────────────▶ 保留        │
-│                 │     │                 │
-│                 │  +  │ • 新增协议章节   │
-│                 │     │ • Bug 修复      │
-│                 │     │ • 最佳实践更新   │
-└────────┬────────┘     └────────┬────────┘
-         │                       │
-         └───────────┬───────────┘
-                     ▼
-            ┌─────────────────┐
-            │   智能合并       │
-            │   重新生成       │
-            │   llm.txt       │
-            └─────────────────┘
+┌──────────────────────┐     ┌──────────────────────┐
+│  用户配置             │     │  最新模板             │
+│  (project.yaml)       │     │  (llmcontext 包)      │
+│                       │     │                       │
+│  • 项目名称 ────────────────▶ 保留                 │
+│  • 自定义角色 ───────────────▶ 保留                 │
+│  • 已确认决策 ───────────────▶ 保留                 │
+│                       │     │                       │
+│                       │  +  │  • 新增协议章节        │
+│                       │     │  • Bug 修复           │
+│                       │     │  • 最佳实践更新        │
+└───────────┬───────────┘     └───────────┬───────────┘
+            │                               │
+            └───────────────┬───────────────┘
+                            ▼
+                   ┌──────────────────┐
+                   │   智能合并        │
+                   │   重新生成        │
+                   │   llm.txt        │
+                   └──────────────────┘
 ```
 
 **保留的用户配置**：
@@ -246,6 +250,34 @@ llmcontext upgrade -c project.yaml
 - 不急于产出代码，先**对齐理解**
 - 每个决策都是**共同思考**的结果
 - 对话本身就是**设计过程**的一部分
+
+### 任务单元 (Task Unit) ⭐
+
+> **开发不按日期，按对话任务单元推进**
+
+任务单元是项目管理的核心概念，每个任务单元代表一次完整的对话协作周期：
+
+```
+任务单元 (Task Unit):
+├── ID: TASK-{role}-{seq}      # 如 TASK-DEV-001
+├── role: DESIGN/ARCH/DEV/PM/QA/TEST
+├── feature: {关联的功能模块}
+├── dependencies: {依赖的任务ID}
+├── output: {预期输出}
+├── status: TODO / IN_PROGRESS / REVIEW / DONE
+└── dialogue_rounds: {完成所需的对话轮数}
+```
+
+**任务单元的优势**：
+- ✅ **对话驱动**：以对话为单位推进，而非时间线
+- ✅ **状态清晰**：每个任务都有明确的状态流转
+- ✅ **依赖管理**：支持任务间的依赖关系
+- ✅ **可追溯**：每个任务单元都有完整的对话历史
+
+**使用场景**：
+- 开始新功能开发时，创建 `TASK-DEV-001`
+- 需要架构决策时，创建 `TASK-ARCH-001`
+- QA 验收时，创建 `TASK-QA-001`
 
 ### 决策分级制度
 
