@@ -180,9 +180,59 @@ llmtxt --version                           # 查看版本
 llmtxt init -n <name> -d <domain> -o <dir> # 初始化项目
 llmtxt generate -c <config> -o <output>    # 生成 llm.txt
 llmtxt validate -c <config>                # 验证配置
+llmtxt upgrade                             # 升级协议到最新版本
 llmtxt domains                             # 列出支持的领域
 llmtxt templates                           # 列出可用模板
 ```
+
+---
+
+## 协议版本升级
+
+当 llmtxt 包有新版本时，已有项目可以无缝升级：
+
+```bash
+# 升级当前项目的协议
+pip install --upgrade llmtxt
+cd your-project
+llmtxt upgrade
+
+# 预览变更（不实际修改）
+llmtxt upgrade --dry-run
+
+# 指定配置文件
+llmtxt upgrade -c project.yaml
+```
+
+**升级原理**：
+```
+┌─────────────────┐     ┌─────────────────┐
+│  用户配置        │     │  最新模板        │
+│  (project.yaml) │     │  (llmtxt 包)    │
+│                 │     │                 │
+│ • 项目名称 ────────────────▶ 保留        │
+│ • 自定义角色 ───────────────▶ 保留        │
+│ • 已确认决策 ───────────────▶ 保留        │
+│                 │     │                 │
+│                 │  +  │ • 新增协议章节   │
+│                 │     │ • Bug 修复      │
+│                 │     │ • 最佳实践更新   │
+└────────┬────────┘     └────────┬────────┘
+         │                       │
+         └───────────┬───────────┘
+                     ▼
+            ┌─────────────────┐
+            │   智能合并       │
+            │   重新生成       │
+            │   llm.txt       │
+            └─────────────────┘
+```
+
+**保留的用户配置**：
+- `project.name`, `project.version`, `project.domain`
+- `roles` - 自定义角色体系
+- `confirmed_decisions` - 已确认的决策记录
+- `domain_extensions` - 领域扩展配置
 
 ---
 

@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich import print as rprint
+import yaml
 
 from . import __version__
 from .generator import LLMTxtGenerator
@@ -17,6 +18,17 @@ from .templates import TemplateManager
 console = Console()
 
 DOMAINS = ["generic", "game", "web", "data", "mobile", "infra"]
+
+
+def deep_merge(base: dict, override: dict) -> dict:
+    """深度合并两个字典，override 优先"""
+    result = base.copy()
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
 
 
 @click.group()
@@ -223,6 +235,131 @@ def export_template(template: str, output: str):
         console.print(f"[red]错误:[/red] 模板不存在: {template}")
         console.print("[dim]使用 'llmtxt templates' 查看可用模板[/dim]")
         raise SystemExit(1)
+
+
+@main.command()
+@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+@click.option("--dry-run", is_flag=True, help="仅显示变更，不实际修改")
+@click.option("--force", "-f", is_flag=True, help="强制升级，不备份")
+def upgrade(config: str, dry_run: bool, force: bool):
+    """升级协议到最新版本
+    
+    智能合并：保留用户自定义配置，同时获取最新协议功能。
+    
+    Examples:
+    
+        llmtxt upgrade                    # 升级当前目录的项目
+        
+        llmtxt upgrade -c project.yaml    # 指定配置文件
+        
+        llmtxt upgrade --dry-run          # 预览变更
+    """
+    config_path = Path(config)
+    
+    if not config_path.exists():
+        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print("[dim]提示: 在项目目录下运行，或使用 -c 指定配置文件路径[/dim]")
+        raise SystemExit(1)
+    
+    # 读取用户配置
+    with open(config_path, encoding="utf-8") as f:
+        user_config = yaml.safe_load(f)
+    
+    # 获取最新模板
+    tm = TemplateManager()
+    latest_template = yaml.safe_load(tm.get_template("default"))
+    
+    # 记录用户自定义的关键字段（不应被覆盖）
+    user_preserved = {
+        "project": user_config.get("project", {}),
+        "roles": user_config.get("roles"),
+        "confirmed_decisions": user_config.get("confirmed_decisions"),
+        "domain_extensions": user_config.get("domain_extensions"),
+    }
+    
+    # 深度合并：latest 为 base，user_preserved 覆盖
+    merged = deep_merge(latest_template, {k: v for k, v in user_preserved.items() if v is not None})
+    
+    # 分析变更
+    new_sections = []
+    for key in latest_template:
+        if key not in user_config:
+            new_sections.append(key)
+    
+    if dry_run:
+        console.print(Panel.fit(
+            f"[bold yellow]预览模式[/bold yellow] - 不会修改任何文件",
+            title="Dry Run"
+        ))
+        console.print()
+        
+        if new_sections:
+            console.print("[bold]📦 将新增以下配置项:[/bold]")
+            for section in new_sections:
+                console.print(f"  [green]+ {section}[/green]")
+        else:
+            console.print("[dim]没有新增配置项[/dim]")
+        
+        console.print()
+        console.print("[bold]🔒 将保留以下用户配置:[/bold]")
+        console.print(f"  • project.name: {user_preserved['project'].get('name', '(未设置)')}")
+        console.print(f"  • project.domain: {user_preserved['project'].get('domain', '(未设置)')}")
+        if user_preserved.get('roles'):
+            console.print(f"  • roles: {len(user_preserved['roles'])} 个角色")
+        if user_preserved.get('confirmed_decisions'):
+            console.print(f"  • confirmed_decisions: {len(user_preserved['confirmed_decisions'])} 条决策")
+        
+        console.print()
+        console.print(f"[dim]移除 --dry-run 执行实际升级[/dim]")
+        return
+    
+    # 备份原配置
+    if not force:
+        backup_path = config_path.with_suffix(".yaml.bak")
+        config_path.rename(backup_path)
+        console.print(f"[dim]已备份原配置到: {backup_path}[/dim]")
+    
+    # 写入合并后的配置
+    with open(config_path, "w", encoding="utf-8") as f:
+        yaml.dump(merged, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+    
+    # 重新生成 llm.txt
+    llm_txt_path = config_path.parent / "llm.txt"
+    generator = LLMTxtGenerator(merged, config_path.parent)
+    llm_txt_path.write_text(generator.generate(), encoding="utf-8")
+    
+    # 成功提示
+    console.print()
+    console.print(Panel.fit(
+        f"[bold green]✅ 协议已升级到 v{__version__}[/bold green]",
+        title="升级完成"
+    ))
+    
+    if new_sections:
+        console.print()
+        console.print("[bold]📦 新增配置项:[/bold]")
+        for section in new_sections:
+            console.print(f"  [green]+ {section}[/green]")
+    
+    console.print()
+    console.print("[bold]已更新文件:[/bold]")
+    console.print(f"  • {config_path}")
+    console.print(f"  • {llm_txt_path}")
+    
+    console.print()
+    console.print("[dim]提示: 使用 git diff 查看具体变更[/dim]")
+
+
+@main.command()
+def version_info():
+    """显示版本和协议信息"""
+    console.print(Panel.fit(
+        f"[bold]LLMTxt[/bold] v{__version__}\n\n"
+        f"[dim]协议版本:[/dim] 1.0\n"
+        f"[dim]支持领域:[/dim] {', '.join(DOMAINS)}\n"
+        f"[dim]Python:[/dim] 3.8+",
+        title="版本信息"
+    ))
 
 
 if __name__ == "__main__":
