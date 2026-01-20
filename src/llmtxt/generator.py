@@ -7,20 +7,44 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
+from .extension import ExtensionProcessor
+
 
 class LLMTxtGenerator:
     """LLM.TXT 文档生成器"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], project_root: Optional[Path] = None):
         self.config = config
         self.sections: List[str] = []
+        self.project_root = project_root or Path.cwd()
+        
+        # 初始化扩展处理器
+        self.extension_processor = ExtensionProcessor(self.project_root)
+        self._load_extensions()
+
+    def _load_extensions(self):
+        """加载扩展配置"""
+        # 从 domain_extensions 加载
+        if "domain_extensions" in self.config:
+            self.extension_processor.load_from_config(self.config)
+        
+        # 从独立扩展文件加载（如果指定）
+        ext_files = self.config.get("extension_files", [])
+        for ext_file in ext_files:
+            ext_path = self.project_root / ext_file
+            if ext_path.exists():
+                import yaml as yaml_
+                with open(ext_path, "r", encoding="utf-8") as f:
+                    ext_data = yaml_.safe_load(f)
+                self.extension_processor.load_from_config(ext_data)
 
     @classmethod
-    def from_file(cls, path: Path) -> "LLMTxtGenerator":
+    def from_file(cls, path: Path, project_root: Optional[Path] = None) -> "LLMTxtGenerator":
         """从文件加载配置"""
         with open(path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
-        return cls(config)
+        root = project_root or path.parent
+        return cls(config, root)
 
     def validate(self) -> List[str]:
         """验证配置，返回错误列表"""
@@ -67,6 +91,7 @@ class LLMTxtGenerator:
         self._add_iteration()
         self._add_documentation()
         self._add_symbology()
+        self._add_extension_sections()  # 新增：扩展章节
         self._add_quick_reference()
         self._add_footer()
 
@@ -562,6 +587,61 @@ git tag -a {tag_pattern} -m "描述"
             content += "\n"
 
         content += "---\n"
+        self.sections.append(content)
+
+    def _add_extension_sections(self):
+        """添加扩展章节"""
+        if not self.extension_processor.extensions:
+            return
+        
+        # 获取当前领域
+        domain = self.config.get("project", {}).get("domain", "")
+        
+        content = """# 附录：领域扩展
+
+"""
+        
+        for ext_domain, ext in self.extension_processor.extensions.items():
+            # 只渲染当前项目领域的扩展，或者渲染所有已加载的
+            content += f"## {ext_domain.upper()} 领域扩展\n\n"
+            
+            # 钩子表格
+            if ext.hooks:
+                content += "### 流程钩子\n\n"
+                content += "以下钩子在特定流程节点自动触发：\n\n"
+                content += "| 触发点 | 动作 | 条件 | 说明 |\n"
+                content += "|-------|------|------|------|\n"
+                
+                for hook in ext.hooks:
+                    condition = f"`{hook.condition}`" if hook.condition else "-"
+                    ctx = ext.contexts.get(hook.context_id, None)
+                    desc = ctx.description if ctx else hook.context_id or "-"
+                    content += f"| `{hook.trigger}` | {hook.action} | {condition} | {desc} |\n"
+                content += "\n"
+            
+            # 上下文说明
+            if ext.contexts:
+                content += "### 可注入上下文\n\n"
+                for ctx_id, ctx in ext.contexts.items():
+                    content += f"**{ctx_id}** ({ctx.type})\n"
+                    if ctx.description:
+                        content += f": {ctx.description}\n"
+                    if ctx.source:
+                        content += f"- 来源: `{ctx.source}`\n"
+                    if ctx.pattern:
+                        content += f"- 匹配: `{ctx.pattern}`\n"
+                    content += "\n"
+            
+            # 额外文件
+            if ext.additional_files:
+                content += "### 领域文件\n\n"
+                content += "| 文件 | 用途 |\n|------|------|\n"
+                for af in ext.additional_files:
+                    content += f"| `{af.get('path', '')}` | {af.get('purpose', '')} |\n"
+                content += "\n"
+            
+            content += "---\n\n"
+        
         self.sections.append(content)
 
     def _add_quick_reference(self):

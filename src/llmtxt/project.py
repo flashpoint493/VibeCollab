@@ -55,9 +55,11 @@ class Project:
     @staticmethod
     def _merge_extension(config: Dict, ext_config: Dict):
         """合并领域扩展配置"""
+        if not ext_config:
+            return
+        
         # 合并角色覆盖
-        if "roles_override" in ext_config:
-            existing_codes = {r["code"] for r in config.get("roles", [])}
+        if "roles_override" in ext_config and ext_config["roles_override"]:
             for role in ext_config["roles_override"]:
                 config["roles"] = [
                     r for r in config.get("roles", [])
@@ -66,9 +68,12 @@ class Project:
                 config["roles"].append(role)
         
         # 合并领域扩展
-        if "domain_extensions" in ext_config:
+        domain_ext = ext_config.get("domain_extensions")
+        if domain_ext:
             config.setdefault("domain_extensions", {})
-            config["domain_extensions"].update(ext_config["domain_extensions"])
+            if config["domain_extensions"] is None:
+                config["domain_extensions"] = {}
+            config["domain_extensions"].update(domain_ext)
 
     def generate_all(self):
         """生成所有项目文件"""
@@ -99,7 +104,7 @@ class Project:
 
     def _generate_llm_txt(self):
         """生成 llm.txt"""
-        generator = LLMTxtGenerator(self.config)
+        generator = LLMTxtGenerator(self.config, self.output_dir)
         content = generator.generate()
         
         llm_txt_path = self.output_dir / "llm.txt"
