@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 from .extension import ExtensionProcessor
+from .lifecycle import LifecycleManager
 
 
 class LLMContextGenerator:
@@ -92,6 +93,7 @@ class LLMContextGenerator:
         self._add_testing()
         self._add_milestone()
         self._add_iteration()
+        self._add_lifecycle_rules()
         self._add_documentation()
         self._add_prompt_engineering()
         self._add_symbology()
@@ -929,6 +931,57 @@ git tag -a {tag_pattern} -m "描述"
                 content += f"- {ex}\n"
 
         content += "\n---\n"
+        self.sections.append(content)
+
+    def _add_lifecycle_rules(self):
+        """添加阶段化协作规则章节"""
+        lifecycle_manager = LifecycleManager(self.config)
+        all_stages = lifecycle_manager.lifecycle_config.get("stages", {})
+        
+        content = """# 七、阶段化协作规则
+
+## 7.1 项目生涯阶段说明
+
+项目开发过程分为 4 个生涯阶段，每个阶段有不同的开发重点和协作原则。阶段信息由 PM 角色在 `docs/ROADMAP.md` 中维护，AI 在协作时应根据当前阶段调整工作方式。
+
+### 阶段类型定义
+
+项目生涯阶段按顺序演进，每个阶段都有明确的定义和规则：
+
+"""
+        
+        # 添加所有阶段的规则（作为类型定义，不标注当前状态）
+        stage_order = ["demo", "production", "commercial", "stable"]
+        for stage_code in stage_order:
+            stage_data = all_stages.get(stage_code, {})
+            if not stage_data:
+                continue
+            
+            content += f"""### {stage_data.get('name', stage_code)} ({stage_code})
+
+**描述**: {stage_data.get('description', '')}
+
+**阶段重点**:
+{chr(10).join(f"- {focus}" for focus in stage_data.get('focus', []))}
+
+**阶段原则**:
+{chr(10).join(f"- {principle}" for principle in stage_data.get('principles', []))}
+
+"""
+        
+        content += """## 7.2 阶段化协作指导
+
+AI 在协作时应：
+
+1. **读取当前阶段**: 在对话开始时，读取 `docs/ROADMAP.md` 了解项目当前处于哪个阶段
+2. **应用阶段规则**: 根据当前阶段的重点和原则调整工作方式
+3. **关注阶段变化**: 当项目升级到新阶段时，注意新阶段的原则变化，调整协作方式
+4. **阶段里程碑**: 关注当前阶段的里程碑完成情况，协助推进里程碑达成
+
+> **重要**: 具体的当前阶段信息请查看 `docs/ROADMAP.md` 中的"当前项目生涯阶段"章节。
+
+---
+"""
         self.sections.append(content)
 
     def _add_documentation(self):

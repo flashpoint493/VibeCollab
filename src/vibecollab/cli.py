@@ -15,6 +15,8 @@ from .generator import LLMContextGenerator
 from .project import Project
 from .templates import TemplateManager
 from .llmstxt import LLMsTxtManager
+from .git_utils import is_git_repo
+from .lifecycle import LifecycleManager
 
 console = Console()
 
@@ -54,7 +56,8 @@ def main():
 )
 @click.option("--output", "-o", required=True, help="输出目录")
 @click.option("--force", "-f", is_flag=True, help="强制覆盖已存在的目录")
-def init(name: str, domain: str, output: str, force: bool):
+@click.option("--no-git", is_flag=True, help="不自动初始化 Git 仓库")
+def init(name: str, domain: str, output: str, force: bool, no_git: bool):
     """初始化新项目
     
     Examples:
@@ -73,7 +76,7 @@ def init(name: str, domain: str, output: str, force: bool):
     with console.status(f"[bold green]正在初始化项目 {name}..."):
         try:
             project = Project.create(name=name, domain=domain, output_dir=output_path)
-            project.generate_all()
+            project.generate_all(auto_init_git=not no_git)
         except Exception as e:
             console.print(f"[red]错误:[/red] {e}")
             raise SystemExit(1)
@@ -101,13 +104,31 @@ def init(name: str, domain: str, output: str, force: bool):
     table.add_row("docs/QA_TEST_CASES.md", "测试用例")
     console.print(table)
     
+    # Git 状态提示
+    git_warning = project.config.get("_meta", {}).get("git_warning")
+    git_auto_init = project.config.get("_meta", {}).get("git_auto_init", False)
+    
+    if git_auto_init:
+        console.print()
+        console.print("[green]✅ Git 仓库已自动初始化[/green]")
+    elif git_warning:
+        console.print()
+        console.print(f"[yellow]⚠️  {git_warning}[/yellow]")
+        console.print("[dim]提示: 建议初始化 Git 仓库以跟踪项目变更[/dim]")
+    
     # 下一步提示
     console.print()
     console.print("[bold]下一步:[/bold]")
     console.print(f"  1. cd {output}")
-    console.print("  2. 编辑 project.yaml 自定义配置")
-    console.print("  3. vibecollab generate -c project.yaml  # 重新生成")
-    console.print("  4. 开始你的 Vibe Development 之旅!")
+    step = 2
+    if not is_git_repo(output_path):
+        console.print(f"  {step}. git init  # 初始化 Git 仓库（如未自动初始化）")
+        step += 1
+    console.print(f"  {step}. 编辑 project.yaml 自定义配置")
+    step += 1
+    console.print(f"  {step}. vibecollab generate -c project.yaml  # 重新生成")
+    step += 1
+    console.print(f"  {step}. 开始你的 Vibe Development 之旅!")
 
 
 @main.command()
@@ -396,6 +417,11 @@ def version_info():
         f"[dim]Python:[/dim] 3.8+",
         title="版本信息"
     ))
+
+
+# 导入生涯管理命令
+from .cli_lifecycle import lifecycle as lifecycle_group
+main.add_command(lifecycle_group)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,47 @@
-# LLMContextGenerator 变更日志
+# VibeCollab 变更日志
+
+## v0.4.1 (2026-01-21)
+
+### 改进
+- **阶段定义优化**: 
+  - Production 阶段添加"完善发布平台标准"原则
+  - Commercial 阶段添加"插件化增量开发"和"数据热更"重点
+- **阶段化规则设计优化**: CONTRIBUTING_AI.md 中的阶段规则改为类型定义和模板，具体当前阶段信息移至 ROADMAP.md
+
+---
+
+## v0.4.0 (2026-01-21)
+
+### 新功能
+- **Git 检查和初始化**: 项目初始化时自动检查 Git，可选自动初始化仓库
+- **项目生涯管理**: 4个阶段（demo/production/commercial/stable）的完整管理系统
+- **阶段化协作规则**: CONTRIBUTING_AI.md 中包含所有阶段的规则，标注当前激活阶段
+- **ROADMAP 集成**: 在 ROADMAP.md 中显示项目生涯阶段信息
+- **生涯管理命令**: `vibecollab lifecycle check` 和 `upgrade` 命令
+
+### 改进
+- 将生涯阶段信息放在 ROADMAP.md（PM 侧重的文档）
+- Demo 阶段早期介入 CI/CD
+- Production 阶段前确立性能规范和代码重构
+- 完善文档体系（DECISIONS.md, ROADMAP.md, QA_TEST_CASES.md）
+
+### 重构
+- 全局替换 llm.txt 为 CONTRIBUTING_AI.md
+- 更新所有代码、文档、模板引用
+
+---
+
+## v0.3.0 (2026-01-20)
+
+### 新功能
+- **llms.txt 标准集成**: 自动检测并更新 llms.txt，添加 AI Collaboration 章节
+- **llmstxt.py 模块**: 管理 llms.txt 的创建和更新
+
+### 重构
+- 重命名包为 `vibe-collab`
+- 重命名仓库为 `VibeCollab`
+
+---
 
 ## v0.2.0 (2026-01-20)
 

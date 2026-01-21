@@ -10,6 +10,8 @@ from datetime import datetime
 from .generator import LLMContextGenerator
 from .templates import TemplateManager
 from .llmstxt import LLMsTxtManager
+from .git_utils import ensure_git_repo, check_git_installed
+from .lifecycle import LifecycleManager
 
 
 class Project:
@@ -38,6 +40,11 @@ class Project:
             cls._merge_extension(config, ext_config)
         except FileNotFoundError:
             pass  # 没有领域扩展，使用默认配置
+        
+        # 初始化项目生涯配置
+        lifecycle_manager = LifecycleManager.create_default(current_stage="demo")
+        lifecycle_config = lifecycle_manager.to_config_dict()
+        config.update(lifecycle_config)
         
         return cls(config, output_dir)
 
@@ -76,11 +83,18 @@ class Project:
                 config["domain_extensions"] = {}
             config["domain_extensions"].update(domain_ext)
 
-    def generate_all(self):
-        """生成所有项目文件"""
+    def generate_all(self, auto_init_git: bool = False):
+        """生成所有项目文件
+        
+        Args:
+            auto_init_git: 如果项目不是 Git 仓库，是否自动初始化
+        """
         # 创建目录
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.docs_dir.mkdir(exist_ok=True)
+        
+        # 检查并初始化 Git 仓库
+        self._ensure_git_repo(auto_init_git)
         
         # 保存项目配置
         self._save_config()
@@ -181,8 +195,33 @@ class Project:
 ---
 """
         
-        # ROADMAP.md
+        # ROADMAP.md - 包含项目生涯阶段信息
+        lifecycle_manager = LifecycleManager(self.config)
+        current_stage = lifecycle_manager.get_current_stage()
+        stage_info = lifecycle_manager.get_stage_info()
+        stage_history = lifecycle_manager.get_stage_history()
+        
+        current_stage_entry = stage_history[-1] if stage_history else None
+        started_at = current_stage_entry.get("started_at", today) if current_stage_entry else today
+        
         roadmap_content = f"""# {project_name} 路线图
+
+## 当前项目生涯阶段
+
+**阶段**: {stage_info.get('name', '未知')} ({current_stage})
+**开始时间**: {started_at}
+**阶段描述**: {stage_info.get('description', '')}
+
+### 阶段重点
+{chr(10).join(f"- {focus}" for focus in stage_info.get('focus', []))}
+
+### 阶段原则
+{chr(10).join(f"- {principle}" for principle in stage_info.get('principles', []))}
+
+### 当前阶段里程碑
+{self._format_milestones(stage_info.get('milestones', []))}
+
+---
 
 ## 当前里程碑: Phase 0 - 项目初始化
 
@@ -194,6 +233,12 @@ class Project:
 ### 迭代建议池
 
 (暂无)
+
+---
+
+## 阶段历史
+
+{self._format_stage_history(stage_history)}
 
 ---
 """
@@ -230,4 +275,67 @@ class Project:
 
     def regenerate(self):
         """重新生成协作规则文档并更新 llms.txt"""
+        # 检查 Git 仓库状态（不自动初始化，只提示）
+        self._ensure_git_repo(auto_init=False)
         self._generate_llm_txt()
+    
+    def _ensure_git_repo(self, auto_init: bool = False):
+        """确保项目是 Git 仓库
+        
+        Args:
+            auto_init: 如果不存在是否自动初始化
+        """
+        success, message, is_new = ensure_git_repo(self.output_dir, auto_init=auto_init)
+        
+        if not success:
+            # 保存警告信息到配置，供 CLI 显示
+            self.config.setdefault("_meta", {})["git_warning"] = message
+        elif is_new:
+            # 记录已自动初始化
+            self.config.setdefault("_meta", {})["git_auto_init"] = True
+    
+    def _format_milestones(self, milestones: list) -> str:
+        """格式化里程碑列表
+        
+        Args:
+            milestones: 里程碑列表
+            
+        Returns:
+            str: 格式化后的里程碑文本
+        """
+        if not milestones:
+            return "(暂无里程碑)"
+        
+        lines = []
+        for i, milestone in enumerate(milestones, 1):
+            name = milestone.get("name", f"里程碑 {i}")
+            completed = milestone.get("completed", False)
+            status = "✅" if completed else "⏳"
+            lines.append(f"- {status} {name}")
+        
+        return "\n".join(lines)
+    
+    def _format_stage_history(self, history: list) -> str:
+        """格式化阶段历史
+        
+        Args:
+            history: 阶段历史列表
+            
+        Returns:
+            str: 格式化后的历史文本
+        """
+        if not history:
+            return "(暂无历史记录)"
+        
+        lines = []
+        for entry in history:
+            stage = entry.get("stage", "unknown")
+            started = entry.get("started_at", "未知")
+            ended = entry.get("ended_at")
+            
+            if ended:
+                lines.append(f"- **{stage}**: {started} → {ended}")
+            else:
+                lines.append(f"- **{stage}**: {started} (进行中)")
+        
+        return "\n".join(lines)
