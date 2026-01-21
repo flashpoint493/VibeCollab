@@ -30,7 +30,7 @@
 - 对话是连续的，上下文需要被**持久化保存**
 - 每次对话都在前次基础上**迭代推进**
 - Git 提交历史记录了**思维演进过程**
-- llm.txt 是**活文档**，随项目成长
+- CONTRIBUTING_AI.md 是**活文档**，随项目成长
 
 ---
 
@@ -115,7 +115,7 @@ QA 职能贯穿整个开发流程：
 
 ```
 1. 读取 docs/CONTEXT.md → 了解当前进度
-2. 读取 llm.txt → 了解协作规则（如未加载）
+2. 读取 CONTRIBUTING_AI.md → 了解协作规则（如未加载）
 3. 确认用户本次对话目标
 4. 开始工作
 ```
@@ -457,7 +457,7 @@ git tag -a v0.1.0 -m "Phase 1: 核心原型完成"
 
 | 文件 | 职责 | 更新时机 |
 |-----|------|---------|
-| `llm.txt` | AI 协作规则，顶层指导，Vibe 哲学 | 协作方式演进时 |
+| `CONTRIBUTING_AI.md` | AI 协作规则，顶层指导，Vibe 哲学 | 协作方式演进时 |
 | `docs/GDD_*.md` | 策划设计文档 | 设计迭代时 |
 | `docs/DECISIONS.md` | 重要决策记录 | 每次 S/A 级决策后 |
 | `docs/CHANGELOG.md` | 版本变更日志 | 每次有效对话后 |
@@ -471,7 +471,7 @@ git tag -a v0.1.0 -m "Phase 1: 核心原型完成"
 ## 5.2 上下文恢复协议
 
 当开启新对话时，AI 应：
-1. 读取 `llm.txt` 了解协作规则和 Vibe 哲学
+1. 读取 `CONTRIBUTING_AI.md` 了解协作规则和 Vibe 哲学
 2. 读取 `docs/CONTEXT.md` 恢复当前状态
 3. 读取 `docs/DECISIONS.md` 了解已确认和待定决策
 4. 运行 `git log --oneline -10` 了解最近进展
@@ -483,7 +483,7 @@ git tag -a v0.1.0 -m "Phase 1: 核心原型完成"
 1. 更新 `docs/CONTEXT.md` 保存当前状态
 2. 更新 `docs/CHANGELOG.md` 记录本次产出
 3. 如有新决策，更新 `docs/DECISIONS.md`
-4. 如有协作方式改进，更新 `llm.txt`
+4. 如有协作方式改进，更新 `CONTRIBUTING_AI.md`
 5. **必须执行 git commit** 记录本次对话产出
 
 ---
@@ -628,7 +628,7 @@ git tag -a v0.1.0 -m "Phase 1: 核心原型完成"
 > **里程碑详细规划请查看**: `docs/ROADMAP.md`
 > **当前进度请查看**: `docs/CONTEXT.md`
 
-本文件 (llm.txt) 只定义规则和流程，不维护具体进度状态。
+本文件 (CONTRIBUTING_AI.md) 只定义规则和流程，不维护具体进度状态。
 
 ---
 
@@ -653,7 +653,7 @@ git tag -a v0.1.0 -m "Phase 1: 核心原型完成"
 
 ```
 继续 DeepSea 项目开发。
-请先读取 llm.txt 和 docs/CONTEXT.md 恢复上下文。
+请先读取 CONTRIBUTING_AI.md 和 docs/CONTEXT.md 恢复上下文。
 本次对话目标: {你的目标}
 ```
 

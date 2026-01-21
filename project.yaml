@@ -4,7 +4,7 @@ project:
   name: "LLMContextGenerator"
   version: "v0.1.1"
   domain: "generic"
-  description: "从 YAML 配置生成标准化的 AI 协作规则文档 (llm.txt)"
+  description: "从 YAML 配置生成标准化的 AI 协作协议，并自动集成 llms.txt 标准"
 
 philosophy:
   vibe_development:
@@ -109,7 +109,7 @@ dialogue_protocol:
   on_start:
     read_files:
       - "docs/CONTEXT.md"
-      - "llm.txt"
+      - "CONTRIBUTING_AI.md"
     actions:
       - "了解当前进度"
       - "确认用户本次对话目标"
@@ -362,7 +362,7 @@ confirmed_decisions:
     choice: "Click"
     reason: "轻量、Pythonic"
 
-llm_txt_changelog:
+contributing_ai_changelog:
   - version: "v0.1.0"
     date: "2026-01-19"
     changes: "初始版本"
@@ -372,7 +372,7 @@ llm_txt_changelog:
 
 documentation:
   key_files:
-    - path: "llm.txt"
+    - path: "CONTRIBUTING_AI.md"
       purpose: "AI 协作规则"
       update_trigger: "协作方式演进时"
 

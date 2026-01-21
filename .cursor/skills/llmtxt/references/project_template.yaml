@@ -1,5 +1,5 @@
 # LLMContext 项目配置模板
-# 用于快速生成 llm.txt
+# 用于快速生成 CONTRIBUTING_AI.md
 
 project:
   name: "项目名称"
@@ -79,7 +79,7 @@ decision_levels:
 dialogue_protocol:
   on_start:
     read_files:
-      - "llm.txt"
+      - "CONTRIBUTING_AI.md"
       - "docs/CONTEXT.md"
     actions:
       - "确认用户本次对话目标"
@@ -157,7 +157,7 @@ documentation:
   changelog_file: "docs/CHANGELOG.md"
   decisions_file: "docs/DECISIONS.md"
   key_files:
-    - path: "llm.txt"
+    - path: "CONTRIBUTING_AI.md"
       purpose: "协作规则"
       update_trigger: "协作方式演进时"
     - path: "docs/CONTEXT.md"

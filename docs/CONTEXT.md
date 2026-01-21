@@ -14,8 +14,8 @@
 - 结构化需求模板（目标/场景/功能要求/验收标准/待确认项）
 - 快速澄清问句
 
-### 对话9: llm.txt 自更新 + README 更新
-- 使用项目自身生成器重新生成 `llm.txt`
+### 对话9: CONTRIBUTING_AI.md 自更新 + README 更新
+- 使用项目自身生成器重新生成 `CONTRIBUTING_AI.md`
 - 新增 `project.yaml` 项目配置文件
 - README 补充完整章节列表、Cursor Skill 使用说明
 - 重新构建 llmcontext-0.1.1 包

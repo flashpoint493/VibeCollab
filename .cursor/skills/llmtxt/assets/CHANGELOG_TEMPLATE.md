@@ -6,7 +6,7 @@
 
 **新增**:
 - 项目结构初始化
-- llm.txt 协作协议
+- CONTRIBUTING_AI.md 协作协议
 - docs/CONTEXT.md 上下文文件
 
 **决策**:

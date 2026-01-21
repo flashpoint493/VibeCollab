@@ -1,5 +1,5 @@
 # LLM Collaboration Protocol - 项目配置模板
-# 使用此模板配置你的项目，然后通过生成器生成 llm.txt
+# 使用此模板配置你的项目，然后通过生成器生成 CONTRIBUTING_AI.md
 
 # ============================================
 # 项目基本信息
@@ -128,7 +128,7 @@ dialogue_protocol:
   on_start:
     read_files:
       - "docs/CONTEXT.md"
-      - "llm.txt"
+      - "CONTRIBUTING_AI.md"
     actions:
       - "了解当前进度"
       - "确认用户本次对话目标"
@@ -416,9 +416,9 @@ confirmed_decisions: []
 #   reason: "团队熟悉，生态完善"
 
 # ============================================
-# 文档迭代日志 (llm.txt 自身的版本历史)
+# 文档迭代日志 (CONTRIBUTING_AI.md 自身的版本历史)
 # ============================================
-llm_txt_changelog: []
+contributing_ai_changelog: []
 # 示例:
 # - version: "v1.0"
 #   date: "2026-01-20"
@@ -429,7 +429,7 @@ llm_txt_changelog: []
 # ============================================
 documentation:
   key_files:
-    - path: "llm.txt"
+    - path: "CONTRIBUTING_AI.md"
       purpose: "AI 协作规则，顶层指导"
       update_trigger: "协作方式演进时"
 

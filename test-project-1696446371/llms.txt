@@ -1,6 +1,6 @@
-# LLMContextGenerator
+# TestProject
 
-> 从 YAML 配置生成标准化的 AI 协作协议，并自动集成 llms.txt 标准
+> 项目描述
 
 ## Overview
 

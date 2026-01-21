@@ -1,10 +1,10 @@
 ---
 name: llmcontext
 description: |
-  This skill provides a standardized AI collaboration protocol (llm.txt) for project development.
+  This skill provides a standardized AI collaboration protocol (CONTRIBUTING_AI.md) for project development.
   It should be used when: (1) initializing a new project that needs AI collaboration rules,
-  (2) continuing development on a project with existing llm.txt, (3) the user mentions 
-  "vibe development", "AI collaboration", "llm.txt", or wants structured human-AI pair programming.
+  (2) continuing development on a project with existing CONTRIBUTING_AI.md, (3) the user mentions 
+  "vibe development", "AI collaboration", "CONTRIBUTING_AI.md", or wants structured human-AI pair programming.
   The skill enforces conversation lifecycle management, decision tracking, and git commit discipline.
 ---
 
@@ -21,8 +21,8 @@ LLMContext 提供标准化的 AI 协作开发规则，实现 **Vibe Development*
 ## 何时使用此 Skill
 
 - 用户要求初始化新项目的 AI 协作规则
-- 项目根目录存在 `llm.txt` 文件
-- 用户提及 "vibe development"、"协作协议"、"llm.txt"
+- 项目根目录存在 `CONTRIBUTING_AI.md` 文件
+- 用户提及 "vibe development"、"协作协议"、"CONTRIBUTING_AI.md"
 - 需要结构化的人机协作开发流程
 
 ## 核心工作流
@@ -32,7 +32,7 @@ LLMContext 提供标准化的 AI 协作开发规则，实现 **Vibe Development*
 每次新对话开始，必须执行：
 
 ```
-1. 读取 llm.txt → 了解协作规则
+1. 读取 CONTRIBUTING_AI.md → 了解协作规则
 2. 读取 docs/CONTEXT.md → 恢复当前状态
 3. 读取 docs/DECISIONS.md → 了解已确认决策
 4. 运行 git log --oneline -10 → 了解最近进展
@@ -165,8 +165,8 @@ QA 测试中产生的迭代建议，必须经过 PM 评审：
 # 初始化新项目（选择领域: generic/game/web/data）
 llmcontext init -n "项目名" -d <domain> -o <output_dir>
 
-# 从 YAML 配置生成 llm.txt
-llmcontext generate -c project.yaml -o llm.txt
+# 从 YAML 配置生成 CONTRIBUTING_AI.md
+llmcontext generate -c project.yaml -o CONTRIBUTING_AI.md
 
 # 验证配置文件
 llmcontext validate -c project.yaml
@@ -228,7 +228,7 @@ llmcontext domains
 
 | 文件 | 职责 | 更新时机 |
 |-----|------|---------|
-| `llm.txt` | 项目协作规则 | 协作方式演进时 |
+| `CONTRIBUTING_AI.md` | 项目协作规则 | 协作方式演进时 |
 | `docs/CONTEXT.md` | 当前开发上下文 | 每次对话结束 |
 | `docs/CHANGELOG.md` | 变更日志 | 每次有效对话 |
 | `docs/DECISIONS.md` | 决策记录 | S/A级决策后 |
@@ -242,7 +242,7 @@ llmcontext domains
 
 ```
 继续项目开发。
-请先读取 llm.txt 和 docs/CONTEXT.md 恢复上下文。
+请先读取 CONTRIBUTING_AI.md 和 docs/CONTEXT.md 恢复上下文。
 本次对话目标: {目标}
 ```
 
