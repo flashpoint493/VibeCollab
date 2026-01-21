@@ -95,7 +95,7 @@ class TestProject:
             project.generate_all()
             
             # 检查文件是否生成
-            assert (output_dir / "llm.txt").exists()
+            assert (output_dir / "CONTRIBUTING_AI.md").exists()
             assert (output_dir / "project.yaml").exists()
             assert (output_dir / "docs" / "CONTEXT.md").exists()
             assert (output_dir / "docs" / "DECISIONS.md").exists()

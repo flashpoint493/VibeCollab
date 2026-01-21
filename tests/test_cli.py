@@ -42,7 +42,7 @@ class TestCLI:
             ])
             
             assert result.exit_code == 0
-            assert (output_dir / "llm.txt").exists()
+            assert (output_dir / "CONTRIBUTING_AI.md").exists()
             assert (output_dir / "project.yaml").exists()
 
     def test_init_existing_dir_without_force(self):

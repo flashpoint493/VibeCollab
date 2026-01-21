@@ -11,7 +11,7 @@ from .extension import ExtensionProcessor
 
 
 class LLMContextGenerator:
-    """LLM.TXT 文档生成器"""
+    """AI 协作协议文档生成器"""
 
     def __init__(self, config: Dict[str, Any], project_root: Optional[Path] = None):
         self.config = config
@@ -76,7 +76,7 @@ class LLMContextGenerator:
         return errors
 
     def generate(self) -> str:
-        """生成完整的 llm.txt 文档"""
+        """生成完整的 CONTRIBUTING_AI.md 文档"""
         self.sections = []
         
         self._add_header()
@@ -151,7 +151,7 @@ class LLMContextGenerator:
 - 对话是连续的，上下文需要被**持久化保存**
 - 每次对话都在前次基础上**迭代推进**
 - Git 提交历史记录了**思维演进过程**
-- llm.txt 是**活文档**，随项目成长
+- CONTRIBUTING_AI.md 是**活文档**，随项目成长
 """
 
         content += "\n---\n"
@@ -686,9 +686,9 @@ AI 澄清后:
 
     def _add_changelog(self):
         """添加文档迭代日志章节"""
-        changelog = self.config.get("llm_txt_changelog", [])
+        changelog = self.config.get("contributing_ai_changelog", [])
         
-        content = """# 本文档迭代日志
+        content = """# CONTRIBUTING_AI.md 迭代日志
 
 | 版本 | 日期 | 变更内容 |
 |-----|------|---------|
@@ -954,7 +954,7 @@ git tag -a {tag_pattern} -m "描述"
 ## 8.2 上下文恢复协议
 
 当开启新对话时，AI 应：
-1. 读取 `llm.txt` 了解协作规则
+1. 读取 `CONTRIBUTING_AI.md` 了解协作规则
 2. 读取 `{context_file}` 恢复当前状态
 3. 读取 `{decisions_file}` 了解已确认和待定决策
 4. 运行 `git log --oneline -10` 了解最近进展
@@ -1061,7 +1061,7 @@ git tag -a {tag_pattern} -m "描述"
 
 ```
 继续项目开发。
-请先读取 llm.txt 和 {context_file} 恢复上下文。
+请先读取 CONTRIBUTING_AI.md 和 {context_file} 恢复上下文。
 本次对话目标: {{你的目标}}
 ```
 

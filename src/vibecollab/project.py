@@ -85,7 +85,7 @@ class Project:
         # 保存项目配置
         self._save_config()
         
-        # 生成 llm.txt
+        # 生成协作规则文档
         self._generate_llm_txt()
         
         # 创建文档模板
@@ -148,7 +148,7 @@ class Project:
 
 ## 已完成事项
 - [x] 项目初始化
-- [x] 生成 llm.txt
+- [x] 生成 CONTRIBUTING_AI.md
 
 ---
 *最后更新: {today}*
@@ -166,7 +166,7 @@ class Project:
 (暂无)
 
 ---
-*决策记录格式见 llm.txt*
+*决策记录格式见 CONTRIBUTING_AI.md*
 """
         
         # CHANGELOG.md
@@ -176,7 +176,7 @@ class Project:
 
 ### Added
 - 项目初始化
-- 生成 llm.txt 协作规则
+- 生成 CONTRIBUTING_AI.md 协作规则
 
 ---
 """

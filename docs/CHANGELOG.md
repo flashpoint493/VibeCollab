@@ -30,10 +30,10 @@
 
 ---
 
-### 对话9: llm.txt 自更新 + README 更新 [VIBE] [DOC]
+### 对话9: CONTRIBUTING_AI.md 自更新 + README 更新 [VIBE] [DOC]
 
 - 新增 `project.yaml` - 项目自身配置
-- `llm.txt` 使用生成器自更新，包含全部章节
+- `CONTRIBUTING_AI.md` 使用生成器自更新，包含全部章节
 - README 补充完整章节列表、Cursor Skill 说明
 
 ---

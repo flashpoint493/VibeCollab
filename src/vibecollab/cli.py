@@ -156,7 +156,7 @@ def generate(config: str, output: str, no_llmstxt: bool):
                     else:
                         console.print(f"[green]✅ 已创建:[/green] {llmstxt_path}")
                 else:
-                    console.print(f"[dim]ℹ️  llms.txt 已包含协作规则引用[/dim]")
+                    console.print(f"[dim]Info: llms.txt 已包含协作规则引用[/dim]")
         except Exception as e:
             console.print(f"[red]错误:[/red] {e}")
             raise SystemExit(1)
@@ -380,7 +380,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
     console.print()
     console.print("[bold]已更新文件:[/bold]")
     console.print(f"  • {config_path}")
-    console.print(f"  • {llm_txt_path}")
+    console.print(f"  • {contributing_ai_path}")
     
     console.print()
     console.print("[dim]提示: 使用 git diff 查看具体变更[/dim]")
