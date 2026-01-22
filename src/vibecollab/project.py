@@ -266,12 +266,39 @@ class Project:
 ---
 """
         
+        # PRD.md - 产品需求文档
+        prd_content = f"""# {project_name} 产品需求文档 (PRD)
+
+本文档记录项目的原始需求和需求变化历史。
+
+## 需求列表
+
+(待添加需求)
+
+---
+
+## 需求统计
+
+| 状态 | 数量 |
+|------|------|
+| draft | 0 |
+| confirmed | 0 |
+| in_progress | 0 |
+| completed | 0 |
+| cancelled | 0 |
+
+---
+
+*最后更新: {today}*
+"""
+        
         # 写入文件
         (self.docs_dir / "CONTEXT.md").write_text(context_content, encoding="utf-8")
         (self.docs_dir / "DECISIONS.md").write_text(decisions_content, encoding="utf-8")
         (self.docs_dir / "CHANGELOG.md").write_text(changelog_content, encoding="utf-8")
         (self.docs_dir / "ROADMAP.md").write_text(roadmap_content, encoding="utf-8")
         (self.docs_dir / "QA_TEST_CASES.md").write_text(qa_content, encoding="utf-8")
+        (self.docs_dir / "PRD.md").write_text(prd_content, encoding="utf-8")
 
     def regenerate(self):
         """重新生成协作规则文档并更新 llms.txt"""
