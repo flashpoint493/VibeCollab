@@ -384,9 +384,56 @@ documentation:
       purpose: "版本变更日志"
       update_trigger: "每次有效对话后"
 
+    - path: "docs/PRD.md"
+      purpose: "产品需求文档，记录原始需求和变化"
+      update_trigger: "新需求提出/需求变化时"
+
   context_file: "docs/CONTEXT.md"
   changelog_file: "docs/CHANGELOG.md"
   decisions_file: "docs/DECISIONS.md"
+
+protocol_check:
+  enabled: true
+  checks:
+    git:
+      enabled: true
+      check_uncommitted: true
+      check_commit_frequency: true
+    documentation:
+      enabled: true
+      check_file_existence: true
+      check_update_frequency: true
+      update_threshold_hours: 24
+    dialogue:
+      enabled: true
+      check_required_files: true
+  trigger_words:
+    - "检查协议"
+    - "协议自检"
+    - "检查是否遵循协议"
+    - "protocol check"
+    - "自检"
+
+prd_management:
+  enabled: true
+  prd_file: "docs/PRD.md"
+  requirement_statuses:
+    - "draft"
+    - "confirmed"
+    - "in_progress"
+    - "completed"
+    - "cancelled"
+  priorities:
+    - "high"
+    - "medium"
+    - "low"
+  trigger_words:
+    - "记录需求"
+    - "更新 PRD"
+    - "查看需求"
+    - "需求状态"
+    - "PRD"
+    - "需求文档"
 
 symbology:
   decision_status:
