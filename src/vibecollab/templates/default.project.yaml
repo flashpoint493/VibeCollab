@@ -453,9 +453,67 @@ documentation:
       purpose: "路线图+迭代建议"
       update_trigger: "里程碑规划/反馈时"
 
+    - path: "docs/PRD.md"
+      purpose: "产品需求文档，记录原始需求和变化"
+      update_trigger: "新需求提出/需求变化时"
+
   context_file: "docs/CONTEXT.md"
   changelog_file: "docs/CHANGELOG.md"
   decisions_file: "docs/DECISIONS.md"
+
+# ============================================
+# 协议自检机制
+# ============================================
+protocol_check:
+  enabled: true
+  # 检查项配置
+  checks:
+    git:
+      enabled: true
+      check_uncommitted: true
+      check_commit_frequency: true
+    documentation:
+      enabled: true
+      check_file_existence: true
+      check_update_frequency: true
+      update_threshold_hours: 24
+    dialogue:
+      enabled: true
+      check_required_files: true
+  # 触发词（用于对话中触发自检）
+  trigger_words:
+    - "检查协议"
+    - "协议自检"
+    - "检查是否遵循协议"
+    - "protocol check"
+    - "自检"
+
+# ============================================
+# PRD 管理
+# ============================================
+prd_management:
+  enabled: true
+  prd_file: "docs/PRD.md"
+  # 需求状态定义
+  requirement_statuses:
+    - "draft"      # 草稿
+    - "confirmed"  # 已确认
+    - "in_progress" # 进行中
+    - "completed"  # 已完成
+    - "cancelled"  # 已取消
+  # 优先级定义
+  priorities:
+    - "high"
+    - "medium"
+    - "low"
+  # 触发词（用于对话中触发 PRD 管理）
+  trigger_words:
+    - "记录需求"
+    - "更新 PRD"
+    - "查看需求"
+    - "需求状态"
+    - "PRD"
+    - "需求文档"
 
 # ============================================
 # 符号学标注系统

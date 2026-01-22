@@ -17,6 +17,7 @@ from .templates import TemplateManager
 from .llmstxt import LLMsTxtManager
 from .git_utils import is_git_repo
 from .lifecycle import LifecycleManager
+from .protocol_checker import ProtocolChecker
 
 console = Console()
 
@@ -417,6 +418,102 @@ def version_info():
         f"[dim]Python:[/dim] 3.8+",
         title="版本信息"
     ))
+
+
+@main.command()
+@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+@click.option("--strict", is_flag=True, help="严格模式：任何警告都视为失败")
+def check(config: str, strict: bool):
+    """检查协议遵循情况
+    
+    检查项目是否遵循了 CONTRIBUTING_AI.md 中定义的协作协议。
+    
+    Examples:
+    
+        vibecollab check                    # 检查当前目录的项目
+        
+        vibecollab check -c project.yaml    # 指定配置文件
+        
+        vibecollab check --strict           # 严格模式
+    """
+    config_path = Path(config)
+    project_root = config_path.parent
+    
+    if not config_path.exists():
+        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print("[dim]提示: 在项目目录下运行，或使用 -c 指定配置文件路径[/dim]")
+        raise SystemExit(1)
+    
+    # 加载配置
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+    
+    # 执行检查
+    checker = ProtocolChecker(project_root, project_config)
+    results = checker.check_all()
+    summary = checker.get_summary(results)
+    
+    # 显示结果
+    console.print()
+    console.print(Panel.fit(
+        f"[bold]协议遵循情况检查[/bold]",
+        title="Protocol Check"
+    ))
+    console.print()
+    
+    # 按严重程度分组显示
+    errors = [r for r in results if r.severity == "error"]
+    warnings = [r for r in results if r.severity == "warning"]
+    infos = [r for r in results if r.severity == "info"]
+    
+    if errors:
+        console.print("[bold red]❌ 错误:[/bold red]")
+        for result in errors:
+            console.print(f"  • {result.name}: {result.message}")
+            if result.suggestion:
+                console.print(f"    [dim]建议: {result.suggestion}[/dim]")
+        console.print()
+    
+    if warnings:
+        console.print("[bold yellow]⚠️  警告:[/bold yellow]")
+        for result in warnings:
+            console.print(f"  • {result.name}: {result.message}")
+            if result.suggestion:
+                console.print(f"    [dim]建议: {result.suggestion}[/dim]")
+        console.print()
+    
+    if infos:
+        console.print("[bold blue]ℹ️  信息:[/bold blue]")
+        for result in infos:
+            console.print(f"  • {result.name}: {result.message}")
+            if result.suggestion:
+                console.print(f"    [dim]建议: {result.suggestion}[/dim]")
+        console.print()
+    
+    # 显示摘要
+    if summary["all_passed"] and not (strict and warnings):
+        console.print(Panel.fit(
+            f"[bold green]✅ 所有检查通过[/bold green]\n\n"
+            f"总计: {summary['total']} 项检查",
+            title="检查完成"
+        ))
+    else:
+        status = "失败" if errors or (strict and warnings) else "有警告"
+        color = "red" if errors or (strict and warnings) else "yellow"
+        console.print(Panel.fit(
+            f"[bold {color}]⚠️  检查{status}[/bold {color}]\n\n"
+            f"总计: {summary['total']} 项\n"
+            f"错误: {summary['errors']} 项\n"
+            f"警告: {summary['warnings']} 项",
+            title="检查完成"
+        ))
+        if strict and warnings:
+            console.print()
+            console.print("[dim]提示: 使用 --strict 时，警告也会被视为失败[/dim]")
+    
+    # 返回退出码
+    if errors or (strict and warnings):
+        raise SystemExit(1)
 
 
 # 导入生涯管理命令
