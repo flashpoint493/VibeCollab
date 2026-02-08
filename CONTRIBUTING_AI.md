@@ -565,9 +565,14 @@ git tag -a v{major}.{minor}.{patch} -m "描述"
 
 | 文件 | 职责 | 更新时机 |
 |-----|------|---------|
-| `CONTRIBUTING_AI.md` | AI 协作规则 | 协作方式演进时 |
+| `CONTRIBUTING_AI.md` | AI 协作规则，顶层指导 | 协作方式演进时 |
+| `llms.txt` | 项目上下文摘要 (llmstxt.org 标准) | 项目信息变更时 |
 | `docs/CONTEXT.md` | 当前开发上下文 | 每次对话结束时 |
+| `docs/DECISIONS.md` | 重要决策记录 | 每次 S/A 级决策后 |
 | `docs/CHANGELOG.md` | 版本变更日志 | 每次有效对话后 |
+| `docs/QA_TEST_CASES.md` | 产品QA测试用例 | 每个功能完成时 |
+| `docs/PRD.md` | 产品需求文档 | 需求变更时 |
+| `docs/ROADMAP.md` | 路线图+迭代建议 | 里程碑规划/反馈时 |
 
 ## 8.2 上下文恢复协议
 

@@ -373,20 +373,36 @@ contributing_ai_changelog:
 documentation:
   key_files:
     - path: "CONTRIBUTING_AI.md"
-      purpose: "AI 协作规则"
+      purpose: "AI 协作规则，顶层指导"
       update_trigger: "协作方式演进时"
+
+    - path: "llms.txt"
+      purpose: "项目上下文摘要 (llmstxt.org 标准)"
+      update_trigger: "项目信息变更时"
 
     - path: "docs/CONTEXT.md"
       purpose: "当前开发上下文"
       update_trigger: "每次对话结束时"
 
+    - path: "docs/DECISIONS.md"
+      purpose: "重要决策记录"
+      update_trigger: "每次 S/A 级决策后"
+
     - path: "docs/CHANGELOG.md"
       purpose: "版本变更日志"
       update_trigger: "每次有效对话后"
 
+    - path: "docs/QA_TEST_CASES.md"
+      purpose: "产品QA测试用例"
+      update_trigger: "每个功能完成时"
+
     - path: "docs/PRD.md"
-      purpose: "产品需求文档，记录原始需求和变化"
-      update_trigger: "新需求提出/需求变化时"
+      purpose: "产品需求文档"
+      update_trigger: "需求变更时"
+
+    - path: "docs/ROADMAP.md"
+      purpose: "路线图+迭代建议"
+      update_trigger: "里程碑规划/反馈时"
 
   context_file: "docs/CONTEXT.md"
   changelog_file: "docs/CHANGELOG.md"
