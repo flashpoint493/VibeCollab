@@ -433,6 +433,10 @@ documentation:
       purpose: "AI 协作规则，顶层指导"
       update_trigger: "协作方式演进时"
 
+    - path: "llms.txt"
+      purpose: "项目上下文摘要 (llmstxt.org 标准)"
+      update_trigger: "项目信息变更时"
+
     - path: "docs/CONTEXT.md"
       purpose: "当前开发上下文"
       update_trigger: "每次对话结束时"
@@ -449,13 +453,13 @@ documentation:
       purpose: "产品QA测试用例"
       update_trigger: "每个功能完成时"
 
+    - path: "docs/PRD.md"
+      purpose: "产品需求文档"
+      update_trigger: "需求变更时"
+
     - path: "docs/ROADMAP.md"
       purpose: "路线图+迭代建议"
       update_trigger: "里程碑规划/反馈时"
-
-    - path: "docs/PRD.md"
-      purpose: "产品需求文档，记录原始需求和变化"
-      update_trigger: "新需求提出/需求变化时"
 
   context_file: "docs/CONTEXT.md"
   changelog_file: "docs/CHANGELOG.md"
