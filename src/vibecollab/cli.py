@@ -43,7 +43,8 @@ EMOJI_MAP = {
     "warning": "!" if not USE_EMOJI else "⚠️",
     "info": "i" if not USE_EMOJI else "ℹ️",
     "success": "OK" if not USE_EMOJI else "✅",
-    "lock": "[保留]" if not USE_EMOJI else "🔒"
+    "lock": "[保留]" if not USE_EMOJI else "🔒",
+    "sparkles": "+" if not USE_EMOJI else "✨"
 }
 
 # bullet point 替代
@@ -442,6 +443,79 @@ def upgrade(config: str, dry_run: bool, force: bool):
         project_desc,
         contributing_ai_path
     )
+    
+    # 检查并初始化多开发者目录结构
+    multi_dev_config = merged.get("multi_developer", {})
+    if multi_dev_config.get("enabled", False):
+        from .developer import DeveloperManager, ContextAggregator
+        from datetime import datetime
+        
+        dm = DeveloperManager(config_path.parent, merged)
+        developers_dir = config_path.parent / "docs" / "developers"
+        
+        # 检查是否需要初始化
+        initialized = False
+        
+        # 初始化每个开发者的上下文
+        developers = multi_dev_config.get("developers", [])
+        for dev in developers:
+            dev_id = dev.get("id")
+            if not dev_id:
+                continue
+            
+            dev_dir = developers_dir / dev_id
+            if not dev_dir.exists():
+                dm.init_developer_context(dev_id)
+                console.print(f"  [green]{EMOJI_MAP['sparkles']} 已初始化开发者目录: docs/developers/{dev_id}/[/green]")
+                initialized = True
+        
+        # 创建 COLLABORATION.md
+        collab_config = multi_dev_config.get('collaboration', {})
+        collab_file = config_path.parent / collab_config.get('file', 'docs/developers/COLLABORATION.md')
+        
+        if not collab_file.exists():
+            collab_file.parent.mkdir(parents=True, exist_ok=True)
+            today = datetime.now().strftime("%Y-%m-%d")
+            
+            collab_content = f"""# {project_name} 开发者协作记录
+
+## 当前协作关系
+
+(暂无协作记录)
+
+## 任务分配矩阵
+
+| 任务 | 负责人 | 协作者 | 状态 | 依赖 |
+|------|--------|--------|------|------|
+| (待分配) | - | - | - | - |
+
+## 里程碑追踪
+
+(暂无里程碑)
+
+## 协作规则约定
+
+1. **文档更新**: 每次任务完成后更新自己的 CONTEXT.md
+2. **冲突避免**: 修改共享文档前先检查是否有其他开发者正在编辑
+3. **交接流程**: 任务交接时在本文档记录交接内容
+
+## 交接记录
+
+(暂无交接记录)
+
+---
+*最后更新: {today}*
+"""
+            collab_file.write_text(collab_content, encoding='utf-8')
+            console.print(f"  [green]{EMOJI_MAP['sparkles']} 已创建协作文档: {collab_config.get('file', 'docs/developers/COLLABORATION.md')}[/green]")
+            initialized = True
+        
+        # 生成全局聚合 CONTEXT.md
+        aggregator = ContextAggregator(config_path.parent, merged)
+        global_context = config_path.parent / "docs" / "CONTEXT.md"
+        if not global_context.exists() or initialized:
+            aggregator.generate_and_save()
+            console.print(f"  [green]{EMOJI_MAP['sparkles']} 已生成全局上下文聚合: docs/CONTEXT.md[/green]")
     
     # 成功提示
     console.print()
