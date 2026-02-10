@@ -95,6 +95,7 @@ class LLMContextGenerator:
         self._add_iteration()
         self._add_lifecycle_rules()
         self._add_documentation()
+        self._add_multi_developer_protocol()  # 新增：多开发者协作协议
         self._add_prompt_engineering()
         self._add_symbology()
         self._add_decisions_summary()
@@ -940,9 +941,9 @@ git tag -a {tag_pattern} -m "描述"
         lifecycle_manager = LifecycleManager(self.config)
         all_stages = lifecycle_manager.lifecycle_config.get("stages", {})
         
-        content = """# 七、阶段化协作规则
+        content = """# 八、阶段化协作规则
 
-## 7.1 项目生涯阶段说明
+## 8.1 项目生涯阶段说明
 
 项目开发过程分为 4 个生涯阶段，每个阶段有不同的开发重点和协作原则。阶段信息由 PM 角色在 `docs/ROADMAP.md` 中维护，AI 在协作时应根据当前阶段调整工作方式。
 
@@ -971,7 +972,7 @@ git tag -a {tag_pattern} -m "描述"
 
 """
         
-        content += """## 7.2 阶段化协作指导
+        content += """## 8.2 阶段化协作指导
 
 AI 在协作时应：
 
@@ -991,9 +992,9 @@ AI 在协作时应：
         docs = self.config.get("documentation", {})
         key_files = docs.get("key_files", [])
 
-        content = """# 八、上下文管理
+        content = """# 九、上下文管理
 
-## 8.1 关键文件职责
+## 9.1 关键文件职责
 
 | 文件 | 职责 | 更新时机 |
 |-----|------|---------|
@@ -1006,7 +1007,7 @@ AI 在协作时应：
         changelog_file = docs.get('changelog_file', 'docs/CHANGELOG.md')
 
         content += f"""
-## 8.2 上下文恢复协议
+## 9.2 上下文恢复协议
 
 当开启新对话时，AI 应：
 1. 读取 `CONTRIBUTING_AI.md` 了解协作规则
@@ -1015,7 +1016,7 @@ AI 在协作时应：
 4. 运行 `git log --oneline -10` 了解最近进展
 5. 询问用户本次对话目标
 
-## 8.3 上下文保存协议
+## 9.3 上下文保存协议
 
 每次对话结束时，AI 应：
 1. 更新 `{context_file}` 保存当前状态
@@ -1027,6 +1028,326 @@ AI 在协作时应：
 """
         self.sections.append(content)
 
+    def _add_multi_developer_protocol(self):
+        """添加多开发者协作协议章节"""
+        multi_dev = self.config.get("multi_developer", {})
+        
+        if not multi_dev.get("enabled", False):
+            return
+        
+        identity_config = multi_dev.get("identity", {})
+        context_config = multi_dev.get("context", {})
+        collab_config = multi_dev.get("collaboration", {})
+        dialogue_config = multi_dev.get("dialogue_protocol", {})
+        
+        content = """# 十、多开发者/Agent 协作协议
+
+> **v0.5.0+ 支持多个开发者或多个 AI Agent 在同一项目中协同开发**
+
+## 10.1 协作模式概述
+
+VibeCollab 支持以下协作场景：
+- 👥 **多人协作**: 多个开发者在同一项目上工作
+- 🤖 **多 Agent 协作**: 多个 AI Agent 分工完成不同任务
+- 🔀 **混合协作**: 人类开发者 + AI Agent 混合团队
+
+### 核心原则
+
+1. **独立工作空间**: 每个开发者维护自己的 `CONTEXT.md`，互不干扰
+2. **智能聚合**: 系统自动聚合生成全局视图，提供整体状态
+3. **明确协作关系**: 通过 `COLLABORATION.md` 记录任务依赖和交接
+4. **自动身份识别**: 基于 Git 配置自动识别当前开发者
+5. **冲突预防**: 提前检测潜在的跨开发者工作冲突
+
+## 10.2 目录结构
+
+多开发者模式下的项目结构：
+
+```
+project/
+├── CONTRIBUTING_AI.md
+├── project.yaml
+└── docs/
+    ├── CONTEXT.md            # 全局聚合视图（自动生成，只读）
+    ├── CHANGELOG.md          # 全局变更日志
+    ├── DECISIONS.md          # 全局决策记录
+    └── developers/           # 开发者工作空间
+        ├── COLLABORATION.md  # 协作关系文档
+        ├── alice/            # 开发者 alice 的目录
+        │   ├── CONTEXT.md    # alice 的工作上下文
+        │   └── .metadata.yaml # 元数据（更新时间等）
+        └── bob/              # 开发者 bob 的目录
+            ├── CONTEXT.md
+            └── .metadata.yaml
+```
+
+## 10.3 开发者身份识别
+
+系统通过以下策略自动识别开发者身份：
+
+"""
+        
+        primary = identity_config.get('primary', 'git_username')
+        fallback = identity_config.get('fallback', 'system_user')
+        normalize = identity_config.get('normalize', True)
+        
+        content += f"""**识别策略**:
+- **主策略**: `{primary}` 
+  - `git_username`: 使用 `git config user.name`
+  - `system_user`: 使用系统用户名（$USER / $USERNAME）
+  - `manual`: 手动指定（通过环境变量 `VIBECOLLAB_DEVELOPER`）
+- **降级策略**: `{fallback}` (主策略失败时使用)
+- **名称标准化**: {'开启' if normalize else '关闭'} (小写、空格转下划线、移除特殊字符)
+
+**使用 CLI 命令查看当前身份**:
+```bash
+vibecollab dev whoami
+```
+
+## 10.4 上下文管理
+
+### 10.4.1 独立上下文
+
+每个开发者维护自己的 `CONTEXT.md`，记录：
+- 当前正在进行的任务
+- 最近完成的工作
+- 待解决的问题
+- 技术债务
+
+**更新命令**:
+```bash
+# 手动更新时间戳（通常在对话结束时自动执行）
+vibecollab dev sync
+```
+
+### 10.4.2 全局上下文聚合
+
+"""
+        
+        agg_file = context_config.get('aggregation_file', 'docs/CONTEXT.md')
+        auto_sync = context_config.get('auto_sync', True)
+        
+        content += f"""系统自动聚合所有开发者的上下文，生成全局视图（`{agg_file}`）：
+
+- ⚠️ **只读文件**: 不要手动编辑全局 CONTEXT.md
+- 📊 **聚合内容**: 
+  - 项目整体状态
+  - 各开发者工作进展
+  - 跨开发者依赖关系
+  - 全局技术债务
+- 🔄 **更新时机**: {'对话结束时自动更新' if auto_sync else '手动执行 `vibecollab dev sync`'}
+
+**手动触发聚合**:
+```bash
+vibecollab dev sync --aggregate
+```
+
+## 10.5 协作文档管理
+
+"""
+        
+        collab_file = collab_config.get('file', 'docs/developers/COLLABORATION.md')
+        
+        content += f"""### 10.5.1 COLLABORATION.md
+
+`{collab_file}` 记录跨开发者的协作关系：
+
+**包含内容**:
+1. **任务分配矩阵**: 谁负责什么任务，谁是协作者
+2. **依赖关系**: 任务之间的依赖关系
+3. **交接记录**: 任务从一个开发者移交给另一个开发者
+4. **协作约定**: 团队的协作惯例和规则
+
+**示例格式**:
+```markdown
+## 任务分配矩阵
+
+| 任务 | 负责人 | 协作者 | 状态 | 依赖 |
+|------|--------|--------|------|------|
+| TASK-DEV-001: 用户认证 | alice | bob | IN_PROGRESS | - |
+| TASK-DEV-002: 数据库设计 | bob | - | DONE | - |
+| TASK-DEV-003: API 开发 | alice | - | TODO | TASK-DEV-002 |
+
+## 交接记录
+
+### TASK-DEV-001: 用户认证
+- **交接时间**: 2026-02-10 14:30
+- **交接人**: bob
+- **接收人**: alice
+- **交接原因**: bob 完成数据库设计，alice 接手前端集成
+- **交接说明**: API 接口已完成，文档见 docs/api.md
+```
+
+### 10.5.2 查看协作状态
+
+```bash
+# 查看所有开发者状态
+vibecollab dev list
+
+# 查看特定开发者状态
+vibecollab dev status alice
+
+# 初始化新开发者上下文
+vibecollab dev init --developer bob
+```
+
+## 10.6 对话流程适配
+
+"""
+        
+        on_start = dialogue_config.get('on_start', {})
+        on_end = dialogue_config.get('on_end', {})
+        
+        content += """### 10.6.1 对话开始时
+
+多开发者模式下，AI 在对话开始时应：
+
+```
+1. 读取全局聚合 CONTEXT.md（了解整体状态）
+2. 读取当前开发者的 CONTEXT.md（了解自己的进度）
+3. 读取 COLLABORATION.md（了解协作关系）
+4. 识别当前开发者身份（vibecollab dev whoami）
+5. 确认本次对话目标
+```
+
+### 10.6.2 对话结束时
+
+```
+1. 更新当前开发者的 CONTEXT.md
+2. 更新全局 CHANGELOG.md
+3. 如有跨开发者协作，更新 COLLABORATION.md
+4. 自动触发上下文聚合（生成新的全局 CONTEXT.md）
+5. Git commit（记录当前开发者的提交）
+```
+
+### 10.6.3 多开发者场景的特殊考虑
+
+**场景一：任务依赖**
+- Alice 的任务依赖 Bob 的任务完成
+- AI 应在 COLLABORATION.md 中标注依赖关系
+- Alice 开始工作前检查依赖任务状态
+
+**场景二：任务交接**
+- Bob 完成阶段性工作，交接给 Alice
+- 在 COLLABORATION.md 记录交接信息
+- Alice 接手时读取交接说明
+
+**场景三：并行开发**
+- Alice 和 Bob 同时开发不同模块
+- 各自维护独立的 CONTEXT.md
+- 通过全局聚合了解对方进展
+
+## 10.7 冲突检测与预防 (v0.5.1+)
+
+> **新特性：自动检测跨开发者的潜在工作冲突**
+
+### 10.7.1 冲突类型
+
+系统会检测以下类型的冲突：
+
+1. **文件冲突**: 多个开发者同时修改同一文件
+2. **任务冲突**: 多个开发者负责相同或重叠的任务
+3. **依赖冲突**: 任务依赖关系不一致或循环依赖
+4. **命名冲突**: 多个开发者创建同名的函数/类/模块
+
+### 10.7.2 冲突检测命令
+
+```bash
+# 检测当前开发者与其他开发者的冲突
+vibecollab dev conflicts
+
+# 详细模式（显示冲突详情）
+vibecollab dev conflicts --verbose
+
+# 检测特定开发者之间的冲突
+vibecollab dev conflicts --between alice bob
+```
+
+### 10.7.3 冲突处理流程
+
+```
+1. [AI] 检测到潜在冲突
+2. [AI] 在 CONTEXT.md 中标注冲突提醒
+3. [AI] 提示用户检查冲突详情
+4. [人] 决定处理方式：
+   - 协调分工
+   - 合并工作
+   - 重新分配任务
+5. [AI] 更新 COLLABORATION.md 记录解决方案
+```
+
+### 10.7.4 冲突预防建议
+
+- ✅ 明确任务边界，避免职责重叠
+- ✅ 及时更新 COLLABORATION.md 的任务分配
+- ✅ 使用任务依赖标注避免循环依赖
+- ✅ 定期执行 `vibecollab dev conflicts` 检查
+- ✅ 重要修改前查看全局 CONTEXT.md 了解他人进展
+
+## 10.8 CLI 命令参考
+
+```bash
+# 开发者身份
+vibecollab dev whoami                    # 查看当前开发者身份
+
+# 开发者管理
+vibecollab dev list                      # 列出所有开发者
+vibecollab dev status <developer>        # 查看开发者状态
+vibecollab dev init --developer <name>   # 初始化新开发者
+
+# 上下文同步
+vibecollab dev sync                      # 更新元数据时间戳
+vibecollab dev sync --aggregate          # 重新生成全局聚合
+
+# 冲突检测 (v0.5.1+)
+vibecollab dev conflicts                 # 检测冲突
+vibecollab dev conflicts --verbose       # 详细冲突报告
+```
+
+## 10.9 最佳实践
+
+### 对于 AI Agent
+
+1. **对话开始时**: 始终先执行 `vibecollab dev whoami` 确认身份
+2. **上下文恢复**: 同时读取全局和个人 CONTEXT.md
+3. **协作意识**: 修改共享资源前检查 COLLABORATION.md
+4. **及时同步**: 对话结束时更新上下文并触发聚合
+5. **冲突敏感**: 发现潜在冲突立即提醒用户
+
+### 对于人类开发者
+
+1. **明确分工**: 在 COLLABORATION.md 中清晰记录任务分配
+2. **定期同步**: 经常查看全局 CONTEXT.md 了解团队进展
+3. **交接规范**: 任务交接时详细记录背景和状态
+4. **冲突检查**: 重大变更前执行冲突检测
+5. **文档及时性**: 完成阶段性工作及时更新个人 CONTEXT.md
+
+### 迁移单开发者项目
+
+如果项目原本是单开发者模式，可以平滑迁移：
+
+```bash
+# 方式一：使用 CLI 命令
+vibecollab dev migrate
+
+# 方式二：在 project.yaml 中启用
+multi_developer:
+  enabled: true
+
+# 然后重新生成协议文档
+vibecollab generate
+```
+
+迁移后：
+- 原 `docs/CONTEXT.md` 会备份为 `docs/CONTEXT.md.backup`
+- 创建 `docs/developers/{developer}/CONTEXT.md`
+- 自动生成新的全局聚合 `docs/CONTEXT.md`
+
+---
+"""
+        
+        self.sections.append(content)
+
     def _add_symbology(self):
         """添加符号学标注系统章节"""
         symbology = self.config.get("symbology", {})
@@ -1034,7 +1355,7 @@ AI 在协作时应：
         if not symbology:
             return
 
-        content = """# 九、符号学标注系统
+        content = """# 十一、符号学标注系统
 
 本协议使用统一的符号体系确保沟通一致性：
 
@@ -1112,15 +1433,15 @@ AI 在协作时应：
         if not protocol_check.get("enabled", True):
             return
         
-        content = """# 十、协议自检机制
+        content = """# 十二、协议自检机制
 
-## 10.1 协议自检的重要性
+## 12.1 协议自检的重要性
 
 > **使用协议时常常发现，有时候对话时会漏掉一些东西，比如没有记得提交 git，没有记得及时同步某个对应文档.md。**
 
 协议自检机制帮助 AI 和用户确保遵循了协作协议中的各项要求。
 
-## 10.2 自检触发方式
+## 12.2 自检触发方式
 
 ### 方式一：命令行检查
 
@@ -1142,7 +1463,7 @@ vibecollab check --strict
 - "protocol check"
 - "自检"
 
-## 10.3 检查项说明
+## 12.3 检查项说明
 
 协议检查器会检查以下内容：
 
@@ -1160,7 +1481,7 @@ vibecollab check --strict
 - ✅ 对话开始时应该读取的文件是否存在
 - ✅ 对话结束时应该更新的文件是否存在
 
-## 10.4 检查结果说明
+## 12.4 检查结果说明
 
 检查结果分为三个级别：
 
@@ -1170,7 +1491,7 @@ vibecollab check --strict
 | **警告** | ⚠️  | 可能遗漏的协议步骤 | 建议处理 |
 | **信息** | ℹ️  | 提醒信息 | 可选择性处理 |
 
-## 10.5 AI 自检行为规范
+## 12.5 AI 自检行为规范
 
 当用户触发协议自检时，AI 应：
 
@@ -1180,7 +1501,7 @@ vibecollab check --strict
 4. **主动修复**: 对于可以自动修复的问题（如更新文档），主动执行修复
 5. **记录提醒**: 对于需要人工处理的问题，明确提醒用户
 
-## 10.6 自检最佳实践
+## 12.6 自检最佳实践
 
 ### 对话开始时
 - 在恢复上下文后，可以执行一次快速自检，确保环境正常
@@ -1205,9 +1526,9 @@ vibecollab check --strict
         
         prd_file = prd_config.get("prd_file", "docs/PRD.md")
         
-        content = f"""# 十一、产品需求文档 (PRD) 管理
+        content = f"""# 十三、产品需求文档 (PRD) 管理
 
-## 11.1 PRD 的作用
+## 13.1 PRD 的作用
 
 > **我们虽然是一个启发式对话，需求在对话中推进，不过我们目前没有一个记录原始需求和变化的 PRD.md。我认为项目需求也在随着对话变化和成长。**
 
@@ -1217,7 +1538,7 @@ PRD.md 用于：
 - 🔍 **需求追溯**: 了解每个需求从提出到实现的完整历程
 - 📈 **需求统计**: 了解项目需求的状态分布
 
-## 11.2 PRD 文档结构
+## 13.2 PRD 文档结构
 
 PRD.md 位于 `{prd_file}`，包含以下内容：
 
@@ -1238,7 +1559,7 @@ PRD.md 位于 `{prd_file}`，包含以下内容：
 
 自动统计各状态需求的数量。
 
-## 11.3 PRD 使用流程
+## 13.3 PRD 使用流程
 
 ### 需求提出阶段
 
@@ -1262,7 +1583,7 @@ PRD.md 位于 `{prd_file}`，包含以下内容：
 2. **完成实现**: 将需求状态更新为 completed
 3. **记录关联**: 在需求中关联对应的 TASK-ID
 
-## 11.4 PRD 管理触发词
+## 13.4 PRD 管理触发词
 
 在对话中使用以下触发词，AI 应主动管理 PRD：
 
@@ -1273,7 +1594,7 @@ PRD.md 位于 `{prd_file}`，包含以下内容：
 - "PRD"
 - "需求文档"
 
-## 11.5 PRD 与需求澄清协议的关系
+## 13.5 PRD 与需求澄清协议的关系
 
 PRD 是需求澄清协议的**输出产物**：
 
@@ -1287,7 +1608,7 @@ PRD 是需求澄清协议的**输出产物**：
 需求演进和实现
 ```
 
-## 11.6 PRD 更新时机
+## 13.6 PRD 更新时机
 
 AI 应在以下时机更新 PRD：
 
@@ -1296,7 +1617,7 @@ AI 应在以下时机更新 PRD：
 3. **需求状态变化时**: 更新状态字段
 4. **需求实现完成时**: 更新状态为 completed，关联 TASK-ID
 
-## 11.7 PRD 最佳实践
+## 13.7 PRD 最佳实践
 
 ### 需求描述规范
 - **原始描述**: 保持用户原话，不做修改
@@ -1325,7 +1646,7 @@ cancelled          cancelled
         docs = self.config.get("documentation", {})
         context_file = docs.get('context_file', 'docs/CONTEXT.md')
 
-        content = f"""# 十二、快速参考
+        content = f"""# 十四、快速参考
 
 ## 开始新对话时说
 
