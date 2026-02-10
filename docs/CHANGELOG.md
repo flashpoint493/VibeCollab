@@ -159,6 +159,30 @@
 
 ## 对话记录
 
+### 对话16: 修复 Windows 编码问题 (2026-02-10) [FIX]
+
+**问题**:
+- `vibecollab check` 命令在 Windows GBK 环境下因 emoji 字符崩溃
+- UnicodeEncodeError: 'gbk' codec can't encode character
+
+**解决方案**:
+- 实现 `is_windows_gbk()` 平台检测函数
+- 添加 emoji 和特殊字符映射表：
+  - ✅ → OK, ❌ → X, ⚠️ → !, ℹ️ → i
+  - • → -, 🔒 → [保留]
+- 修改所有 CLI 输出使用 EMOJI_MAP 和 BULLET
+
+**修改文件**:
+- `src/vibecollab/cli.py`: 添加平台检测和字符替代（+80 行）
+- `src/vibecollab/cli_lifecycle.py`: 同步修改生涯管理命令（+36 行）
+
+**测试结果**:
+- ✅ `vibecollab check` 在 Windows GBK 下正常运行
+- ✅ 显示格式良好，易读性未受影响
+
+**技术债务**:
+- ✅ **已解决**: Windows 控制台编码问题（高优先级）
+
 ### 对话15: 协议自检执行 (2026-02-10) [VIBE]
 
 **检查结果**:
