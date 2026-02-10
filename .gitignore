@@ -23,3 +23,11 @@ Thumbs.db
 
 # Test outputs
 test_output/
+
+# Build and distribution
+dist/
+build/
+*.egg-info/
+
+# Publishing scripts (contains local credentials/configs)
+publish_pypi.bat
