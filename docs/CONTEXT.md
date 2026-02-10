@@ -17,9 +17,18 @@
   - 建立 CI/CD 流程
   - 性能优化
 
-## 最近对话 (2026-02-09)
+## 最近对话
 
-### 对话14: 完善关键文件职责配置
+### 对话15: 协议自检执行 (2026-02-10)
+- 执行完整的协议自检流程
+- 使用 `vibecollab check` 命令检查协议遵循情况
+- 发现 Windows 控制台编码问题（emoji 字符导致 GBK 错误）
+- 使用 Python 直接调用 ProtocolChecker 完成检查
+- 检查结果：0 错误，2 警告（CHANGELOG.md 19天未更新，CONTEXT.md 2天未更新）
+- 补充更新 CONTEXT.md 和 CHANGELOG.md
+- 将 Windows 编码问题记录到技术债务
+
+### 对话14: 完善关键文件职责配置 (2026-02-09)
 - 从 GitHub 拉取最新代码
 - 补充 documentation.key_files 配置（llms.txt, DECISIONS.md, QA_TEST_CASES.md, ROADMAP.md）
 - 同步更新 project.yaml 和 default.project.yaml 模板
@@ -94,10 +103,13 @@
 - [ ] 配置验证和错误提示优化
 
 ## 技术债务
-- Windows 控制台编码问题（GBK）需要更好的处理
+- **Windows 控制台编码问题（高优先级）**: 
+  - `vibecollab check` 命令因 emoji 字符在 Windows GBK 编码下崩溃
+  - 临时方案：直接调用 Python 模块
+  - 需要在 CLI 中添加编码兼容处理（检测 Windows 环境并降级为纯文本输出）
 - 大项目生成时的性能优化
 - 配置验证错误提示可以更详细
 - 需要添加更多的集成测试
 
 ---
-*最后更新: 2026-02-09 对话14*
+*最后更新: 2026-02-10 对话15*
