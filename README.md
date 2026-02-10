@@ -89,6 +89,9 @@ pip install -e .
 # 通用项目
 vibecollab init -n "MyProject" -d generic -o ./my-project
 
+# 多开发者模式项目
+vibecollab init -n "MyProject" -d generic -o ./my-project --multi-dev
+
 # 游戏项目（含 GM 命令注入）
 vibecollab init -n "MyGame" -d game -o ./my-game
 
@@ -101,6 +104,8 @@ vibecollab init -n "MyDataProject" -d data -o ./my-data-project
 
 ### 生成的项目结构
 
+#### 单开发者模式（默认）
+
 ```
 my-project/
 ├── CONTRIBUTING_AI.md         # AI 协作规则文档
@@ -112,6 +117,29 @@ my-project/
     ├── CHANGELOG.md            # 变更日志
     ├── ROADMAP.md              # 路线图 + 迭代建议池
     └── QA_TEST_CASES.md        # 产品QA测试用例
+```
+
+#### 多开发者模式（`--multi-dev`）
+
+```
+my-project/
+├── CONTRIBUTING_AI.md
+├── llms.txt
+├── project.yaml
+└── docs/
+    ├── CONTEXT.md              # 全局聚合视图（自动生成，只读）
+    ├── CHANGELOG.md            # 全局变更日志
+    ├── DECISIONS.md            # 全局决策记录
+    ├── ROADMAP.md
+    ├── QA_TEST_CASES.md
+    └── developers/             # 开发者工作空间
+        ├── COLLABORATION.md    # 协作关系文档
+        ├── alice/              # 开发者 alice 的目录
+        │   ├── CONTEXT.md      # alice 的工作上下文
+        │   └── .metadata.yaml  # 元数据
+        └── bob/                # 开发者 bob 的目录
+            ├── CONTEXT.md
+            └── .metadata.yaml
 ```
 
 > **💡 llms.txt 集成**：工具会自动检测项目中是否已有 `llms.txt` 文件。如果存在，会在其中添加 AI Collaboration 章节引用协作规则；如果不存在，会创建一个符合 [llmstxt.org](https://llmstxt.org) 标准的 `llms.txt` 文件。
@@ -263,11 +291,25 @@ vibecollab validate -c project.yaml
 vibecollab --help                              # 查看帮助
 vibecollab --version                           # 查看版本
 vibecollab init -n <name> -d <domain> -o <dir> # 初始化项目
+vibecollab init ... --multi-dev                # 初始化多开发者项目
 vibecollab generate -c <config> -o <output>    # 生成协作规则文档（默认集成 llms.txt）
 vibecollab validate -c <config>                # 验证配置
 vibecollab upgrade                             # 升级协议到最新版本
 vibecollab domains                             # 列出支持的领域
 vibecollab templates                           # 列出可用模板
+
+# 多开发者命令 (v0.5.0+)
+vibecollab dev whoami                          # 查看当前开发者身份
+vibecollab dev list                            # 列出所有开发者
+vibecollab dev status <developer>              # 查看开发者状态
+vibecollab dev sync                            # 同步上下文
+vibecollab dev sync --aggregate                # 重新生成全局聚合
+vibecollab dev init --developer <name>         # 初始化新开发者
+
+# 冲突检测 (v0.5.1+)
+vibecollab dev conflicts                       # 检测跨开发者冲突
+vibecollab dev conflicts -v                    # 显示详细冲突信息
+vibecollab dev conflicts --between alice bob   # 检测特定开发者间冲突
 ```
 
 ---

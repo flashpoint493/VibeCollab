@@ -23,8 +23,15 @@ class Project:
         self.docs_dir = output_dir / "docs"
 
     @classmethod
-    def create(cls, name: str, domain: str, output_dir: Path) -> "Project":
-        """创建新项目"""
+    def create(cls, name: str, domain: str, output_dir: Path, multi_dev: bool = False) -> "Project":
+        """创建新项目
+        
+        Args:
+            name: 项目名称
+            domain: 业务领域
+            output_dir: 输出目录
+            multi_dev: 是否启用多开发者模式
+        """
         tm = TemplateManager()
         
         # 加载基础模板
@@ -33,6 +40,12 @@ class Project:
         # 更新项目信息
         config["project"]["name"] = name
         config["project"]["domain"] = domain
+        
+        # 启用多开发者模式
+        if multi_dev:
+            if "multi_developer" not in config:
+                config["multi_developer"] = {}
+            config["multi_developer"]["enabled"] = True
         
         # 合并领域扩展
         try:
@@ -145,28 +158,47 @@ class Project:
         """创建文档模板"""
         project_name = self.config.get("project", {}).get("name", "Project")
         today = datetime.now().strftime("%Y-%m-%d")
+        multi_dev_enabled = self.config.get("multi_developer", {}).get("enabled", False)
         
-        # CONTEXT.md
-        context_content = f"""# {project_name} 当前上下文
+        # 多开发者模式：初始化开发者上下文
+        if multi_dev_enabled:
+            from .developer import DeveloperManager, ContextAggregator
+            
+            dm = DeveloperManager(self.output_dir, self.config)
+            current_dev = dm.get_current_developer()
+            
+            # 初始化当前开发者的上下文
+            dm.init_developer_context(current_dev)
+            
+            # 创建 COLLABORATION.md
+            collab_config = self.config.get('multi_developer', {}).get('collaboration', {})
+            collab_file = self.output_dir / collab_config.get('file', 'docs/developers/COLLABORATION.md')
+            collab_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            collab_content = f"""# {project_name} 开发者协作记录
 
-## 当前状态
-- **阶段**: Phase 0 - 项目初始化
-- **进度**: 刚开始
-- **下一步**: 确定首要任务
+## 当前协作关系
 
-## 本次对话目标
-(待填写)
+(暂无协作记录)
 
-## 待决策事项
-(待填写)
+## 任务分配矩阵
 
-## 已完成事项
-- [x] 项目初始化
-- [x] 生成 CONTRIBUTING_AI.md
+| 任务 | 负责人 | 协作者 | 状态 | 依赖 |
+|------|--------|--------|------|------|
+| 项目初始化 | {current_dev} | - | DONE | - |
+
+## 交接记录
+
+(暂无交接记录)
 
 ---
 *最后更新: {today}*
 """
+            collab_file.write_text(collab_content, encoding='utf-8')
+            
+            # 生成全局聚合 CONTEXT.md
+            aggregator = ContextAggregator(self.output_dir, self.config)
+            aggregator.generate_and_save()
         
         # DECISIONS.md
         decisions_content = f"""# {project_name} 决策记录
@@ -293,7 +325,30 @@ class Project:
 """
         
         # 写入文件
-        (self.docs_dir / "CONTEXT.md").write_text(context_content, encoding="utf-8")
+        if not multi_dev_enabled:
+            # 单开发者模式才写入 CONTEXT.md（多开发者模式已通过聚合生成）
+            context_content = f"""# {project_name} 当前上下文
+
+## 当前状态
+- **阶段**: Phase 0 - 项目初始化
+- **进度**: 刚开始
+- **下一步**: 确定首要任务
+
+## 本次对话目标
+(待填写)
+
+## 待决策事项
+(待填写)
+
+## 已完成事项
+- [x] 项目初始化
+- [x] 生成 CONTRIBUTING_AI.md
+
+---
+*最后更新: {today}*
+"""
+            (self.docs_dir / "CONTEXT.md").write_text(context_content, encoding="utf-8")
+        
         (self.docs_dir / "DECISIONS.md").write_text(decisions_content, encoding="utf-8")
         (self.docs_dir / "CHANGELOG.md").write_text(changelog_content, encoding="utf-8")
         (self.docs_dir / "ROADMAP.md").write_text(roadmap_content, encoding="utf-8")
