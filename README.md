@@ -148,6 +148,33 @@ my-project/
 
 项目初始化后会生成一套完整的文档体系，每个文档都有明确的用途和更新时机：
 
+#### 关键文件职责
+
+| 文件 | 职责 | 更新时机 |
+|-----|------|---------|
+| `CONTRIBUTING_AI.md` | AI 协作规则，顶层指导 | 协作方式演进时 |
+| `llms.txt` | 项目上下文摘要 (llmstxt.org 标准) | 项目信息变更时 |
+| `docs/CONTEXT.md` | 当前开发上下文 | 每次对话结束时 |
+| `docs/DECISIONS.md` | 重要决策记录 | 每次 S/A 级决策后 |
+| `docs/CHANGELOG.md` | 版本变更日志 | 每次有效对话后 |
+| `docs/QA_TEST_CASES.md` | 产品QA测试用例 | 每个功能完成时 |
+| `docs/PRD.md` | 产品需求文档 | 需求变更时 |
+| `docs/ROADMAP.md` | 路线图+迭代建议 | 里程碑规划/反馈时 |
+
+**多开发者模式额外文件**：
+
+| 文件 | 职责 | 更新时机 |
+|-----|------|---------|
+| `docs/developers/COLLABORATION.md` | 团队协作关系和任务分配 | 任务分配/交接时 |
+| `docs/developers/{dev_id}/CONTEXT.md` | 开发者个人工作上下文 | 每次对话结束时 |
+| `docs/developers/{dev_id}/.metadata.yaml` | 开发者元数据（角色、专长等） | 角色变更时 |
+
+> **⚠️ 上下文保存协议**: 每次对话结束时，AI 应：
+> 1. 更新 `docs/CONTEXT.md` 保存当前状态
+> 2. 更新 `docs/CHANGELOG.md` 记录本次产出
+> 3. 如有新决策，更新 `docs/DECISIONS.md`
+> 4. **必须执行 git commit** 记录本次对话产出
+
 #### 📄 `CONTRIBUTING_AI.md` - AI 协作规则文档
 - **用途**: 项目的顶层协作规则，定义 AI 与开发者的协作方式
 - **内容**: 包含核心理念、角色定义、决策分级、流程协议等完整协议
@@ -310,6 +337,10 @@ vibecollab dev init --developer <name>         # 初始化新开发者
 vibecollab dev conflicts                       # 检测跨开发者冲突
 vibecollab dev conflicts -v                    # 显示详细冲突信息
 vibecollab dev conflicts --between alice bob   # 检测特定开发者间冲突
+
+# 协议自检 (v0.5.2+)
+vibecollab check                               # 检查协议遵循情况
+vibecollab check --verbose                     # 显示详细检查报告
 ```
 
 ---
