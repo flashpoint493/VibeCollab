@@ -7,7 +7,7 @@ Usage:
     vibecollab validate -c project.yaml
 """
 
-__version__ = "0.5.1"
+__version__ = "0.5.2"
 __author__ = "VibeCollab Contributors"
 
 from .generator import LLMContextGenerator

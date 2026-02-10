@@ -47,6 +47,9 @@ class ProtocolChecker:
         # 检查对话流程协议
         results.extend(self._check_dialogue_protocol())
         
+        # 检查多开发者协议
+        results.extend(self._check_multi_developer_protocol())
+        
         return results
     
     def _check_git_protocol(self) -> List[CheckResult]:
@@ -136,6 +139,35 @@ class ProtocolChecker:
                     suggestion="创建 docs/PRD.md 记录项目需求和需求变化"
                 ))
         
+        # 检查多开发者协作文档（如果启用多开发者模式）
+        multi_dev_config = self.config.get("multi_developer", {})
+        if multi_dev_config.get("enabled", False):
+            collab_config = multi_dev_config.get("collaboration", {})
+            collab_file = collab_config.get("file", "docs/developers/COLLABORATION.md")
+            collab_path = self.project_root / collab_file
+            
+            if not collab_path.exists():
+                results.append(CheckResult(
+                    name="协作文档",
+                    passed=False,
+                    message=f"多开发者协作文档不存在: {collab_file}",
+                    severity="warning",
+                    suggestion=f"创建 {collab_file} 记录开发者之间的协作关系、任务分配和依赖关系"
+                ))
+            else:
+                # 检查文件是否最近更新（7天内）
+                file_mtime = datetime.fromtimestamp(collab_path.stat().st_mtime)
+                days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
+                
+                if days_since_update > 7:
+                    results.append(CheckResult(
+                        name="协作文档更新",
+                        passed=True,
+                        message=f"{collab_file} 已超过 7 天未更新",
+                        severity="info",
+                        suggestion="建议定期（每周）更新协作文档，记录任务进展和团队变更"
+                    ))
+        
         return results
     
     def _check_dialogue_protocol(self) -> List[CheckResult]:
@@ -159,6 +191,173 @@ class ProtocolChecker:
                 ))
         
         return results
+    
+    def _check_multi_developer_protocol(self) -> List[CheckResult]:
+        """检查多开发者协议遵循情况"""
+        results = []
+        
+        multi_dev_config = self.config.get("multi_developer", {})
+        if not multi_dev_config.get("enabled", False):
+            # 多开发者模式未启用，跳过检查
+            return results
+        
+        developers = multi_dev_config.get("developers", [])
+        if not developers:
+            results.append(CheckResult(
+                name="开发者配置",
+                passed=False,
+                message="多开发者模式已启用但未配置任何开发者",
+                severity="error",
+                suggestion="在 project.yaml 的 multi_developer.developers 中配置开发者信息"
+            ))
+            return results
+        
+        developers_dir = self.project_root / "docs" / "developers"
+        
+        # 检查每个开发者的上下文文件
+        for dev in developers:
+            dev_id = dev.get("id")
+            dev_name = dev.get("name", dev_id)
+            
+            if not dev_id:
+                results.append(CheckResult(
+                    name="开发者ID",
+                    passed=False,
+                    message=f"开发者 '{dev_name}' 缺少必需的 'id' 字段",
+                    severity="error",
+                    suggestion="为每个开发者配置唯一的 id 标识符"
+                ))
+                continue
+            
+            dev_dir = developers_dir / dev_id
+            
+            # 检查开发者目录是否存在
+            if not dev_dir.exists():
+                results.append(CheckResult(
+                    name=f"开发者目录: {dev_name}",
+                    passed=False,
+                    message=f"开发者 '{dev_name}' 的目录不存在: docs/developers/{dev_id}",
+                    severity="error",
+                    suggestion=f"创建目录 docs/developers/{dev_id} 并添加 CONTEXT.md 和 .metadata.yaml"
+                ))
+                continue
+            
+            # 检查 CONTEXT.md
+            context_file = dev_dir / "CONTEXT.md"
+            if not context_file.exists():
+                results.append(CheckResult(
+                    name=f"开发者上下文: {dev_name}",
+                    passed=False,
+                    message=f"开发者 '{dev_name}' 的 CONTEXT.md 不存在",
+                    severity="error",
+                    suggestion=f"创建 docs/developers/{dev_id}/CONTEXT.md 记录该开发者的工作上下文"
+                ))
+            else:
+                # 检查 CONTEXT.md 是否最近更新（7天内有活动）
+                file_mtime = datetime.fromtimestamp(context_file.stat().st_mtime)
+                days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
+                
+                if days_since_update > 7:
+                    results.append(CheckResult(
+                        name=f"开发者上下文更新: {dev_name}",
+                        passed=True,
+                        message=f"开发者 '{dev_name}' 的 CONTEXT.md 已超过 {int(days_since_update)} 天未更新",
+                        severity="info",
+                        suggestion=f"如果 {dev_name} 最近有开发活动，记得更新其 CONTEXT.md"
+                    ))
+                else:
+                    results.append(CheckResult(
+                        name=f"开发者上下文更新: {dev_name}",
+                        passed=True,
+                        message=f"开发者 '{dev_name}' 的 CONTEXT.md 在 {int(days_since_update)} 天前更新",
+                        severity="info"
+                    ))
+            
+            # 检查 .metadata.yaml
+            metadata_file = dev_dir / ".metadata.yaml"
+            if not metadata_file.exists():
+                results.append(CheckResult(
+                    name=f"开发者元数据: {dev_name}",
+                    passed=False,
+                    message=f"开发者 '{dev_name}' 的 .metadata.yaml 不存在",
+                    severity="warning",
+                    suggestion=f"创建 docs/developers/{dev_id}/.metadata.yaml 记录开发者信息（角色、专长等）"
+                ))
+            
+            # 检查 Git 提交中是否包含该开发者的上下文更新
+            if context_file.exists():
+                git_tracked = self._is_file_tracked_in_git(context_file)
+                if not git_tracked:
+                    results.append(CheckResult(
+                        name=f"Git 追踪: {dev_name} CONTEXT.md",
+                        passed=False,
+                        message=f"开发者 '{dev_name}' 的 CONTEXT.md 未纳入 Git 版本控制",
+                        severity="warning",
+                        suggestion=f"运行 'git add docs/developers/{dev_id}/CONTEXT.md' 并提交"
+                    ))
+        
+        # 检查协作文档
+        collab_config = multi_dev_config.get("collaboration", {})
+        collab_file = collab_config.get("file", "docs/developers/COLLABORATION.md")
+        collab_path = self.project_root / collab_file
+        
+        if not collab_path.exists():
+            results.append(CheckResult(
+                name="多开发者协作文档",
+                passed=False,
+                message=f"协作文档不存在: {collab_file}",
+                severity="error",
+                suggestion=f"创建 {collab_file} 记录团队任务分配、里程碑和协作规则"
+            ))
+        else:
+            # 检查协作文档更新频率
+            file_mtime = datetime.fromtimestamp(collab_path.stat().st_mtime)
+            days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
+            
+            if days_since_update > 7:
+                results.append(CheckResult(
+                    name="协作文档更新频率",
+                    passed=True,
+                    message=f"协作文档已超过 {int(days_since_update)} 天未更新",
+                    severity="info",
+                    suggestion="建议每周更新协作文档，记录任务进展和团队变更"
+                ))
+        
+        # 检查冲突检测配置
+        conflict_config = multi_dev_config.get("conflict_detection", {})
+        if not conflict_config.get("enabled", True):
+            results.append(CheckResult(
+                name="冲突检测",
+                passed=True,
+                message="多开发者冲突检测已禁用",
+                severity="warning",
+                suggestion="建议启用冲突检测以避免多个开发者修改同一文件产生冲突"
+            ))
+        
+        return results
+    
+    def _is_file_tracked_in_git(self, file_path: Path) -> bool:
+        """检查文件是否在 Git 版本控制中
+        
+        Args:
+            file_path: 文件路径
+            
+        Returns:
+            bool: 是否被追踪
+        """
+        if not is_git_repo(self.project_root):
+            return False
+        
+        try:
+            result = subprocess.run(
+                ["git", "ls-files", "--error-unmatch", str(file_path.relative_to(self.project_root))],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
     
     def _get_last_commit_time(self) -> Optional[datetime]:
         """获取最后一次提交的时间"""
