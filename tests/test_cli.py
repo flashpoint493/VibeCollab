@@ -93,3 +93,70 @@ class TestCLI:
             
             assert result.exit_code == 0
             assert (output_dir / "llm-new.txt").exists()
+
+    def test_upgrade_with_multi_developer(self):
+        """测试 upgrade 命令自动初始化多开发者目录结构"""
+        import yaml
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir) / "test-project"
+            
+            # 1. 初始化单开发者项目
+            self.runner.invoke(main, [
+                "init",
+                "-n", "TestProject",
+                "-d", "generic",
+                "-o", str(output_dir)
+            ])
+            
+            # 2. 手动修改配置启用多开发者模式
+            config_path = output_dir / "project.yaml"
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+            
+            config["multi_developer"] = {
+                "enabled": True,
+                "developers": [
+                    {"id": "alice", "name": "Alice", "role": "backend"},
+                    {"id": "bob", "name": "Bob", "role": "frontend"}
+                ],
+                "collaboration": {
+                    "file": "docs/developers/COLLABORATION.md"
+                }
+            }
+            
+            with open(config_path, "w", encoding="utf-8") as f:
+                yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
+            
+            # 3. 运行 upgrade 命令
+            result = self.runner.invoke(main, [
+                "upgrade",
+                "-c", str(config_path),
+                "--force"
+            ])
+            
+            # 4. 验证多开发者目录结构已创建
+            assert result.exit_code == 0
+            
+            # 检查开发者目录
+            alice_dir = output_dir / "docs" / "developers" / "alice"
+            bob_dir = output_dir / "docs" / "developers" / "bob"
+            assert alice_dir.exists(), "Alice 目录应该被创建"
+            assert bob_dir.exists(), "Bob 目录应该被创建"
+            
+            # 检查 CONTEXT.md
+            assert (alice_dir / "CONTEXT.md").exists(), "Alice 的 CONTEXT.md 应该被创建"
+            assert (bob_dir / "CONTEXT.md").exists(), "Bob 的 CONTEXT.md 应该被创建"
+            
+            # 检查 .metadata.yaml
+            assert (alice_dir / ".metadata.yaml").exists(), "Alice 的 .metadata.yaml 应该被创建"
+            assert (bob_dir / ".metadata.yaml").exists(), "Bob 的 .metadata.yaml 应该被创建"
+            
+            # 检查协作文档
+            collab_file = output_dir / "docs" / "developers" / "COLLABORATION.md"
+            assert collab_file.exists(), "COLLABORATION.md 应该被创建"
+            
+            # 检查全局聚合的 CONTEXT.md
+            global_context = output_dir / "docs" / "CONTEXT.md"
+            assert global_context.exists(), "全局聚合的 CONTEXT.md 应该存在"
+
