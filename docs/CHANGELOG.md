@@ -1,5 +1,19 @@
 # VibeCollab 变更日志
 
+## v0.4.3 (2026-02-09)
+
+### 配置改进
+- **关键文件职责配置完善**:
+  - 补充 `llms.txt`, `DECISIONS.md`, `QA_TEST_CASES.md`, `ROADMAP.md` 到文档体系配置
+  - 确保其他仓库使用时能生成完整的关键文件职责说明（CONTRIBUTING_AI.md 第八章）
+  - 同步更新 `project.yaml` 和 `default.project.yaml` 模板
+
+### 发布
+- 构建 PyPI 发布包 (dist/vibe_collab-0.4.3.tar.gz, vibe_collab-0.4.3-py3-none-any.whl)
+- 待上传到 PyPI
+
+---
+
 ## v0.4.2 (2026-01-21)
 
 ### 新功能
@@ -142,6 +156,43 @@
 - 新增 13 个扩展机制单元测试
 
 ---
+
+## 对话记录
+
+### 对话15: 协议自检执行 (2026-02-10) [VIBE]
+
+**检查结果**:
+- ✅ Git 仓库正常
+- ⚠️ CHANGELOG.md 19天未更新
+- ⚠️ CONTEXT.md 2天未更新
+- 总计 3 项检查：0 错误，2 警告，1 信息
+
+**发现问题**:
+- Windows 控制台编码问题：`vibecollab check` 因 emoji 字符导致 GBK 编码错误
+- 临时方案：直接调用 Python `ProtocolChecker` 模块
+
+**产出**:
+- 更新 CONTEXT.md 记录对话15
+- 补充 CHANGELOG.md 缺失的记录（对话14、v0.4.3）
+- 将 Windows 编码问题记录到技术债务
+
+### 对话14: 完善关键文件职责配置 (2026-02-09) [CONFIG]
+
+**背景**:
+- 从 GitHub 拉取最新代码
+- 发现 documentation.key_files 配置不完整
+
+**改进**:
+- 补充 4 个关键文件配置：llms.txt, DECISIONS.md, QA_TEST_CASES.md, ROADMAP.md
+- 同步更新 project.yaml 和 templates/default.project.yaml
+
+**发布**:
+- 版本升级到 v0.4.3
+- 构建发布包：`python -m build`
+
+---
+
+## 历史版本
 
 ### 对话1-4: 项目初始化到文档同步
 
