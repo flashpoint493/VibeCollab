@@ -9,8 +9,30 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 import yaml
+import sys
+import platform
 
 from .lifecycle import LifecycleManager, STAGE_ORDER
+
+# 检测是否为 Windows 且使用 GBK 编码
+def is_windows_gbk():
+    """检测是否为 Windows 且使用 GBK 编码"""
+    if platform.system() != "Windows":
+        return False
+    try:
+        "✅⚠️❌ℹ️".encode(sys.stdout.encoding or "utf-8")
+        return False
+    except (UnicodeEncodeError, LookupError):
+        return True
+
+USE_EMOJI = not is_windows_gbk()
+EMOJI_MAP = {
+    "success": "OK" if not USE_EMOJI else "✅",
+    "warning": "!" if not USE_EMOJI else "⚠️"
+}
+
+# bullet point 替代
+BULLET = "-" if is_windows_gbk() else "•"
 
 console = Console()
 
@@ -81,18 +103,18 @@ def check(config: str):
     can_upgrade, next_stage, reason = manager.can_upgrade()
     if can_upgrade:
         console.print()
-        console.print("[green]✅ 可以升级到下一阶段![/green]")
+        console.print(f"[green]{EMOJI_MAP['success']} 可以升级到下一阶段![/green]")
         console.print(f"[dim]下一阶段:[/dim] {next_stage}")
         console.print()
         console.print("[bold]升级建议:[/bold]")
         suggestions = manager.get_upgrade_suggestions(next_stage)
         for suggestion in suggestions:
-            console.print(f"  • {suggestion}")
+            console.print(f"  {BULLET} {suggestion}")
         console.print()
         console.print("[dim]运行 'vibecollab lifecycle upgrade' 进行升级[/dim]")
     elif reason:
         console.print()
-        console.print(f"[yellow]⚠️  暂不能升级:[/yellow] {reason}")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} 暂不能升级:[/yellow] {reason}")
     
     # 显示阶段历史
     if stage_history:
@@ -104,9 +126,9 @@ def check(config: str):
             ended = entry.get("ended_at")
             
             if ended:
-                console.print(f"  • {stage}: {started} → {ended}")
+                console.print(f"  {BULLET} {stage}: {started} → {ended}")
             else:
-                console.print(f"  • {stage}: {started} [bold green](进行中)[/bold green]")
+                console.print(f"  {BULLET} {stage}: {started} [bold green](进行中)[/bold green]")
 
 
 @lifecycle.command()
@@ -165,7 +187,7 @@ def upgrade(config: str, stage: Optional[str], force: bool):
     target_info = manager.get_stage_info(target_stage)
     console.print()
     console.print(Panel.fit(
-        f"[bold green]✅ 项目已升级到 {target_info.get('name', target_stage)} 阶段[/bold green]",
+        f"[bold green]{EMOJI_MAP['success']} 项目已升级到 {target_info.get('name', target_stage)} 阶段[/bold green]",
         title="升级成功"
     ))
     
@@ -175,7 +197,7 @@ def upgrade(config: str, stage: Optional[str], force: bool):
         console.print()
         console.print("[bold]升级后需要关注的变化:[/bold]")
         for suggestion in suggestions:
-            console.print(f"  • {suggestion}")
+            console.print(f"  {BULLET} {suggestion}")
     
     console.print()
     console.print("[bold]下一步:[/bold]")
