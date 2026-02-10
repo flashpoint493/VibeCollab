@@ -1,6 +1,120 @@
 # VibeCollab 变更日志
 
+## v0.5.1 (2026-02-10) - 跨开发者冲突检测
+
+### 重大特性
+- **跨开发者冲突检测** (v0.5.1):
+  - 自动检测多个开发者之间的工作冲突
+  - 支持文件冲突、任务冲突、依赖冲突、命名冲突检测
+  - 提供详细的冲突报告和处理建议
+
+### 新增模块
+- `src/vibecollab/conflict_detector.py`:
+  - `ConflictDetector`: 跨开发者冲突检测器
+  - `Conflict`: 冲突对象表示
+  - 支持检测文件冲突、任务重叠、循环依赖、命名冲突
+
+### CLI 命令扩展
+- 新增 `vibecollab dev conflicts` 命令:
+  - 检测当前开发者与其他开发者的冲突
+  - `--verbose`: 显示详细冲突信息
+  - `--between alice bob`: 检测特定两人之间的冲突
+  - 自动识别高/中/低优先级冲突
+
+### 文档完善
+- **CONTRIBUTING_AI.md 新增章节**: 
+  - "八、多开发者/Agent 协作协议" 完整章节
+  - 协作模式概述、目录结构、身份识别
+  - 上下文管理、协作文档、对话流程适配
+  - 冲突检测与预防、CLI 命令参考、最佳实践
+- **README.md 更新**:
+  - 添加多开发者模式初始化示例
+  - 展示单/多开发者目录结构对比
+  - 补充多开发者相关 CLI 命令文档
+
+### 冲突检测算法
+- 文件冲突：检测多个开发者同时修改相同文件
+- 任务冲突：基于相似度算法检测重复/重叠任务
+- 依赖冲突：深度优先搜索检测循环依赖
+- 命名冲突：检测代码块中的类名/函数名重复
+
+### 向后兼容
+- 所有 v0.5.0 功能保持不变
+- 冲突检测为增量特性，不影响现有使用
+
+### Bug 修复
+- **本项目自身启用多开发者模式** (对话19):
+  - project.yaml 添加 multi_developer 配置（enabled: true）
+  - 重新生成 CONTRIBUTING_AI.md，包含完整多开发者章节
+  - 实践自己提倡的协作特性
+- **upgrade 命令支持 multi_developer 配置保留**:
+  - 修复升级时未保留用户 multi_developer 配置的问题
+  - 添加 Tuple 类型导入修复 NameError
+  - 确保旧项目升级到 v0.5.1 时包含多开发者配置（默认 disabled）
+
+
+
+---
+
+## v0.5.0 (2026-02-10) - 多开发者支持
+
+### 重大特性
+- **多开发者协同支持** (DECISION-008):
+  - 支持多个开发者/多个 AI Agent 协同开发同一项目
+  - 开发者身份自动识别（基于 Git 用户名）
+  - 开发者独立上下文管理（`docs/developers/{developer}/CONTEXT.md`）
+  - 全局上下文自动聚合（`docs/CONTEXT.md` 自动生成）
+  - 开发者协作文档（`docs/developers/COLLABORATION.md`）记录依赖和交接
+
+### 新增模块
+- `src/vibecollab/developer.py`:
+  - `DeveloperManager`: 开发者身份识别、目录管理、元数据维护
+  - `ContextAggregator`: 全局上下文聚合算法
+  - `migrate_to_multi_developer()`: 单开发者项目迁移工具
+
+### CLI 命令扩展
+- 新增 `vibecollab dev` 命令组:
+  - `dev whoami`: 显示当前开发者身份
+  - `dev list`: 列出所有开发者及状态
+  - `dev status [developer]`: 查看开发者详细状态
+  - `dev sync`: 手动触发全局 CONTEXT 聚合
+  - `dev init [-d developer]`: 初始化开发者上下文
+- `vibecollab init` 新增 `--multi-dev` 选项，支持初始化多开发者项目
+
+### 配置扩展
+- `project.yaml` 新增 `multi_developer` 配置节:
+  - `identity`: 开发者识别策略（git_username/system_user/manual）
+  - `context`: 上下文管理配置（目录结构、聚合规则）
+  - `collaboration`: 协作管理配置（依赖跟踪、交接记录）
+  - `dialogue_protocol`: 多开发者模式下的对话流程
+
+### 决策记录
+- DECISION-008: 多开发者支持架构设计 (A 级)
+  - CHANGELOG.md、DECISIONS.md 保持全局统一
+  - 添加 `initiator` 和 `participants` 字段标记参与者
+  - Git commit 不额外标记，使用原生 author 信息
+
+### 测试验证
+- 所有核心功能测试通过
+- 开发者身份识别正常
+- 上下文聚合算法验证通过
+- 文件生成结构正确
+
+### 向后兼容
+- 单开发者模式完全兼容
+- 现有项目可平滑迁移到多开发者模式
+
+---
+
 ## v0.4.3 (2026-02-09)
+
+### Bug 修复
+- **Windows 编码问题修复** (对话16):
+  - 修复 `vibecollab check` 在 Windows GBK 环境下的 emoji 编码错误
+  - 实现 `is_windows_gbk()` 平台检测函数
+  - 添加 emoji 字符映射（✅→OK, ⚠️→!, ❌→X, ℹ️→i）
+  - 添加 bullet point 映射（•→-）
+  - 修复 `cli.py` 和 `cli_lifecycle.py` 中所有 emoji 使用
 
 ### 配置改进
 - **关键文件职责配置完善**:

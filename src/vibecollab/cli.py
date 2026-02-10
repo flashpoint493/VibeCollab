@@ -11,6 +11,7 @@ from rich import print as rprint
 import yaml
 import sys
 import platform
+from typing import Optional, Tuple
 
 from . import __version__
 from .generator import LLMContextGenerator
@@ -87,7 +88,8 @@ def main():
 @click.option("--output", "-o", required=True, help="输出目录")
 @click.option("--force", "-f", is_flag=True, help="强制覆盖已存在的目录")
 @click.option("--no-git", is_flag=True, help="不自动初始化 Git 仓库")
-def init(name: str, domain: str, output: str, force: bool, no_git: bool):
+@click.option("--multi-dev", is_flag=True, help="启用多开发者模式")
+def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_dev: bool):
     """初始化新项目
     
     Examples:
@@ -95,6 +97,8 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool):
         vibecollab init -n "MyProject" -d web -o ./my-project
         
         vibecollab init -n "GameProject" -d game -o ./game --force
+        
+        vibecollab init -n "TeamProject" -o ./team --multi-dev  # 多开发者模式
     """
     output_path = Path(output)
     
@@ -105,7 +109,7 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool):
     
     with console.status(f"[bold green]正在初始化项目 {name}..."):
         try:
-            project = Project.create(name=name, domain=domain, output_dir=output_path)
+            project = Project.create(name=name, domain=domain, output_dir=output_path, multi_dev=multi_dev)
             project.generate_all(auto_init_git=not no_git)
         except Exception as e:
             console.print(f"[red]错误:[/red] {e}")
@@ -113,10 +117,12 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool):
     
     # 成功提示
     console.print()
+    mode_text = "多开发者" if multi_dev else "单开发者"
     console.print(Panel.fit(
         f"[bold green]{EMOJI_MAP['success']} 项目 {name} 初始化成功![/bold green]\n\n"
         f"[dim]目录:[/dim] {output_path.absolute()}\n"
-        f"[dim]领域:[/dim] {domain}",
+        f"[dim]领域:[/dim] {domain}\n"
+        f"[dim]模式:[/dim] {mode_text}",
         title="完成"
     ))
     
@@ -127,7 +133,14 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool):
     table.add_row("CONTRIBUTING_AI.md", "AI 协作规则文档")
     table.add_row("llms.txt", "项目上下文文档（已集成协作规则引用）")
     table.add_row("project.yaml", "项目配置 (可编辑)")
-    table.add_row("docs/CONTEXT.md", "当前上下文")
+    
+    if multi_dev:
+        table.add_row("docs/CONTEXT.md", "全局聚合上下文（自动生成）")
+        table.add_row("docs/developers/{dev}/CONTEXT.md", "各开发者上下文")
+        table.add_row("docs/developers/COLLABORATION.md", "协作文档")
+    else:
+        table.add_row("docs/CONTEXT.md", "当前上下文")
+    
     table.add_row("docs/DECISIONS.md", "决策记录")
     table.add_row("docs/CHANGELOG.md", "变更日志")
     table.add_row("docs/ROADMAP.md", "路线图")
@@ -146,6 +159,17 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool):
         console.print(f"[yellow]{EMOJI_MAP['warning']} {git_warning}[/yellow]")
         console.print("[dim]提示: 建议初始化 Git 仓库以跟踪项目变更[/dim]")
     
+    # 多开发者模式额外提示
+    if multi_dev:
+        from .developer import DeveloperManager
+        dm = DeveloperManager(output_path, project.config)
+        current_dev = dm.get_current_developer()
+        
+        console.print()
+        console.print(f"[bold cyan]多开发者模式已启用[/bold cyan]")
+        console.print(f"  {BULLET} 当前开发者: {current_dev}")
+        console.print(f"  {BULLET} 使用 'vibecollab dev' 查看相关命令")
+    
     # 下一步提示
     console.print()
     console.print("[bold]下一步:[/bold]")
@@ -153,6 +177,9 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool):
     step = 2
     if not is_git_repo(output_path):
         console.print(f"  {step}. git init  # 初始化 Git 仓库（如未自动初始化）")
+        step += 1
+    if multi_dev:
+        console.print(f"  {step}. vibecollab dev whoami  # 查看当前开发者")
         step += 1
     console.print(f"  {step}. 编辑 project.yaml 自定义配置")
     step += 1
@@ -352,6 +379,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
         "roles": user_config.get("roles"),
         "confirmed_decisions": user_config.get("confirmed_decisions"),
         "domain_extensions": user_config.get("domain_extensions"),
+        "multi_developer": user_config.get("multi_developer"),  # v0.5.0+ 保留多开发者配置
     }
     
     # 深度合并：latest 为 base，user_preserved 覆盖
@@ -549,6 +577,341 @@ def check(config: str, strict: bool):
 # 导入生涯管理命令
 from .cli_lifecycle import lifecycle as lifecycle_group
 main.add_command(lifecycle_group)
+
+
+# ============================================
+# 多开发者管理命令组 (v0.5.0+)
+# ============================================
+
+@main.group()
+def dev():
+    """多开发者管理命令
+    
+    管理多开发者协同开发的项目。
+    """
+    pass
+
+
+@dev.command("whoami")
+@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+def dev_whoami(config: str):
+    """显示当前开发者身份
+    
+    Examples:
+    
+        vibecollab dev whoami
+    """
+    from .developer import DeveloperManager
+    
+    config_path = Path(config)
+    project_root = config_path.parent
+    
+    if not config_path.exists():
+        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        raise SystemExit(1)
+    
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+    
+    dm = DeveloperManager(project_root, project_config)
+    current_dev = dm.get_current_developer()
+    
+    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    
+    console.print()
+    console.print(Panel.fit(
+        f"[bold cyan]{current_dev}[/bold cyan]\n\n"
+        f"多开发者模式: {'[green]启用[/green]' if multi_dev_enabled else '[yellow]未启用[/yellow]'}\n"
+        f"识别方式: {project_config.get('multi_developer', {}).get('identity', {}).get('primary', 'git_username')}",
+        title="当前开发者"
+    ))
+    console.print()
+
+
+@dev.command("list")
+@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+def dev_list(config: str):
+    """列出所有开发者
+    
+    Examples:
+    
+        vibecollab dev list
+    """
+    from .developer import DeveloperManager
+    
+    config_path = Path(config)
+    project_root = config_path.parent
+    
+    if not config_path.exists():
+        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        raise SystemExit(1)
+    
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+    
+    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    if not multi_dev_enabled:
+        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
+        console.print("[dim]在 project.yaml 中设置 multi_developer.enabled: true[/dim]")
+        raise SystemExit(1)
+    
+    dm = DeveloperManager(project_root, project_config)
+    developers = dm.list_developers()
+    current_dev = dm.get_current_developer()
+    
+    if not developers:
+        console.print()
+        console.print("[yellow]暂无开发者[/yellow]")
+        console.print("[dim]使用 'vibecollab init --multi-dev' 初始化多开发者项目[/dim]")
+        console.print()
+        return
+    
+    table = Table(title="开发者列表", show_header=True)
+    table.add_column("开发者", style="cyan")
+    table.add_column("状态")
+    table.add_column("上次更新")
+    table.add_column("更新次数")
+    
+    for dev in developers:
+        status_info = dm.get_developer_status(dev)
+        is_current = " (当前)" if dev == current_dev else ""
+        status = f"{EMOJI_MAP['success']} 活跃{is_current}" if status_info['exists'] else f"{EMOJI_MAP['warning']} 未初始化"
+        last_updated = status_info.get('last_updated', '-') or '-'
+        if last_updated != '-' and len(last_updated) > 19:
+            last_updated = last_updated[:19]  # 截取日期时间部分
+        total_updates = str(status_info.get('total_updates', 0))
+        
+        table.add_row(dev, status, last_updated, total_updates)
+    
+    console.print()
+    console.print(table)
+    console.print()
+
+
+@dev.command("status")
+@click.argument("developer", required=False)
+@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+def dev_status(developer: Optional[str], config: str):
+    """查看开发者状态
+    
+    Examples:
+    
+        vibecollab dev status           # 查看所有开发者
+        
+        vibecollab dev status alice     # 查看特定开发者
+    """
+    from .developer import DeveloperManager
+    
+    config_path = Path(config)
+    project_root = config_path.parent
+    
+    if not config_path.exists():
+        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        raise SystemExit(1)
+    
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+    
+    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    if not multi_dev_enabled:
+        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
+        raise SystemExit(1)
+    
+    dm = DeveloperManager(project_root, project_config)
+    
+    if developer:
+        # 显示特定开发者
+        developers = [developer]
+    else:
+        # 显示所有开发者
+        developers = dm.list_developers()
+    
+    if not developers:
+        console.print()
+        console.print("[yellow]暂无开发者[/yellow]")
+        console.print()
+        return
+    
+    for dev in developers:
+        context_file = dm.get_developer_context_file(dev)
+        if context_file.exists():
+            console.print()
+            console.print(Panel.fit(
+                f"[bold]{dev}[/bold]",
+                title="开发者状态"
+            ))
+            console.print()
+            
+            # 读取并显示 CONTEXT.md 摘要
+            try:
+                content = context_file.read_text(encoding='utf-8')
+                # 显示前20行
+                lines = content.split('\n')[:20]
+                console.print('\n'.join(lines))
+                if len(content.split('\n')) > 20:
+                    console.print(f"\n[dim]... (更多内容见 {context_file})[/dim]")
+            except Exception as e:
+                console.print(f"[red]读取失败:[/red] {e}")
+            
+            console.print()
+        else:
+            console.print(f"[yellow]{EMOJI_MAP['warning']} 开发者 {dev} 未初始化[/yellow]")
+
+
+@dev.command("sync")
+@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+def dev_sync(config: str):
+    """手动触发全局 CONTEXT 聚合
+    
+    Examples:
+    
+        vibecollab dev sync
+    """
+    from .developer import ContextAggregator
+    
+    config_path = Path(config)
+    project_root = config_path.parent
+    
+    if not config_path.exists():
+        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        raise SystemExit(1)
+    
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+    
+    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    if not multi_dev_enabled:
+        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
+        raise SystemExit(1)
+    
+    console.print()
+    console.print("[cyan]正在聚合全局 CONTEXT...[/cyan]")
+    
+    try:
+        aggregator = ContextAggregator(project_root, project_config)
+        output_file = aggregator.generate_and_save()
+        
+        console.print(f"[green]{EMOJI_MAP['success']} 聚合完成:[/green] {output_file}")
+        console.print()
+    except Exception as e:
+        console.print(f"[red]聚合失败:[/red] {e}")
+        raise SystemExit(1)
+
+
+@dev.command("init")
+@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+@click.option("--developer", "-d", help="开发者名称（留空则自动识别）")
+def dev_init(config: str, developer: Optional[str]):
+    """初始化当前开发者的上下文
+    
+    Examples:
+    
+        vibecollab dev init                 # 自动识别当前开发者
+        
+        vibecollab dev init -d alice        # 为 alice 初始化
+    """
+    from .developer import DeveloperManager
+    
+    config_path = Path(config)
+    project_root = config_path.parent
+    
+    if not config_path.exists():
+        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        raise SystemExit(1)
+    
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+    
+    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    if not multi_dev_enabled:
+        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
+        console.print("[dim]在 project.yaml 中设置 multi_developer.enabled: true[/dim]")
+        raise SystemExit(1)
+    
+    dm = DeveloperManager(project_root, project_config)
+    
+    if developer is None:
+        developer = dm.get_current_developer()
+    
+    console.print()
+    console.print(f"[cyan]正在初始化开发者:[/cyan] {developer}")
+    
+    try:
+        dm.init_developer_context(developer)
+        context_file = dm.get_developer_context_file(developer)
+        
+        console.print(f"[green]{EMOJI_MAP['success']} 初始化完成:[/green]")
+        console.print(f"  {BULLET} 上下文文件: {context_file}")
+        console.print()
+    except Exception as e:
+        console.print(f"[red]初始化失败:[/red] {e}")
+        raise SystemExit(1)
+
+
+@dev.command("conflicts")
+@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+@click.option("--verbose", "-v", is_flag=True, help="显示详细冲突信息")
+@click.option("--between", nargs=2, help="检测两个特定开发者之间的冲突 (例: --between alice bob)")
+def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]):
+    """检测跨开发者工作冲突
+    
+    检测多个开发者之间的潜在冲突，包括文件冲突、任务冲突、依赖冲突等。
+    
+    Examples:
+    
+        vibecollab dev conflicts                 # 检测所有开发者的冲突
+        
+        vibecollab dev conflicts -v              # 显示详细信息
+        
+        vibecollab dev conflicts --between alice bob  # 检测特定两人之间的冲突
+    """
+    from .conflict_detector import ConflictDetector
+    
+    config_path = Path(config)
+    project_root = config_path.parent
+    
+    if not config_path.exists():
+        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        raise SystemExit(1)
+    
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+    
+    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    if not multi_dev_enabled:
+        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
+        console.print("[dim]在 project.yaml 中设置 multi_developer.enabled: true[/dim]")
+        raise SystemExit(1)
+    
+    console.print()
+    console.print("[cyan]正在检测跨开发者冲突...[/cyan]")
+    console.print()
+    
+    try:
+        detector = ConflictDetector(project_root, project_config)
+        
+        # 执行冲突检测
+        conflicts = detector.detect_all_conflicts(
+            target_developer=None,
+            between_developers=between
+        )
+        
+        # 生成并显示报告
+        report = detector.generate_conflict_report(conflicts, verbose=verbose)
+        console.print(report)
+        
+        # 如果有冲突，返回非零退出码
+        if conflicts:
+            raise SystemExit(1)
+        
+    except Exception as e:
+        console.print(f"[red]冲突检测失败:[/red] {e}")
+        if verbose:
+            import traceback
+            console.print(traceback.format_exc())
+        raise SystemExit(1)
+
+
 
 
 if __name__ == "__main__":

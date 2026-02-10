@@ -466,6 +466,48 @@ documentation:
   decisions_file: "docs/DECISIONS.md"
 
 # ============================================
+# 多开发者支持 (v0.5.0+)
+# ============================================
+multi_developer:
+  enabled: false  # 默认关闭，通过 --multi-dev 开启
+  
+  # 开发者身份识别策略
+  identity:
+    primary: "git_username"        # git_username / system_user / manual
+    fallback: "system_user"        # 主策略失败时的降级方案
+    normalize: true                # 标准化名称（小写、替换空格为下划线）
+  
+  # 上下文管理
+  context:
+    per_developer_dir: "docs/developers"     # 各开发者上下文目录
+    global_aggregation: true                 # 是否生成全局聚合视图
+    aggregation_file: "docs/CONTEXT.md"      # 全局聚合文件路径
+    metadata_file: ".metadata.yaml"          # 元数据文件名
+    auto_sync: true                          # 对话结束时自动触发聚合
+  
+  # 协作管理
+  collaboration:
+    enabled: true
+    file: "docs/developers/COLLABORATION.md"
+    track_dependencies: true       # 跟踪任务依赖
+    track_handoffs: true           # 跟踪任务交接
+  
+  # 对话流程变更（多开发者模式下）
+  dialogue_protocol:
+    on_start:
+      read_files:
+        - "docs/CONTEXT.md"                           # 读全局聚合视图
+        - "docs/developers/{developer}/CONTEXT.md"    # 读自己的上下文
+        - "docs/developers/COLLABORATION.md"          # 读协作文档
+        - "CONTRIBUTING_AI.md"
+    on_end:
+      update_files:
+        - "docs/developers/{developer}/CONTEXT.md"    # 更新自己的上下文
+        - "docs/CHANGELOG.md"                         # 更新全局 CHANGELOG
+      aggregate_context: true                         # 重新生成全局聚合
+      git_commit: true
+
+# ============================================
 # 协议自检机制
 # ============================================
 protocol_check:
