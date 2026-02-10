@@ -9,6 +9,8 @@ from rich.table import Table
 from rich.panel import Panel
 from rich import print as rprint
 import yaml
+import sys
+import platform
 
 from . import __version__
 from .generator import LLMContextGenerator
@@ -18,6 +20,33 @@ from .llmstxt import LLMsTxtManager
 from .git_utils import is_git_repo
 from .lifecycle import LifecycleManager
 from .protocol_checker import ProtocolChecker
+
+# 检测是否为 Windows 且使用 GBK 编码
+def is_windows_gbk():
+    """检测是否为 Windows 且使用 GBK 编码"""
+    if platform.system() != "Windows":
+        return False
+    try:
+        # 尝试编码 emoji，如果失败说明不支持
+        "✅⚠️❌ℹ️".encode(sys.stdout.encoding or "utf-8")
+        return False
+    except (UnicodeEncodeError, LookupError):
+        return True
+
+# 根据环境选择是否使用 emoji
+USE_EMOJI = not is_windows_gbk()
+
+# emoji 和特殊字符替代方案
+EMOJI_MAP = {
+    "error": "X" if not USE_EMOJI else "❌",
+    "warning": "!" if not USE_EMOJI else "⚠️",
+    "info": "i" if not USE_EMOJI else "ℹ️",
+    "success": "OK" if not USE_EMOJI else "✅",
+    "lock": "[保留]" if not USE_EMOJI else "🔒"
+}
+
+# bullet point 替代
+BULLET = "-" if is_windows_gbk() else "•"
 
 console = Console()
 
@@ -85,7 +114,7 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool):
     # 成功提示
     console.print()
     console.print(Panel.fit(
-        f"[bold green]✅ 项目 {name} 初始化成功![/bold green]\n\n"
+        f"[bold green]{EMOJI_MAP['success']} 项目 {name} 初始化成功![/bold green]\n\n"
         f"[dim]目录:[/dim] {output_path.absolute()}\n"
         f"[dim]领域:[/dim] {domain}",
         title="完成"
@@ -111,10 +140,10 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool):
     
     if git_auto_init:
         console.print()
-        console.print("[green]✅ Git 仓库已自动初始化[/green]")
+        console.print(f"[green]{EMOJI_MAP['success']} Git 仓库已自动初始化[/green]")
     elif git_warning:
         console.print()
-        console.print(f"[yellow]⚠️  {git_warning}[/yellow]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} {git_warning}[/yellow]")
         console.print("[dim]提示: 建议初始化 Git 仓库以跟踪项目变更[/dim]")
     
     # 下一步提示
@@ -174,16 +203,16 @@ def generate(config: str, output: str, no_llmstxt: bool):
                 
                 if updated:
                     if llmstxt_path and llmstxt_path.exists():
-                        console.print(f"[green]✅ 已更新:[/green] {llmstxt_path}")
+                        console.print(f"[green]{EMOJI_MAP['success']} 已更新:[/green] {llmstxt_path}")
                     else:
-                        console.print(f"[green]✅ 已创建:[/green] {llmstxt_path}")
+                        console.print(f"[green]{EMOJI_MAP['success']} 已创建:[/green] {llmstxt_path}")
                 else:
                     console.print(f"[dim]Info: llms.txt 已包含协作规则引用[/dim]")
         except Exception as e:
             console.print(f"[red]错误:[/red] {e}")
             raise SystemExit(1)
     
-    console.print(f"[green]✅ 已生成:[/green] {output_path}")
+    console.print(f"[green]{EMOJI_MAP['success']} 已生成:[/green] {output_path}")
     console.print(f"[dim]配置:[/dim] {config_path}")
 
 
@@ -211,12 +240,12 @@ def validate(config: str):
             raise SystemExit(1)
     
     if errors:
-        console.print(f"[red]❌ 发现 {len(errors)} 个问题:[/red]")
+        console.print(f"[red]{EMOJI_MAP['error']} 发现 {len(errors)} 个问题:[/red]")
         for err in errors:
             console.print(f"  - {err}")
         raise SystemExit(1)
     else:
-        console.print(f"[green]✅ 配置有效:[/green] {config}")
+        console.print(f"[green]{EMOJI_MAP['success']} 配置有效:[/green] {config}")
 
 
 @main.command()
@@ -278,7 +307,7 @@ def export_template(template: str, output: str):
     try:
         content = tm.get_template(template)
         output_path.write_text(content, encoding="utf-8")
-        console.print(f"[green]✅ 已导出模板:[/green] {output_path}")
+        console.print(f"[green]{EMOJI_MAP['success']} 已导出模板:[/green] {output_path}")
     except FileNotFoundError:
         console.print(f"[red]错误:[/red] 模板不存在: {template}")
         console.print("[dim]使用 'vibecollab templates' 查看可用模板[/dim]")
@@ -349,13 +378,13 @@ def upgrade(config: str, dry_run: bool, force: bool):
             console.print("[dim]没有新增配置项[/dim]")
         
         console.print()
-        console.print("[bold]🔒 将保留以下用户配置:[/bold]")
-        console.print(f"  • project.name: {user_preserved['project'].get('name', '(未设置)')}")
-        console.print(f"  • project.domain: {user_preserved['project'].get('domain', '(未设置)')}")
+        console.print(f"[bold]{EMOJI_MAP['lock']} 将保留以下用户配置:[/bold]")
+        console.print(f"  {BULLET} project.name: {user_preserved['project'].get('name', '(未设置)')}")
+        console.print(f"  {BULLET} project.domain: {user_preserved['project'].get('domain', '(未设置)')}")
         if user_preserved.get('roles'):
-            console.print(f"  • roles: {len(user_preserved['roles'])} 个角色")
+            console.print(f"  {BULLET} roles: {len(user_preserved['roles'])} 个角色")
         if user_preserved.get('confirmed_decisions'):
-            console.print(f"  • confirmed_decisions: {len(user_preserved['confirmed_decisions'])} 条决策")
+            console.print(f"  {BULLET} confirmed_decisions: {len(user_preserved['confirmed_decisions'])} 条决策")
         
         console.print()
         console.print(f"[dim]移除 --dry-run 执行实际升级[/dim]")
@@ -389,7 +418,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
     # 成功提示
     console.print()
     console.print(Panel.fit(
-        f"[bold green]✅ 协议已升级到 v{__version__}[/bold green]",
+        f"[bold green]{EMOJI_MAP['success']} 协议已升级到 v{__version__}[/bold green]",
         title="升级完成"
     ))
     
@@ -401,8 +430,8 @@ def upgrade(config: str, dry_run: bool, force: bool):
     
     console.print()
     console.print("[bold]已更新文件:[/bold]")
-    console.print(f"  • {config_path}")
-    console.print(f"  • {contributing_ai_path}")
+    console.print(f"  {BULLET} {config_path}")
+    console.print(f"  {BULLET} {contributing_ai_path}")
     
     console.print()
     console.print("[dim]提示: 使用 git diff 查看具体变更[/dim]")
@@ -467,25 +496,25 @@ def check(config: str, strict: bool):
     infos = [r for r in results if r.severity == "info"]
     
     if errors:
-        console.print("[bold red]❌ 错误:[/bold red]")
+        console.print(f"[bold red]{EMOJI_MAP['error']} 错误:[/bold red]")
         for result in errors:
-            console.print(f"  • {result.name}: {result.message}")
+            console.print(f"  {BULLET} {result.name}: {result.message}")
             if result.suggestion:
                 console.print(f"    [dim]建议: {result.suggestion}[/dim]")
         console.print()
     
     if warnings:
-        console.print("[bold yellow]⚠️  警告:[/bold yellow]")
+        console.print(f"[bold yellow]{EMOJI_MAP['warning']} 警告:[/bold yellow]")
         for result in warnings:
-            console.print(f"  • {result.name}: {result.message}")
+            console.print(f"  {BULLET} {result.name}: {result.message}")
             if result.suggestion:
                 console.print(f"    [dim]建议: {result.suggestion}[/dim]")
         console.print()
     
     if infos:
-        console.print("[bold blue]ℹ️  信息:[/bold blue]")
+        console.print(f"[bold blue]{EMOJI_MAP['info']} 信息:[/bold blue]")
         for result in infos:
-            console.print(f"  • {result.name}: {result.message}")
+            console.print(f"  {BULLET} {result.name}: {result.message}")
             if result.suggestion:
                 console.print(f"    [dim]建议: {result.suggestion}[/dim]")
         console.print()
@@ -493,15 +522,16 @@ def check(config: str, strict: bool):
     # 显示摘要
     if summary["all_passed"] and not (strict and warnings):
         console.print(Panel.fit(
-            f"[bold green]✅ 所有检查通过[/bold green]\n\n"
+            f"[bold green]{EMOJI_MAP['success']} 所有检查通过[/bold green]\n\n"
             f"总计: {summary['total']} 项检查",
             title="检查完成"
         ))
     else:
         status = "失败" if errors or (strict and warnings) else "有警告"
         color = "red" if errors or (strict and warnings) else "yellow"
+        emoji = EMOJI_MAP['error'] if errors or (strict and warnings) else EMOJI_MAP['warning']
         console.print(Panel.fit(
-            f"[bold {color}]⚠️  检查{status}[/bold {color}]\n\n"
+            f"[bold {color}]{emoji} 检查{status}[/bold {color}]\n\n"
             f"总计: {summary['total']} 项\n"
             f"错误: {summary['errors']} 项\n"
             f"警告: {summary['warnings']} 项",
