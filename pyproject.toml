@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vibe-collab"
-version = "0.4.3"
-description = "Generate AI collaboration protocols with Vibe Development philosophy"
+version = "0.5.1"
+description = "Generate AI collaboration protocols with Vibe Development philosophy - Multi-developer with conflict detection"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.8"

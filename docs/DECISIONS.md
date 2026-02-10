@@ -99,5 +99,38 @@
 - **状态**: CONFIRMED
 - **影响**: 新增 git_utils.py 模块，集成到项目初始化流程
 
+### DECISION-008: 多开发者支持架构设计
+- **发起人**: user
+- **参与者**: user, AI
+- **等级**: A
+- **角色**: [ARCH]
+- **问题**: 如何支持多个开发者/多个 Agent 协同开发？
+- **选项**:
+  - A: 每个开发者独立 CONTEXT.md，无全局视图
+  - B: 保持单一 CONTEXT.md，添加开发者标记
+  - C: 开发者独立 CONTEXT.md + 全局聚合视图（选择）
+- **决策**: 采用方案 C - 开发者独立上下文 + 全局自动聚合
+- **理由**:
+  - **隔离性**: 各开发者维护自己的工作上下文，避免冲突
+  - **全局视图**: 自动聚合提供项目整体状态，便于协调
+  - **可扩展**: 易于添加新开发者，无需重构现有结构
+  - **向后兼容**: 单开发者项目可平滑迁移到多开发者模式
+- **技术方案**:
+  - 开发者身份识别: Git 用户名自动识别（`git config user.name`）
+  - 目录结构: `docs/developers/{developer}/CONTEXT.md`
+  - 全局聚合: `docs/CONTEXT.md` 自动从各开发者上下文生成（只读）
+  - 协作管理: 新增 `docs/developers/COLLABORATION.md` 记录依赖和交接
+  - CHANGELOG.md: 保持全局统一（版本历史应该统一）
+  - DECISIONS.md: 添加 `initiator` 和 `participants` 字段标记参与者
+  - Git commit: 不额外标记，使用 Git 原生 author 信息
+- **日期**: 2026-02-10
+- **状态**: CONFIRMED
+- **影响**: 
+  - 新增 `src/vibecollab/developer.py` 模块（DeveloperManager, ContextAggregator）
+  - 扩展 `project.yaml` schema（multi_developer 配置）
+  - 新增 CLI 命令（`vibecollab dev *`）
+  - 更新项目初始化逻辑（支持 `--multi-dev` 选项）
+  - 版本升级到 v0.5.0
+
 ---
 *决策记录格式见 CONTRIBUTING_AI.md*
