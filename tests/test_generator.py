@@ -2,9 +2,9 @@
 Tests for LLMContext Generator
 """
 
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 import yaml
 
 from vibecollab import LLMContextGenerator, Project
@@ -49,10 +49,10 @@ class TestLLMContextGenerator:
                 }
             ]
         }
-        
+
         generator = LLMContextGenerator(config)
         content = generator.generate()
-        
+
         assert "TestProject" in content
         assert "Vibe Development" in content
         assert "[DEV]" in content
@@ -62,7 +62,7 @@ class TestLLMContextGenerator:
         config = {}
         generator = LLMContextGenerator(config)
         errors = generator.validate()
-        
+
         assert len(errors) > 0
         assert any("project" in e for e in errors)
 
@@ -76,7 +76,7 @@ class TestLLMContextGenerator:
         }
         generator = LLMContextGenerator(config)
         errors = generator.validate()
-        
+
         assert any("决策级别" in e or "level" in e.lower() for e in errors)
 
 
@@ -93,7 +93,7 @@ class TestProject:
                 output_dir=output_dir
             )
             project.generate_all()
-            
+
             # 检查文件是否生成
             assert (output_dir / "CONTRIBUTING_AI.md").exists()
             assert (output_dir / "project.yaml").exists()
@@ -110,11 +110,11 @@ class TestProject:
                 output_dir=output_dir
             )
             project.generate_all()
-            
+
             # 读取生成的配置
             with open(output_dir / "project.yaml", "r", encoding="utf-8") as f:
                 config = yaml.safe_load(f)
-            
+
             assert config["project"]["name"] == "MyTestProject"
             assert config["project"]["domain"] == "web"
 
@@ -180,10 +180,10 @@ class TestProject:
                 }
             }
         }
-        
+
         generator = LLMContextGenerator(config)
         content = generator.generate()
-        
+
         # 验证主章节编号顺序正确
         expected_chapters = [
             "# 一、核心理念",
@@ -199,36 +199,36 @@ class TestProject:
             "# 十一、符号学标注系统",
             "# 十二、协议自检机制",
         ]
-        
+
         for chapter in expected_chapters:
             assert chapter in content, f"章节 '{chapter}' 未找到"
-        
+
         # 验证没有重复的章节编号
         import re
         chapter_pattern = r'^# (一|二|三|四|五|六|七|八|九|十|十一|十二|十三|十四)、'
         chapters_found = re.findall(chapter_pattern, content, re.MULTILINE)
-        
+
         # 检查是否有重复
         from collections import Counter
         chapter_counts = Counter(chapters_found)
         duplicates = [ch for ch, count in chapter_counts.items() if count > 1]
         assert len(duplicates) == 0, f"发现重复的章节编号: {duplicates}"
-        
+
         # 验证子章节编号（以多开发者章节为例）
         assert "## 10.1 协作模式概述" in content
         assert "## 10.2 目录结构" in content
         assert "## 10.3 开发者身份识别" in content
         assert "## 10.4 上下文管理" in content
-        
+
         # 验证阶段化协作规则的子章节
         assert "## 8.1 项目生涯阶段说明" in content
         assert "## 8.2 阶段化协作指导" in content
-        
+
         # 验证上下文管理的子章节
         assert "## 9.1 关键文件职责" in content
         assert "## 9.2 上下文恢复协议" in content
         assert "## 9.3 上下文保存协议" in content
-        
+
         # 验证协议自检机制的子章节
         assert "## 12.1 协议自检的重要性" in content
         assert "## 12.2 自检触发方式" in content

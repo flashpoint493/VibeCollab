@@ -14,23 +14,23 @@ AI CLI 命令 — 人机对话 + 自主 Agent 模式
 - 内存阈值保护
 """
 
-import click
 import json
 import os
+import platform
 import random
 import sys
 import time
-import platform
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+import click
 from rich.console import Console
-from rich.panel import Panel
 from rich.markdown import Markdown
+from rich.panel import Panel
 
-from .llm_client import LLMClient, LLMConfig, Message, LLMResponse, build_project_context
 from .event_log import Event, EventLog, EventType
+from .llm_client import LLMClient, LLMConfig, LLMResponse, Message, build_project_context
 from .task_manager import TaskManager, TaskStatus
 
 
@@ -336,7 +336,7 @@ def chat(project: Optional[str], no_context: bool, temperature: float, verbose: 
 
     console.print(f"[dim]项目: {project_root}[/dim]")
     console.print(f"[dim]模型: {client.config.model} ({client.config.provider})[/dim]")
-    console.print(f"[dim]输入 'exit' 或 Ctrl+C 退出[/dim]\n")
+    console.print("[dim]输入 'exit' 或 Ctrl+C 退出[/dim]\n")
 
     # 初始化消息历史
     messages = []
@@ -492,7 +492,7 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
         raise SystemExit(1)
 
     # Phase 1: ASSESS + PLAN
-    console.print(f"\n[cyan]Phase 1: ASSESS + PLAN[/cyan]")
+    console.print("\n[cyan]Phase 1: ASSESS + PLAN[/cyan]")
     system = _build_system_prompt(project_root, agent_mode=True)
 
     plan_prompt = (
@@ -542,17 +542,20 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
             return
 
         # Phase 2: EXECUTE (让 LLM 生成具体代码变更)
-        console.print(f"\n[cyan]Phase 2: EXECUTE[/cyan]")
+        console.print("\n[cyan]Phase 2: EXECUTE[/cyan]")
         messages.append(Message(role="assistant", content=plan_resp.content))
         messages.append(Message(role="user", content=(
             "Phase 2: EXECUTE. Based on your plan, generate the specific code changes.\n\n"
-            "For each file change, output:\n"
+            "For each file change, output a JSON code block:\n"
             "```json\n"
             '{"file": "relative/path", "action": "create|modify|delete", '
-            '"content": "full file content or diff description"}\n'
+            '"content": "full file content"}\n'
             "```\n\n"
-            "Important: Generate ACTUAL code, not placeholders. Follow the project's "
-            "coding conventions visible in the context."
+            "Rules:\n"
+            "- Output one JSON block per file change\n"
+            "- For 'modify', include the COMPLETE new file content, not a diff\n"
+            "- Generate ACTUAL code, not placeholders\n"
+            "- Follow the project's coding conventions"
         )))
 
         console.print(f"[cyan]{EMOJI['think']} Phase 2: 生成代码变更...[/cyan]")
@@ -561,16 +564,66 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
         if exec_resp.ok:
             console.print(Panel(
                 Markdown(exec_resp.content),
-                title="Execution Result",
+                title="Generated Changes",
                 border_style="yellow",
             ))
 
-        # Phase 3: REPORT (更新上下文)
-        console.print(f"\n[cyan]Phase 3: REPORT[/cyan]")
-        _log_event(event_log, EventType.CUSTOM,
-                   "Agent run: cycle completed", actor="agent",
-                   payload={"model": exec_resp.model, "phases_completed": 3})
-        console.print(f"{EMOJI['ok']} 周期完成。请人工审查生成的变更。")
+        # Phase 3: APPLY + TEST + COMMIT
+        console.print("\n[cyan]Phase 3: APPLY + TEST + COMMIT[/cyan]")
+
+        from .agent_executor import AgentExecutor
+        executor = AgentExecutor(project_root)
+        changes = executor.parse_changes(exec_resp.content if exec_resp.ok else "")
+
+        if not changes:
+            console.print(f"[yellow]{EMOJI['warn']} 未从 LLM 输出中解析到文件变更[/yellow]")
+            _log_event(event_log, EventType.CUSTOM,
+                       "Agent run: no parseable changes", actor="agent")
+            return
+
+        console.print(f"  解析到 {len(changes)} 个文件变更:")
+        for c in changes:
+            console.print(f"    {c.action}: {c.file}")
+
+        # 获取测试命令
+        test_cmd = None
+        cfg_path = project_root / "project.yaml"
+        if cfg_path.exists():
+            import yaml
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                proj_cfg = yaml.safe_load(f) or {}
+            qa = proj_cfg.get("quick_acceptance", {})
+            if qa.get("start_command"):
+                test_cmd = qa["start_command"]
+
+        result = executor.execute_full_cycle(
+            exec_resp.content,
+            commit_message=f"[AGENT] {plan_resp.content[:80].splitlines()[0]}",
+            test_command=test_cmd,
+        )
+
+        if result.success:
+            console.print(f"\n{EMOJI['ok']} [green]周期完成![/green]")
+            for applied in result.changes_applied:
+                console.print(f"  [green]{applied}[/green]")
+            if result.test_passed:
+                console.print(f"  {EMOJI['ok']} 测试通过")
+            if result.git_committed:
+                console.print(f"  {EMOJI['ok']} Git commit: {result.git_hash}")
+
+            _log_event(event_log, EventType.CUSTOM,
+                       "Agent run: cycle completed successfully", actor="agent",
+                       payload=result.to_dict())
+        else:
+            console.print(f"\n[red]{EMOJI['err']} 周期执行失败[/red]")
+            for err in result.errors:
+                console.print(f"  [red]{err}[/red]")
+            if result.rollback_performed:
+                console.print(f"  [yellow]{EMOJI['warn']} 已回滚所有变更[/yellow]")
+
+            _log_event(event_log, EventType.VALIDATION_FAILED,
+                       "Agent run: execution failed", actor="agent",
+                       payload=result.to_dict())
 
     except (ImportError, RuntimeError, ValueError) as e:
         console.print(f"[red]{EMOJI['err']} Agent run 失败: {e}[/red]")
@@ -767,8 +820,13 @@ def _execute_agent_cycle(
         # Phase 2: EXECUTE
         messages.append(Message(role="assistant", content=plan_resp.content))
         messages.append(Message(role="user", content=(
-            "Phase 2: EXECUTE. Generate the specific changes. "
-            "Output concrete code, not placeholders."
+            "Phase 2: EXECUTE. Generate the specific changes.\n"
+            "For each file, output a JSON code block:\n"
+            "```json\n"
+            '{"file": "relative/path", "action": "create|modify|delete", '
+            '"content": "full file content"}\n'
+            "```\n"
+            "Output ACTUAL code, not placeholders. One JSON block per file."
         )))
 
         exec_resp = client.chat(messages, temperature=0.2)
@@ -781,12 +839,42 @@ def _execute_agent_cycle(
                 title="Execute", border_style="yellow",
             ))
 
-        # Phase 3: REPORT
-        _log_event(event_log, EventType.CUSTOM,
-                   "Agent cycle completed", actor="agent",
-                   payload={"model": plan_resp.model})
+        # Phase 3: APPLY + TEST + COMMIT
+        from .agent_executor import AgentExecutor
+        executor = AgentExecutor(project_root)
+        changes = executor.parse_changes(exec_resp.content)
 
-        return True
+        if not changes:
+            _log_event(event_log, EventType.CUSTOM,
+                       "Agent cycle: no parseable changes", actor="agent")
+            return True  # 非失败，只是没有可执行的变更
+
+        # 获取测试命令
+        test_cmd = None
+        cfg_path = project_root / "project.yaml"
+        if cfg_path.exists():
+            import yaml
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                proj_cfg = yaml.safe_load(f) or {}
+            qa = proj_cfg.get("quick_acceptance", {})
+            if qa.get("start_command"):
+                test_cmd = qa["start_command"]
+
+        result = executor.execute_full_cycle(
+            exec_resp.content,
+            commit_message=f"[AGENT] {plan_resp.content[:80].splitlines()[0]}",
+            test_command=test_cmd,
+        )
+
+        _log_event(event_log, EventType.CUSTOM,
+                   f"Agent cycle {'completed' if result.success else 'failed'}",
+                   actor="agent", payload=result.to_dict())
+
+        if verbose and result.success:
+            console.print(f"  Applied: {len(result.changes_applied)} files, "
+                          f"git: {result.git_hash}")
+
+        return result.success
 
     except Exception as e:
         console.print(f"[red]Cycle error: {e}[/red]")
@@ -823,11 +911,11 @@ def status(project: Optional[str]):
         except ValueError:
             console.print(f"[yellow]{EMOJI['warn']} 无效锁文件[/yellow]")
     else:
-        console.print(f"[dim]Agent 未运行[/dim]")
+        console.print("[dim]Agent 未运行[/dim]")
 
     # LLM 配置状态
     config = LLMConfig()
-    console.print(f"\n[bold]LLM 配置:[/bold]")
+    console.print("\n[bold]LLM 配置:[/bold]")
     for k, v in config.to_safe_dict().items():
         console.print(f"  {k}: {v}")
 
@@ -840,7 +928,7 @@ def status(project: Optional[str]):
             for t in tasks.values():
                 s = t.get("status", "UNKNOWN")
                 by_status[s] = by_status.get(s, 0) + 1
-            console.print(f"\n[bold]任务统计:[/bold]")
+            console.print("\n[bold]任务统计:[/bold]")
             for s, n in sorted(by_status.items()):
                 console.print(f"  {s}: {n}")
         except (json.JSONDecodeError, OSError):
@@ -853,7 +941,7 @@ def status(project: Optional[str]):
             event_log = EventLog(project_root)
             recent = event_log.read_recent(5)
             if recent:
-                console.print(f"\n[bold]最近事件:[/bold]")
+                console.print("\n[bold]最近事件:[/bold]")
                 for evt in recent:
                     console.print(
                         f"  [{evt.event_type}] {evt.summary} "
