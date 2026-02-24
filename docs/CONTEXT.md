@@ -18,12 +18,11 @@
 
 ### ocarina
 - **上次更新**: 2026-02-24
-- **当前任务**: DECISION-009 全部 4 迭代完成
-- **最近完成**: AgentExecutor, HealthExtractor, CI/CD, PatternEngine, Lint修复, 285 tests
-- **下一步**: v0.6.0 收尾, Agent 增强
+- **当前任务**: DECISION-009 全部完成 (Evolver 10 模式审计: 9/10 已实现)
+- **最近完成**: 架构模式全量核实, AgentExecutor, HealthExtractor, CI/CD, PatternEngine, Lint修复, 285 tests
+- **下一步**: v0.6.0 收尾, 覆盖率提升, PyPI 发布
 
 ## 全局技术债务
-- [ocarina] 🔧 `agent run` 目前只输出文本计划，不实际写文件/跑测试
 - [alice] 🔧 需要添加 E2E 测试
 
 ---

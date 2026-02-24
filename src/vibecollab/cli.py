@@ -55,6 +55,34 @@ console = Console()
 DOMAINS = ["generic", "game", "web", "data", "mobile", "infra"]
 
 
+def _safe_load_yaml(path: Path, label: str = "配置文件") -> dict:
+    """安全加载 YAML 文件，提供友好错误提示。
+
+    处理: 文件不存在、YAML 语法错误、空文件。
+    """
+    if not path.exists():
+        console.print(f"[red]错误:[/red] {label}不存在: {path}")
+        console.print("[dim]提示: 在项目目录下运行，或使用 -c 指定路径[/dim]")
+        raise SystemExit(1)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        console.print(f"[red]错误:[/red] {label} YAML 格式有误: {path}")
+        console.print(f"[dim]{e}[/dim]")
+        raise SystemExit(1)
+    except OSError as e:
+        console.print(f"[red]错误:[/red] 无法读取{label}: {e}")
+        raise SystemExit(1)
+    if data is None:
+        console.print(f"[red]错误:[/red] {label}为空: {path}")
+        raise SystemExit(1)
+    if not isinstance(data, dict):
+        console.print(f"[red]错误:[/red] {label}格式无效 (应为 YAML 字典): {path}")
+        raise SystemExit(1)
+    return data
+
+
 def deep_merge(base: dict, override: dict) -> dict:
     """深度合并两个字典，override 优先"""
     result = base.copy()
@@ -112,8 +140,14 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
         try:
             project = Project.create(name=name, domain=domain, output_dir=output_path, multi_dev=multi_dev)
             project.generate_all(auto_init_git=not no_git)
+        except PermissionError as e:
+            console.print(f"[red]错误:[/red] 权限不足，无法创建项目文件: {e}")
+            raise SystemExit(1)
+        except OSError as e:
+            console.print(f"[red]错误:[/red] 文件系统错误 (磁盘满/路径无效): {e}")
+            raise SystemExit(1)
         except Exception as e:
-            console.print(f"[red]错误:[/red] {e}")
+            console.print(f"[red]错误:[/red] 项目初始化失败: {e}")
             raise SystemExit(1)
 
     # 成功提示
@@ -236,8 +270,14 @@ def generate(config: str, output: str, no_llmstxt: bool):
                         console.print(f"[green]{EMOJI_MAP['success']} 已创建:[/green] {llmstxt_path}")
                 else:
                     console.print("[dim]Info: llms.txt 已包含协作规则引用[/dim]")
+        except yaml.YAMLError as e:
+            console.print(f"[red]错误:[/red] 配置文件 YAML 格式有误: {e}")
+            raise SystemExit(1)
+        except FileNotFoundError as e:
+            console.print(f"[red]错误:[/red] 所需文件不存在: {e}")
+            raise SystemExit(1)
         except Exception as e:
-            console.print(f"[red]错误:[/red] {e}")
+            console.print(f"[red]错误:[/red] 文档生成失败: {e}")
             raise SystemExit(1)
 
     console.print(f"[green]{EMOJI_MAP['success']} 已生成:[/green] {output_path}")
@@ -263,8 +303,11 @@ def validate(config: str):
         try:
             generator = LLMContextGenerator.from_file(config_path)
             errors = generator.validate()
+        except yaml.YAMLError as e:
+            console.print(f"[red]错误:[/red] 配置文件 YAML 格式有误: {e}")
+            raise SystemExit(1)
         except Exception as e:
-            console.print(f"[red]错误:[/red] 解析失败: {e}")
+            console.print(f"[red]错误:[/red] 配置解析失败: {e}")
             raise SystemExit(1)
 
     if errors:
@@ -367,12 +410,18 @@ def upgrade(config: str, dry_run: bool, force: bool):
         raise SystemExit(1)
 
     # 读取用户配置
-    with open(config_path, encoding="utf-8") as f:
-        user_config = yaml.safe_load(f)
+    user_config = _safe_load_yaml(config_path)
 
     # 获取最新模板
     tm = TemplateManager()
-    latest_template = yaml.safe_load(tm.get_template("default"))
+    try:
+        latest_template = yaml.safe_load(tm.get_template("default"))
+        if not isinstance(latest_template, dict):
+            console.print("[red]错误:[/red] 内置默认模板格式无效")
+            raise SystemExit(1)
+    except yaml.YAMLError as e:
+        console.print(f"[red]错误:[/red] 内置模板解析失败: {e}")
+        raise SystemExit(1)
 
     # 记录用户自定义的关键字段（不应被覆盖）
     user_preserved = {
@@ -420,14 +469,26 @@ def upgrade(config: str, dry_run: bool, force: bool):
         return
 
     # 备份原配置
+    backup_path = None
     if not force:
         backup_path = config_path.with_suffix(".yaml.bak")
-        config_path.rename(backup_path)
-        console.print(f"[dim]已备份原配置到: {backup_path}[/dim]")
+        try:
+            config_path.rename(backup_path)
+            console.print(f"[dim]已备份原配置到: {backup_path}[/dim]")
+        except OSError as e:
+            console.print(f"[red]错误:[/red] 备份失败: {e}")
+            raise SystemExit(1)
 
     # 写入合并后的配置
-    with open(config_path, "w", encoding="utf-8") as f:
-        yaml.dump(merged, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+    try:
+        with open(config_path, "w", encoding="utf-8") as f:
+            yaml.dump(merged, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+    except OSError as e:
+        console.print(f"[red]错误:[/red] 写入配置失败: {e}")
+        if backup_path and backup_path.exists():
+            backup_path.rename(config_path)
+            console.print("[yellow]已从备份恢复原配置[/yellow]")
+        raise SystemExit(1)
 
     # 重新生成协作规则文档并集成 llms.txt
     contributing_ai_path = config_path.parent / "CONTRIBUTING_AI.md"
@@ -577,8 +638,7 @@ def check(config: str, strict: bool):
         raise SystemExit(1)
 
     # 加载配置
-    with open(config_path, encoding="utf-8") as f:
-        project_config = yaml.safe_load(f)
+    project_config = _safe_load_yaml(config_path)
 
     # 执行检查
     checker = ProtocolChecker(project_root, project_config)
@@ -661,8 +721,7 @@ def health(config: str, as_json: bool):
         console.print(f"[red]配置文件不存在: {config}[/red]")
         raise SystemExit(1)
 
-    with open(config_path, "r", encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
+    cfg = _safe_load_yaml(config_path)
 
     from .health import HealthExtractor
     ext = HealthExtractor(config_path.parent, cfg)
