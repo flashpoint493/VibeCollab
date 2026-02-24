@@ -34,6 +34,10 @@ build/
 # Publishing scripts (contains local credentials/configs)
 publish_pypi.bat
 
+# Secrets / environment variables (NEVER commit)
+.env
+.env.*
+
 # VibeCollab local runtime data
 .vibecollab/
 .vibecollab.local.yaml

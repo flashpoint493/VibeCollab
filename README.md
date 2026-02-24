@@ -16,40 +16,44 @@
 
 ```mermaid
 flowchart TD
-    A[1. 安装 vibe-collab<br/>pip install] --> B[2. 初始化项目<br/>选择领域模板]
+    A[1. 安装 vibe-collab<br/>pip install] --> B[2. 初始化项目<br/>vibecollab init]
     B --> C[生成项目结构]
-    C --> D1[CONTRIBUTING_AI.md<br/>协作规则]
-    C --> D2[project.yaml<br/>配置文件]
-    C --> D3[docs/<br/>CONTEXT.md CHANGELOG.md]
+    C --> D1[project.yaml<br/>核心配置 · 单一数据源]
+    C --> D2[docs/<br/>CONTEXT · CHANGELOG · DECISIONS]
     
-    D1 --> E1[3. 开始对话<br/>与 AI 协作]
-    D2 --> E2[3. 自定义配置<br/>编辑 project.yaml]
+    D1 --> E[Pattern Engine<br/>Jinja2 模板渲染]
+    E --> F[CONTRIBUTING_AI.md<br/>协作规则文档]
     
-    E1 --> F[对话生命周期]
-    E2 --> F
+    F --> G[3. 开始协作]
+    D2 --> G
     
-    F --> G1[对话开始<br/>• 读 CONTRIBUTING_AI.md<br/>• 读 CONTEXT<br/>• 确认目标]
-    G1 --> G2[协作开发<br/>• 需求澄清<br/>• 决策分级<br/>• 代码实现]
-    G2 --> G3[对话结束<br/>• 更新 CONTEXT.md<br/>• 更新 CHANGELOG<br/>• git commit]
+    G --> M1[IDE 对话模式<br/>读 CONTRIBUTING_AI.md<br/>读 CONTEXT.md<br/>人机交互开发]
+    G --> M2[CLI 交互模式<br/>vibecollab ai ask/chat<br/>自动注入项目上下文]
+    G --> M3[Agent 自主模式<br/>vibecollab ai agent<br/>Plan→Execute→Solidify]
     
-    G3 --> H1{功能完成时}
-    G3 --> H2{配置变更时}
+    M1 --> H[开发循环]
+    M2 --> H
+    M3 --> H
     
-    H1 --> I1[QA 验收测试]
-    H2 --> I2[重新生成 CONTRIBUTING_AI.md]
+    H --> H1[TaskManager<br/>创建任务 · 状态流转<br/>validate → solidify]
+    H1 --> H2[EventLog<br/>append-only 审计日志<br/>SHA-256 完整性校验]
+    H2 --> H3[对话结束<br/>更新 CONTEXT · CHANGELOG<br/>git commit]
+    
+    H3 --> I{检查点}
+    I --> I1[vibecollab check<br/>协议自检]
+    I --> I2[vibecollab health<br/>项目健康信号]
+    I --> I3[vibecollab dev conflicts<br/>冲突检测]
     
     I1 --> J[里程碑发布]
     I2 --> J
-    
-    J --> K1[全量 QA]
-    K1 --> K2[构建打包]
-    K2 --> K3[版本回顾]
-    K3 --> K4[发布]
+    I3 --> J
     
     style A fill:#e1f5ff
     style B fill:#e1f5ff
-    style C fill:#fff4e1
-    style F fill:#ffe1f5
+    style D1 fill:#fff4e1
+    style E fill:#fff4e1
+    style G fill:#ffe1f5
+    style H fill:#ffe1f5
     style J fill:#e1ffe1
 ```
 
@@ -57,19 +61,19 @@ flowchart TD
 
 ## 特性
 
-- **完整协议覆盖**: 决策分级、迭代管理、QA验收、Prompt工程最佳实践
+- **Pattern Engine** (v0.5.9+): Jinja2 模板驱动的 CONTRIBUTING_AI.md 生成，27 个 `.md.j2` 模板 + manifest 控制
+- **Template Overlay** (v0.5.9+): `.vibecollab/patterns/` 本地模板覆盖，支持章节增删改
 - **三模式 AI CLI** (v0.5.8+): `vibecollab ai ask/chat` 人机交互 + `vibecollab ai agent` 自主模式
-- **Agent 安全门控** (v0.5.8+): PID 锁、pending-solidify、最大周期、自适应退避、断路器、RSS 限制
+- **Agent Executor** (v0.5.9+): LLM 计划 → 文件变更 → 测试 → git commit，含安全门控
+- **Health Signals** (v0.5.9+): 项目健康评分 (0-100 + A/B/C/D/F)，10+ 信号类型
 - **LLM 客户端** (v0.5.7+): Provider-agnostic (OpenAI-compatible + Anthropic Claude)
 - **任务生命周期** (v0.5.6+): validate→solidify→rollback 状态管理
-- **审计日志** (v0.5.5+): Append-only JSONL EventLog
+- **审计日志** (v0.5.5+): Append-only JSONL EventLog，SHA-256 完整性校验
 - **多开发者支持** (v0.5.0+): 多人/多 Agent 协同开发，独立上下文管理
-- **CLI 身份切换** (v0.5.4+): 通过命令行切换开发者身份，无需修改 Git 配置
 - **冲突检测** (v0.5.1+): 自动检测跨开发者的文件冲突、任务冲突、依赖冲突
 - **协议自检** (v0.5.2+): 检查协议遵循情况，确保文档及时更新
+- **CI/CD 自动发布** (v0.6.1+): GitHub Release 触发自动 PyPI 发布
 - **领域扩展**: 支持 game/web/data 等领域的定制扩展
-- **钩子机制**: 在对话流程节点自动注入上下文
-- **Cursor Skill**: 可作为 IDE Skill 使用，提供结构化协作流程
 - **自举实现**: 本项目使用自身生成的协作协议进行开发
 
 ---
@@ -298,26 +302,28 @@ vibecollab validate -c project.yaml
 
 ## 生成的 CONTRIBUTING_AI.md 包含章节
 
+> 由 Pattern Engine 通过 `manifest.yaml` 控制，27 个 Jinja2 模板按序渲染
+
 | 章节 | 说明 |
 |------|------|
 | 核心理念 | Vibe Development 哲学、决策质量观 |
 | 职能角色定义 | 可自定义的角色体系 (DESIGN/ARCH/DEV/PM/QA/TEST) |
 | 决策分级制度 | S/A/B/C 四级决策及 Review 要求 |
 | 开发流程协议 | 对话开始/结束时的强制流程 |
-| **需求澄清协议** | **模糊需求 → 结构化描述转化** |
-| **任务单元管理** | **对话任务单元定义、状态流转、依赖管理** ⭐ |
+| 需求澄清协议 | 模糊需求 → 结构化描述转化 |
+| 任务单元管理 | 对话任务单元定义、状态流转、依赖管理 |
 | 迭代建议管理协议 | QA 建议 → PM 评审 → 纳入/延后/拒绝 |
-| 版本回顾协议 | 里程碑验收后的回顾流程 |
-| 构建打包协议 | 全量验收前的 CheckList |
-| 配置级迭代协议 | 无需审批的快速配置修改 |
 | QA 验收协议 | 测试用例要素、快速验收模板 |
 | Git 协作规范 | 分支策略、Commit 前缀 |
 | 测试体系 | Unit Test + Product QA 双轨 |
 | 里程碑定义 | 生命周期、Bug 优先级 |
 | Prompt 工程最佳实践 | 有效提问模板、高价值引导词 |
+| 多开发者协作协议 | 身份识别、上下文管理、冲突检测 (条件渲染) |
 | 符号学标注系统 | 统一的状态/优先级符号 |
-| 已确认决策汇总 | 项目决策记录表 |
-| 文档迭代日志 | CONTRIBUTING_AI.md 自身版本历史 |
+| 协议自检 | 触发词、检查项 |
+| PRD 管理 | 需求文档管理协议 |
+
+> 支持 **Template Overlay**：在项目 `.vibecollab/patterns/` 中放置自定义模板可覆盖内置章节
 
 ---
 
@@ -356,6 +362,13 @@ vibecollab dev conflicts --between alice bob   # 检测特定开发者间冲突
 vibecollab check                               # 检查协议遵循情况
 vibecollab check --verbose                     # 显示详细检查报告
 
+# 项目健康信号 (v0.5.9+)
+vibecollab health                              # 项目健康评分 (0-100)
+vibecollab health --json                       # JSON 格式输出
+
+# Pattern Engine (v0.5.9+)
+vibecollab patterns                            # 列出所有章节模板及来源
+
 # AI 人机交互 (v0.5.8+)
 vibecollab ai ask "问题"                       # 单轮 AI 提问 (自动注入项目上下文)
 vibecollab ai ask "问题" --no-context          # 不注入项目上下文
@@ -392,16 +405,16 @@ vibecollab upgrade -c project.yaml
 
 ```mermaid
 flowchart LR
-    A[用户配置<br/>project.yaml] --> C[智能合并<br/>重新生成]
-    B[最新模板<br/>vibecollab 包] --> C
+    A[用户配置<br/>project.yaml] --> C[Pattern Engine<br/>Jinja2 渲染]
+    B[内置模板<br/>27 个 .md.j2] --> C
     
     A1[• 项目名称] -.保留.-> C
     A2[• 自定义角色] -.保留.-> C
     A3[• 已确认决策] -.保留.-> C
     
     B1[• 新增协议章节] --> C
-    B2[• Bug 修复] --> C
-    B3[• 最佳实践更新] --> C
+    B2[• manifest 控制] --> C
+    B3[• 本地模板覆盖] --> C
     
     C --> D[CONTRIBUTING_AI.md]
     
@@ -577,32 +590,43 @@ Skill 会在对话中自动：
 ```
 VibeCollab/
 ├── CONTRIBUTING_AI.md           # 本项目的协作规则（自举）
-├── project.yaml                 # 本项目的配置
+├── project.yaml                 # 本项目的配置（单一数据源）
 ├── pyproject.toml               # 包配置
 ├── src/vibecollab/
 │   ├── cli.py                   # CLI 主入口
 │   ├── cli_ai.py                # AI CLI 命令 (ask/chat/agent)
 │   ├── cli_lifecycle.py         # 项目生涯管理命令
-│   ├── generator.py             # 文档生成器
+│   ├── pattern_engine.py        # Jinja2 Pattern Engine (manifest 驱动)
+│   ├── generator.py             # 文档生成器 (粘合层)
 │   ├── extension.py             # 扩展处理器
 │   ├── project.py               # 项目管理
 │   ├── developer.py             # 多开发者管理
 │   ├── conflict_detector.py     # 冲突检测
 │   ├── llm_client.py            # LLM 客户端 (OpenAI/Anthropic)
-│   ├── event_log.py             # 审计日志 (JSONL)
+│   ├── agent_executor.py        # Agent 执行器 (Plan→Execute→Solidify)
+│   ├── event_log.py             # 审计日志 (JSONL + SHA-256)
 │   ├── task_manager.py          # 任务生命周期管理
+│   ├── health.py                # 项目健康信号提取
+│   ├── protocol_checker.py      # 协议自检
+│   ├── prd_manager.py           # PRD 需求管理
 │   ├── templates.py             # 模板管理
-│   └── templates/
-│       ├── default.project.yaml
-│       └── domains/             # 领域扩展
+│   ├── templates/
+│   │   ├── default.project.yaml
+│   │   └── domains/             # 领域扩展
+│   └── patterns/                # Jinja2 模板 (.md.j2)
+│       ├── manifest.yaml        # 章节清单 + 渲染条件
+│       └── *.md.j2              # 27 个章节模板
 ├── schema/
 │   ├── project.schema.yaml      # 项目配置 Schema
 │   └── extension.schema.yaml    # 扩展机制 Schema
-├── .cursor/skills/vibecollab/    # Cursor Skill
+├── .github/workflows/
+│   ├── ci.yml                   # CI: 测试 + lint + 构建
+│   └── publish.yml              # CD: Release → PyPI 自动发布
 ├── docs/
 │   ├── CONTEXT.md
-│   └── CHANGELOG.md
-└── tests/
+│   ├── CHANGELOG.md
+│   └── DECISIONS.md
+└── tests/                       # 359 tests
 ```
 
 ---
@@ -611,16 +635,22 @@ VibeCollab/
 
 ```bash
 # 安装开发依赖
-pip install -e ".[dev]"
+pip install -e ".[dev,llm]"
 
 # 运行测试
 pytest
 
+# Lint 检查
+ruff check src/vibecollab/ tests/
+
 # 重新生成本项目的协作规则文档
-python -c "from vibecollab import LLMContextGenerator; import yaml; from pathlib import Path; \
-  config = yaml.safe_load(open('project.yaml', encoding='utf-8')); \
-  g = LLMContextGenerator(config, Path('.')); \
-  Path('CONTRIBUTING_AI.md').write_text(g.generate(), encoding='utf-8')"
+vibecollab generate -c project.yaml
+
+# 检查协议遵循情况
+vibecollab check
+
+# 查看项目健康信号
+vibecollab health
 ```
 
 ---
@@ -629,13 +659,14 @@ python -c "from vibecollab import LLMContextGenerator; import yaml; from pathlib
 
 | 版本 | 日期 | 主要特性 |
 |------|------|---------|
+| v0.6.1 | 2026-02-24 | CI/CD 自动发布 (GitHub Release → PyPI) |
+| v0.6.0 | 2026-02-24 | 测试覆盖率 58%→68%，冲突检测 + PRD 管理全覆盖 |
+| v0.5.9 | 2026-02-24 | Pattern Engine + Template Overlay + Health Signals + Agent Executor |
 | v0.5.8 | 2026-02-24 | 三模式 AI CLI (ask/chat/agent) + 安全门控 |
 | v0.5.7 | 2026-02-24 | LLM Client — Provider-agnostic (OpenAI + Anthropic) |
 | v0.5.6 | 2026-02-24 | TaskManager — validate-solidify-rollback 生命周期 |
 | v0.5.5 | 2026-02-24 | EventLog — append-only JSONL 审计日志 |
 | v0.5.4 | 2026-02-24 | CLI 开发者切换 (`vibecollab dev switch`) |
-| v0.5.3 | 2026-02-10 | PyPI 发布脚本和构建配置优化 |
-| v0.5.2 | 2026-02-10 | 增强多开发者协议检查和自动初始化 |
 | v0.5.1 | 2026-02-10 | 跨开发者冲突检测 |
 | v0.5.0 | 2026-02-10 | 多开发者/多 Agent 协同支持 |
 | v0.4.3 | 2026-02-09 | Windows 编码问题修复 |
