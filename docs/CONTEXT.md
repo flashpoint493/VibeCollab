@@ -5,7 +5,7 @@
 > 聚合自: alice, ocarina
 
 ## 项目整体状态
-- **版本**: v0.5.7
+- **版本**: v0.5.8
 - **阶段**: 原型验证 (demo)
 - **活跃开发者**: 2 (alice, ocarina)
 
@@ -18,13 +18,12 @@
 
 ### ocarina
 - **上次更新**: 2026-02-24
-- **当前任务**: DECISION-009 实施 + LLM Client
-- **最近完成**: LLMClient (llm_client.py), TaskManager, EventLog, 142 tests
-- **下一步**: CLI 命令集成 (vibecollab ask/chat), Iteration 3
+- **当前任务**: DECISION-009 实施 (Iteration 3: Pattern 模块)
+- **最近完成**: cli_ai.py (三模式AI CLI), LLMClient, TaskManager, EventLog, 174 tests
+- **下一步**: Iteration 3 (Pattern 模块), CI/CD (GitHub Actions)
 
 ## 全局技术债务
-- [ocarina] 🔧 ROADMAP.md 历史冗余已清理
-- [ocarina] 🔧 EventLog 需集成到 CLI 操作
+- [ocarina] 🔧 `agent run` 目前只输出文本计划，不实际写文件/跑测试
 - [alice] 🔧 需要添加 E2E 测试
 
 ---
