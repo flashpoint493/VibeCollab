@@ -1,5 +1,34 @@
 # VibeCollab 变更日志
 
+## v0.5.4 (2026-02-24) - CLI 开发者切换功能
+
+### 新功能
+- **CLI 开发者切换** (`vibecollab dev switch`):
+  - 支持通过 CLI 切换当前开发者身份，无需修改 Git 配置或环境变量
+  - `vibecollab dev switch alice` - 直接切换到指定开发者
+  - `vibecollab dev switch` - 交互式选择开发者
+  - `vibecollab dev switch --clear` - 清除切换设置，恢复默认识别策略
+  - 切换状态持久化到 `.vibecollab.local.yaml`（已加入 .gitignore）
+
+### 改进
+- **`vibecollab dev whoami` 增强**:
+  - 显示身份来源（CLI 切换 / 环境变量 / Git 用户名 / 系统用户名）
+  - 更清晰地展示当前开发者识别方式
+
+### 技术实现
+- `DeveloperManager` 新增方法:
+  - `switch_developer(developer)` - 切换开发者并持久化
+  - `clear_switch()` - 清除切换设置
+  - `get_identity_source()` - 获取身份来源
+  - `_get_local_developer()` - 从本地配置读取开发者
+- 身份识别优先级：本地配置 > 环境变量 > 主策略 > 降级策略
+
+### 文档更新
+- CONTRIBUTING_AI.md 更新 CLI 命令参考，添加 switch 命令说明
+- alice 的 CONTEXT.md 更新工作方向
+
+---
+
 ## v0.5.1 (2026-02-10) - 跨开发者冲突检测
 
 ### 重大特性
