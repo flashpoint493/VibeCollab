@@ -227,11 +227,10 @@ git_workflow:
 testing:
   unit_test:
     enabled: true
-    framework: jest
+    framework: pytest
     coverage_target: 0.8
     patterns:
-    - '**/*.test.ts'
-    - '**/*.spec.ts'
+    - 'tests/test_*.py'
     run_on:
     - pre-commit
     - ci
@@ -333,15 +332,15 @@ version_review:
   - 迭代建议池
 build:
   enabled: true
-  command: npm run build
-  dist_entry: dist/index.html
+  command: python -m build
+  dist_entry: dist/*.whl
   timing:
   - 里程碑全量验收前
   - Bug修复期集中测试
   - 准备分发/演示版本
 quick_acceptance:
   enabled: true
-  start_command: npm run dev
+  start_command: pytest
   reply_formats:
     pass: ✅
     issue: '⚠️ 问题:'

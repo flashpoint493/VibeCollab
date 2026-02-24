@@ -1,5 +1,5 @@
 # LLMContextGenerator AI 协作开发规则
-## LLM Collaboration Protocol v0.1.1
+## LLM Collaboration Protocol v0.5.4
 
 ---
 
@@ -306,8 +306,8 @@ AI 澄清后:
 
 **全量验收前 CheckList**:
 ```
-[ ] 1. npm run build
-[ ] 2. 双击 dist/index.html 测试
+[ ] 1. python -m build
+[ ] 2. 双击 dist/*.whl 测试
 [ ] 3. 确认正常运行
 [ ] 4. 更新操作说明（如有新功能）
 ```
@@ -368,7 +368,7 @@ AI 澄清后:
 ```markdown
 ## 🧪 快速验收
 
-**启动**: `npm run dev`
+**启动**: `pytest`
 
 **验收项**:
 - [ ] 功能A: {操作} → {预期}
@@ -428,9 +428,9 @@ Git 历史不仅是代码版本，更是**设计思维的演进记录**。
 
 | 配置项 | 值 |
 |-------|-----|
-| 测试框架 | jest |
+| 测试框架 | pytest |
 | 覆盖率目标 | 80% |
-| 文件模式 | **/*.test.ts, **/*.spec.ts |
+| 文件模式 | tests/test_*.py |
 | 运行时机 | pre-commit, ci |
 
 **单元测试原则**:
@@ -930,6 +930,20 @@ vibecollab dev sync --aggregate          # 重新生成全局聚合
 # 冲突检测 (v0.5.1+)
 vibecollab dev conflicts                 # 检测冲突
 vibecollab dev conflicts --verbose       # 详细冲突报告
+
+# AI 人机交互 (v0.5.8+)
+vibecollab ai ask "问题"                 # 单轮 AI 提问 (自动注入项目上下文)
+vibecollab ai ask "问题" --no-context    # 不注入项目上下文
+vibecollab ai ask "问题" -v              # 显示详细信息
+vibecollab ai chat                       # 多轮对话模式 (exit/quit/bye 退出)
+
+# Agent 自主模式 (v0.5.8+)
+vibecollab ai agent plan                 # 只读分析，生成行动计划
+vibecollab ai agent run                  # 单次 Plan→Execute→Solidify 周期
+vibecollab ai agent run --dry-run        # 干运行，只输出计划不执行
+vibecollab ai agent serve                # 长运行 Agent 服务 (默认 50 周期)
+vibecollab ai agent serve -n 10          # 指定最大周期数
+vibecollab ai agent status               # 查看 Agent 运行状态
 ```
 
 ## 10.9 最佳实践
@@ -1332,7 +1346,7 @@ vibecollab check
 
 | 版本 | 日期 | 变更内容 |
 |-----|------|---------|
-| v1.0 | 2026-02-10 | 初始版本 |
+| v1.0 | 2026-02-24 | 初始版本 |
 
 ---
 
@@ -1355,5 +1369,5 @@ git log --follow -p <file>
 
 
 *本文档是活文档，记录人机协作的演进过程。*
-*生成时间: 2026-02-10 23:31:54*
+*生成时间: 2026-02-24 14:53:18*
 *最珍贵的不是结果，而是我们共同思考的旅程。*

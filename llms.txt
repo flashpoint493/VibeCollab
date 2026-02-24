@@ -1,10 +1,21 @@
-# LLMContextGenerator
+# VibeCollab
 
-> 从 YAML 配置生成标准化的 AI 协作协议，并自动集成 llms.txt 标准
+> AI-powered project collaboration framework with three-mode CLI (IDE/interactive/agent)
 
 ## Overview
 
-This project uses AI-assisted development with structured collaboration protocols.
+VibeCollab is a Python-based project collaboration framework that generates AI collaboration protocols, manages multi-developer workflows, and provides three-mode AI CLI integration (IDE dialogue, CLI human interaction, Agent autonomous).
+
+## Key Features
+
+- **Protocol Generation**: Generate `CONTRIBUTING_AI.md` from `project.yaml` configuration
+- **Multi-Developer Workflow**: Developer context isolation, task management, event logging
+- **Three-Mode AI CLI** (v0.5.8):
+  - `vibecollab ai ask/chat`: Human-interactive CLI with project context injection
+  - `vibecollab ai agent plan/run/serve/status`: Autonomous agent mode with safety gates
+  - IDE dialogue: Reads CONTRIBUTING_AI.md for in-editor AI collaboration
+- **Project Lifecycle**: Stage-based development (demo → production → scaling)
+- **LLM Client**: Provider-agnostic (OpenAI-compatible + Anthropic Claude)
 
 ## Quick Start
 
@@ -12,6 +23,6 @@ See [AI Collaboration Guidelines](CONTRIBUTING_AI.md) for how to work with AI as
 
 ## AI Collaboration
 
-- [AI Collaboration Guidelines](CONTRIBUTING_AI.md): 
+- [AI Collaboration Guidelines](CONTRIBUTING_AI.md):
   Collaboration protocol, decision levels, task units, and workflow rules for AI-assisted development.
   This document defines how AI assistants should work with developers on this project.

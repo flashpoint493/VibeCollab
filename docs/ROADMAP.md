@@ -27,12 +27,20 @@
 - v0.5.5 (已完成) - EventLog 审计日志
 - v0.5.6 (已完成) - TaskManager 验证-固化-回滚
 - v0.5.7 (已完成) - LLM Client (CLI + API Key)
+- v0.5.8 (已完成) - AI CLI 三模式架构 (ask/chat/agent)
 
 ---
 
 ## 已完成里程碑
 
 ### Phase 2 - 多开发者支持 (v0.5.0 - v0.5.1)
+
+#### v0.5.8 - AI CLI 三模式架构 (2026-02-24)
+- [x] vibecollab ai ask / chat — 人机交互 CLI
+- [x] vibecollab ai agent plan / run / serve — Agent 自主模式
+- [x] 安全门控: PID锁, pending-solidify, 最大周期, 自适应退避, 断路器, 内存阈值
+- [x] DECISION-010: 三模式架构
+- [x] 32 unit tests, 全量 174 tests 零回归
 
 #### v0.5.7 - LLM Client (2026-02-24)
 - [x] LLMClient: OpenAI + Anthropic 双 provider 支持
