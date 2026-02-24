@@ -167,5 +167,34 @@
   - Iteration 3: Protocol formatting enhancement — PLANNED
   - Iteration 4: Auto-evolution discussion — PLANNED
 
+### DECISION-010: 三模式 AI 架构 (IDE + CLI + Agent)
+- **发起人**: user
+- **参与者**: user, AI
+- **等级**: A
+- **角色**: [ARCH]
+- **问题**: VibeCollab 应如何支持不同的 AI 交互场景？
+- **选项**:
+  - A: 仅保留 IDE 对话模式 (现有)
+  - B: 添加 CLI 人机交互 + IDE (两模式)
+  - C: IDE + CLI 人机交互 + Agent 自主 (三模式，选择)
+- **决策**: 采用方案 C — 三模式共存
+- **理由**:
+  - **IDE 对话**: 开发者在 Cursor/CodeBuddy 中直接协作，读 CONTRIBUTING_AI.md (已有)
+  - **CLI 人机交互**: `vibecollab ai ask/chat`，无需 IDE 也能与 AI 协作
+  - **Agent 自主**: `vibecollab ai agent run/serve`，服务器部署，配 API Key 自驱开发
+  - 三模式满足从本地开发到服务器部署的完整场景
+  - Agent 模式内置安全门控 (PID锁, pending-solidify, 最大周期, 自适应退避, 断路器)
+- **技术方案**:
+  - 新增 `cli_ai.py` 作为命令层，注册到主 CLI (`vibecollab ai`)
+  - 复用 `LLMClient` + `build_project_context()` + `TaskManager` + `EventLog`
+  - Agent serve 循环: Plan→Execute→Solidify，每周期独立
+  - 环境变量配置: `VIBECOLLAB_AGENT_MAX_CYCLES`, `VIBECOLLAB_AGENT_*`
+- **日期**: 2026-02-24
+- **状态**: CONFIRMED
+- **影响**:
+  - 新增 `src/vibecollab/cli_ai.py` (870+ 行)
+  - 新增 `tests/test_cli_ai.py` (32 tests)
+  - 版本升级到 v0.5.8
+
 ---
 *决策记录格式见 CONTRIBUTING_AI.md*

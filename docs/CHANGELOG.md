@@ -1,5 +1,32 @@
 # VibeCollab 变更日志
 
+## v0.5.8 (2026-02-24) - AI CLI 命令层 (三模式架构)
+
+### New Feature
+- **AI CLI 命令** (`src/vibecollab/cli_ai.py`):
+  - `vibecollab ai ask "问题"` — 单轮 AI 提问，自动注入项目上下文
+  - `vibecollab ai chat` — 多轮对话模式，支持 exit/quit/bye 退出
+  - `vibecollab ai agent plan` — 只读分析，生成行动计划不执行
+  - `vibecollab ai agent run` — 单次 Plan→Execute→Solidify 周期
+  - `vibecollab ai agent serve -n 50` — 长运行 Agent 服务 (服务器部署)
+  - `vibecollab ai agent status` — 查看 Agent 运行状态
+
+### Safety Gates
+- **PID 单例锁**: 防止多个 agent 实例同时运行
+- **pending-solidify 门控**: REVIEW 状态任务未固化时阻塞新周期
+- **最大周期数**: 默认 50，可通过 `VIBECOLLAB_AGENT_MAX_CYCLES` 配置
+- **自适应睡眠 + 指数退避**: 失败/过快周期自动退避 (2s→300s)
+- **修复循环断路器**: 连续 3 次失败 → 长等待后重置
+- **RSS 内存阈值**: 默认 500MB，超限自动停止
+
+### Architecture
+- 三模式共存: IDE 对话 / CLI 人机交互 / Agent 自主
+- DECISION-010: 三模式架构决策记录
+
+### Testing
+- 32 新增 unit tests (全覆盖: 配置/PID锁/solidify门控/ask/chat/plan/run/serve/status)
+- 全量 174 tests，零回归
+
 ## v0.5.7 (2026-02-24) - LLM Client for CLI + API Key mode
 
 ### New Feature

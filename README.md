@@ -58,6 +58,11 @@ flowchart TD
 ## 特性
 
 - **完整协议覆盖**: 决策分级、迭代管理、QA验收、Prompt工程最佳实践
+- **三模式 AI CLI** (v0.5.8+): `vibecollab ai ask/chat` 人机交互 + `vibecollab ai agent` 自主模式
+- **Agent 安全门控** (v0.5.8+): PID 锁、pending-solidify、最大周期、自适应退避、断路器、RSS 限制
+- **LLM 客户端** (v0.5.7+): Provider-agnostic (OpenAI-compatible + Anthropic Claude)
+- **任务生命周期** (v0.5.6+): validate→solidify→rollback 状态管理
+- **审计日志** (v0.5.5+): Append-only JSONL EventLog
 - **多开发者支持** (v0.5.0+): 多人/多 Agent 协同开发，独立上下文管理
 - **CLI 身份切换** (v0.5.4+): 通过命令行切换开发者身份，无需修改 Git 配置
 - **冲突检测** (v0.5.1+): 自动检测跨开发者的文件冲突、任务冲突、依赖冲突
@@ -350,6 +355,18 @@ vibecollab dev conflicts --between alice bob   # 检测特定开发者间冲突
 # 协议自检 (v0.5.2+)
 vibecollab check                               # 检查协议遵循情况
 vibecollab check --verbose                     # 显示详细检查报告
+
+# AI 人机交互 (v0.5.8+)
+vibecollab ai ask "问题"                       # 单轮 AI 提问 (自动注入项目上下文)
+vibecollab ai ask "问题" --no-context          # 不注入项目上下文
+vibecollab ai chat                             # 多轮对话模式
+
+# Agent 自主模式 (v0.5.8+)
+vibecollab ai agent plan                       # 只读分析，生成行动计划
+vibecollab ai agent run                        # 单次 Plan→Execute→Solidify 周期
+vibecollab ai agent run --dry-run              # 干运行，只输出计划不执行
+vibecollab ai agent serve -n 50                # 长运行 Agent 服务
+vibecollab ai agent status                     # 查看 Agent 运行状态
 ```
 
 ---
@@ -563,10 +580,17 @@ VibeCollab/
 ├── project.yaml                 # 本项目的配置
 ├── pyproject.toml               # 包配置
 ├── src/vibecollab/
-│   ├── cli.py                   # CLI 命令
+│   ├── cli.py                   # CLI 主入口
+│   ├── cli_ai.py                # AI CLI 命令 (ask/chat/agent)
+│   ├── cli_lifecycle.py         # 项目生涯管理命令
 │   ├── generator.py             # 文档生成器
 │   ├── extension.py             # 扩展处理器
 │   ├── project.py               # 项目管理
+│   ├── developer.py             # 多开发者管理
+│   ├── conflict_detector.py     # 冲突检测
+│   ├── llm_client.py            # LLM 客户端 (OpenAI/Anthropic)
+│   ├── event_log.py             # 审计日志 (JSONL)
+│   ├── task_manager.py          # 任务生命周期管理
 │   ├── templates.py             # 模板管理
 │   └── templates/
 │       ├── default.project.yaml
@@ -605,6 +629,10 @@ python -c "from vibecollab import LLMContextGenerator; import yaml; from pathlib
 
 | 版本 | 日期 | 主要特性 |
 |------|------|---------|
+| v0.5.8 | 2026-02-24 | 三模式 AI CLI (ask/chat/agent) + 安全门控 |
+| v0.5.7 | 2026-02-24 | LLM Client — Provider-agnostic (OpenAI + Anthropic) |
+| v0.5.6 | 2026-02-24 | TaskManager — validate-solidify-rollback 生命周期 |
+| v0.5.5 | 2026-02-24 | EventLog — append-only JSONL 审计日志 |
 | v0.5.4 | 2026-02-24 | CLI 开发者切换 (`vibecollab dev switch`) |
 | v0.5.3 | 2026-02-10 | PyPI 发布脚本和构建配置优化 |
 | v0.5.2 | 2026-02-10 | 增强多开发者协议检查和自动初始化 |
