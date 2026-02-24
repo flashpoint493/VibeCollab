@@ -32,5 +32,6 @@ build/
 # Publishing scripts (contains local credentials/configs)
 publish_pypi.bat
 
-# VibeCollab local config (developer switch state)
+# VibeCollab local runtime data
+.vibecollab/
 .vibecollab.local.yaml
