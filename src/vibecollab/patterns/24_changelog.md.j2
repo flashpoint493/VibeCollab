@@ -1,0 +1,13 @@
+{%- set cl = contributing_ai_changelog if contributing_ai_changelog is iterable and contributing_ai_changelog is not mapping else [] -%}
+# CONTRIBUTING_AI.md 迭代日志
+
+| 版本 | 日期 | 变更内容 |
+|-----|------|---------|
+{% if cl -%}
+{% for entry in cl -%}
+| {{ entry.get('version', '') }} | {{ entry.get('date', '') }} | {{ entry.get('changes', '') }} |
+{% endfor -%}
+{% else -%}
+| v1.0 | {{ now.strftime('%Y-%m-%d') }} | 初始版本 |
+{% endif %}
+---

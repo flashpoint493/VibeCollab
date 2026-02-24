@@ -5,7 +5,7 @@
 > 聚合自: alice, ocarina
 
 ## 项目整体状态
-- **版本**: v0.5.8
+- **版本**: v0.5.9
 - **阶段**: 原型验证 (demo)
 - **活跃开发者**: 2 (alice, ocarina)
 
@@ -18,9 +18,9 @@
 
 ### ocarina
 - **上次更新**: 2026-02-24
-- **当前任务**: DECISION-009 实施 (Iteration 3: Pattern 模块)
-- **最近完成**: cli_ai.py (三模式AI CLI), LLMClient, TaskManager, EventLog, 174 tests
-- **下一步**: Iteration 3 (Pattern 模块), CI/CD (GitHub Actions)
+- **当前任务**: DECISION-009 实施 (Iteration 3/4: Pattern Engine 完成)
+- **最近完成**: PatternEngine + Template Overlay, Legacy 移除 (1713→83行), 215 tests
+- **下一步**: Iteration 4 (自动化演进), CI/CD (GitHub Actions)
 
 ## 全局技术债务
 - [ocarina] 🔧 `agent run` 目前只输出文本计划，不实际写文件/跑测试

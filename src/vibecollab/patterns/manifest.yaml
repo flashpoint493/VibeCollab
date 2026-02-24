@@ -1,0 +1,115 @@
+# Pattern Manifest — 定义 CONTRIBUTING_AI.md 的章节顺序、模板文件和条件开关
+# 每个 section 对应一个 .md.j2 模板文件
+
+sections:
+  - id: header
+    template: 01_header.md.j2
+    description: "文档标题和版本号"
+
+  - id: philosophy
+    template: 02_philosophy.md.j2
+    description: "核心理念 (Vibe Development / 决策质量观 / 长期对话)"
+
+  - id: roles
+    template: 03_roles.md.j2
+    description: "职能角色定义"
+
+  - id: decision_levels
+    template: 04_decision_levels.md.j2
+    description: "决策分级制度"
+
+  - id: task_unit
+    template: 05_task_unit.md.j2
+    description: "任务单元定义"
+
+  - id: dialogue_protocol
+    template: 06_dialogue_protocol.md.j2
+    description: "标准对话流程"
+
+  - id: requirement_clarification
+    template: 07_requirement_clarification.md.j2
+    description: "需求澄清协议"
+    condition: "config.requirement_clarification.enabled|true"
+
+  - id: iteration_protocols
+    template: 08_iteration_protocols.md.j2
+    description: "迭代管理协议 (版本回顾/构建打包/配置级迭代)"
+
+  - id: qa_protocol
+    template: 09_qa_protocol.md.j2
+    description: "QA 验收协议 + 快速验收模板"
+    condition: "config.testing.product_qa.enabled|true"
+
+  - id: git_workflow
+    template: 10_git_workflow.md.j2
+    description: "Git 协作规范"
+
+  - id: testing
+    template: 11_testing.md.j2
+    description: "测试体系 (Unit Test / Product QA)"
+
+  - id: milestone
+    template: 12_milestone.md.j2
+    description: "里程碑定义"
+
+  - id: iteration
+    template: 13_iteration.md.j2
+    description: "迭代管理 (建议池/配置级迭代)"
+
+  - id: lifecycle_rules
+    template: 14_lifecycle_rules.md.j2
+    description: "阶段化协作规则"
+
+  - id: documentation
+    template: 15_documentation.md.j2
+    description: "上下文管理 (关键文件/恢复/保存协议)"
+
+  - id: multi_developer
+    template: 16_multi_developer.md.j2
+    description: "多开发者/Agent 协作协议"
+    condition: "config.multi_developer.enabled"
+
+  - id: prompt_engineering
+    template: 17_prompt_engineering.md.j2
+    description: "Prompt 工程最佳实践"
+    condition: "config.prompt_engineering.enabled|true"
+
+  - id: symbology
+    template: 18_symbology.md.j2
+    description: "符号学标注系统"
+    condition: "config.symbology"
+
+  - id: decisions_summary
+    template: 19_decisions_summary.md.j2
+    description: "已确认决策汇总"
+
+  - id: extension_sections
+    template: 20_extension_sections.md.j2
+    description: "领域扩展附录"
+    condition: "has_extensions"
+
+  - id: protocol_check
+    template: 21_protocol_check.md.j2
+    description: "协议自检机制"
+    condition: "config.protocol_check.enabled|true"
+
+  - id: prd_management
+    template: 22_prd_management.md.j2
+    description: "产品需求文档管理"
+    condition: "config.prd_management.enabled|true"
+
+  - id: quick_reference
+    template: 23_quick_reference.md.j2
+    description: "快速参考"
+
+  - id: changelog
+    template: 24_changelog.md.j2
+    description: "CONTRIBUTING_AI.md 迭代日志"
+
+  - id: git_history
+    template: 25_git_history.md.j2
+    description: "Git 提交历史参考"
+
+  - id: footer
+    template: 26_footer.md.j2
+    description: "文档尾部"
