@@ -1,31 +1,32 @@
 # VibeCollab - ocarina 的工作上下文
 
 ## 当前状态
-- **版本**: v0.5.9
+- **版本**: v0.6.0
 - **开发者**: ocarina
 - **上次更新**: 2026-02-24
 
 ## 当前任务
-- **DECISION-009 实施**: 选择性借鉴架构模式提升协议成熟度
-  - 状态: DONE (全部 10 个模式中 9 个已实现, #10 A2A 资产共享为 Low 优先级)
+- **v0.6.0 发布**: 里程碑完成，准备发布
 
 ## 最近完成
+- ✅ **v0.6.0 里程碑完成**:
+  - 测试覆盖率提升: 58% → 68% (+74 tests, 总计 359)
+  - `conflict_detector.py`: 0% → 99% (38 tests)
+  - `prd_manager.py`: 0% → 92% (36 tests)
+- ✅ 清理遗留文件 (project.yaml.broken, check_protocol.py, llm_example.txt, 测试目录)
 - ✅ 架构模式审计: Evolver 10 模式 → VibeCollab 映射全量核实 (9/10 完成)
-- ✅ `agent_executor.py` — Agent 执行层 (解析LLM→写入文件→测试→git commit→回滚)
-- ✅ `health.py` — 项目健康信号提取器 (10+ 信号, A-F 评分)
-- ✅ `.github/workflows/ci.yml` — CI/CD (Python 3.8-3.12, Ubuntu+Windows)
-- ✅ Ruff lint 全量修复 (908 errors fixed)
+- ✅ `agent_executor.py` — Agent 执行层
+- ✅ `health.py` — 项目健康信号提取器
+- ✅ `.github/workflows/ci.yml` — CI/CD
 - ✅ `pattern_engine.py` — Jinja2 模板驱动 + Template Overlay
 - ✅ `generator.py` legacy 移除 — 1713→83 行
-- ✅ 全量 285 tests 零回归
 
 ## 接下来计划
-- **v0.6.0 收尾**: 错误处理和用户提示完善
-- **覆盖率提升**: 当前 56%，Production 阶段要求 80%+
-- **PyPI 发布**: v0.5.9 发布（上次停在 v0.4.3）
+- **PyPI 发布**: v0.6.0 发布到 PyPI
+- **v0.7.0 规划**: Web UI 或其他新功能
 
 ## 技术债务
-- (已清零: `agent run` 已通过 AgentExecutor 实现实际执行)
+- (已清零)
 
 ---
 *此文件由 ocarina 维护*

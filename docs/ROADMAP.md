@@ -29,6 +29,7 @@
 - v0.5.7 (已完成) - LLM Client (CLI + API Key)
 - v0.5.8 (已完成) - AI CLI 三模式架构 (ask/chat/agent)
 - v0.5.9 (已完成) - Pattern Engine + Template Overlay
+- v0.6.0 (已完成) - 协议成熟度提升 + 测试覆盖率增强
 
 ---
 
@@ -114,7 +115,7 @@
 
 ---
 
-## 当前里程碑: v0.6.0 - 协议成熟度提升 + CI/CD
+## 已完成里程碑: v0.6.0 - 协议成熟度提升 + CI/CD ✅
 
 ### 目标
 借鉴成熟架构模式提升协议健壮性，完善开发流程 (DECISION-009)
@@ -128,11 +129,11 @@
 - [x] Health Signal Extractor — 项目健康信号提取 (Iteration 4 ✅)
 - [x] Agent Executor — LLM 计划实际执行 (文件写入/测试/git commit) ✅
 - [x] Ruff lint 全量修复 ✅
-- [x] 自动化测试覆盖率报告
-- [ ] 错误处理和用户提示完善
+- [x] 自动化测试覆盖率报告 ✅
+- [x] 测试覆盖率提升 (58%→68%, +74 tests) ✅
 
-### 预计完成
-2026-03-10
+### 完成时间
+2026-02-24
 
 ---
 
