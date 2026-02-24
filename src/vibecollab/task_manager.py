@@ -74,7 +74,7 @@ TASK_ID_PATTERN = re.compile(r"^TASK-[A-Z]+-\d{3,}$")
 # Default required fields (from project.yaml task_unit.required_fields)
 DEFAULT_REQUIRED_FIELDS = ["id", "role", "feature", "status"]
 
-# Default max change scope (files) — inspired by Evolver's blast radius
+# Default max change scope (files) — blast radius limit
 DEFAULT_MAX_FILES = 30
 DEFAULT_MAX_LINES = 10000
 
