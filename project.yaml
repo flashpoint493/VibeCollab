@@ -1,6 +1,6 @@
 project:
   name: LLMContextGenerator
-  version: v0.5.9
+  version: v0.6.1
   domain: generic
   description: 从 YAML 配置生成标准化的 AI 协作协议，并自动集成 llms.txt 标准
 philosophy:
