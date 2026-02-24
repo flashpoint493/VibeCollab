@@ -11,6 +11,7 @@ __version__ = "0.5.8"
 __author__ = "VibeCollab Contributors"
 
 from .generator import LLMContextGenerator
+from .pattern_engine import PatternEngine
 from .project import Project
 from .extension import ExtensionProcessor, Extension, Hook, Context
 from .event_log import Event, EventLog, EventType
@@ -19,6 +20,7 @@ from .llm_client import LLMClient, LLMConfig, LLMResponse, Message
 
 __all__ = [
     "LLMContextGenerator",
+    "PatternEngine",
     "Project",
     "ExtensionProcessor",
     "Extension",
