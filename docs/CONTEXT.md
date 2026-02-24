@@ -18,9 +18,9 @@
 
 ### ocarina
 - **上次更新**: 2026-02-24
-- **当前任务**: DECISION-009 实施 (Iteration 3/4: Pattern Engine 完成)
-- **最近完成**: PatternEngine + Template Overlay, Legacy 移除 (1713→83行), 215 tests
-- **下一步**: Iteration 4 (自动化演进), CI/CD (GitHub Actions)
+- **当前任务**: DECISION-009 全部 4 迭代完成
+- **最近完成**: AgentExecutor, HealthExtractor, CI/CD, PatternEngine, Lint修复, 285 tests
+- **下一步**: v0.6.0 收尾, Agent 增强
 
 ## 全局技术债务
 - [ocarina] 🔧 `agent run` 目前只输出文本计划，不实际写文件/跑测试

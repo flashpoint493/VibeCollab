@@ -23,6 +23,8 @@ Thumbs.db
 
 # Test outputs
 test_output/
+.coverage
+htmlcov/
 
 # Build and distribution
 dist/

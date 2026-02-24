@@ -5,19 +5,27 @@ All API calls are mocked — no real HTTP requests are made.
 
 import json
 import os
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from vibecollab.llm_client import (
-    LLMClient, LLMConfig, LLMResponse, Message,
+    DEFAULT_MAX_TOKENS,
+    DEFAULT_MODEL_ANTHROPIC,
+    DEFAULT_MODEL_OPENAI,
+    ENV_API_KEY,
+    ENV_BASE_URL,
+    ENV_MAX_TOKENS,
+    ENV_MODEL,
+    ENV_PROVIDER,
+    PROVIDER_ANTHROPIC,
+    PROVIDER_OPENAI,
+    LLMClient,
+    LLMConfig,
+    LLMResponse,
+    Message,
     build_project_context,
-    DEFAULT_MAX_TOKENS, DEFAULT_MODEL_ANTHROPIC, DEFAULT_MODEL_OPENAI,
-    ENV_API_KEY, ENV_BASE_URL, ENV_MAX_TOKENS, ENV_MODEL, ENV_PROVIDER,
-    PROVIDER_ANTHROPIC, PROVIDER_OPENAI,
 )
-
 
 # ---------------------------------------------------------------------------
 # LLMConfig tests
@@ -266,7 +274,7 @@ class TestLLMClient:
         """ask() with custom system_prompt uses it."""
         mock_call.return_value = LLMResponse(content="yes")
         client = self._make_client()
-        resp = client.ask("hi", system_prompt="You are a cat.")
+        client.ask("hi", system_prompt="You are a cat.")
         call_messages = mock_call.call_args[0][0]
         assert call_messages[0].content == "You are a cat."
 

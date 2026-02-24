@@ -19,14 +19,13 @@ Design principles:
 import json
 import os
 import re
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from .event_log import Event, EventLog, EventType
-
 
 # ---------------------------------------------------------------------------
 # Task status enum & state machine

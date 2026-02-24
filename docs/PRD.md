@@ -136,6 +136,40 @@
 
 ---
 
+## REQ-008: 项目健康信号提取
+
+**当前描述**:
+> 实现项目健康状态的自动化检测和评分系统：
+> 1. `HealthExtractor` 模块，从 ProtocolChecker / EventLog / TaskManager 三个数据源提取信号
+> 2. `Signal` 数据类（name, level, category, value, message, suggestion）
+> 3. `HealthReport` 包含评分 (0-100) 和分级 (A-F)
+> 4. 10+ 信号类型: 协议合规、日志完整性、活跃度、冲突、验证失败率、任务进度、积压、评审瓶颈、依赖阻塞、负载不均
+> 5. CLI 命令 `vibecollab health` + `--json` 输出
+
+**状态**: completed
+**优先级**: medium
+**创建时间**: 2026-02-24
+**更新时间**: 2026-02-24
+
+---
+
+## REQ-009: Agent 执行器 (LLM 输出 → 实际变更)
+
+**当前描述**:
+> 实现 Agent 自主执行能力，桥接 LLM 计划输出到文件系统操作：
+> 1. `AgentExecutor` 模块，支持 parse → validate → apply → test → commit/rollback 完整周期
+> 2. JSON 解析: 从 markdown 代码块提取，支持单对象/数组/wrapper 三种格式
+> 3. 安全校验: 路径遍历防护、受保护文件列表、文件数量/大小限制
+> 4. 备份回滚机制: 测试失败时自动恢复所有已变更文件
+> 5. 集成到 `agent run` 和 `agent serve` 命令，替代纯文本输出
+
+**状态**: completed
+**优先级**: high
+**创建时间**: 2026-02-24
+**更新时间**: 2026-02-24
+
+---
+
 ## 需求统计
 
 | 状态 | 数量 |
@@ -143,7 +177,7 @@
 | draft | 0 |
 | confirmed | 0 |
 | in_progress | 0 |
-| completed | 7 |
+| completed | 9 |
 | cancelled | 0 |
 
 ---

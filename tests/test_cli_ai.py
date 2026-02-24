@@ -4,36 +4,29 @@ Tests for cli_ai.py — AI CLI 命令 (人机对话 + Agent 自主模式)
 
 import json
 import os
-import sys
-import tempfile
-from pathlib import Path
 from unittest import mock
 
 import pytest
 from click.testing import CliRunner
 
 from vibecollab.cli_ai import (
-    ai,
-    _find_project_root,
-    _acquire_lock,
-    _release_lock,
-    _is_pending_solidify,
-    _check_rss_mb,
-    _get_agent_config,
-    _ensure_llm_configured,
-    _build_system_prompt,
-    _log_event,
-    EMOJI,
     DEFAULT_MAX_CYCLES,
-    DEFAULT_MIN_SLEEP_S,
-    DEFAULT_MAX_SLEEP_S,
     DEFAULT_MAX_RSS_MB,
+    DEFAULT_MAX_SLEEP_S,
+    DEFAULT_MIN_SLEEP_S,
     PID_LOCK_FILE,
+    _acquire_lock,
+    _build_system_prompt,
+    _check_rss_mb,
+    _find_project_root,
+    _get_agent_config,
+    _is_pending_solidify,
+    _release_lock,
+    ai,
 )
-from vibecollab.llm_client import LLMConfig, LLMResponse, Message
 from vibecollab.event_log import Event, EventLog, EventType
+from vibecollab.llm_client import LLMConfig, LLMResponse
 from vibecollab.task_manager import TaskManager, TaskStatus
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
