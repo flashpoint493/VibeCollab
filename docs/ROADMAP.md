@@ -26,12 +26,20 @@
 - v0.5.4 (已完成) - CLI 开发者切换
 - v0.5.5 (已完成) - EventLog 审计日志
 - v0.5.6 (已完成) - TaskManager 验证-固化-回滚
+- v0.5.7 (已完成) - LLM Client (CLI + API Key)
 
 ---
 
 ## 已完成里程碑
 
 ### Phase 2 - 多开发者支持 (v0.5.0 - v0.5.1)
+
+#### v0.5.7 - LLM Client (2026-02-24)
+- [x] LLMClient: OpenAI + Anthropic 双 provider 支持
+- [x] 环境变量配置 (VIBECOLLAB_LLM_*)
+- [x] build_project_context() 自动上下文组装
+- [x] httpx 可选依赖 (pip install vibe-collab[llm])
+- [x] 30 unit tests, 全量 142 tests 零回归
 
 #### v0.5.6 - TaskManager 验证-固化-回滚 (2026-02-24)
 - [x] Task dataclass + TaskStatus 状态机

@@ -5,7 +5,7 @@
 > 聚合自: alice, ocarina
 
 ## 项目整体状态
-- **版本**: v0.5.6
+- **版本**: v0.5.7
 - **阶段**: 原型验证 (demo)
 - **活跃开发者**: 2 (alice, ocarina)
 
@@ -18,9 +18,9 @@
 
 ### ocarina
 - **上次更新**: 2026-02-24
-- **当前任务**: DECISION-009 架构模式借鉴实施 (Iteration 2/4 完成)
-- **最近完成**: TaskManager 模块 (task_manager.py), 53 tests, 跨模块验证
-- **下一步**: Iteration 3 — Pattern 模块
+- **当前任务**: DECISION-009 实施 + LLM Client
+- **最近完成**: LLMClient (llm_client.py), TaskManager, EventLog, 142 tests
+- **下一步**: CLI 命令集成 (vibecollab ask/chat), Iteration 3
 
 ## 全局技术债务
 - [ocarina] 🔧 ROADMAP.md 历史冗余已清理
