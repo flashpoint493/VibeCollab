@@ -914,6 +914,9 @@ vibecollab dev conflicts --between alice bob
 ```bash
 # 开发者身份
 vibecollab dev whoami                    # 查看当前开发者身份
+vibecollab dev switch <developer>        # 切换到指定开发者 (v0.5.4+)
+vibecollab dev switch                    # 交互式选择开发者 (v0.5.4+)
+vibecollab dev switch --clear            # 清除切换，恢复默认识别 (v0.5.4+)
 
 # 开发者管理
 vibecollab dev list                      # 列出所有开发者
