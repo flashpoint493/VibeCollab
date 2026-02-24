@@ -14,6 +14,10 @@ from typing import Dict, List, Optional, Tuple
 import yaml
 
 
+# Local config file for storing current developer selection
+LOCAL_CONFIG_FILE = ".vibecollab.local.yaml"
+
+
 class DeveloperManager:
     """开发者管理器，负责身份识别和目录管理"""
     
@@ -39,6 +43,13 @@ class DeveloperManager:
         """
         获取当前开发者身份
         
+        优先级顺序:
+        1. 本地配置文件 (.vibecollab.local.yaml)
+        2. 环境变量 (VIBECOLLAB_DEVELOPER)
+        3. 主策略 (git_username / system_user)
+        4. 降级策略
+        5. 默认值
+        
         Returns:
             开发者标识符（标准化后的字符串）
         """
@@ -49,23 +60,33 @@ class DeveloperManager:
         
         developer = None
         
-        # 尝试主策略
-        if primary == 'git_username':
-            developer = self._get_git_username()
-        elif primary == 'system_user':
-            developer = self._get_system_user()
-        elif primary == 'manual':
-            # 手动模式：从环境变量或配置文件读取
+        # 1. 首先检查本地配置文件（CLI switch 设置的）
+        local_developer = self._get_local_developer()
+        if local_developer:
+            developer = local_developer
+        
+        # 2. 检查环境变量
+        if not developer:
             developer = os.environ.get('VIBECOLLAB_DEVELOPER')
         
-        # 降级到备用策略
+        # 3. 尝试主策略
+        if not developer:
+            if primary == 'git_username':
+                developer = self._get_git_username()
+            elif primary == 'system_user':
+                developer = self._get_system_user()
+            elif primary == 'manual':
+                # 手动模式已在上面处理
+                pass
+        
+        # 4. 降级到备用策略
         if not developer:
             if fallback == 'git_username':
                 developer = self._get_git_username()
             elif fallback == 'system_user':
                 developer = self._get_system_user()
         
-        # 最终降级：使用默认值
+        # 5. 最终降级：使用默认值
         if not developer:
             developer = 'unknown_developer'
         
@@ -74,6 +95,110 @@ class DeveloperManager:
             developer = self._normalize_developer_name(developer)
         
         return developer
+    
+    def _get_local_developer(self) -> Optional[str]:
+        """从本地配置文件获取开发者身份"""
+        local_config_path = self.project_root / LOCAL_CONFIG_FILE
+        if local_config_path.exists():
+            try:
+                with open(local_config_path, 'r', encoding='utf-8') as f:
+                    local_config = yaml.safe_load(f) or {}
+                    return local_config.get('current_developer')
+            except Exception:
+                pass
+        return None
+    
+    def switch_developer(self, developer: str) -> bool:
+        """
+        切换当前开发者身份（持久化到本地配置文件）
+        
+        Args:
+            developer: 目标开发者标识符
+        
+        Returns:
+            切换是否成功
+        """
+        identity_config = self.multi_dev_config.get('identity', {})
+        normalize = identity_config.get('normalize', True)
+        
+        # 标准化开发者名称
+        if normalize:
+            developer = self._normalize_developer_name(developer)
+        
+        local_config_path = self.project_root / LOCAL_CONFIG_FILE
+        
+        # 读取现有配置
+        local_config = {}
+        if local_config_path.exists():
+            try:
+                with open(local_config_path, 'r', encoding='utf-8') as f:
+                    local_config = yaml.safe_load(f) or {}
+            except Exception:
+                pass
+        
+        # 更新开发者
+        local_config['current_developer'] = developer
+        local_config['switched_at'] = datetime.now().isoformat()
+        
+        # 写入配置
+        try:
+            with open(local_config_path, 'w', encoding='utf-8') as f:
+                yaml.dump(local_config, f, allow_unicode=True, sort_keys=False)
+            return True
+        except Exception:
+            return False
+    
+    def clear_switch(self) -> bool:
+        """
+        清除开发者切换设置，恢复使用默认识别策略
+        
+        Returns:
+            是否成功清除
+        """
+        local_config_path = self.project_root / LOCAL_CONFIG_FILE
+        
+        if not local_config_path.exists():
+            return True
+        
+        try:
+            with open(local_config_path, 'r', encoding='utf-8') as f:
+                local_config = yaml.safe_load(f) or {}
+            
+            # 移除开发者设置
+            if 'current_developer' in local_config:
+                del local_config['current_developer']
+            if 'switched_at' in local_config:
+                del local_config['switched_at']
+            
+            # 如果配置为空，删除文件
+            if not local_config:
+                local_config_path.unlink()
+            else:
+                with open(local_config_path, 'w', encoding='utf-8') as f:
+                    yaml.dump(local_config, f, allow_unicode=True, sort_keys=False)
+            
+            return True
+        except Exception:
+            return False
+    
+    def get_identity_source(self) -> str:
+        """
+        获取当前开发者身份的来源
+        
+        Returns:
+            身份来源描述
+        """
+        # 检查本地配置
+        if self._get_local_developer():
+            return "local_switch"
+        
+        # 检查环境变量
+        if os.environ.get('VIBECOLLAB_DEVELOPER'):
+            return "env_var"
+        
+        # 返回主策略
+        identity_config = self.multi_dev_config.get('identity', {})
+        return identity_config.get('primary', 'git_username')
     
     def _get_git_username(self) -> Optional[str]:
         """从 Git 配置获取用户名"""
