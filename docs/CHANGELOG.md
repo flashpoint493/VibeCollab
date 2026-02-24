@@ -1,5 +1,40 @@
 # VibeCollab 变更日志
 
+## v0.6.0 (2026-02-24) - 协议成熟度提升 + 测试覆盖率增强
+
+### 里程碑完成
+本版本完成了 v0.6.0 里程碑的所有核心目标，标志着 VibeCollab 协议框架进入成熟阶段。
+
+### Testing
+- **测试覆盖率提升**: 58% → 68% (+10%)
+- **新增 74 个单元测试** (总计 359 tests):
+  - `test_conflict_detector.py` (38 tests): 冲突检测全覆盖
+  - `test_prd_manager.py` (36 tests): PRD 管理全覆盖
+- **模块覆盖率**:
+  - `conflict_detector.py`: 0% → 99%
+  - `prd_manager.py`: 0% → 92%
+
+### Cleanup
+- **移除遗留文件**:
+  - `project.yaml.broken` (旧版配置备份)
+  - `check_protocol.py` (已被 CLI 替代)
+  - `llm_example.txt` (示例输出文件)
+  - `test-vibe-project/` (空测试目录)
+  - `test-project-1696446371/` (临时测试项目)
+
+### v0.6.0 里程碑总结
+- ✅ EventLog append-only 审计日志
+- ✅ TaskManager 验证-固化-回滚
+- ✅ Pattern Engine + Template Overlay
+- ✅ Legacy 代码移除 (generator.py 1713→83 行)
+- ✅ CI/CD 流程 (GitHub Actions)
+- ✅ Health Signal Extractor
+- ✅ Agent Executor
+- ✅ Ruff lint 全量修复
+- ✅ 测试覆盖率提升 (58%→68%)
+
+---
+
 ## v0.5.9 (2026-02-24) - Pattern Engine + Health Signals + Agent Executor
 
 ### New Feature
