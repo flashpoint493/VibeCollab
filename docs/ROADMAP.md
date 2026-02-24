@@ -124,8 +124,11 @@
 - [x] TaskManager 验证-固化-回滚 (Iteration 2 ✅)
 - [x] Pattern Engine — Jinja2 模板驱动 + Template Overlay (Iteration 3 ✅)
 - [x] Legacy 代码移除 — generator.py 1713→83 行 (Iteration 3 ✅)
-- [ ] 建立 CI/CD 流程（GitHub Actions）
-- [ ] 自动化测试覆盖率报告
+- [x] 建立 CI/CD 流程（GitHub Actions）✅
+- [x] Health Signal Extractor — 项目健康信号提取 (Iteration 4 ✅)
+- [x] Agent Executor — LLM 计划实际执行 (文件写入/测试/git commit) ✅
+- [x] Ruff lint 全量修复 ✅
+- [x] 自动化测试覆盖率报告
 - [ ] 错误处理和用户提示完善
 
 ### 预计完成

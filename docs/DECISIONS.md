@@ -163,9 +163,9 @@
 - **状态**: CONFIRMED
 - **影响**:
   - Iteration 1: EventLog module (event_log.py) — COMPLETED
-  - Iteration 2: Pattern module (reusable project templates) — PLANNED
-  - Iteration 3: Protocol formatting enhancement — PLANNED
-  - Iteration 4: Auto-evolution discussion — PLANNED
+  - Iteration 2: TaskManager module (task_manager.py) — COMPLETED
+  - Iteration 3: PatternEngine module (pattern_engine.py) — COMPLETED
+  - Iteration 4: Health Signals (health.py) + Agent Executor (agent_executor.py) — COMPLETED
 
 ### DECISION-010: 三模式 AI 架构 (IDE + CLI + Agent)
 - **发起人**: user

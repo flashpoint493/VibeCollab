@@ -1,15 +1,10 @@
 """Tests for the EventLog module."""
 
 import json
-import os
-import tempfile
-from datetime import datetime, timezone
-from pathlib import Path
 
 import pytest
 
 from vibecollab.event_log import Event, EventLog, EventType, _atomic_append
-
 
 # ---------------------------------------------------------------------------
 # Event dataclass tests
@@ -289,7 +284,7 @@ class TestEventLog:
             summary="Created task",
         ))
 
-        child = log.append(Event(
+        log.append(Event(
             event_type=EventType.TASK_ASSIGNED,
             actor="alice",
             summary="Assigned task",

@@ -2,16 +2,17 @@
 LLMContext Project - 项目管理
 """
 
-import yaml
-from pathlib import Path
-from typing import Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict
+
+import yaml
 
 from .generator import LLMContextGenerator
-from .templates import TemplateManager
-from .llmstxt import LLMsTxtManager
-from .git_utils import ensure_git_repo, check_git_installed
+from .git_utils import ensure_git_repo
 from .lifecycle import LifecycleManager
+from .llmstxt import LLMsTxtManager
+from .templates import TemplateManager
 
 
 class Project:
@@ -25,7 +26,7 @@ class Project:
     @classmethod
     def create(cls, name: str, domain: str, output_dir: Path, multi_dev: bool = False) -> "Project":
         """创建新项目
-        
+
         Args:
             name: 项目名称
             domain: 业务领域
@@ -33,32 +34,32 @@ class Project:
             multi_dev: 是否启用多开发者模式
         """
         tm = TemplateManager()
-        
+
         # 加载基础模板
         config = tm.load_config("default")
-        
+
         # 更新项目信息
         config["project"]["name"] = name
         config["project"]["domain"] = domain
-        
+
         # 启用多开发者模式
         if multi_dev:
             if "multi_developer" not in config:
                 config["multi_developer"] = {}
             config["multi_developer"]["enabled"] = True
-        
+
         # 合并领域扩展
         try:
             ext_config = tm.load_config(domain)
             cls._merge_extension(config, ext_config)
         except FileNotFoundError:
             pass  # 没有领域扩展，使用默认配置
-        
+
         # 初始化项目生涯配置
         lifecycle_manager = LifecycleManager.create_default(current_stage="demo")
         lifecycle_config = lifecycle_manager.to_config_dict()
         config.update(lifecycle_config)
-        
+
         return cls(config, output_dir)
 
     @classmethod
@@ -67,10 +68,10 @@ class Project:
         config_path = project_dir / "project.yaml"
         if not config_path.exists():
             raise FileNotFoundError(f"项目配置不存在: {config_path}")
-        
+
         with open(config_path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
-        
+
         return cls(config, project_dir)
 
     @staticmethod
@@ -78,7 +79,7 @@ class Project:
         """合并领域扩展配置"""
         if not ext_config:
             return
-        
+
         # 合并角色覆盖
         if "roles_override" in ext_config and ext_config["roles_override"]:
             for role in ext_config["roles_override"]:
@@ -87,7 +88,7 @@ class Project:
                     if r["code"] != role["code"]
                 ]
                 config["roles"].append(role)
-        
+
         # 合并领域扩展
         domain_ext = ext_config.get("domain_extensions")
         if domain_ext:
@@ -98,23 +99,23 @@ class Project:
 
     def generate_all(self, auto_init_git: bool = False):
         """生成所有项目文件
-        
+
         Args:
             auto_init_git: 如果项目不是 Git 仓库，是否自动初始化
         """
         # 创建目录
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.docs_dir.mkdir(exist_ok=True)
-        
+
         # 检查并初始化 Git 仓库
         self._ensure_git_repo(auto_init_git)
-        
+
         # 保存项目配置
         self._save_config()
-        
+
         # 生成协作规则文档
         self._generate_llm_txt()
-        
+
         # 创建文档模板
         self._create_doc_templates()
 
@@ -134,22 +135,22 @@ class Project:
         """生成协作规则文档（CONTRIBUTING_AI.md）并集成 llms.txt"""
         generator = LLMContextGenerator(self.config, self.output_dir)
         content = generator.generate()
-        
+
         # 输出为 CONTRIBUTING_AI.md
         contributing_ai_path = self.output_dir / "CONTRIBUTING_AI.md"
         contributing_ai_path.write_text(content, encoding="utf-8")
-        
+
         # 集成 llms.txt
         project_name = self.config.get("project", {}).get("name", "Project")
         project_desc = self.config.get("project", {}).get("description", "AI-assisted development project")
-        
+
         updated, llmstxt_path = LLMsTxtManager.ensure_integration(
             self.output_dir,
             project_name,
             project_desc,
             contributing_ai_path
         )
-        
+
         # 保存 llms.txt 路径到配置（用于后续更新）
         if llmstxt_path:
             self.config.setdefault("_meta", {})["llmstxt_path"] = str(llmstxt_path)
@@ -159,22 +160,22 @@ class Project:
         project_name = self.config.get("project", {}).get("name", "Project")
         today = datetime.now().strftime("%Y-%m-%d")
         multi_dev_enabled = self.config.get("multi_developer", {}).get("enabled", False)
-        
+
         # 多开发者模式：初始化开发者上下文
         if multi_dev_enabled:
-            from .developer import DeveloperManager, ContextAggregator
-            
+            from .developer import ContextAggregator, DeveloperManager
+
             dm = DeveloperManager(self.output_dir, self.config)
             current_dev = dm.get_current_developer()
-            
+
             # 初始化当前开发者的上下文
             dm.init_developer_context(current_dev)
-            
+
             # 创建 COLLABORATION.md
             collab_config = self.config.get('multi_developer', {}).get('collaboration', {})
             collab_file = self.output_dir / collab_config.get('file', 'docs/developers/COLLABORATION.md')
             collab_file.parent.mkdir(parents=True, exist_ok=True)
-            
+
             collab_content = f"""# {project_name} 开发者协作记录
 
 ## 当前协作关系
@@ -195,11 +196,11 @@ class Project:
 *最后更新: {today}*
 """
             collab_file.write_text(collab_content, encoding='utf-8')
-            
+
             # 生成全局聚合 CONTEXT.md
             aggregator = ContextAggregator(self.output_dir, self.config)
             aggregator.generate_and_save()
-        
+
         # DECISIONS.md
         decisions_content = f"""# {project_name} 决策记录
 
@@ -214,7 +215,7 @@ class Project:
 ---
 *决策记录格式见 CONTRIBUTING_AI.md*
 """
-        
+
         # CHANGELOG.md
         changelog_content = f"""# {project_name} 变更日志
 
@@ -226,16 +227,16 @@ class Project:
 
 ---
 """
-        
+
         # ROADMAP.md - 包含项目生涯阶段信息
         lifecycle_manager = LifecycleManager(self.config)
         current_stage = lifecycle_manager.get_current_stage()
         stage_info = lifecycle_manager.get_stage_info()
         stage_history = lifecycle_manager.get_stage_history()
-        
+
         current_stage_entry = stage_history[-1] if stage_history else None
         started_at = current_stage_entry.get("started_at", today) if current_stage_entry else today
-        
+
         roadmap_content = f"""# {project_name} 路线图
 
 ## 当前项目生涯阶段
@@ -274,7 +275,7 @@ class Project:
 
 ---
 """
-        
+
         # QA_TEST_CASES.md
         qa_content = f"""# {project_name} 测试用例手册
 
@@ -297,7 +298,7 @@ class Project:
 
 ---
 """
-        
+
         # PRD.md - 产品需求文档
         prd_content = f"""# {project_name} 产品需求文档 (PRD)
 
@@ -323,7 +324,7 @@ class Project:
 
 *最后更新: {today}*
 """
-        
+
         # 写入文件
         if not multi_dev_enabled:
             # 单开发者模式才写入 CONTEXT.md（多开发者模式已通过聚合生成）
@@ -348,7 +349,7 @@ class Project:
 *最后更新: {today}*
 """
             (self.docs_dir / "CONTEXT.md").write_text(context_content, encoding="utf-8")
-        
+
         (self.docs_dir / "DECISIONS.md").write_text(decisions_content, encoding="utf-8")
         (self.docs_dir / "CHANGELOG.md").write_text(changelog_content, encoding="utf-8")
         (self.docs_dir / "ROADMAP.md").write_text(roadmap_content, encoding="utf-8")
@@ -360,64 +361,64 @@ class Project:
         # 检查 Git 仓库状态（不自动初始化，只提示）
         self._ensure_git_repo(auto_init=False)
         self._generate_llm_txt()
-    
+
     def _ensure_git_repo(self, auto_init: bool = False):
         """确保项目是 Git 仓库
-        
+
         Args:
             auto_init: 如果不存在是否自动初始化
         """
         success, message, is_new = ensure_git_repo(self.output_dir, auto_init=auto_init)
-        
+
         if not success:
             # 保存警告信息到配置，供 CLI 显示
             self.config.setdefault("_meta", {})["git_warning"] = message
         elif is_new:
             # 记录已自动初始化
             self.config.setdefault("_meta", {})["git_auto_init"] = True
-    
+
     def _format_milestones(self, milestones: list) -> str:
         """格式化里程碑列表
-        
+
         Args:
             milestones: 里程碑列表
-            
+
         Returns:
             str: 格式化后的里程碑文本
         """
         if not milestones:
             return "(暂无里程碑)"
-        
+
         lines = []
         for i, milestone in enumerate(milestones, 1):
             name = milestone.get("name", f"里程碑 {i}")
             completed = milestone.get("completed", False)
             status = "✅" if completed else "⏳"
             lines.append(f"- {status} {name}")
-        
+
         return "\n".join(lines)
-    
+
     def _format_stage_history(self, history: list) -> str:
         """格式化阶段历史
-        
+
         Args:
             history: 阶段历史列表
-            
+
         Returns:
             str: 格式化后的历史文本
         """
         if not history:
             return "(暂无历史记录)"
-        
+
         lines = []
         for entry in history:
             stage = entry.get("stage", "unknown")
             started = entry.get("started_at", "未知")
             ended = entry.get("ended_at")
-            
+
             if ended:
                 lines.append(f"- **{stage}**: {started} → {ended}")
             else:
                 lines.append(f"- **{stage}**: {started} (进行中)")
-        
+
         return "\n".join(lines)

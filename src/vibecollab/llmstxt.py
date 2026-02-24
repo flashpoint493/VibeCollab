@@ -12,7 +12,7 @@ class LLMsTxtManager:
 
     AI_COLLAB_SECTION = """## AI Collaboration
 
-- [AI Collaboration Guidelines](CONTRIBUTING_AI.md): 
+- [AI Collaboration Guidelines](CONTRIBUTING_AI.md):
   Collaboration protocol, decision levels, task units, and workflow rules for AI-assisted development.
   This document defines how AI assistants should work with developers on this project.
 """
@@ -44,7 +44,7 @@ class LLMsTxtManager:
     def find_insertion_point(content: str) -> int:
         """找到插入 AI Collaboration 章节的最佳位置"""
         lines = content.split("\n")
-        
+
         # 优先在 Documentation 章节后插入
         for i, line in enumerate(lines):
             if re.match(r"^##\s+Documentation", line, re.IGNORECASE):
@@ -53,7 +53,7 @@ class LLMsTxtManager:
                     if re.match(r"^##\s+", lines[j]):
                         return j
                 return len(lines)
-        
+
         # 如果没有 Documentation，在最后插入
         return len(lines)
 
@@ -63,29 +63,29 @@ class LLMsTxtManager:
         try:
             with open(llmstxt_path, "r", encoding="utf-8") as f:
                 content = f.read()
-            
+
             # 检查是否已存在
             if LLMsTxtManager.has_ai_collab_section(content):
                 return False  # 已存在，无需更新
-            
+
             # 确保引用路径正确（相对路径）
             rel_path = contributing_ai_path.relative_to(llmstxt_path.parent)
             section = LLMsTxtManager.AI_COLLAB_SECTION.replace(
                 "CONTRIBUTING_AI.md", str(rel_path)
             )
-            
+
             # 找到插入位置
             insert_pos = LLMsTxtManager.find_insertion_point(content)
             lines = content.split("\n")
-            
+
             # 插入新章节
             lines.insert(insert_pos, "")
             lines.insert(insert_pos + 1, section)
-            
+
             # 写回文件
             with open(llmstxt_path, "w", encoding="utf-8") as f:
                 f.write("\n".join(lines))
-            
+
             return True
         except Exception as e:
             raise RuntimeError(f"更新 llms.txt 失败: {e}")
@@ -99,10 +99,10 @@ class LLMsTxtManager:
     ) -> Path:
         """创建新的 llms.txt 文件"""
         llmstxt_path = project_root / "llms.txt"
-        
+
         # 确保引用路径正确
         rel_path = contributing_ai_path.relative_to(project_root)
-        
+
         content = f"""# {project_name}
 
 > {project_description}
@@ -117,14 +117,14 @@ See [AI Collaboration Guidelines]({rel_path}) for how to work with AI assistants
 
 ## AI Collaboration
 
-- [AI Collaboration Guidelines]({rel_path}): 
+- [AI Collaboration Guidelines]({rel_path}):
   Collaboration protocol, decision levels, task units, and workflow rules for AI-assisted development.
   This document defines how AI assistants should work with developers on this project.
 """
-        
+
         with open(llmstxt_path, "w", encoding="utf-8") as f:
             f.write(content)
-        
+
         return llmstxt_path
 
     @staticmethod
@@ -136,14 +136,14 @@ See [AI Collaboration Guidelines]({rel_path}) for how to work with AI assistants
     ) -> Tuple[bool, Optional[Path]]:
         """
         确保 llms.txt 集成完成
-        
+
         Returns:
-            (is_updated, llmstxt_path): 
+            (is_updated, llmstxt_path):
                 is_updated: 是否进行了更新（True=更新/创建，False=已存在）
                 llmstxt_path: llms.txt 文件路径
         """
         llmstxt_path = LLMsTxtManager.find_llmstxt(project_root)
-        
+
         if llmstxt_path:
             # 存在，尝试更新
             updated = LLMsTxtManager.update_llmstxt(llmstxt_path, contributing_ai_path)
