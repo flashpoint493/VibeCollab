@@ -25,12 +25,21 @@
 - v0.5.1 (已完成) - 冲突检测
 - v0.5.4 (已完成) - CLI 开发者切换
 - v0.5.5 (已完成) - EventLog 审计日志
+- v0.5.6 (已完成) - TaskManager 验证-固化-回滚
 
 ---
 
 ## 已完成里程碑
 
 ### Phase 2 - 多开发者支持 (v0.5.0 - v0.5.1)
+
+#### v0.5.6 - TaskManager 验证-固化-回滚 (2026-02-24)
+- [x] Task dataclass + TaskStatus 状态机
+- [x] TaskManager: CRUD + transition + validate + solidify + rollback
+- [x] EventLog 集成: 每次操作自动记录事件
+- [x] 原子 JSON 持久化 (.vibecollab/tasks.json)
+- [x] 53 unit tests, 全量 112 tests 零回归
+- [x] 跨模块集成验证 (TaskManager + EventLog)
 
 #### v0.5.5 - EventLog 审计日志 (2026-02-24)
 - [x] Append-only JSONL 事件日志 (event_log.py)
@@ -87,7 +96,8 @@
 
 ### 核心功能
 - [x] EventLog append-only 审计日志 (Iteration 1 ✅)
-- [ ] Pattern 模块 — 可复用项目模板 (Iteration 2)
+- [x] TaskManager 验证-固化-回滚 (Iteration 2 ✅)
+- [ ] Pattern 模块 — 可复用项目模板 (Iteration 3)
 - [ ] 验证-固化-回滚循环 (Iteration 3)
 - [ ] 建立 CI/CD 流程（GitHub Actions）
 - [ ] 自动化测试覆盖率报告

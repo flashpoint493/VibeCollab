@@ -1,5 +1,32 @@
 # VibeCollab 变更日志
 
+## v0.5.6 (2026-02-24) - TaskManager with validate-solidify-rollback
+
+### New Feature
+- **TaskManager module** (`src/vibecollab/task_manager.py`):
+  - Structured `Task` dataclass with all fields from project.yaml `task_unit` schema
+  - `TaskStatus` enum: TODO → IN_PROGRESS → REVIEW → DONE
+  - State machine with legal transitions (including pause/reject paths)
+  - `TaskManager` class: create, get, list, transition, validate, solidify, rollback, count
+  - Validate-solidify gate pipeline: required fields → dependency satisfaction → output check
+  - Rollback support: IN_PROGRESS → TODO, REVIEW → IN_PROGRESS
+  - Full EventLog integration: every CRUD/transition/solidify auto-logs events
+  - Atomic JSON persistence (`.vibecollab/tasks.json`)
+  - Task ID format validation (`TASK-{ROLE}-{SEQ}`)
+
+### New Tests
+- **53 unit tests** (`tests/test_task_manager.py`):
+  - `TestTask` (5): defaults, explicit fields, roundtrip, ID validation
+  - `TestStateMachine` (4): transition legality
+  - `TestValidationResult` (3): ok/failed/serialization
+  - `TestTaskManager` (41): CRUD, transitions, validation, solidify, rollback, persistence, full lifecycle, Unicode
+
+### Integration Verified
+- TaskManager + EventLog cross-module validation: full lifecycle produces 5 events, integrity CLEAN
+- Total test suite: 112 tests, zero regression
+
+---
+
 ## v0.5.5 (2026-02-24) - EventLog append-only audit trail
 
 ### New Feature
