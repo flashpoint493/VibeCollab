@@ -689,14 +689,23 @@ def dev_whoami(config: str):
     
     dm = DeveloperManager(project_root, project_config)
     current_dev = dm.get_current_developer()
+    identity_source = dm.get_identity_source()
     
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    
+    # 身份来源的友好显示
+    source_display = {
+        'local_switch': '[green]CLI 切换[/green] (.vibecollab.local.yaml)',
+        'env_var': '[yellow]环境变量[/yellow] (VIBECOLLAB_DEVELOPER)',
+        'git_username': 'Git 用户名 (git config user.name)',
+        'system_user': '系统用户名',
+    }.get(identity_source, identity_source)
     
     console.print()
     console.print(Panel.fit(
         f"[bold cyan]{current_dev}[/bold cyan]\n\n"
         f"多开发者模式: {'[green]启用[/green]' if multi_dev_enabled else '[yellow]未启用[/yellow]'}\n"
-        f"识别方式: {project_config.get('multi_developer', {}).get('identity', {}).get('primary', 'git_username')}",
+        f"身份来源: {source_display}",
         title="当前开发者"
     ))
     console.print()
@@ -920,6 +929,138 @@ def dev_init(config: str, developer: Optional[str]):
     except Exception as e:
         console.print(f"[red]初始化失败:[/red] {e}")
         raise SystemExit(1)
+
+
+@dev.command("switch")
+@click.argument("developer", required=False)
+@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+@click.option("--clear", is_flag=True, help="清除切换设置，恢复使用默认识别策略")
+def dev_switch(developer: Optional[str], config: str, clear: bool):
+    """切换当前开发者身份
+    
+    通过 CLI 选择要使用的开发者上下文，而无需修改 Git 配置或环境变量。
+    切换后的设置会持久化到本地配置文件 (.vibecollab.local.yaml)。
+    
+    Examples:
+    
+        vibecollab dev switch alice      # 切换到 alice
+        
+        vibecollab dev switch            # 交互式选择开发者
+        
+        vibecollab dev switch --clear    # 清除切换，恢复默认识别
+    """
+    from .developer import DeveloperManager
+    
+    config_path = Path(config)
+    project_root = config_path.parent
+    
+    if not config_path.exists():
+        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        raise SystemExit(1)
+    
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+    
+    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    if not multi_dev_enabled:
+        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
+        console.print("[dim]在 project.yaml 中设置 multi_developer.enabled: true[/dim]")
+        raise SystemExit(1)
+    
+    dm = DeveloperManager(project_root, project_config)
+    
+    # 处理清除切换
+    if clear:
+        console.print()
+        if dm.clear_switch():
+            default_dev = dm.get_current_developer()
+            console.print(f"[green]{EMOJI_MAP['success']} 已清除切换设置[/green]")
+            console.print(f"  {BULLET} 当前身份: [cyan]{default_dev}[/cyan] (通过默认策略识别)")
+        else:
+            console.print(f"[red]清除失败[/red]")
+            raise SystemExit(1)
+        console.print()
+        return
+    
+    # 获取可用开发者列表
+    developers = dm.list_developers()
+    current_dev = dm.get_current_developer()
+    
+    # 如果没有指定开发者，进行交互式选择
+    if developer is None:
+        if not developers:
+            console.print()
+            console.print("[yellow]暂无开发者[/yellow]")
+            console.print("[dim]使用 'vibecollab dev init -d <name>' 初始化新开发者[/dim]")
+            console.print()
+            return
+        
+        console.print()
+        console.print("[cyan]选择要切换的开发者:[/cyan]")
+        console.print()
+        
+        for i, dev in enumerate(developers, 1):
+            status_info = dm.get_developer_status(dev)
+            is_current = " [green](当前)[/green]" if dev == current_dev else ""
+            last_update = status_info.get('last_updated', '未知')
+            console.print(f"  {i}. [bold]{dev}[/bold]{is_current}")
+            console.print(f"     上次更新: {last_update}")
+        
+        console.print()
+        console.print(f"  0. [dim]取消[/dim]")
+        console.print()
+        
+        # 读取用户选择
+        try:
+            choice = click.prompt("请输入序号", type=int, default=0)
+        except click.Abort:
+            console.print("\n[dim]已取消[/dim]")
+            return
+        
+        if choice == 0:
+            console.print("[dim]已取消[/dim]")
+            return
+        
+        if choice < 1 or choice > len(developers):
+            console.print(f"[red]无效的选择: {choice}[/red]")
+            raise SystemExit(1)
+        
+        developer = developers[choice - 1]
+    
+    # 标准化开发者名称
+    identity_config = project_config.get('multi_developer', {}).get('identity', {})
+    if identity_config.get('normalize', True):
+        developer = dm._normalize_developer_name(developer)
+    
+    # 检查开发者是否存在
+    if developer not in developers:
+        console.print()
+        console.print(f"[yellow]{EMOJI_MAP['warning']} 开发者 '{developer}' 不存在[/yellow]")
+        console.print()
+        
+        # 询问是否要初始化
+        create = click.confirm(f"是否为 '{developer}' 初始化上下文?", default=True)
+        if create:
+            dm.init_developer_context(developer)
+            console.print(f"[green]{EMOJI_MAP['success']} 已为 '{developer}' 初始化上下文[/green]")
+        else:
+            console.print("[dim]已取消[/dim]")
+            return
+    
+    # 执行切换
+    console.print()
+    if dm.switch_developer(developer):
+        console.print(f"[green]{EMOJI_MAP['success']} 已切换到开发者: [bold cyan]{developer}[/bold cyan][/green]")
+        console.print()
+        console.print(f"  {BULLET} 上下文文件: {dm.get_developer_context_file(developer)}")
+        console.print(f"  {BULLET} 持久化位置: .vibecollab.local.yaml")
+        console.print()
+        console.print("[dim]提示: 使用 'vibecollab dev switch --clear' 可恢复默认识别[/dim]")
+    else:
+        console.print(f"[red]切换失败[/red]")
+        raise SystemExit(1)
+    
+    console.print()
 
 
 @dev.command("conflicts")
