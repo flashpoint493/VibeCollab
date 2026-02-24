@@ -8,7 +8,8 @@ VibeCollab is a Python-based project collaboration framework that generates AI c
 
 ## Key Features
 
-- **Protocol Generation**: Generate `CONTRIBUTING_AI.md` from `project.yaml` configuration
+- **Protocol Generation**: Generate `CONTRIBUTING_AI.md` from `project.yaml` configuration via PatternEngine (Jinja2 template-driven, manifest-controlled)
+- **Template Overlay**: Per-project template customization via `.vibecollab/patterns/` (local-first, builtin-fallback)
 - **Multi-Developer Workflow**: Developer context isolation, task management, event logging
 - **Three-Mode AI CLI** (v0.5.8):
   - `vibecollab ai ask/chat`: Human-interactive CLI with project context injection

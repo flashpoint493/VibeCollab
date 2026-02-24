@@ -1,5 +1,37 @@
 # VibeCollab 变更日志
 
+## v0.5.9 (2026-02-24) - Pattern Engine + Template Overlay
+
+### New Feature
+- **PatternEngine** (`src/vibecollab/pattern_engine.py`):
+  - Jinja2 模板驱动的 CONTRIBUTING_AI.md 生成引擎
+  - `manifest.yaml` 控制章节顺序、条件、模板映射
+  - 27 个 `.md.j2` 模板文件替代硬编码 Python 方法
+  - 条件求值支持 `|default` 语法 (如 `config.x.enabled|true`)
+  - `DEFAULT_STAGES` 内置阶段定义回退
+
+- **Template Overlay** (本地模板覆盖机制):
+  - 项目可在 `.vibecollab/patterns/` 创建自定义模板
+  - Jinja2 `ChoiceLoader` 实现本地优先、内置回退的模板解析
+  - 本地 `manifest.yaml` 支持: 覆盖章节、插入新章节(`after` 定位)、排除章节(`exclude` 列表)
+  - `list_patterns()` 标注 `source: "local" | "builtin"`
+
+### Refactor
+- **Legacy 代码移除**: `generator.py` 从 1713 行精简到 83 行
+  - 移除全部 27 个 `_add_*()` 方法
+  - 移除 `_generate_legacy()` 和 `use_patterns` 参数
+  - `generate()` 方法直接委托 `PatternEngine.render()`
+  - 零 API 破坏 (所有调用方无需修改)
+
+### Architecture
+- DECISION-011: Pattern Engine 架构 (manifest 驱动 + 模板覆盖 + legacy 移除)
+
+### Testing
+- 40 PatternEngine tests (含 8 个 Template Overlay tests)
+- 全量 215 tests，零回归
+
+---
+
 ## v0.5.8 (2026-02-24) - AI CLI 命令层 (三模式架构)
 
 ### New Feature

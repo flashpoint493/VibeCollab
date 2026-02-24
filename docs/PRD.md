@@ -119,6 +119,23 @@
 
 ---
 
+## REQ-007: Pattern Engine (模板驱动文档生成)
+
+**当前描述**:
+> 实现 Jinja2 模板驱动的 CONTRIBUTING_AI.md 生成引擎，替代 27 个硬编码 Python 方法：
+> 1. `PatternEngine` 模块，基于 `manifest.yaml` 声明式控制章节
+> 2. 27 个 `.md.j2` 模板文件，每个章节独立可维护
+> 3. Template Overlay 机制: 用户可在 `.vibecollab/patterns/` 自定义模板和 manifest
+> 4. 条件求值支持 `|default` 语法，manifest 合并支持 override/insert/exclude
+> 5. 移除 generator.py 中全部 legacy 代码 (1713 → 83 行)
+
+**状态**: completed
+**优先级**: high
+**创建时间**: 2026-02-24
+**更新时间**: 2026-02-24
+
+---
+
 ## 需求统计
 
 | 状态 | 数量 |
@@ -126,7 +143,7 @@
 | draft | 0 |
 | confirmed | 0 |
 | in_progress | 0 |
-| completed | 6 |
+| completed | 7 |
 | cancelled | 0 |
 
 ---

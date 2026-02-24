@@ -1,0 +1,15 @@
+{%- set sym = symbology if symbology else {} -%}
+# 十一、符号学标注系统
+
+本协议使用统一的符号体系确保沟通一致性：
+
+{% for category, symbols in sym.items() -%}
+## {{ category.replace('_', ' ').title() }}
+
+| 符号 | 含义 |
+|------|------|
+{% for s in symbols -%}
+| `{{ s.get('symbol', '') }}` | {{ s.get('meaning', '') }} |
+{% endfor %}
+{% endfor -%}
+---

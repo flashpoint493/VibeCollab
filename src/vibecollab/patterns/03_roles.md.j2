@@ -1,0 +1,23 @@
+{%- set role_list = roles if roles is iterable and roles is not mapping else [] -%}
+# 二、职能角色定义
+
+本项目模拟多职能协作，AI 在对话中切换不同角色视角：
+
+| 角色代号 | 职能 | 关注点 | 触发词 |
+|---------|------|--------|--------|
+{% for role in role_list -%}
+| `[{{ role.get('code', '') }}]` | {{ role.get('name', '') }} | {{ role.get('focus', []) | join_list }} | {{ role.get('triggers', []) | quote_list }} |
+{% endfor %}
+**使用方式**: 在对话中明确指定角色，或让 AI 自动识别并标注当前角色视角。
+{% for gk in role_list if gk.get('is_gatekeeper', False) %}
+
+## 2.2 {{ gk.get('code', '') }} 角色的特殊地位
+
+> **{{ gk.get('code', '') }} 是每个功能的最后守门人，无验收则不算完成**
+
+{{ gk.get('code', '') }} 职能贯穿整个开发流程：
+- **开发前**: 参与需求评审，提出测试视角问题
+- **开发中**: 准备测试用例框架
+- **开发后**: 执行验收测试，确认功能符合预期
+{% endfor %}
+---

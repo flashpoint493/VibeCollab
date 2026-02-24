@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vibe-collab"
-version = "0.5.8"
+version = "0.5.9"
 description = "AI-powered project collaboration framework with three-mode CLI (IDE/interactive/agent)"
 readme = "README.md"
 license = "MIT"
@@ -41,6 +41,7 @@ dependencies = [
     "PyYAML>=6.0",
     "click>=8.0",
     "rich>=13.0",
+    "Jinja2>=3.0",
 ]
 
 [project.optional-dependencies]
@@ -64,6 +65,7 @@ vibecollab = "vibecollab.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/vibecollab"]
+artifacts = ["src/vibecollab/patterns/**"]
 
 [tool.hatch.build.targets.sdist]
 include = [
