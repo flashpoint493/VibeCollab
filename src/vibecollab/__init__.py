@@ -7,16 +7,17 @@ Usage:
     vibecollab validate -c project.yaml
 """
 
-__version__ = "0.5.8"
+__version__ = "0.5.9"
 __author__ = "VibeCollab Contributors"
 
+from .event_log import Event, EventLog, EventType
+from .extension import Context, Extension, ExtensionProcessor, Hook
 from .generator import LLMContextGenerator
+from .health import HealthExtractor, HealthReport, Signal, SignalLevel
+from .llm_client import LLMClient, LLMConfig, LLMResponse, Message
 from .pattern_engine import PatternEngine
 from .project import Project
-from .extension import ExtensionProcessor, Extension, Hook, Context
-from .event_log import Event, EventLog, EventType
 from .task_manager import Task, TaskManager, TaskStatus, ValidationResult
-from .llm_client import LLMClient, LLMConfig, LLMResponse, Message
 
 __all__ = [
     "LLMContextGenerator",
@@ -37,5 +38,9 @@ __all__ = [
     "LLMConfig",
     "LLMResponse",
     "Message",
+    "HealthExtractor",
+    "HealthReport",
+    "Signal",
+    "SignalLevel",
     "__version__",
 ]

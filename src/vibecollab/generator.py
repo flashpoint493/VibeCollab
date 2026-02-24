@@ -2,9 +2,10 @@
 LLMContext Generator - 文档生成器
 """
 
-import yaml
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 from .extension import ExtensionProcessor
 

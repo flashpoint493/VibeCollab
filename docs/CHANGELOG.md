@@ -1,6 +1,6 @@
 # VibeCollab 变更日志
 
-## v0.5.9 (2026-02-24) - Pattern Engine + Template Overlay
+## v0.5.9 (2026-02-24) - Pattern Engine + Health Signals + Agent Executor
 
 ### New Feature
 - **PatternEngine** (`src/vibecollab/pattern_engine.py`):
@@ -16,19 +16,40 @@
   - 本地 `manifest.yaml` 支持: 覆盖章节、插入新章节(`after` 定位)、排除章节(`exclude` 列表)
   - `list_patterns()` 标注 `source: "local" | "builtin"`
 
+- **Health Signal Extractor** (`src/vibecollab/health.py`):
+  - 从 ProtocolChecker + EventLog + TaskManager 提取项目健康信号
+  - 三级信号: CRITICAL / WARNING / INFO
+  - 10+ 信号类型: 协议合规、日志完整性、活跃度、冲突、验证失败率、任务进度、积压、审核瓶颈、依赖阻塞、负载均衡
+  - 评分系统: 0-100 分 + A/B/C/D/F 等级
+  - CLI 命令 `vibecollab health` (支持 `--json` JSON 输出)
+
+- **Agent Executor** (`src/vibecollab/agent_executor.py`):
+  - 将 LLM 计划转化为实际文件变更 (解析 JSON → 写入文件 → 运行测试 → git commit)
+  - 安全措施: 路径穿越检测、受保护文件列表、文件大小限制、最大变更文件数
+  - 测试失败自动回滚 (备份/恢复机制)
+  - `agent run` 和 `agent serve` 现在实际执行变更而非仅打印
+
 ### Refactor
 - **Legacy 代码移除**: `generator.py` 从 1713 行精简到 83 行
-  - 移除全部 27 个 `_add_*()` 方法
-  - 移除 `_generate_legacy()` 和 `use_patterns` 参数
-  - `generate()` 方法直接委托 `PatternEngine.render()`
-  - 零 API 破坏 (所有调用方无需修改)
+
+### CI/CD
+- **GitHub Actions** (`.github/workflows/ci.yml`):
+  - 矩阵测试: Python 3.8-3.12 × Ubuntu + Windows
+  - Ruff lint + pytest + coverage
+  - 构建验证 + artifact 上传 + Codecov 集成
+
+### Code Quality
+- **Ruff lint 全量修复**: 908 个 auto-fixable 错误已修复
 
 ### Architecture
 - DECISION-011: Pattern Engine 架构 (manifest 驱动 + 模板覆盖 + legacy 移除)
 
 ### Testing
-- 40 PatternEngine tests (含 8 个 Template Overlay tests)
-- 全量 215 tests，零回归
+- 285 tests 总计 (新增 70):
+  - 40 PatternEngine tests (含 8 Template Overlay)
+  - 32 Health Signal tests
+  - 38 Agent Executor tests
+- 全量零回归
 
 ---
 
