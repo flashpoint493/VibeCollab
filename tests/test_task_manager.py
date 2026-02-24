@@ -1,16 +1,17 @@
 """Tests for the TaskManager module."""
 
-import json
-from pathlib import Path
 
 import pytest
 
-from vibecollab.event_log import EventLog, EventType
+from vibecollab.event_log import EventType
 from vibecollab.task_manager import (
-    Task, TaskManager, TaskStatus, ValidationResult,
-    TASK_ID_PATTERN, VALID_TRANSITIONS,
+    TASK_ID_PATTERN,
+    VALID_TRANSITIONS,
+    Task,
+    TaskManager,
+    TaskStatus,
+    ValidationResult,
 )
-
 
 # ---------------------------------------------------------------------------
 # Task dataclass tests

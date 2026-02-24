@@ -2,17 +2,18 @@
 PatternEngine 单元测试
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
+
+from vibecollab.generator import LLMContextGenerator
 from vibecollab.pattern_engine import (
-    PatternEngine,
     PATTERNS_DIR,
+    PatternEngine,
+    _filter_format_review,
     _filter_join_list,
     _filter_quote_list,
-    _filter_format_review,
 )
-from vibecollab.generator import LLMContextGenerator
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -279,7 +280,6 @@ class TestTemplateOverlay:
     @pytest.fixture
     def overlay_project(self, tmp_path, minimal_config):
         """创建带本地 overlay 的临时项目"""
-        import yaml
 
         # 创建项目目录结构
         patterns_dir = tmp_path / ".vibecollab" / "patterns"

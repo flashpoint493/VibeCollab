@@ -329,6 +329,88 @@
   - cli.py, project.py 等调用方正常工作
 - **状态**: 🟢 (unit test 覆盖)
 
+### TC-HEALTH-001: HealthExtractor 基础提取
+- **关联**: v0.5.9
+- **前置**: 项目已初始化
+- **步骤**:
+  1. 创建 `HealthExtractor(project_root, config)`
+  2. 调用 `extractor.extract()`
+- **预期**:
+  - 返回 `HealthReport`，包含 signals 列表、score (0-100)、summary
+  - 从 ProtocolChecker / EventLog / TaskManager 三个数据源提取信号
+- **状态**: 🟢 (unit test 覆盖, 32 tests)
+
+### TC-HEALTH-002: 健康评分与分级
+- **关联**: v0.5.9
+- **前置**: HealthReport 包含不同级别的信号
+- **步骤**:
+  1. 构造包含 CRITICAL / WARNING / INFO 信号的 report
+  2. 计算评分
+- **预期**:
+  - CRITICAL -25 分, WARNING -10 分, INFO 不扣分
+  - 评分下限为 0，上限为 100
+  - 分级: A(90+) / B(80+) / C(70+) / D(60+) / F(<60)
+- **状态**: 🟢 (unit test 覆盖, 10 scoring tests)
+
+### TC-HEALTH-003: 健康检查 CLI 命令
+- **关联**: v0.5.9
+- **前置**: 项目已初始化
+- **步骤**:
+  1. 运行 `vibecollab health`
+  2. 运行 `vibecollab health --json`
+- **预期**:
+  - 显示健康评分和信号列表
+  - `--json` 输出 JSON 格式
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-EXECUTOR-001: AgentExecutor JSON 解析
+- **关联**: v0.5.9
+- **前置**: LLM 返回包含 JSON 代码块的文本
+- **步骤**:
+  1. 创建 `AgentExecutor(project_root)`
+  2. 调用 `executor.parse_changes(llm_output)`
+- **预期**:
+  - 支持三种 JSON 格式: 单对象、数组、`{"changes": [...]}`
+  - 从 markdown ```json 块中提取
+  - 返回 `FileChange` 列表
+- **状态**: 🟢 (unit test 覆盖, 9 parse tests)
+
+### TC-EXECUTOR-002: AgentExecutor 安全校验
+- **关联**: v0.5.9
+- **前置**: 变更列表包含路径遍历或受保护文件
+- **步骤**:
+  1. 提交包含 `../` 路径遍历的变更
+  2. 提交针对 `.git/` 等受保护文件的变更
+  3. 超过 MAX_FILES_PER_CYCLE 的变更
+- **预期**:
+  - 路径遍历被拒绝
+  - 受保护文件 (.git/, .env, project.yaml, pyproject.toml) 被拒绝
+  - 超限变更被拒绝
+- **状态**: 🟢 (unit test 覆盖, 5 validation tests)
+
+### TC-EXECUTOR-003: AgentExecutor 完整周期
+- **关联**: v0.5.9
+- **前置**: LLM 输出有效变更
+- **步骤**:
+  1. 调用 `executor.execute_full_cycle(llm_output, commit_message, test_command)`
+- **预期**:
+  - Parse → Validate → Apply → Test → Commit 完整流程
+  - 测试失败时自动回滚
+  - 成功时返回 git hash
+- **状态**: 🟢 (unit test 覆盖, 5 full cycle tests)
+
+### TC-EXECUTOR-004: Agent Run 实际执行集成
+- **关联**: v0.5.9
+- **前置**: LLM 配置已设置
+- **步骤**:
+  1. 运行 `vibecollab ai agent run`
+  2. LLM 返回 JSON 变更计划
+- **预期**:
+  - AgentExecutor 解析并执行变更
+  - 测试通过后自动 git commit
+  - 失败时回滚并报告错误
+- **状态**: 🟢 (unit test 覆盖)
+
 ---
 
 ## 已知问题
