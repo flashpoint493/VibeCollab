@@ -160,6 +160,112 @@
   - 包含领域特定的角色和流程
 - **状态**: 🟢
 
+## Phase 2 测试用例 (v0.5.5 ~ v0.5.8)
+
+### TC-EVENTLOG-001: EventLog 追加与读取
+- **关联**: v0.5.5
+- **前置**: 项目已初始化
+- **步骤**:
+  1. 创建 `EventLog(project_root)`
+  2. 调用 `event_log.append(Event(event_type=..., summary=..., actor=..., payload=...))`
+  3. 调用 `event_log.read_all()`
+- **预期**:
+  - 事件持久化到 `.vibecollab/events.jsonl`
+  - 读取返回所有已追加事件
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-TASK-001: TaskManager 生命周期
+- **关联**: v0.5.6
+- **前置**: 项目已初始化
+- **步骤**:
+  1. 创建 `TaskManager(project_root, event_log)`
+  2. `create_task(id=..., role=..., feature=...)`
+  3. `transition_task(id, "validate")` → `transition_task(id, "solidify")`
+- **预期**:
+  - Task 状态按 IN_PROGRESS→REVIEW→DONE 流转
+  - 非法流转抛出异常
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-LLM-001: LLMClient 配置与调用
+- **关联**: v0.5.7
+- **前置**: 设置 `VIBECOLLAB_LLM_API_KEY` 环境变量
+- **步骤**:
+  1. 创建 `LLMConfig()` 读取环境变量
+  2. 创建 `LLMClient(config)` 并调用 `client.ask("test")`
+- **预期**:
+  - 正确解析 provider/model/endpoint
+  - API 调用返回响应 (或 mock 验证请求格式)
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-AI-001: AI Ask 单轮提问
+- **关联**: v0.5.8
+- **前置**: LLM 配置已设置
+- **步骤**:
+  1. 运行 `vibecollab ai ask "项目状态如何?"`
+- **预期**:
+  - 自动注入项目上下文
+  - 返回 LLM 响应
+  - 记录事件到 EventLog
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-AI-002: AI Chat 多轮对话
+- **关联**: v0.5.8
+- **前置**: LLM 配置已设置
+- **步骤**:
+  1. 运行 `vibecollab ai chat`
+  2. 输入问题，查看回复
+  3. 输入 "exit" 退出
+- **预期**:
+  - 保持对话历史
+  - 支持 exit/quit/bye 退出
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-AI-003: Agent Plan 只读分析
+- **关联**: v0.5.8
+- **前置**: LLM 配置已设置
+- **步骤**:
+  1. 运行 `vibecollab ai agent plan`
+- **预期**:
+  - 输出行动计划
+  - 不执行任何变更
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-AI-004: Agent Run 单周期执行
+- **关联**: v0.5.8
+- **前置**: LLM 配置已设置
+- **步骤**:
+  1. 运行 `vibecollab ai agent run`
+  2. 运行 `vibecollab ai agent run --dry-run`
+- **预期**:
+  - 完成 Plan→Execute→Solidify 单周期
+  - `--dry-run` 只输出计划不执行
+  - pending-solidify 门控阻塞执行
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-AI-005: Agent Serve 安全门控
+- **关联**: v0.5.8
+- **前置**: LLM 配置已设置
+- **步骤**:
+  1. 运行 `vibecollab ai agent serve -n 1`
+  2. 尝试同时运行第二个实例
+- **预期**:
+  - PID 锁阻止多实例
+  - 最大周期数限制生效
+  - RSS 内存阈值检查
+  - 自适应退避 + 断路器
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-AI-006: Agent Status 状态查看
+- **关联**: v0.5.8
+- **前置**: 无特殊要求
+- **步骤**:
+  1. 运行 `vibecollab ai agent status`
+- **预期**:
+  - 显示 PID 锁状态
+  - 显示 LLM 配置
+  - 显示任务统计和最近事件
+- **状态**: 🟢 (unit test 覆盖)
+
 ---
 
 ## 已知问题
@@ -178,4 +284,4 @@
 
 ---
 
-*最后更新: 2026-01-21*
+*最后更新: 2026-02-24*

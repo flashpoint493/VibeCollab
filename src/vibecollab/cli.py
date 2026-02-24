@@ -652,6 +652,10 @@ def check(config: str, strict: bool):
 from .cli_lifecycle import lifecycle as lifecycle_group
 main.add_command(lifecycle_group)
 
+# 导入 AI 命令 (人机对话 + Agent 自主模式)
+from .cli_ai import ai as ai_group
+main.add_command(ai_group)
+
 
 # ============================================
 # 多开发者管理命令组 (v0.5.0+)

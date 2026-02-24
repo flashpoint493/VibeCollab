@@ -55,6 +55,70 @@
 
 ---
 
+## REQ-003: 事件审计日志
+
+**当前描述**:
+> 实现 append-only JSONL 格式的事件日志系统，用于追踪项目所有操作：
+> 1. `EventLog` 模块，支持 append + read_all
+> 2. `Event` 数据类（event_type, summary, actor, payload, timestamp）
+> 3. 持久化到 `.vibecollab/events.jsonl`
+> 4. 支持自定义事件类型（TASK_CREATED, TASK_TRANSITIONED, DECISION, CUSTOM 等）
+
+**状态**: completed
+**优先级**: high
+**创建时间**: 2026-02-24
+**更新时间**: 2026-02-24
+
+---
+
+## REQ-004: 任务生命周期管理
+
+**当前描述**:
+> 实现任务状态机管理系统：
+> 1. `TaskManager` 模块，支持 create/transition/list/get
+> 2. 状态流转: IN_PROGRESS → REVIEW → DONE，支持 rollback
+> 3. 变更范围控制（最大文件数/行数限制）
+> 4. 所有状态变更自动记录到 EventLog
+
+**状态**: completed
+**优先级**: high
+**创建时间**: 2026-02-24
+**更新时间**: 2026-02-24
+
+---
+
+## REQ-005: LLM 客户端集成
+
+**当前描述**:
+> 实现 provider-agnostic 的 LLM 客户端：
+> 1. `LLMClient` 模块，支持 OpenAI-compatible API 和 Anthropic Claude
+> 2. 环境变量配置（`VIBECOLLAB_LLM_*`），零硬编码 API key
+> 3. `build_project_context()` 自动组装项目上下文
+> 4. 单轮 ask() + 多轮 chat() API
+
+**状态**: completed
+**优先级**: high
+**创建时间**: 2026-02-24
+**更新时间**: 2026-02-24
+
+---
+
+## REQ-006: 三模式 AI CLI
+
+**当前描述**:
+> 实现三种 AI 使用模式的 CLI 命令层：
+> 1. `vibecollab ai ask/chat` — 人机交互模式
+> 2. `vibecollab ai agent plan/run/serve/status` — Agent 自主模式
+> 3. 安全门控: PID 单例锁、pending-solidify 检查、最大周期数、自适应退避、断路器、RSS 内存限制
+> 4. 与 IDE 对话模式 (读 CONTRIBUTING_AI.md) 共存
+
+**状态**: completed
+**优先级**: high
+**创建时间**: 2026-02-24
+**更新时间**: 2026-02-24
+
+---
+
 ## 需求统计
 
 | 状态 | 数量 |
@@ -62,9 +126,9 @@
 | draft | 0 |
 | confirmed | 0 |
 | in_progress | 0 |
-| completed | 2 |
+| completed | 6 |
 | cancelled | 0 |
 
 ---
 
-*最后更新: 2026-01-21*
+*最后更新: 2026-02-24*
