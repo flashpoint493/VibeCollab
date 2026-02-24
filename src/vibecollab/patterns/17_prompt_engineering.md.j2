@@ -1,0 +1,51 @@
+{%- set pe = prompt_engineering if prompt_engineering else {} -%}
+{%- set role_list = roles if roles is iterable and roles is not mapping else [] -%}
+{%- set role_templates = pe.get('role_templates', {}) -%}
+# Prompt 工程最佳实践
+
+## 有效提问模板
+
+{% for role in role_list[:4] -%}
+{%- set code = role.get('code', '') -%}
+{%- set name = role.get('name', '') -%}
+{%- set tmpl = role_templates.get(code, '[' ~ code ~ '] 请帮我{任务描述}') -%}
+### {{ name }}讨论
+```
+{{ tmpl }}
+```
+
+{% endfor -%}
+
+### 问题诊断
+```
+[QA] 遇到问题: {问题描述}
+复现步骤: {步骤}
+期望行为: {期望}
+实际行为: {实际}
+```
+
+## 高价值引导词
+
+| 场景 | 引导词 |
+|-----|-------|
+| 深入分析 | "请从{角色}视角分析"、"有哪些我没考虑到的" |
+| 方案对比 | "给出2-3个方案并对比优劣" |
+| 风险评估 | "这个方案最大的风险是什么" |
+| 简化问题 | "MVP版本最少需要什么" |
+| 扩展思考 | "如果未来要支持{X}，现在要预留什么" |
+| Vibe 对齐 | "你理解我的意图了吗"、"我们先对齐一下理解" |
+
+## Vibe Development 沟通技巧
+
+### 不要说
+- "帮我写一个XXX" (太直接，跳过思考)
+- "直接给我代码" (跳过设计讨论)
+
+### 推荐说
+- "我想和你讨论一下XXX的设计"
+- "你觉得这个方案有什么问题"
+- "我们先对齐一下理解，再动手"
+- "这个决策你怎么看"
+- "把你的思考过程告诉我"
+
+---

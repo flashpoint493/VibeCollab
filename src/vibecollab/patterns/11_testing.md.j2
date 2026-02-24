@@ -1,0 +1,61 @@
+{%- set test_cfg = testing if testing else {} -%}
+{%- set ut = test_cfg.get('unit_test', {}) -%}
+{%- set pqa = test_cfg.get('product_qa', {}) -%}
+# 五、测试体系
+
+{% if ut.get('enabled', True) -%}
+{%- set coverage = ut.get('coverage_target', 0.8) -%}
+{%- set patterns = ut.get('patterns', ['**/*.test.ts']) -%}
+{%- set run_on = ut.get('run_on', ['pre-commit', 'ci']) -%}
+## 5.1 单元测试 (Unit Test)
+
+> **开发者视角：验证代码逻辑正确性**
+
+| 配置项 | 值 |
+|-------|-----|
+| 测试框架 | {{ ut.get('framework', 'jest') }} |
+| 覆盖率目标 | {{ (coverage * 100) | int }}% |
+| 文件模式 | {{ patterns | join(', ') }} |
+| 运行时机 | {{ run_on | join(', ') }} |
+
+**单元测试原则**:
+- 每个模块应有对应的测试文件
+- 关键函数必须有测试覆盖
+- 测试应该独立、可重复
+- Mock 外部依赖
+
+{% endif -%}
+{% if pqa.get('enabled', True) -%}
+## 5.2 产品QA验收 (Product QA)
+
+> **用户视角：验证功能符合预期**
+
+**测试用例文件**: `{{ pqa.get('test_case_file', 'docs/QA_TEST_CASES.md') }}`
+
+**用例ID格式**: `{{ pqa.get('case_id_pattern', 'TC-{module}-{seq}') }}`
+
+**测试用例要素**:
+{% for field in pqa.get('required_fields', []) -%}
+- {{ field }}
+{% endfor %}
+**测试状态**:
+{% for status in pqa.get('statuses', []) -%}
+{% if status is mapping -%}
+- {{ status.get('symbol', '') }} {{ status.get('meaning', '') }}
+{% else -%}
+- {{ status }}
+{% endif -%}
+{% endfor -%}
+{% endif %}
+## 5.3 Unit Test vs Product QA 区别
+
+| 维度 | Unit Test | Product QA |
+|------|-----------|------------|
+| 视角 | 开发者 | 用户 |
+| 目标 | 代码正确性 | 功能完整性 |
+| 粒度 | 函数/模块级 | 功能/流程级 |
+| 执行 | 自动化 | 可自动+人工 |
+| 时机 | 提交时 | 功能完成时 |
+| 工具 | 测试框架 | 测试用例手册 |
+
+---

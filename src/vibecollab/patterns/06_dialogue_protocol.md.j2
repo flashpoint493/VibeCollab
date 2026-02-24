@@ -1,0 +1,49 @@
+{%- set protocol = dialogue_protocol if dialogue_protocol else {} -%}
+{%- set on_start = protocol.get('on_start', {}) -%}
+{%- set on_end = protocol.get('on_end', {}) -%}
+{%- set flow = protocol.get('standard_flow', []) -%}
+{%- set read_files = on_start.get('read_files', []) -%}
+{%- set update_files = on_end.get('update_files', []) -%}
+## 4.2 标准对话流程
+
+### 4.2.0 对话开始时（强制）
+
+> **每次新对话开始，AI 必须先恢复当前状态**
+
+```
+{% for f in read_files -%}
+{{ loop.index }}. 读取 {{ f }}
+{% endfor -%}
+{% for action in on_start.get('actions', []) -%}
+{{ read_files | length + loop.index }}. {{ action }}
+{% endfor -%}
+```
+
+**项目初始化约束**：
+- 如果是新项目且没有 `.git` 目录，必须执行 `git init` 初始化 Git 仓库
+- 初始化后立即执行首次提交：`git add -A && git commit -m "init: 项目初始化"`
+- Git 是协作记录的基础，没有 Git 无法进行有效的版本追踪
+
+### 4.2.1 对话结束时（强制）
+
+> **每次对话结束前，AI 必须保存当前状态**
+
+```
+{% for f in update_files -%}
+{{ loop.index }}. 更新 {{ f }}
+{% endfor -%}
+{% if on_end.get('git_commit', True) -%}
+{{ update_files | length + 1 }}. Git commit → 记录对话成果
+{% endif -%}
+```
+
+### 4.2.2 标准对话中流程
+
+```
+{% for step in flow -%}
+{%- set actor = "[人]" if step.get('actor') == 'human' else "[AI]" -%}
+{{ step.get('step', '') }}. {{ actor }} {{ step.get('action', '') }}{% if step.get('condition') %} ← 条件: {{ step.get('condition') }}{% endif %}
+{% if not loop.last %}       ↓
+{% endif -%}
+{% endfor -%}
+```

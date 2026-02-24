@@ -268,6 +268,69 @@
 
 ---
 
+## Phase 3 测试用例 (v0.5.9)
+
+### TC-PATTERN-001: PatternEngine 基础渲染
+- **关联**: v0.5.9
+- **前置**: 项目已初始化，存在 project.yaml
+- **步骤**:
+  1. 创建 `PatternEngine(config, project_root)`
+  2. 调用 `engine.render()`
+- **预期**:
+  - 生成完整 CONTRIBUTING_AI.md 内容
+  - 包含 manifest.yaml 中定义的所有启用章节
+  - 章节顺序与 manifest 一致
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-PATTERN-002: Manifest 条件求值
+- **关联**: v0.5.9
+- **前置**: 配置中包含/不包含特定功能
+- **步骤**:
+  1. 配置 `protocol_check.enabled: false`
+  2. 渲染文档
+- **预期**:
+  - 条件为 false 的章节不出现在输出中
+  - `|default` 语法正确处理缺失配置 (默认启用)
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-PATTERN-003: Template Overlay 本地覆盖
+- **关联**: v0.5.9
+- **前置**: 项目中存在 `.vibecollab/patterns/` 目录
+- **步骤**:
+  1. 在 `.vibecollab/patterns/` 创建自定义模板
+  2. 创建本地 `manifest.yaml` (override/insert/exclude)
+  3. 渲染文档
+- **预期**:
+  - 本地模板优先于内置模板
+  - manifest 合并正确: 覆盖、after 定位插入、exclude 排除
+  - `list_patterns()` 正确标注 source: "local" / "builtin"
+- **状态**: 🟢 (unit test 覆盖, 8 overlay tests)
+
+### TC-PATTERN-004: 外部项目兼容性
+- **关联**: v0.5.9
+- **前置**: 使用非 VibeCollab 项目的 project.yaml
+- **步骤**:
+  1. 使用 test-project 的 project.yaml 配置
+  2. 渲染 CONTRIBUTING_AI.md
+- **预期**:
+  - 正确处理缺失的配置项 (lifecycle, multi_developer 等)
+  - 输出比 legacy 更完整 (DEFAULT_STAGES 回退, |true 默认)
+- **状态**: 🟢 (test_generate_full_config 验证)
+
+### TC-PATTERN-005: Legacy 移除兼容性
+- **关联**: v0.5.9
+- **前置**: 使用 generator.py 的 public API
+- **步骤**:
+  1. `generator = LLMContextGenerator.from_file(path)`
+  2. `output = generator.generate()`
+- **预期**:
+  - API 不变，调用方无需修改
+  - 输出由 PatternEngine 生成
+  - cli.py, project.py 等调用方正常工作
+- **状态**: 🟢 (unit test 覆盖)
+
+---
+
 ## 已知问题
 
 ### 🔴 高优先级问题
@@ -284,4 +347,4 @@
 
 ---
 
-*最后更新: 2026-02-24*
+*最后更新: 2026-02-24 (v0.5.9)*
