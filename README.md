@@ -4,9 +4,9 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**从 YAML 配置生成标准化的 AI 协作协议，并自动集成 llms.txt 标准**
+**从 YAML 配置生成标准化的 AI 协作协议，支持多开发者/多 Agent 协同开发**
 
-将 Vibe Development 哲学和 LLM 协作协议抽象为可配置、可复用的框架，支持快速在不同领域部署工程化的人机协作流程。
+将 Vibe Development 哲学和 LLM 协作协议抽象为可配置、可复用的框架，支持快速在不同领域部署工程化的人机协作流程。支持多开发者独立上下文管理、CLI 身份切换、跨开发者冲突检测等特性。
 
 > 本项目自身也使用生成的协作规则进行开发（元实现），并支持与 [llmstxt.org](https://llmstxt.org) 标准无缝集成
 
@@ -58,6 +58,10 @@ flowchart TD
 ## 特性
 
 - **完整协议覆盖**: 决策分级、迭代管理、QA验收、Prompt工程最佳实践
+- **多开发者支持** (v0.5.0+): 多人/多 Agent 协同开发，独立上下文管理
+- **CLI 身份切换** (v0.5.4+): 通过命令行切换开发者身份，无需修改 Git 配置
+- **冲突检测** (v0.5.1+): 自动检测跨开发者的文件冲突、任务冲突、依赖冲突
+- **协议自检** (v0.5.2+): 检查协议遵循情况，确保文档及时更新
 - **领域扩展**: 支持 game/web/data 等领域的定制扩展
 - **钩子机制**: 在对话流程节点自动注入上下文
 - **Cursor Skill**: 可作为 IDE Skill 使用，提供结构化协作流程
@@ -333,6 +337,11 @@ vibecollab dev sync                            # 同步上下文
 vibecollab dev sync --aggregate                # 重新生成全局聚合
 vibecollab dev init --developer <name>         # 初始化新开发者
 
+# 开发者身份切换 (v0.5.4+)
+vibecollab dev switch <developer>              # 切换到指定开发者
+vibecollab dev switch                          # 交互式选择开发者
+vibecollab dev switch --clear                  # 清除切换，恢复默认识别
+
 # 冲突检测 (v0.5.1+)
 vibecollab dev conflicts                       # 检测跨开发者冲突
 vibecollab dev conflicts -v                    # 显示详细冲突信息
@@ -589,6 +598,24 @@ python -c "from vibecollab import LLMContextGenerator; import yaml; from pathlib
   g = LLMContextGenerator(config, Path('.')); \
   Path('CONTRIBUTING_AI.md').write_text(g.generate(), encoding='utf-8')"
 ```
+
+---
+
+## 版本历史
+
+| 版本 | 日期 | 主要特性 |
+|------|------|---------|
+| v0.5.4 | 2026-02-24 | CLI 开发者切换 (`vibecollab dev switch`) |
+| v0.5.3 | 2026-02-10 | PyPI 发布脚本和构建配置优化 |
+| v0.5.2 | 2026-02-10 | 增强多开发者协议检查和自动初始化 |
+| v0.5.1 | 2026-02-10 | 跨开发者冲突检测 |
+| v0.5.0 | 2026-02-10 | 多开发者/多 Agent 协同支持 |
+| v0.4.3 | 2026-02-09 | Windows 编码问题修复 |
+| v0.4.2 | 2026-01-21 | 协议自检机制、PRD 文档管理 |
+| v0.4.0 | 2026-01-21 | Git 检查和初始化、项目生涯管理 |
+| v0.3.0 | 2026-01-20 | llms.txt 标准集成 |
+
+详细变更日志请查看 [docs/CHANGELOG.md](docs/CHANGELOG.md)
 
 ---
 
