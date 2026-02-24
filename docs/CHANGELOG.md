@@ -1,5 +1,28 @@
 # VibeCollab 变更日志
 
+## v0.5.5 (2026-02-24) - EventLog append-only audit trail
+
+### New Feature
+- **EventLog module** (`src/vibecollab/event_log.py`):
+  - Append-only JSONL audit trail for all project operations
+  - 17 event types covering task lifecycle, developer actions, collaboration, validation, lifecycle, and decisions
+  - SHA-256 content-addressable fingerprinting for tamper detection
+  - `EventLog` class: `append()`, `read_all()`, `read_recent(n)`, `query()`, `count()`, `verify_integrity()`
+  - Atomic append with `fsync` for write durability
+  - Parent-event linkage via `parent_id` for causal chains
+  - Default storage: `.vibecollab/events.jsonl`
+
+### New Tests
+- **23 unit tests** (`tests/test_event_log.py`):
+  - `TestEvent` (6): auto-fields, explicit fields, fingerprint determinism, content sensitivity, serialization, roundtrip
+  - `TestAtomicAppend` (3): file creation, preservation, newline handling
+  - `TestEventLog` (14): CRUD, query filters, integrity verification, malformed line handling, Unicode support
+
+### Architecture Decision
+- **DECISION-009**: Selective pattern borrowing for protocol maturity (Direction B confirmed)
+
+---
+
 ## v0.5.4 (2026-02-24) - CLI 开发者切换功能
 
 ### 新功能

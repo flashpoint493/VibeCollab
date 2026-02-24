@@ -132,5 +132,40 @@
   - 更新项目初始化逻辑（支持 `--multi-dev` 选项）
   - 版本升级到 v0.5.0
 
+### DECISION-009: Borrow architectural patterns for protocol maturity
+- **发起人**: user
+- **参与者**: user, AI
+- **等级**: A
+- **角色**: [ARCH]
+- **问题**: How to improve VibeCollab's protocol maturity and structural robustness?
+- **选项**:
+  - A: Full-scale architecture overhaul (high risk, high disruption)
+  - B: Selective pattern borrowing with gradual introduction (chosen)
+  - C: Minimal changes, only fix bugs
+- **决策**: Direction B — Selectively adopt 10 proven architectural patterns, mapped to VibeCollab-native concepts, introduced incrementally with unit tests per iteration.
+- **理由**:
+  - Incremental approach reduces risk and allows validation at each step
+  - Patterns are renamed and adapted to VibeCollab's project-centric philosophy
+  - Each iteration is independently testable and committable
+  - Avoids coupling to any external framework's proprietary terminology
+- **Borrowed patterns**:
+  1. State separation (mutable JSON + immutable JSONL) → multi-file split (High)
+  2. Append-only event log → EventLog events.jsonl (High)
+  3. Validate-solidify-rollback loop → Task solidify check (High)
+  4. Atomic write → Python atomic_write (Medium)
+  5. Content-addressable hashing → SHA-256 fingerprint (Medium)
+  6. Signal extraction → Project health signals (Medium)
+  7. Experience reuse patterns → Project Pattern / Template (Medium)
+  8. Blast radius control → Task max change scope (Medium)
+  9. Defense-in-depth safety → Multi-level validation guards (Low)
+  10. Asset sharing protocol → Cross-project template sharing (Low)
+- **日期**: 2026-02-24
+- **状态**: CONFIRMED
+- **影响**:
+  - Iteration 1: EventLog module (event_log.py) — COMPLETED
+  - Iteration 2: Pattern module (reusable project templates) — PLANNED
+  - Iteration 3: Protocol formatting enhancement — PLANNED
+  - Iteration 4: Auto-evolution discussion — PLANNED
+
 ---
 *决策记录格式见 CONTRIBUTING_AI.md*
