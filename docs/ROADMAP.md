@@ -28,12 +28,21 @@
 - v0.5.6 (已完成) - TaskManager 验证-固化-回滚
 - v0.5.7 (已完成) - LLM Client (CLI + API Key)
 - v0.5.8 (已完成) - AI CLI 三模式架构 (ask/chat/agent)
+- v0.5.9 (已完成) - Pattern Engine + Template Overlay
 
 ---
 
 ## 已完成里程碑
 
 ### Phase 2 - 多开发者支持 (v0.5.0 - v0.5.1)
+
+#### v0.5.9 - Pattern Engine + Template Overlay (2026-02-24)
+- [x] PatternEngine: Jinja2 模板 + manifest.yaml 声明式引擎
+- [x] 27 个 .md.j2 模板替代硬编码 _add_*() 方法
+- [x] Template Overlay: .vibecollab/patterns/ 本地覆盖机制
+- [x] Legacy 移除: generator.py 1713→83 行
+- [x] DECISION-011: Pattern Engine 架构
+- [x] 40 PatternEngine tests (含 8 Overlay tests), 全量 215 tests 零回归
 
 #### v0.5.8 - AI CLI 三模式架构 (2026-02-24)
 - [x] vibecollab ai ask / chat — 人机交互 CLI
@@ -113,8 +122,8 @@
 ### 核心功能
 - [x] EventLog append-only 审计日志 (Iteration 1 ✅)
 - [x] TaskManager 验证-固化-回滚 (Iteration 2 ✅)
-- [ ] Pattern 模块 — 可复用项目模板 (Iteration 3)
-- [ ] 验证-固化-回滚循环 (Iteration 3)
+- [x] Pattern Engine — Jinja2 模板驱动 + Template Overlay (Iteration 3 ✅)
+- [x] Legacy 代码移除 — generator.py 1713→83 行 (Iteration 3 ✅)
 - [ ] 建立 CI/CD 流程（GitHub Actions）
 - [ ] 自动化测试覆盖率报告
 - [ ] 错误处理和用户提示完善
@@ -180,4 +189,4 @@
 
 ---
 
-*最后更新: 2026-02-24*
+*最后更新: 2026-02-24 (v0.5.9)*

@@ -1,0 +1,30 @@
+{%- set git = git_workflow if git_workflow else {} -%}
+{%- set branches = git.get('branches', {}) -%}
+{%- set prefixes = git.get('commit_prefixes', []) -%}
+## 4.3 Git 协作规范
+
+### 分支策略
+```
+{{ branches.get('main', 'main') }}                 # 稳定版本
+├── {{ branches.get('dev', 'dev') }}              # 开发主线
+│   ├── {{ branches.get('feature_prefix', 'feature/') }}{特性名}     # 功能开发
+│   ├── {{ branches.get('design_prefix', 'design/') }}{设计文档}    # 设计迭代
+│   ├── {{ branches.get('refactor_prefix', 'refactor/') }}{模块名}    # 重构优化
+│   └── {{ branches.get('fix_prefix', 'fix/') }}{问题描述}       # Bug修复
+```
+
+### Commit 前缀
+```
+{% for p in prefixes -%}
+{{ p.get('prefix', '') }}  {{ p.get('description', '') }}
+{% endfor -%}
+```
+{% if git.get('commit_required', True) %}
+### Git 提交要求（重要）
+
+> **每次有效对话都必须产生 Git 提交，记录思维演进**
+
+Git 历史不仅是代码版本，更是**设计思维的演进记录**。
+
+---
+{% endif -%}

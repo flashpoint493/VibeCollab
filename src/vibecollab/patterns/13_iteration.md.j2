@@ -1,0 +1,37 @@
+{%- set iter_cfg = iteration if iteration else {} -%}
+{%- set sp = iter_cfg.get('suggestion_pool', {}) -%}
+{%- set config_iter = iter_cfg.get('config_level_iteration', {}) -%}
+{%- set dimensions = iter_cfg.get('review_dimensions', []) -%}
+# 七、迭代管理
+
+## 7.1 迭代建议管理协议
+
+> **迭代建议必须经过 PM 评审后决定是否纳入当前里程碑**
+
+**决策分类**:
+{% for cat in sp.get('categories', []) -%}
+- {{ cat.get('symbol', '') }} {{ cat.get('meaning', '') }}
+{% endfor -%}
+{% if dimensions %}
+**评审维度**:
+{% for dim in dimensions -%}
+- {{ dim }}
+{% endfor -%}
+{% endif %}
+{% if config_iter.get('enabled', True) %}
+## 7.2 配置级迭代协议
+
+> **仅修改配置、不改动代码逻辑的迭代，可快速执行**
+
+**执行规则**:
+- 用户明确指出"配置调整"
+- AI 直接修改对应配置值
+- 无需 PM 审批，无需创建 TASK
+- commit 使用 `{{ config_iter.get('commit_prefix', '[CONFIG]') }}` 前缀
+
+**适用示例**:
+{% for ex in config_iter.get('examples', []) -%}
+- {{ ex }}
+{% endfor -%}
+{% endif %}
+---

@@ -196,5 +196,37 @@
   - 新增 `tests/test_cli_ai.py` (32 tests)
   - 版本升级到 v0.5.8
 
+### DECISION-011: Pattern Engine 架构 (Manifest 驱动模板引擎)
+- **发起人**: user
+- **参与者**: user, AI
+- **等级**: A
+- **角色**: [ARCH]
+- **问题**: 如何替换 generator.py 中 27 个硬编码的 `_add_*()` 方法，实现可维护、可扩展的文档生成？
+- **选项**:
+  - A: 保持硬编码 Python 方法，逐步优化
+  - B: Jinja2 模板 + manifest.yaml 声明式引擎 (选择)
+  - C: 纯 Markdown 拼接，不用模板引擎
+- **决策**: 采用方案 B — Manifest 驱动的 Jinja2 模板引擎 + 本地覆盖机制
+- **理由**:
+  - **可维护性**: 每个章节独立 `.md.j2` 模板，修改不影响其他章节
+  - **声明式控制**: `manifest.yaml` 定义章节顺序、条件、模板映射，非代码即配置
+  - **可扩展性**: Template Overlay 允许用户在 `.vibecollab/patterns/` 自定义模板和 manifest
+  - **代码精简**: generator.py 从 1713 行减至 83 行，降低维护成本
+  - **条件语法**: 支持 `config.x.enabled|true` 默认值语法，比硬编码 if/else 更灵活
+- **技术方案**:
+  - `PatternEngine`: Jinja2 Environment + ChoiceLoader (本地优先 → 内置回退)
+  - `manifest.yaml`: 27 个 section 定义 (id, template, condition, chapter_title)
+  - `_merge_manifests()`: 支持 override/insert(after)/exclude 三种合并操作
+  - `_evaluate_condition()`: 支持 `|default` 语法的条件求值
+  - 27 个 `.md.j2` 模板文件 + `DEFAULT_STAGES` 内置阶段定义
+- **日期**: 2026-02-24
+- **状态**: CONFIRMED
+- **影响**:
+  - `src/vibecollab/pattern_engine.py` 增强 (~290 行)
+  - `src/vibecollab/generator.py` 精简 (1713 → 83 行)
+  - `tests/test_pattern_engine.py` (40 tests)
+  - 新增 `Jinja2>=3.0` 依赖
+  - 新增 `src/vibecollab/patterns/` 目录 (27 模板 + manifest.yaml)
+
 ---
 *决策记录格式见 CONTRIBUTING_AI.md*
