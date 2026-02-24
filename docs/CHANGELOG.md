@@ -1,5 +1,30 @@
 # VibeCollab 变更日志
 
+## v0.5.7 (2026-02-24) - LLM Client for CLI + API Key mode
+
+### New Feature
+- **LLM Client module** (`src/vibecollab/llm_client.py`):
+  - Provider-agnostic: OpenAI-compatible APIs and Anthropic Claude
+  - Zero impact on existing offline features (pure additive, lazy httpx import)
+  - `LLMConfig`: environment variable based config (`VIBECOLLAB_LLM_*`)
+  - `LLMClient.chat()`: multi-turn conversation
+  - `LLMClient.ask()`: single-question convenience with auto project context
+  - `build_project_context()`: assembles project.yaml, CONTEXT.md, tasks, events into LLM-ready prompt
+  - API key safety: `to_safe_dict()` masks secrets, no keys in project files
+  - Custom endpoint support: any OpenAI-compatible base URL
+
+### New Tests
+- **30 unit tests** (`tests/test_llm_client.py`):
+  - `TestLLMConfig` (7): defaults, env vars, overrides, safe serialization
+  - `TestMessageAndResponse` (4): data classes
+  - `TestBuildProjectContext` (8): context assembly, truncation, Unicode, section toggles
+  - `TestLLMClient` (11): provider dispatch, mock API calls, error handling, context injection
+
+### Installation
+- `httpx` added as optional dependency: `pip install vibe-collab[llm]`
+
+---
+
 ## v0.5.6 (2026-02-24) - TaskManager with validate-solidify-rollback
 
 ### New Feature
