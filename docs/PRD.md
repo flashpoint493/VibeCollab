@@ -184,6 +184,22 @@
 > 8. 跨 Developer 共享：get_insight_developers / get_cross_developer_stats
 > 9. 溯源 CLI 可视化：get_full_trace + ASCII 树渲染
 
+**状态**: completed
+**优先级**: high
+**创建时间**: 2026-02-25
+**更新时间**: 2026-02-25
+
+---
+
+## REQ-011: AI Agent 接入引导与行动建议
+
+**当前描述**:
+> 实现 AI Agent 接入项目时的自动化引导和修改后的下一步建议系统：
+> 1. `vibecollab onboard` — 新 Agent 接入时输出项目全貌、当前进度、待办事项、应读文件列表
+> 2. `vibecollab next` — 基于当前工作区状态（git diff、文件 mtime、linked_groups）生成行动建议
+> 3. 从被动诊断（check）进化为主动引导（onboard + next）
+> 4. 让 Agent 模式的 AI 能自主了解项目、自主推进开发
+
 **状态**: in_progress
 **优先级**: high
 **创建时间**: 2026-02-25
@@ -198,7 +214,7 @@
 | draft | 0 |
 | confirmed | 0 |
 | in_progress | 1 |
-| completed | 9 |
+| completed | 10 |
 | cancelled | 0 |
 
 ---
