@@ -1,8 +1,8 @@
 project:
-  name: LLMContextGenerator
-  version: v0.6.1
+  name: VibeCollab
+  version: v0.7.0-dev
   domain: generic
-  description: 从 YAML 配置生成标准化的 AI 协作协议，并自动集成 llms.txt 标准
+  description: AI 协作开发框架，支持 Insight 沉淀、文档一致性检查、三模式 CLI
 philosophy:
   vibe_development:
     enabled: true
