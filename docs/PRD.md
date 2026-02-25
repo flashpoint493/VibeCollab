@@ -200,7 +200,7 @@
 > 3. 从被动诊断（check）进化为主动引导（onboard + next）
 > 4. 让 Agent 模式的 AI 能自主了解项目、自主推进开发
 
-**状态**: in_progress
+**状态**: completed
 **优先级**: high
 **创建时间**: 2026-02-25
 **更新时间**: 2026-02-25
@@ -213,8 +213,8 @@
 |------|------|
 | draft | 0 |
 | confirmed | 0 |
-| in_progress | 1 |
-| completed | 10 |
+| in_progress | 0 |
+| completed | 11 |
 | cancelled | 0 |
 
 ---
