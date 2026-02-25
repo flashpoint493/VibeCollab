@@ -1,5 +1,34 @@
 # VibeCollab 变更日志
 
+## v0.7.1-dev (2026-02-25) - Task-Insight 自动关联
+
+### Architecture
+- **DECISION-014 (A 级)**: Task-Insight 单向自动关联 — Task 创建时自动搜索关联 Insight
+- **零配置集成**: InsightManager 可选注入，无 InsightManager 时自动退化，完全向后兼容
+
+### New Feature
+- **Task-Insight 自动关联** (`src/vibecollab/task_manager.py`):
+  - `TaskManager.__init__` 新增可选 `insight_manager` 参数
+  - `_extract_search_tags()`: 从 feature/description/role 提取关键词，过滤停用词
+  - `_find_related_insights()`: Jaccard × weight 匹配，结果存入 `task.metadata["related_insights"]`
+  - `suggest_insights()`: 对已有任务推荐关联 Insight
+  - EventLog 自动记录 `related_insights` 到 TASK_CREATED 事件
+- **Task CLI 命令** (`src/vibecollab/cli_task.py`):
+  - `vibecollab task create --id --role --feature [--assignee] [--description] [--json]`
+  - `vibecollab task list [--status] [--assignee] [--json]`
+  - `vibecollab task show <id> [--json]`
+  - `vibecollab task suggest <id> [-n limit] [--json]`
+
+### Testing
+- **新增 28 个单元测试** (`tests/test_task_insight_integration.py`):
+  - `TestExtractSearchTags` (8 tests): 关键词提取（英文/中文/停用词/去重）
+  - `TestInsightAutoLink` (7 tests): 自动关联（匹配/无匹配/无 IM/score/event/持久化/description增强）
+  - `TestSuggestInsights` (4 tests): 推荐（存在/不存在/无IM/limit）
+  - `TestBackwardCompatibility` (2 tests): 向后兼容验证
+  - `TestCLI` (7 tests): CLI 端到端（create/show/list/suggest/invalid/empty/rich）
+
+---
+
 ## v0.7.0-dev (2026-02-25) - Insight 沉淀系统 + Agent 引导
 
 ### Architecture

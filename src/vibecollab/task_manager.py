@@ -8,6 +8,7 @@ existing protocol-driven task conventions, adding:
 - Solidify gate: pre-completion checks (required fields, scope limits)
 - Rollback: revert a task to its previous state on validation failure
 - EventLog integration: every mutation automatically records an event
+- Insight auto-linking: creating a task auto-searches related Insights
 
 Design principles:
 - Tasks are stored as structured JSON in .vibecollab/tasks.json
@@ -23,9 +24,12 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from .event_log import Event, EventLog, EventType
+
+if TYPE_CHECKING:
+    from .insight_manager import InsightManager
 
 # ---------------------------------------------------------------------------
 # Task status enum & state machine
@@ -156,12 +160,14 @@ class TaskManager:
 
     def __init__(self, project_root: Path,
                  event_log: Optional[EventLog] = None,
+                 insight_manager: Optional["InsightManager"] = None,
                  max_files: int = DEFAULT_MAX_FILES,
                  max_lines: int = DEFAULT_MAX_LINES):
         self.project_root = Path(project_root)
         self.data_dir = self.project_root / ".vibecollab"
         self.tasks_path = self.data_dir / self.TASKS_FILE
         self.event_log = event_log or EventLog(project_root=self.project_root)
+        self.insight_manager = insight_manager
         self.max_files = max_files
         self.max_lines = max_lines
         self._tasks: Dict[str, Task] = {}
@@ -199,6 +205,10 @@ class TaskManager:
                     **kwargs) -> Task:
         """Create a new task.
 
+        If an InsightManager is configured, automatically searches for
+        related Insights using tags extracted from the task's feature and
+        description, and stores matched IDs in task.metadata["related_insights"].
+
         Args:
             id: Task ID (must match TASK-{ROLE}-{SEQ} pattern)
             role: Role code
@@ -222,15 +232,30 @@ class TaskManager:
 
         task = Task(id=id, role=role, feature=feature,
                     assignee=assignee, **kwargs)
+
+        # Auto-link related Insights
+        related = self._find_related_insights(task)
+        if related:
+            task.metadata["related_insights"] = [
+                {"id": ins.id, "title": ins.title, "score": round(score, 4)}
+                for score, ins in related
+            ]
+
         self._tasks[id] = task
         self._save()
+
+        payload: Dict[str, Any] = {
+            "task_id": id, "role": role, "feature": feature,
+            "assignee": assignee,
+        }
+        if related:
+            payload["related_insights"] = [ins.id for _, ins in related]
 
         self.event_log.append(Event(
             event_type=EventType.TASK_CREATED,
             actor=actor,
             summary=f"Created task {id}: {feature}",
-            payload={"task_id": id, "role": role, "feature": feature,
-                     "assignee": assignee},
+            payload=payload,
         ))
         return task
 
@@ -490,3 +515,112 @@ class TaskManager:
         if status:
             return sum(1 for t in self._tasks.values() if t.status == status)
         return len(self._tasks)
+
+    # -- Insight integration -------------------------------------------------
+
+    @staticmethod
+    def _extract_search_tags(feature: str, description: str = "",
+                             role: str = "") -> List[str]:
+        """Extract search tags from task fields for Insight matching.
+
+        Strategy:
+        - Split feature and description into words
+        - Filter out short/common stop words
+        - Include role as a tag (lowered)
+        - Deduplicate and return
+        """
+        STOP_WORDS = frozenset([
+            "a", "an", "the", "is", "are", "was", "were", "be", "been",
+            "have", "has", "had", "do", "does", "did", "will", "would",
+            "could", "should", "may", "might", "can", "shall",
+            "and", "or", "but", "if", "then", "else",
+            "in", "on", "at", "to", "for", "of", "with", "by", "from",
+            "up", "about", "into", "through", "during", "before", "after",
+            "above", "below", "between", "under", "again",
+            "not", "no", "nor", "only", "own", "same", "so", "than",
+            "too", "very", "just", "because", "as", "until", "while",
+            "this", "that", "these", "those", "it", "its",
+            "的", "了", "在", "是", "和", "与", "对", "从", "到",
+            "中", "上", "下", "为", "以", "将", "把", "被", "让",
+            "用", "于", "及", "等", "也", "都", "而", "或", "则",
+            "一", "不", "有", "个", "人",
+        ])
+
+        text = f"{feature} {description}".lower()
+        # Split on non-alphanumeric (keeping CJK characters)
+        words = re.split(r'[^a-z0-9\u4e00-\u9fff]+', text)
+        tags = [w for w in words if w and len(w) > 1 and w not in STOP_WORDS]
+
+        if role:
+            tags.append(role.lower())
+
+        # Deduplicate while preserving order
+        seen = set()
+        result = []
+        for t in tags:
+            if t not in seen:
+                seen.add(t)
+                result.append(t)
+        return result
+
+    def _find_related_insights(
+        self, task: Task, limit: int = 5
+    ) -> List[tuple]:
+        """Find Insights related to a task.
+
+        Returns:
+            List of (score, Insight) tuples sorted by relevance,
+            or empty list if no InsightManager is configured.
+        """
+        if self.insight_manager is None:
+            return []
+
+        tags = self._extract_search_tags(
+            task.feature, task.description, task.role
+        )
+        if not tags:
+            return []
+
+        try:
+            results = self.insight_manager.search_by_tags(tags, active_only=True)
+        except Exception:
+            return []
+
+        # Build scored list using the same Jaccard × weight logic
+        entries, _ = self.insight_manager.get_registry()
+        query_tags = set(t.lower() for t in tags)
+        scored = []
+        for ins in results[:limit]:
+            ins_tags = set(t.lower() for t in ins.tags)
+            overlap = query_tags & ins_tags
+            if not overlap:
+                continue
+            match_score = len(overlap) / len(query_tags | ins_tags)
+            weight = 1.0
+            entry = entries.get(ins.id)
+            if entry:
+                weight = entry.weight
+            scored.append((round(match_score * weight, 4), ins))
+        return scored
+
+    def suggest_insights(self, task_id: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """Suggest related Insights for an existing task.
+
+        Args:
+            task_id: Task to find related Insights for
+            limit: Maximum number of suggestions
+
+        Returns:
+            List of dicts with id, title, score, tags.
+            Empty list if task not found or no InsightManager.
+        """
+        task = self._tasks.get(task_id)
+        if task is None:
+            return []
+
+        related = self._find_related_insights(task, limit=limit)
+        return [
+            {"id": ins.id, "title": ins.title,
+             "score": score, "tags": ins.tags}
+            for score, ins in related
+        ]
