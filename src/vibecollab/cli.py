@@ -817,6 +817,11 @@ from .cli_guide import next_step, onboard  # noqa: E402
 main.add_command(onboard)
 main.add_command(next_step, name="next")
 
+# 导入 Task 管理命令 (含 Insight 自动关联, v0.7.1+)
+from .cli_task import task_group  # noqa: E402
+
+main.add_command(task_group)
+
 
 # ============================================
 # 多开发者管理命令组 (v0.5.0+)

@@ -142,7 +142,7 @@
 ### ~~v0.7.0 - Web UI~~ ❌ 已砍掉 (DECISION-012)
 > 决策：Web UI 不是核心竞争力，不投入资源。资源转向经验系统。
 
-### v0.7.0 - Insight 沉淀系统（开发中）
+### v0.7.0 - Insight 沉淀系统（已完成）
 - [x] Insight Schema 设计（本体 + Registry + Developer Tag 三部分）✅
 - [x] InsightManager 核心模块（CRUD / Registry / 搜索 / 溯源 / 一致性校验）✅
 - [x] InsightManager 单元测试 (62 tests) ✅
@@ -155,6 +155,16 @@
 - [x] Agent 引导命令 `vibecollab onboard` + `vibecollab next` ✅
 - [x] 技术债务清理（版本号统一 v0.7.0-dev、项目名 VibeCollab、REQ-010→completed）✅
 - [x] protocol_checker 多开发者动态发现（从文件系统扫描替代静态配置）✅
+
+### v0.7.1 - Task-Insight 自动关联（开发中）
+- [x] TaskManager.create_task() 自动搜索关联 Insight ✅
+- [x] _extract_search_tags(): 从 feature/description/role 提取关键词 ✅
+- [x] _find_related_insights(): Jaccard × weight 匹配 + metadata 存储 ✅
+- [x] suggest_insights(): 已有任务的 Insight 推荐 ✅
+- [x] CLI `vibecollab task create/list/show/suggest` ✅
+- [x] EventLog 记录关联 Insight ✅
+- [x] 向后兼容（无 InsightManager 时自动跳过）✅
+- [x] 28 个单元测试（含 CLI + 集成 + 向后兼容）✅
 
 ### v1.0.0 - 正式版（待规划）
 - [ ] 文档完善和中英文支持
@@ -204,4 +214,4 @@
 
 ---
 
-*最后更新: 2026-02-25 (v0.7.0-dev)*
+*最后更新: 2026-02-25 (v0.7.1-dev)*
