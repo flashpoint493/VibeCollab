@@ -1,5 +1,5 @@
-# LLMContextGenerator AI 协作开发规则
-## LLM Collaboration Protocol v0.5.9
+# VibeCollab AI 协作开发规则
+## LLM Collaboration Protocol v0.7.0
 
 ---
 
