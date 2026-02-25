@@ -413,6 +413,126 @@
 
 ---
 
+## Phase 4 测试用例 (v0.7.0 — Insight 沉淀系统)
+
+### TC-INSIGHT-001: InsightManager CRUD
+- **关联**: v0.7.0
+- **前置**: 项目已初始化
+- **步骤**:
+  1. 创建 `InsightManager(project_root)`
+  2. `create(title=..., tags=[...], category=..., body={...}, created_by=...)`
+  3. `get(insight_id)`, `list_all()`, `update(insight_id, ...)`, `delete(insight_id, ...)`
+- **预期**:
+  - 沉淀文件持久化到 `.vibecollab/insights/INS-xxx.yaml`
+  - 注册表自动维护 `registry.yaml`
+  - 所有操作记录 EventLog 审计事件
+- **状态**: 🟢 (11 unit tests 覆盖)
+
+### TC-INSIGHT-002: Registry 权重衰减与使用奖励
+- **关联**: v0.7.0
+- **前置**: 至少 1 条沉淀已创建
+- **步骤**:
+  1. `record_use(insight_id, used_by=...)` — 使用奖励
+  2. `apply_decay()` — 权重衰减
+  3. `get_active_insights()` — 查看活跃列表
+- **预期**:
+  - 使用后 weight +0.1, used_count +1
+  - 衰减后 weight *= 0.95
+  - weight < 0.1 时自动 active=false
+- **状态**: 🟢 (8 unit tests 覆盖)
+
+### TC-INSIGHT-003: Tag 搜索 (Jaccard × 权重)
+- **关联**: v0.7.0
+- **前置**: 多条不同 tag 的沉淀
+- **步骤**:
+  1. `search_by_tags(["python", "refactor"])`
+  2. `search_by_category("workflow")`
+- **预期**:
+  - 按 Jaccard 相似度 × 注册表权重排序
+  - 无匹配返回空列表
+- **状态**: 🟢 (6 unit tests 覆盖)
+
+### TC-INSIGHT-004: 溯源 derived_from
+- **关联**: v0.7.0
+- **前置**: 存在派生关系的沉淀
+- **步骤**:
+  1. 创建 INS-001，再创建 INS-002 (derived_from: [INS-001])
+  2. `get_derived_tree("INS-001")`
+- **预期**:
+  - derived_from 返回上游 ID
+  - derived_by 返回下游 ID
+- **状态**: 🟢 (3 unit tests 覆盖)
+
+### TC-INSIGHT-005: 一致性校验 (5 项全量)
+- **关联**: v0.7.0
+- **前置**: 沉淀系统已有数据
+- **步骤**:
+  1. `check_consistency()`
+  2. 构造各种不一致场景测试
+- **预期**:
+  - 注册表↔文件双向一致性检查
+  - derived_from 引用完整性检查
+  - Developer metadata 引用完整性检查
+  - SHA-256 指纹一致性检查
+  - 低权重活跃沉淀发出警告
+- **状态**: 🟢 (7 unit tests 覆盖)
+
+### TC-INSIGHT-006: Developer Tag 扩展
+- **关联**: v0.7.0
+- **前置**: Developer metadata 已初始化
+- **步骤**:
+  1. `dm.set_tags(["arch", "python"], "alice")`
+  2. `dm.add_contributed("INS-001", "alice")`
+  3. `dm.add_bookmark("INS-002", "alice")`
+- **预期**:
+  - tags/contributed/bookmarks 正确写入 .metadata.yaml
+  - 不影响已有的 developer/created_at/total_updates 字段
+  - 去重：重复添加返回 False
+- **状态**: 🟢 (21 unit tests 覆盖)
+
+### TC-INSIGHT-007: CLI insight list/show/add/search
+- **关联**: v0.7.0
+- **前置**: 项目已初始化
+- **步骤**:
+  1. `vibecollab insight list [--active-only] [--json]`
+  2. `vibecollab insight show INS-001`
+  3. `vibecollab insight add --title ... --tags ... --category ... --scenario ... --approach ...`
+  4. `vibecollab insight search --tags python`
+- **预期**:
+  - list: 正确列出/过滤/JSON 输出
+  - show: 显示详情含 body、registry 状态
+  - add: 创建并记录 contributed
+  - search: 匹配并按权重排序
+- **状态**: 🟢 (12 unit tests 覆盖)
+
+### TC-INSIGHT-008: CLI insight use/decay/check/delete
+- **关联**: v0.7.0
+- **前置**: 至少 1 条沉淀
+- **步骤**:
+  1. `vibecollab insight use INS-001`
+  2. `vibecollab insight decay [--dry-run]`
+  3. `vibecollab insight check [--json]`
+  4. `vibecollab insight delete INS-001 -y`
+- **预期**:
+  - use: 权重奖励 +0.1
+  - decay: 衰减或预览
+  - check: 一致性校验报告
+  - delete: 删除文件和注册表条目
+- **状态**: 🟢 (9 unit tests 覆盖)
+
+### TC-INSIGHT-009: vibecollab check --insights 集成
+- **关联**: v0.7.0
+- **前置**: 项目已初始化
+- **步骤**:
+  1. 运行 `vibecollab check --insights`
+- **预期**:
+  - 协议检查 + Insight 一致性校验联合执行
+  - 合并统计错误/警告数
+  - Insight 错误计入退出码
+- **状态**: 🟢 (需手动验证)
+
+---
+
 ## 已知问题
 
 ### 🔴 高优先级问题
@@ -429,4 +549,4 @@
 
 ---
 
-*最后更新: 2026-02-24 (v0.5.9)*
+*最后更新: 2026-02-25 (v0.7.0-dev)*

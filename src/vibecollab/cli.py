@@ -616,7 +616,8 @@ def version_info():
 @main.command()
 @click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
 @click.option("--strict", is_flag=True, help="严格模式：任何警告都视为失败")
-def check(config: str, strict: bool):
+@click.option("--insights", is_flag=True, help="同时执行 Insight 沉淀系统一致性校验")
+def check(config: str, strict: bool, insights: bool):
     """检查协议遵循情况
 
     检查项目是否遵循了 CONTRIBUTING_AI.md 中定义的协作协议。
@@ -628,6 +629,8 @@ def check(config: str, strict: bool):
         vibecollab check -c project.yaml    # 指定配置文件
 
         vibecollab check --strict           # 严格模式
+
+        vibecollab check --insights         # 同时检查 Insight 一致性
     """
     config_path = Path(config)
     project_root = config_path.parent
@@ -682,30 +685,70 @@ def check(config: str, strict: bool):
                 console.print(f"    [dim]建议: {result.suggestion}[/dim]")
         console.print()
 
+    # Insight 一致性校验
+    insight_errors = 0
+    insight_warnings = 0
+    if insights:
+        console.print(Panel.fit(
+            "[bold]Insight 沉淀系统一致性校验[/bold]",
+            title="Insight Consistency Check"
+        ))
+        console.print()
+        try:
+            from .event_log import EventLog
+            from .insight_manager import InsightManager
+            event_log = EventLog(project_root / ".vibecollab" / "events.jsonl")
+            mgr = InsightManager(project_root=project_root, event_log=event_log)
+            report = mgr.check_consistency()
+
+            if report.errors:
+                insight_errors = len(report.errors)
+                console.print(f"[bold red]{EMOJI_MAP['error']} Insight 错误:[/bold red]")
+                for err in report.errors:
+                    console.print(f"  {BULLET} {err}")
+                console.print()
+            if report.warnings:
+                insight_warnings = len(report.warnings)
+                console.print(f"[bold yellow]{EMOJI_MAP['warning']} Insight 警告:[/bold yellow]")
+                for warn in report.warnings:
+                    console.print(f"  {BULLET} {warn}")
+                console.print()
+            if report.ok and not report.warnings:
+                console.print(f"  [green]{EMOJI_MAP['success']} Insight 一致性校验通过[/green]")
+                console.print()
+        except Exception as e:
+            console.print(f"  [yellow]{EMOJI_MAP['warning']} Insight 校验跳过: {e}[/yellow]")
+            console.print()
+
+    # 合并统计
+    total_errors = len(errors) + insight_errors
+    total_warnings = len(warnings) + insight_warnings
+    total_checks = summary["total"] + (1 if insights else 0)
+
     # 显示摘要
-    if summary["all_passed"] and not (strict and warnings):
+    if total_errors == 0 and not (strict and total_warnings > 0):
         console.print(Panel.fit(
             f"[bold green]{EMOJI_MAP['success']} 所有检查通过[/bold green]\n\n"
-            f"总计: {summary['total']} 项检查",
+            f"总计: {total_checks} 项检查",
             title="检查完成"
         ))
     else:
-        status = "失败" if errors or (strict and warnings) else "有警告"
-        color = "red" if errors or (strict and warnings) else "yellow"
-        emoji = EMOJI_MAP['error'] if errors or (strict and warnings) else EMOJI_MAP['warning']
+        status = "失败" if total_errors > 0 or (strict and total_warnings > 0) else "有警告"
+        color = "red" if total_errors > 0 or (strict and total_warnings > 0) else "yellow"
+        emoji = EMOJI_MAP['error'] if total_errors > 0 or (strict and total_warnings > 0) else EMOJI_MAP['warning']
         console.print(Panel.fit(
             f"[bold {color}]{emoji} 检查{status}[/bold {color}]\n\n"
-            f"总计: {summary['total']} 项\n"
-            f"错误: {summary['errors']} 项\n"
-            f"警告: {summary['warnings']} 项",
+            f"总计: {total_checks} 项\n"
+            f"错误: {total_errors} 项\n"
+            f"警告: {total_warnings} 项",
             title="检查完成"
         ))
-        if strict and warnings:
+        if strict and total_warnings > 0:
             console.print()
             console.print("[dim]提示: 使用 --strict 时，警告也会被视为失败[/dim]")
 
     # 返回退出码
-    if errors or (strict and warnings):
+    if total_errors > 0 or (strict and total_warnings > 0):
         raise SystemExit(1)
 
 
@@ -762,6 +805,11 @@ main.add_command(lifecycle_group)
 from .cli_ai import ai as ai_group  # noqa: E402
 
 main.add_command(ai_group)
+
+# 导入 Insight 沉淀系统命令
+from .cli_insight import insight as insight_group  # noqa: E402
+
+main.add_command(insight_group)
 
 
 # ============================================
