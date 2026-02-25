@@ -235,10 +235,10 @@ class TestProtocolChecker:
             checker = ProtocolChecker(project_root, config)
             results = checker.check_all()
 
-            # 应该有配置错误
+            # 应该有配置警告（无静态配置且无开发者目录）
             config_errors = [r for r in results if "开发者配置" in r.name]
             assert len(config_errors) > 0
-            assert config_errors[0].severity == "error"
+            assert config_errors[0].severity == "warning"
 
     def test_check_conflict_detection_disabled(self):
         """测试冲突检测禁用时的警告"""

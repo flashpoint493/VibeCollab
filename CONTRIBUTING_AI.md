@@ -1,5 +1,5 @@
 # VibeCollab AI 协作开发规则
-## LLM Collaboration Protocol v0.7.0
+## LLM Collaboration Protocol v0.7.0-dev
 
 ---
 
@@ -946,17 +946,45 @@ vibecollab ai agent run --dry-run        # 干运行，只输出计划不执行
 vibecollab ai agent serve                # 长运行 Agent 服务 (默认 50 周期)
 vibecollab ai agent serve -n 10          # 指定最大周期数
 vibecollab ai agent status               # 查看 Agent 运行状态
+
+# Agent 引导 (v0.7.0+)
+vibecollab onboard                       # AI 接入引导 (项目概况/进度/待办)
+vibecollab onboard -d <developer>        # 指定开发者视角
+vibecollab onboard --json                # JSON 输出 (便于 Agent 消费)
+vibecollab next                          # 行动建议 (优先级化的下一步)
+vibecollab next --json                   # JSON 输出
+
+# Insight 沉淀 (v0.7.0+)
+vibecollab insight list [--active-only]  # 列出所有沉淀
+vibecollab insight show <id>             # 查看沉淀详情
+vibecollab insight add --title ...       # 创建沉淀
+vibecollab insight search --tags t1,t2   # 按标签搜索
+vibecollab insight use <id>              # 记录使用，奖励权重
+vibecollab insight decay [--dry-run]     # 执行权重衰减
+vibecollab insight check [--json]        # 一致性校验
+vibecollab insight delete <id> [-y]      # 删除沉淀
+vibecollab insight bookmark <id>         # 收藏沉淀
+vibecollab insight trace <id>            # 溯源树可视化
+vibecollab insight who <id>              # 跨开发者使用信息
+vibecollab insight stats                 # 跨开发者共享统计
+
+# 协议自检 + 健康
+vibecollab check                         # 协议遵循检查
+vibecollab check --strict                # 严格模式
+vibecollab check --insights              # 含 Insight 一致性校验
+vibecollab health [--json]               # 项目健康信号 (v0.5.9+)
 ```
 
 ## 10.9 最佳实践
 
 ### 对于 AI Agent
 
-1. **对话开始时**: 始终先执行 `vibecollab dev whoami` 确认身份
+1. **对话开始时**: 运行 `vibecollab onboard -d <name>` 全面了解项目状态
 2. **上下文恢复**: 同时读取全局和个人 CONTEXT.md
 3. **协作意识**: 修改共享资源前检查 COLLABORATION.md
 4. **及时同步**: 对话结束时更新上下文并触发聚合
 5. **冲突敏感**: 发现潜在冲突立即提醒用户
+6. **三步闭环**: `onboard`（我在哪）→ 做事 → `next`（下一步）→ `check`（自检）
 
 ### 对于人类开发者
 
@@ -1128,6 +1156,9 @@ vibecollab check
 
 # 严格模式（警告也视为失败）
 vibecollab check --strict
+
+# 含 Insight 一致性校验 (v0.7.0+)
+vibecollab check --insights
 ```
 
 ### 方式二：对话中触发
@@ -1348,7 +1379,7 @@ vibecollab check
 
 | 版本 | 日期 | 变更内容 |
 |-----|------|---------|
-| v1.0 | 2026-02-24 | 初始版本 |
+| v1.0 | 2026-02-25 | 初始版本 |
 
 ---
 
@@ -1371,5 +1402,5 @@ git log --follow -p <file>
 
 
 *本文档是活文档，记录人机协作的演进过程。*
-*生成时间: 2026-02-24 15:35:26*
+*生成时间: 2026-02-25 17:42:23*
 *最珍贵的不是结果，而是我们共同思考的旅程。*

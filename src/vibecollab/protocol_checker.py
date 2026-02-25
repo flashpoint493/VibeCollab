@@ -213,22 +213,38 @@ class ProtocolChecker:
             return results
 
         developers = multi_dev_config.get("developers", [])
-        if not developers:
-            results.append(CheckResult(
-                name="开发者配置",
-                passed=False,
-                message="多开发者模式已启用但未配置任何开发者",
-                severity="error",
-                suggestion="在 project.yaml 的 multi_developer.developers 中配置开发者信息"
-            ))
-            return results
 
-        developers_dir = self.project_root / "docs" / "developers"
+        developers_dir_name = multi_dev_config.get("context", {}).get(
+            "per_developer_dir", "docs/developers"
+        )
+        developers_dir = self.project_root / developers_dir_name
+
+        # 如果没有静态配置开发者列表，从文件系统动态发现
+        if not developers:
+            if developers_dir.exists():
+                discovered = []
+                for d in sorted(developers_dir.iterdir()):
+                    if d.is_dir() and not d.name.startswith("."):
+                        discovered.append({"id": d.name, "name": d.name})
+                developers = discovered
+
+            if not developers:
+                results.append(CheckResult(
+                    name="开发者配置",
+                    passed=False,
+                    message="多开发者模式已启用但未发现任何开发者",
+                    severity="warning",
+                    suggestion=(
+                        "使用 'vibecollab dev init -d <name>' 初始化开发者，"
+                        "或在 multi_developer.developers 中静态配置"
+                    )
+                ))
+                return results
 
         # 检查每个开发者的上下文文件
         for dev in developers:
-            dev_id = dev.get("id")
-            dev_name = dev.get("name", dev_id)
+            dev_id = dev.get("id") if isinstance(dev, dict) else dev
+            dev_name = (dev.get("name", dev_id) if isinstance(dev, dict) else dev)
 
             if not dev_id:
                 results.append(CheckResult(

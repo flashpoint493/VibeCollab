@@ -151,6 +151,10 @@
 - [x] CLI 命令封装（`vibecollab insight list/show/add/search/use/decay/check/delete` + 21 tests）✅
 - [x] 跨 Developer 共享 + 溯源 CLI 可视化（bookmark/unbookmark/trace/who/stats + 24 tests）✅
 - [x] 一致性校验集成到 `vibecollab check --insights` ✅
+- [x] 文档一致性检查增强（linked_groups 三级检查 + 可配置阈值）✅
+- [x] Agent 引导命令 `vibecollab onboard` + `vibecollab next` ✅
+- [x] 技术债务清理（版本号统一 v0.7.0-dev、项目名 VibeCollab、REQ-010→completed）✅
+- [x] protocol_checker 多开发者动态发现（从文件系统扫描替代静态配置）✅
 
 ### v1.0.0 - 正式版（待规划）
 - [ ] 文档完善和中英文支持

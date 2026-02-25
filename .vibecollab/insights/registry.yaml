@@ -17,10 +17,10 @@ entries:
     used_count: 0
     active: true
   INS-004:
-    weight: 1.1
-    used_count: 1
+    weight: 1.2
+    used_count: 2
     active: true
-    last_used_at: '2026-02-25T07:19:43.039233+00:00'
+    last_used_at: '2026-02-25T09:39:09.631114+00:00'
     last_used_by: ocarina
     used_by:
     - ocarina
