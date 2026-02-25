@@ -1,10 +1,10 @@
 # VibeCollab
 
-> AI-powered project collaboration framework with three-mode CLI (IDE/interactive/agent)
+> AI-powered project collaboration framework with three-mode CLI (IDE/interactive/agent) and Insight knowledge system
 
 ## Overview
 
-VibeCollab is a Python-based project collaboration framework that generates AI collaboration protocols, manages multi-developer workflows, and provides three-mode AI CLI integration (IDE dialogue, CLI human interaction, Agent autonomous).
+VibeCollab is a Python-based project collaboration framework that generates AI collaboration protocols, manages multi-developer workflows, provides three-mode AI CLI integration (IDE dialogue, CLI human interaction, Agent autonomous), and includes an Insight system for capturing and reusing development knowledge.
 
 ## Key Features
 
@@ -15,6 +15,11 @@ VibeCollab is a Python-based project collaboration framework that generates AI c
   - `vibecollab ai ask/chat`: Human-interactive CLI with project context injection
   - `vibecollab ai agent plan/run/serve/status`: Autonomous agent mode with safety gates
   - IDE dialogue: Reads CONTRIBUTING_AI.md for in-editor AI collaboration
+- **Insight System** (v0.7.0):
+  - Reusable knowledge units extracted from development practices
+  - Two-layer architecture: Insight body (portable) + Registry (project-level state)
+  - Tag-driven matching (Jaccard × weight), decay/reward lifecycle, derived tracing
+  - CLI: `vibecollab insight list/show/add/search/use/decay/check/delete`
 - **Project Lifecycle**: Stage-based development (demo → production → scaling)
 - **LLM Client**: Provider-agnostic (OpenAI-compatible + Anthropic Claude)
 

@@ -1,5 +1,53 @@
 # VibeCollab 变更日志
 
+## v0.7.0-dev (2026-02-25) - Insight 沉淀系统（开发中）
+
+### Architecture
+- **DECISION-012 (S 级)**: 砍掉 Web UI，转向 Insight 沉淀系统
+- **两层分离架构**: Insight 本体（可移植知识包）+ Registry 注册表（项目级使用状态）
+- **Tag 驱动 Developer 描述**: 开放式标签体系替代枚举字段
+
+### New Feature
+- **`schema/insight.schema.yaml`**: Insight 三部分 Schema（本体 + Registry + Developer Tag 扩展）
+- **`src/vibecollab/insight_manager.py`**: 核心管理模块
+  - CRUD: create / get / list_all / update / delete
+  - Registry: record_use / apply_decay / get_active_insights
+  - 搜索: search_by_tags (Jaccard × 权重) / search_by_category
+  - 溯源: get_derived_tree (派生关系树)
+  - 一致性校验: check_consistency (5 项全量检查)
+  - EventLog 集成: 所有操作自动记录审计事件
+  - SHA-256 内容指纹防篡改
+- **Developer metadata 扩展** (`src/vibecollab/developer.py`):
+  - tags / contributed / bookmarks CRUD 方法
+  - `_read_metadata()` / `_write_metadata()` 内部助手
+  - `get_tags()` / `set_tags()` / `add_tag()` / `remove_tag()`
+  - `get_contributed()` / `add_contributed()` / `remove_contributed()`
+  - `get_bookmarks()` / `add_bookmark()` / `remove_bookmark()`
+- **CLI 命令组** (`src/vibecollab/cli_insight.py` — `vibecollab insight`):
+  - `insight list [--active-only] [--json]` — 列出所有沉淀
+  - `insight show <id>` — 查看沉淀详情
+  - `insight add --title --tags --category --scenario --approach [...]` — 创建沉淀
+  - `insight search --tags/--category` — 搜索沉淀
+  - `insight use <id>` — 记录使用，奖励权重
+  - `insight decay [--dry-run]` — 执行权重衰减
+  - `insight check [--json]` — 一致性校验
+  - `insight delete <id> [-y]` — 删除沉淀
+
+### Testing
+- **新增 171 个单元测试** (全量 498 tests, 零回归):
+  - `tests/test_developer.py` (88 tests): developer.py 全覆盖（含 Tag 扩展）
+    - 初始化(5), 名称标准化(7), 身份识别(8), 身份来源(4), switch/clear(6), 路径(5), 列表/创建/初始化(11), 元数据(4), ContextAggregator(8), 迁移函数(5), 边界情况(5), Tag(8), Contributed(5), Bookmarks(5), MetadataReadWrite(3)
+  - `tests/test_insight_manager.py` (62 tests): insight_manager.py 全覆盖
+    - Artifact(3), Origin(4), Insight(7), RegistryEntry(3), CRUD(11), Registry(8), Search(6), DerivedTree(3), Consistency(7), EventLog(4), EdgeCases(5)
+  - `tests/test_cli_insight.py` (21 tests): cli_insight.py 全覆盖
+    - List(4), Show(2), Add(2), Search(4), Use(2), Decay(2), Check(3), Delete(2)
+
+### Cleanup
+- `.gitignore` 添加 `Reference/` 排除外部参考仓库
+- 清理 ROADMAP.md / DECISIONS.md 中的外部专有术语引用
+
+---
+
 ## v0.6.0 (2026-02-24) - 协议成熟度提升 + 测试覆盖率增强
 
 ### 里程碑完成

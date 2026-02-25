@@ -228,5 +228,60 @@
   - 新增 `Jinja2>=3.0` 依赖
   - 新增 `src/vibecollab/patterns/` 目录 (27 模板 + manifest.yaml)
 
+### DECISION-012: 砍掉 Web UI，转向 Insight 沉淀系统
+- **发起人**: user
+- **参与者**: user, AI
+- **等级**: S
+- **角色**: [ARCH] [PM]
+- **问题**: v0.7.0 应该做什么？Web UI 还是沉淀系统？
+- **选项**:
+  - A: v0.7.0 做 Web UI（项目状态可视化、冲突图谱、实时监控）
+  - B: 砍掉 Web UI，v0.7.0 做 Insight 沉淀系统（选择）
+- **决策**: 砍掉 Web UI，v0.7.0 全力做 Insight 沉淀系统
+- **理由**:
+  - Web UI 不是 VibeCollab 的核心竞争力，投入产出比低
+  - 沉淀系统直接增强 AI 协作质量，是核心差异化能力
+  - 开发中成功的步骤和经验应可被固定化、复用、跨 Developer 共享
+  - 未来沉淀不仅是 YAML 知识，还可关联实际工具/脚本/模板（Artifact），并可跨项目复用
+- **核心架构：本体与注册表分离**:
+  - **Insight 本体** (`INS-xxx.yaml`): 可移植的知识包，包含 title/summary/tags/category/body/artifacts/origin/fingerprint
+  - **Registry 注册表** (`registry.yaml`): 项目级使用状态，包含 weight/used_count/last_used_at/active + 衰减设置
+  - 本体是**跨项目可复用**的纯知识描述；注册表记录**本项目**的使用权重和生命周期
+  - 存储路径: `.vibecollab/insights/INS-xxx.yaml` + `.vibecollab/insights/registry.yaml`
+- **Tag 驱动的 Developer 描述**:
+  - Developer 使用开放式 Tag 体系描述（替代枚举字段），存于 `.metadata.yaml`
+  - 特定 Tag 可影响决策行为（如 `prefers:conservative` 影响风险评估）
+  - Developer 可记录 contributed（创造的 Insight）和 bookmarks（收藏的 Insight）
+- **搜索与溯源**:
+  - Tag 搜索: Jaccard 相似度 × 注册表权重排序
+  - Category 搜索: 精确匹配 + 权重排序
+  - 溯源链: `origin.derived_from` 追踪派生关系，`get_derived_tree()` 构建上下游关系
+- **权重衰减机制**:
+  - `decay_rate` × 周期衰减，`use_reward` 使用奖励，`deactivate_threshold` 自动停用
+  - 生命周期状态（weight/used_count/active）完全属于项目级注册表，不属于沉淀本体
+- **一致性校验**（5 项全量检查）:
+  - 注册表 ↔ 文件双向一致性
+  - `derived_from` 引用完整性
+  - Developer metadata 引用完整性
+  - SHA-256 内容指纹校验
+  - 所有 CRUD 操作自动记录 EventLog 审计事件
+- **设计原则**:
+  - 面向协作沉淀固化，而非 Agent 自进化
+  - Tag 驱动的开放式描述，而非僵硬枚举字段
+  - 融合 VibeCollab 自有符号系统（决策分级 S/A/B/C、SHA-256 指纹、EventLog 审计），不照搬外部术语
+  - Insight 本体极简可移植，未来可抽象为包通过包管理注册到项目
+- **日期**: 2026-02-25
+- **状态**: CONFIRMED
+- **影响**:
+  - ROADMAP.md 更新：v0.7.0 目标变更
+  - `schema/insight.schema.yaml` — Insight 本体 + Registry + Developer Tag 三部分 Schema ✅
+  - `src/vibecollab/insight_manager.py` — 核心模块（CRUD/Registry/搜索/溯源/一致性校验）✅
+  - `tests/test_insight_manager.py` — 62 单元测试 ✅
+  - `tests/test_developer.py` — developer.py 全覆盖，88 单元测试（含 Tag 扩展）✅
+  - Developer metadata 扩展 — tags/contributed/bookmarks CRUD ✅
+  - `src/vibecollab/cli_insight.py` — CLI 命令组 (list/show/add/search/use/decay/check/delete) ✅
+  - `tests/test_cli_insight.py` — 21 单元测试 ✅
+  - 待完成：跨 Developer 共享 + 溯源 CLI 可视化、一致性校验集成到 `vibecollab check`
+
 ---
 *决策记录格式见 CONTRIBUTING_AI.md*
