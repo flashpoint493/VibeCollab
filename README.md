@@ -4,9 +4,9 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**从 YAML 配置生成标准化的 AI 协作协议，支持多开发者/多 Agent 协同开发**
+**从 YAML 配置生成标准化的 AI 协作协议，内置知识沉淀系统，支持多开发者/多 Agent 协同开发**
 
-将 Vibe Development 哲学和 LLM 协作协议抽象为可配置、可复用的框架，支持快速在不同领域部署工程化的人机协作流程。支持多开发者独立上下文管理、CLI 身份切换、跨开发者冲突检测等特性。
+将 Vibe Development 哲学和 LLM 协作协议抽象为可配置、可复用的框架。核心特性包括：Insight 知识沉淀与自动关联、Agent 引导系统 (onboard/next)、三模式 AI CLI (IDE/交互/Agent)、多开发者独立上下文管理、跨开发者冲突检测、文档一致性检查等。
 
 > 本项目自身也使用生成的协作规则进行开发（元实现），并支持与 [llmstxt.org](https://llmstxt.org) 标准无缝集成
 
@@ -30,19 +30,22 @@ flowchart TD
     G --> M1[IDE 对话模式<br/>读 CONTRIBUTING_AI.md<br/>读 CONTEXT.md<br/>人机交互开发]
     G --> M2[CLI 交互模式<br/>vibecollab ai ask/chat<br/>自动注入项目上下文]
     G --> M3[Agent 自主模式<br/>vibecollab ai agent<br/>Plan→Execute→Solidify]
+    G --> M4[Agent 引导<br/>vibecollab onboard<br/>vibecollab next]
     
     M1 --> H[开发循环]
     M2 --> H
     M3 --> H
+    M4 --> H
     
     H --> H1[TaskManager<br/>创建任务 · 状态流转<br/>validate → solidify]
-    H1 --> H2[EventLog<br/>append-only 审计日志<br/>SHA-256 完整性校验]
+    H1 --> H1a[Task-Insight 自动关联<br/>关键词提取 → Jaccard 匹配<br/>推荐相关知识沉淀]
+    H1a --> H2[EventLog<br/>append-only 审计日志<br/>SHA-256 完整性校验]
     H2 --> H3[对话结束<br/>更新 CONTEXT · CHANGELOG<br/>git commit]
     
     H3 --> I{检查点}
-    I --> I1[vibecollab check<br/>协议自检]
+    I --> I1[vibecollab check<br/>协议自检 + Insight 一致性]
     I --> I2[vibecollab health<br/>项目健康信号]
-    I --> I3[vibecollab dev conflicts<br/>冲突检测]
+    I --> I3[Insight 沉淀<br/>vibecollab insight add/search/use<br/>知识复用与衰减]
     
     I1 --> J[里程碑发布]
     I2 --> J
@@ -54,6 +57,8 @@ flowchart TD
     style E fill:#fff4e1
     style G fill:#ffe1f5
     style H fill:#ffe1f5
+    style H1a fill:#f5e1ff
+    style I3 fill:#f5e1ff
     style J fill:#e1ffe1
 ```
 
@@ -61,18 +66,31 @@ flowchart TD
 
 ## 特性
 
-- **Pattern Engine** (v0.5.9+): Jinja2 模板驱动的 CONTRIBUTING_AI.md 生成，27 个 `.md.j2` 模板 + manifest 控制
-- **Template Overlay** (v0.5.9+): `.vibecollab/patterns/` 本地模板覆盖，支持章节增删改
-- **三模式 AI CLI** (v0.5.8+): `vibecollab ai ask/chat` 人机交互 + `vibecollab ai agent` 自主模式
-- **Agent Executor** (v0.5.9+): LLM 计划 → 文件变更 → 测试 → git commit，含安全门控
-- **Health Signals** (v0.5.9+): 项目健康评分 (0-100 + A/B/C/D/F)，10+ 信号类型
-- **LLM 客户端** (v0.5.7+): Provider-agnostic (OpenAI-compatible + Anthropic Claude)
-- **任务生命周期** (v0.5.6+): validate→solidify→rollback 状态管理
-- **审计日志** (v0.5.5+): Append-only JSONL EventLog，SHA-256 完整性校验
-- **多开发者支持** (v0.5.0+): 多人/多 Agent 协同开发，独立上下文管理
-- **冲突检测** (v0.5.1+): 自动检测跨开发者的文件冲突、任务冲突、依赖冲突
-- **协议自检** (v0.5.2+): 检查协议遵循情况，确保文档及时更新
-- **CI/CD 自动发布** (v0.6.1+): GitHub Release 触发自动 PyPI 发布
+### 知识沉淀与复用
+- **Insight 沉淀系统** (v0.7.0): 从开发实践中提取可复用知识单元，Tag 驱动搜索 (Jaccard × 权重)，衰减/奖励生命周期，派生溯源
+- **Task-Insight 自动关联** (v0.7.1): 创建任务时自动搜索关联 Insight，关键词提取 + Jaccard 匹配，结果存入任务元数据
+- **Agent 引导系统** (v0.7.0): `vibecollab onboard` 接入引导 + `vibecollab next` 智能行动建议
+
+### 协作引擎
+- **Pattern Engine**: Jinja2 模板驱动的 CONTRIBUTING_AI.md 生成，27+ 个 `.md.j2` 模板 + manifest 控制
+- **Template Overlay**: `.vibecollab/patterns/` 本地模板覆盖，支持章节增删改
+- **三模式 AI CLI**: `vibecollab ai ask/chat` 人机交互 + `vibecollab ai agent` 自主模式 (Plan→Execute→Solidify)
+- **LLM 客户端**: Provider-agnostic (OpenAI-compatible + Anthropic Claude)
+
+### 项目管理
+- **任务生命周期**: validate→solidify→rollback 状态管理 + 自动 Insight 关联
+- **审计日志**: Append-only JSONL EventLog，SHA-256 完整性校验
+- **协议自检**: `vibecollab check` 检查协议遵循 + `--insights` Insight 一致性校验
+- **项目健康信号**: `vibecollab health` 评分 (0-100 + A/B/C/D/F)，10+ 信号类型
+- **文档一致性检查**: linked_groups 三级检查 (local_mtime / git_commit / release)
+
+### 多开发者协同
+- **多开发者支持**: 多人/多 Agent 协同开发，独立上下文管理，动态开发者发现
+- **冲突检测**: 自动检测跨开发者的文件冲突、任务冲突、依赖冲突
+- **跨开发者 Insight 共享**: 收藏/使用/贡献统计 + 溯源可视化
+
+### 基础设施
+- **CI/CD 自动发布**: GitHub Release 触发自动 PyPI 发布
 - **领域扩展**: 支持 game/web/data 等领域的定制扩展
 - **自举实现**: 本项目使用自身生成的协作协议进行开发
 
@@ -319,8 +337,10 @@ vibecollab validate -c project.yaml
 | 里程碑定义 | 生命周期、Bug 优先级 |
 | Prompt 工程最佳实践 | 有效提问模板、高价值引导词 |
 | 多开发者协作协议 | 身份识别、上下文管理、冲突检测 (条件渲染) |
+| Insight 沉淀协议 | 知识沉淀/搜索/复用/衰减 + CLI 命令参考 |
+| Task 管理 | 任务创建/状态流转/Insight 自动关联 |
 | 符号学标注系统 | 统一的状态/优先级符号 |
-| 协议自检 | 触发词、检查项 |
+| 协议自检 | 触发词、检查项、Insight 一致性 |
 | PRD 管理 | 需求文档管理协议 |
 
 > 支持 **Template Overlay**：在项目 `.vibecollab/patterns/` 中放置自定义模板可覆盖内置章节
@@ -340,6 +360,30 @@ vibecollab upgrade                             # 升级协议到最新版本
 vibecollab domains                             # 列出支持的领域
 vibecollab templates                           # 列出可用模板
 
+# Agent 引导 (v0.7.0+)
+vibecollab onboard [-d <developer>] [--json]   # AI 接入引导（项目概况/进度/决策/待办）
+vibecollab next [--json]                       # 智能行动建议（文档同步/超时/缺失文件）
+
+# Insight 沉淀 (v0.7.0+)
+vibecollab insight list [--active-only] [--json]   # 列出所有沉淀
+vibecollab insight show <id>                       # 查看沉淀详情
+vibecollab insight add --title --tags --category   # 创建沉淀
+vibecollab insight search --tags/--category        # 搜索沉淀 (Jaccard × 权重)
+vibecollab insight use <id>                        # 记录使用，奖励权重
+vibecollab insight decay [--dry-run]               # 执行权重衰减
+vibecollab insight check [--json]                  # 一致性校验
+vibecollab insight delete <id> [-y]                # 删除沉淀
+vibecollab insight bookmark/unbookmark <id>        # 收藏/取消收藏
+vibecollab insight trace <id> [--json]             # 溯源树可视化
+vibecollab insight who <id> [--json]               # 跨开发者使用信息
+vibecollab insight stats [--json]                  # 跨开发者共享统计
+
+# Task 管理 (v0.7.1+)
+vibecollab task create --id --role --feature [--description] [--json]  # 创建任务（自动关联 Insight）
+vibecollab task list [--status] [--assignee] [--json]                  # 列出任务
+vibecollab task show <id> [--json]                                     # 任务详情
+vibecollab task suggest <id> [-n limit] [--json]                       # 推荐关联 Insight
+
 # 多开发者命令 (v0.5.0+)
 vibecollab dev whoami                          # 查看当前开发者身份
 vibecollab dev list                            # 列出所有开发者
@@ -347,26 +391,16 @@ vibecollab dev status <developer>              # 查看开发者状态
 vibecollab dev sync                            # 同步上下文
 vibecollab dev sync --aggregate                # 重新生成全局聚合
 vibecollab dev init --developer <name>         # 初始化新开发者
-
-# 开发者身份切换 (v0.5.4+)
 vibecollab dev switch <developer>              # 切换到指定开发者
-vibecollab dev switch                          # 交互式选择开发者
 vibecollab dev switch --clear                  # 清除切换，恢复默认识别
+vibecollab dev conflicts [-v]                  # 检测跨开发者冲突
 
-# 冲突检测 (v0.5.1+)
-vibecollab dev conflicts                       # 检测跨开发者冲突
-vibecollab dev conflicts -v                    # 显示详细冲突信息
-vibecollab dev conflicts --between alice bob   # 检测特定开发者间冲突
+# 协议自检与健康
+vibecollab check [--verbose] [--strict]        # 协议遵循检查
+vibecollab check --insights                    # 含 Insight 一致性校验
+vibecollab health [--json]                     # 项目健康评分 (0-100)
 
-# 协议自检 (v0.5.2+)
-vibecollab check                               # 检查协议遵循情况
-vibecollab check --verbose                     # 显示详细检查报告
-
-# 项目健康信号 (v0.5.9+)
-vibecollab health                              # 项目健康评分 (0-100)
-vibecollab health --json                       # JSON 格式输出
-
-# Pattern Engine (v0.5.9+)
+# Pattern Engine
 vibecollab patterns                            # 列出所有章节模板及来源
 
 # AI 人机交互 (v0.5.8+)
@@ -376,8 +410,7 @@ vibecollab ai chat                             # 多轮对话模式
 
 # Agent 自主模式 (v0.5.8+)
 vibecollab ai agent plan                       # 只读分析，生成行动计划
-vibecollab ai agent run                        # 单次 Plan→Execute→Solidify 周期
-vibecollab ai agent run --dry-run              # 干运行，只输出计划不执行
+vibecollab ai agent run [--dry-run]            # 单次 Plan→Execute→Solidify 周期
 vibecollab ai agent serve -n 50                # 长运行 Agent 服务
 vibecollab ai agent status                     # 查看 Agent 运行状态
 ```
@@ -595,6 +628,9 @@ VibeCollab/
 ├── src/vibecollab/
 │   ├── cli.py                   # CLI 主入口
 │   ├── cli_ai.py                # AI CLI 命令 (ask/chat/agent)
+│   ├── cli_insight.py           # Insight 沉淀 CLI (13 子命令)
+│   ├── cli_task.py              # Task 管理 CLI (create/list/show/suggest)
+│   ├── cli_guide.py             # Agent 引导 CLI (onboard/next)
 │   ├── cli_lifecycle.py         # 项目生涯管理命令
 │   ├── pattern_engine.py        # Jinja2 Pattern Engine (manifest 驱动)
 │   ├── generator.py             # 文档生成器 (粘合层)
@@ -602,12 +638,13 @@ VibeCollab/
 │   ├── project.py               # 项目管理
 │   ├── developer.py             # 多开发者管理
 │   ├── conflict_detector.py     # 冲突检测
+│   ├── insight_manager.py       # Insight 沉淀管理 (CRUD/搜索/溯源/衰减)
 │   ├── llm_client.py            # LLM 客户端 (OpenAI/Anthropic)
 │   ├── agent_executor.py        # Agent 执行器 (Plan→Execute→Solidify)
 │   ├── event_log.py             # 审计日志 (JSONL + SHA-256)
-│   ├── task_manager.py          # 任务生命周期管理
+│   ├── task_manager.py          # 任务生命周期管理 + Insight 自动关联
 │   ├── health.py                # 项目健康信号提取
-│   ├── protocol_checker.py      # 协议自检
+│   ├── protocol_checker.py      # 协议自检 + 文档一致性检查
 │   ├── prd_manager.py           # PRD 需求管理
 │   ├── templates.py             # 模板管理
 │   ├── templates/
@@ -615,9 +652,10 @@ VibeCollab/
 │   │   └── domains/             # 领域扩展
 │   └── patterns/                # Jinja2 模板 (.md.j2)
 │       ├── manifest.yaml        # 章节清单 + 渲染条件
-│       └── *.md.j2              # 27 个章节模板
+│       └── *.md.j2              # 27+ 章节模板
 ├── schema/
 │   ├── project.schema.yaml      # 项目配置 Schema
+│   ├── insight.schema.yaml      # Insight 沉淀 Schema
 │   └── extension.schema.yaml    # 扩展机制 Schema
 ├── .github/workflows/
 │   ├── ci.yml                   # CI: 测试 + lint + 构建
@@ -625,8 +663,10 @@ VibeCollab/
 ├── docs/
 │   ├── CONTEXT.md
 │   ├── CHANGELOG.md
-│   └── DECISIONS.md
-└── tests/                       # 359 tests
+│   ├── DECISIONS.md
+│   ├── PRD.md
+│   └── ROADMAP.md
+└── tests/                       # 590+ tests
 ```
 
 ---
@@ -659,19 +699,16 @@ vibecollab health
 
 | 版本 | 日期 | 主要特性 |
 |------|------|---------|
-| v0.6.1 | 2026-02-24 | CI/CD 自动发布 (GitHub Release → PyPI) |
+| v0.7.1 | 2026-02-25 | Task-Insight 自动关联 + Task CLI 命令组 + 28 tests |
+| v0.7.0 | 2026-02-25 | Insight 沉淀系统 + Agent 引导 (onboard/next) + 266 tests |
 | v0.6.0 | 2026-02-24 | 测试覆盖率 58%→68%，冲突检测 + PRD 管理全覆盖 |
 | v0.5.9 | 2026-02-24 | Pattern Engine + Template Overlay + Health Signals + Agent Executor |
 | v0.5.8 | 2026-02-24 | 三模式 AI CLI (ask/chat/agent) + 安全门控 |
 | v0.5.7 | 2026-02-24 | LLM Client — Provider-agnostic (OpenAI + Anthropic) |
 | v0.5.6 | 2026-02-24 | TaskManager — validate-solidify-rollback 生命周期 |
 | v0.5.5 | 2026-02-24 | EventLog — append-only JSONL 审计日志 |
-| v0.5.4 | 2026-02-24 | CLI 开发者切换 (`vibecollab dev switch`) |
-| v0.5.1 | 2026-02-10 | 跨开发者冲突检测 |
 | v0.5.0 | 2026-02-10 | 多开发者/多 Agent 协同支持 |
-| v0.4.3 | 2026-02-09 | Windows 编码问题修复 |
-| v0.4.2 | 2026-01-21 | 协议自检机制、PRD 文档管理 |
-| v0.4.0 | 2026-01-21 | Git 检查和初始化、项目生涯管理 |
+| v0.4.0 | 2026-01-21 | 协议自检、PRD 管理、项目生涯管理 |
 | v0.3.0 | 2026-01-20 | llms.txt 标准集成 |
 
 详细变更日志请查看 [docs/CHANGELOG.md](docs/CHANGELOG.md)
@@ -684,4 +721,4 @@ MIT
 
 ---
 
-*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。*
+*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.7.1。*
