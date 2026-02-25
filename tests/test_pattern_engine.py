@@ -148,7 +148,7 @@ class TestPatternEngineRender:
         """使用完整 project.yaml 渲染"""
         engine = PatternEngine(full_config, project_root=Path(__file__).parent.parent)
         output = engine.render()
-        assert "# LLMContextGenerator AI 协作开发规则" in output
+        assert "# VibeCollab AI 协作开发规则" in output
         assert "# 十、多开发者/Agent 协作协议" in output
         assert len(output) > 15000
 
@@ -266,7 +266,7 @@ class TestGeneratorIntegration:
         project_root = Path(__file__).parent.parent
         gen = LLMContextGenerator(full_config, project_root)
         output = gen.generate()
-        assert "# LLMContextGenerator AI 协作开发规则" in output
+        assert "# VibeCollab AI 协作开发规则" in output
         assert len(output) > 15000
 
 
