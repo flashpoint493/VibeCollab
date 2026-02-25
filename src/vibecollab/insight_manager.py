@@ -99,11 +99,23 @@ class Artifact:
 
 @dataclass
 class Origin:
-    """沉淀的溯源信息"""
+    """沉淀的溯源信息
+
+    设计原则：溯源信息必须自描述，不依赖任何项目的内部 ID 体系。
+    - context: 一句话描述创建背景（人可读）
+    - source.description: 来源的自然语言描述（必填当 source 存在时）
+    - source.ref: 来源项目内部 ID（可选 hint，跨项目时仅供参考）
+    - source.url: 外部可访问链接（可选，如 GitHub issue/PR）
+    - source.project: 来源项目名（可选）
+    """
     created_by: str
     created_at: str
+    context: str = ""
     source_type: Optional[str] = None
+    source_desc: Optional[str] = None
     source_ref: Optional[str] = None
+    source_url: Optional[str] = None
+    source_project: Optional[str] = None
     derived_from: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -111,12 +123,21 @@ class Origin:
             "created_by": self.created_by,
             "created_at": self.created_at,
         }
-        if self.source_type or self.source_ref:
-            d["source"] = {}
+        if self.context:
+            d["context"] = self.context
+        if self.source_type or self.source_desc:
+            source: Dict[str, str] = {}
             if self.source_type:
-                d["source"]["type"] = self.source_type
+                source["type"] = self.source_type
+            if self.source_desc:
+                source["description"] = self.source_desc
+            if self.source_url:
+                source["url"] = self.source_url
+            if self.source_project:
+                source["project"] = self.source_project
             if self.source_ref:
-                d["source"]["ref"] = self.source_ref
+                source["ref"] = self.source_ref
+            d["source"] = source
         if self.derived_from:
             d["derived_from"] = self.derived_from
         return d
@@ -127,8 +148,12 @@ class Origin:
         return cls(
             created_by=data.get("created_by", "unknown"),
             created_at=data.get("created_at", ""),
+            context=data.get("context", ""),
             source_type=source.get("type"),
+            source_desc=source.get("description"),
             source_ref=source.get("ref"),
+            source_url=source.get("url"),
+            source_project=source.get("project"),
             derived_from=data.get("derived_from", []),
         )
 
@@ -226,6 +251,7 @@ class RegistryEntry:
     last_used_at: Optional[str] = None
     last_used_by: Optional[str] = None
     active: bool = True
+    used_by: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         d: Dict[str, Any] = {
@@ -237,6 +263,8 @@ class RegistryEntry:
             d["last_used_at"] = self.last_used_at
         if self.last_used_by:
             d["last_used_by"] = self.last_used_by
+        if self.used_by:
+            d["used_by"] = self.used_by
         return d
 
     @classmethod
@@ -247,6 +275,7 @@ class RegistryEntry:
             last_used_at=data.get("last_used_at"),
             last_used_by=data.get("last_used_by"),
             active=data.get("active", True),
+            used_by=data.get("used_by", []),
         )
 
 
@@ -304,8 +333,12 @@ class InsightManager:
     def create(self, title: str, tags: List[str], category: str,
                body: Dict[str, Any], created_by: str,
                summary: str = "",
+               context: str = "",
                source_type: Optional[str] = None,
+               source_desc: Optional[str] = None,
                source_ref: Optional[str] = None,
+               source_url: Optional[str] = None,
+               source_project: Optional[str] = None,
                derived_from: Optional[List[str]] = None,
                artifacts: Optional[List[Dict[str, Any]]] = None) -> Insight:
         """创建新的沉淀条目"""
@@ -313,8 +346,12 @@ class InsightManager:
         origin = Origin(
             created_by=created_by,
             created_at=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            context=context,
             source_type=source_type,
+            source_desc=source_desc,
             source_ref=source_ref,
+            source_url=source_url,
+            source_project=source_project,
             derived_from=derived_from or [],
         )
         artifact_objs = [Artifact.from_dict(a) for a in (artifacts or [])]
@@ -426,6 +463,8 @@ class InsightManager:
         entry.weight += settings["use_reward"]
         entry.last_used_at = datetime.now(timezone.utc).isoformat()
         entry.last_used_by = used_by
+        if used_by not in entry.used_by:
+            entry.used_by.append(used_by)
         if not entry.active:
             entry.active = True  # 使用时重新激活
         entries[insight_id] = entry
@@ -530,6 +569,216 @@ class InsightManager:
                 result["derived_by"].append(ins.id)
 
         return result
+
+    def get_full_trace(self, insight_id: str) -> Dict[str, Any]:
+        """获取沉淀的完整溯源信息（递归展开派生树）
+
+        Returns:
+            {
+                "id": "INS-001",
+                "title": "...",
+                "upstream": [{"id": ..., "title": ..., "upstream": [...]}],
+                "downstream": [{"id": ..., "title": ..., "downstream": [...]}],
+            }
+        """
+        visited: set = set()
+
+        def _trace_upstream(iid: str) -> List[Dict[str, Any]]:
+            if iid in visited:
+                return []
+            visited.add(iid)
+            ins = self.get(iid)
+            if not ins:
+                return [{"id": iid, "title": "(missing)", "upstream": []}]
+            result = []
+            for parent_id in ins.origin.derived_from:
+                node: Dict[str, Any] = {
+                    "id": parent_id,
+                    "title": "",
+                    "upstream": [],
+                }
+                parent = self.get(parent_id)
+                if parent:
+                    node["title"] = parent.title
+                    node["upstream"] = _trace_upstream(parent_id)
+                else:
+                    node["title"] = "(missing)"
+                result.append(node)
+            return result
+
+        visited_down: set = set()
+        all_insights = self.list_all()
+
+        def _trace_downstream(iid: str) -> List[Dict[str, Any]]:
+            if iid in visited_down:
+                return []
+            visited_down.add(iid)
+            result = []
+            for ins in all_insights:
+                if iid in ins.origin.derived_from:
+                    node: Dict[str, Any] = {
+                        "id": ins.id,
+                        "title": ins.title,
+                        "downstream": _trace_downstream(ins.id),
+                    }
+                    result.append(node)
+            return result
+
+        target = self.get(insight_id)
+        return {
+            "id": insight_id,
+            "title": target.title if target else "(missing)",
+            "upstream": _trace_upstream(insight_id),
+            "downstream": _trace_downstream(insight_id),
+        }
+
+    # ------------------------------------------------------------------
+    # 跨开发者共享
+    # ------------------------------------------------------------------
+
+    def get_insight_developers(self, insight_id: str) -> Dict[str, Any]:
+        """获取某条沉淀的跨开发者信息
+
+        Returns:
+            {
+                "created_by": "ocarina",
+                "used_by": ["alice", "bob"],
+                "bookmarked_by": ["alice"],
+                "contributed_by": ["ocarina"],
+            }
+        """
+        result: Dict[str, Any] = {
+            "created_by": None,
+            "used_by": [],
+            "bookmarked_by": [],
+            "contributed_by": [],
+        }
+
+        # 从 insight 本体获取创建者
+        ins = self.get(insight_id)
+        if ins:
+            result["created_by"] = ins.origin.created_by
+
+        # 从 registry 获取使用者
+        entries, _ = self.get_registry()
+        entry = entries.get(insight_id)
+        if entry:
+            result["used_by"] = list(entry.used_by)
+
+        # 从 developer metadata 反查 contributed 和 bookmarks
+        developers_dir = self.project_root / "docs" / "developers"
+        if developers_dir.exists():
+            for dev_dir in sorted(developers_dir.iterdir()):
+                if not dev_dir.is_dir() or dev_dir.name.startswith("."):
+                    continue
+                meta_path = dev_dir / ".metadata.yaml"
+                if not meta_path.exists():
+                    continue
+                try:
+                    meta = self._load_yaml(meta_path)
+                    if insight_id in meta.get("contributed", []):
+                        result["contributed_by"].append(dev_dir.name)
+                    if insight_id in meta.get("bookmarks", []):
+                        result["bookmarked_by"].append(dev_dir.name)
+                except Exception:
+                    continue
+
+        return result
+
+    def get_cross_developer_stats(self) -> Dict[str, Any]:
+        """汇总跨开发者共享统计
+
+        Returns:
+            {
+                "developers": {
+                    "ocarina": {"contributed": [...], "bookmarks": [...], "used": [...]},
+                    "alice": {...},
+                },
+                "insights": {
+                    "INS-001": {"contributors": 1, "users": 2, "bookmarks": 1},
+                },
+                "summary": {
+                    "total_insights": N,
+                    "total_developers": N,
+                    "total_uses": N,
+                    "most_used": "INS-001",
+                    "most_shared": "INS-002",
+                },
+            }
+        """
+        all_insights = self.list_all()
+        entries, _ = self.get_registry()
+
+        # 收集 developer metadata
+        dev_stats: Dict[str, Dict[str, list]] = {}
+        developers_dir = self.project_root / "docs" / "developers"
+        if developers_dir.exists():
+            for dev_dir in sorted(developers_dir.iterdir()):
+                if not dev_dir.is_dir() or dev_dir.name.startswith("."):
+                    continue
+                meta_path = dev_dir / ".metadata.yaml"
+                dev_name = dev_dir.name
+                dev_stats[dev_name] = {
+                    "contributed": [],
+                    "bookmarks": [],
+                    "used": [],
+                }
+                if meta_path.exists():
+                    try:
+                        meta = self._load_yaml(meta_path)
+                        dev_stats[dev_name]["contributed"] = meta.get("contributed", [])
+                        dev_stats[dev_name]["bookmarks"] = meta.get("bookmarks", [])
+                    except Exception:
+                        pass
+
+        # 从 registry used_by 补充使用数据
+        for ins_id, entry in entries.items():
+            for user in entry.used_by:
+                if user not in dev_stats:
+                    dev_stats[user] = {"contributed": [], "bookmarks": [], "used": []}
+                if ins_id not in dev_stats[user]["used"]:
+                    dev_stats[user]["used"].append(ins_id)
+
+        # 构建 insight 级统计
+        insight_stats: Dict[str, Dict[str, int]] = {}
+        for ins in all_insights:
+            ins_id = ins.id
+            entry = entries.get(ins_id)
+            contributors = sum(
+                1 for d in dev_stats.values() if ins_id in d["contributed"]
+            )
+            users = len(entry.used_by) if entry else 0
+            bookmarks = sum(
+                1 for d in dev_stats.values() if ins_id in d["bookmarks"]
+            )
+            insight_stats[ins_id] = {
+                "contributors": contributors,
+                "users": users,
+                "bookmarks": bookmarks,
+            }
+
+        # Summary
+        total_uses = sum(e.used_count for e in entries.values())
+        most_used = max(entries.items(), key=lambda x: x[1].used_count)[0] if entries else None
+        # most_shared = highest combined (users + bookmarks)
+        most_shared = None
+        if insight_stats:
+            most_shared = max(
+                insight_stats.items(),
+                key=lambda x: x[1]["users"] + x[1]["bookmarks"],
+            )[0]
+
+        return {
+            "developers": dev_stats,
+            "insights": insight_stats,
+            "summary": {
+                "total_insights": len(all_insights),
+                "total_developers": len(dev_stats),
+                "total_uses": total_uses,
+                "most_used": most_used,
+                "most_shared": most_shared,
+            },
+        }
 
     # ------------------------------------------------------------------
     # 一致性校验

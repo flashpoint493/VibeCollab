@@ -3,8 +3,6 @@ Tests for cli_insight.py — Insight 沉淀系统 CLI 命令
 """
 
 import json
-import os
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -12,7 +10,6 @@ import yaml
 from click.testing import CliRunner
 
 from vibecollab.cli_insight import insight
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -250,8 +247,8 @@ class TestSearchInsights:
 class TestUseInsight:
     @patch("vibecollab.cli_insight._load_developer_manager")
     def test_use_existing(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.developer import DeveloperManager
         from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.developer import DeveloperManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Use Me", tags=["test"], category="technique",
@@ -351,8 +348,8 @@ class TestCheckInsights:
 class TestDeleteInsight:
     @patch("vibecollab.cli_insight._load_developer_manager")
     def test_delete_with_yes(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.developer import DeveloperManager
         from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.developer import DeveloperManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Delete Me", tags=["test"], category="technique",
@@ -373,3 +370,202 @@ class TestDeleteInsight:
         result = runner.invoke(insight, ["delete", "INS-999", "-y"])
         assert result.exit_code != 0
         assert "未找到" in result.output
+
+
+# ---------------------------------------------------------------------------
+# Tests: bookmark / unbookmark
+# ---------------------------------------------------------------------------
+
+class TestBookmarkInsight:
+    @patch("vibecollab.cli_insight._load_developer_manager")
+    def test_bookmark_existing(self, mock_dm_factory, runner, chdir_project, project_dir):
+        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.developer import DeveloperManager
+
+        mgr = _load_insight_manager()
+        mgr.create(title="Bookmark Me", tags=["test"], category="technique",
+                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+
+        dm = DeveloperManager(project_dir, yaml.safe_load(
+            (project_dir / "project.yaml").read_text(encoding="utf-8")
+        ))
+        with patch.object(dm, "get_current_developer", return_value="testdev"):
+            mock_dm_factory.return_value = dm
+            result = runner.invoke(insight, ["bookmark", "INS-001"])
+
+        assert result.exit_code == 0
+        assert "已收藏" in result.output
+
+    @patch("vibecollab.cli_insight._load_developer_manager")
+    def test_bookmark_duplicate(self, mock_dm_factory, runner, chdir_project, project_dir):
+        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.developer import DeveloperManager
+
+        mgr = _load_insight_manager()
+        mgr.create(title="Bookmark Me", tags=["test"], category="technique",
+                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+
+        dm = DeveloperManager(project_dir, yaml.safe_load(
+            (project_dir / "project.yaml").read_text(encoding="utf-8")
+        ))
+        with patch.object(dm, "get_current_developer", return_value="testdev"):
+            mock_dm_factory.return_value = dm
+            runner.invoke(insight, ["bookmark", "INS-001"])
+            result = runner.invoke(insight, ["bookmark", "INS-001"])
+
+        assert result.exit_code == 0
+        assert "已存在" in result.output
+
+    def test_bookmark_not_found(self, runner, chdir_project):
+        result = runner.invoke(insight, ["bookmark", "INS-999"])
+        assert result.exit_code != 0
+        assert "未找到" in result.output
+
+
+class TestUnbookmarkInsight:
+    @patch("vibecollab.cli_insight._load_developer_manager")
+    def test_unbookmark_existing(self, mock_dm_factory, runner, chdir_project, project_dir):
+        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.developer import DeveloperManager
+
+        mgr = _load_insight_manager()
+        mgr.create(title="Unbookmark Me", tags=["test"], category="technique",
+                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+
+        dm = DeveloperManager(project_dir, yaml.safe_load(
+            (project_dir / "project.yaml").read_text(encoding="utf-8")
+        ))
+        with patch.object(dm, "get_current_developer", return_value="testdev"):
+            mock_dm_factory.return_value = dm
+            # First bookmark, then unbookmark
+            runner.invoke(insight, ["bookmark", "INS-001"])
+            result = runner.invoke(insight, ["unbookmark", "INS-001"])
+
+        assert result.exit_code == 0
+        assert "已取消收藏" in result.output
+
+    @patch("vibecollab.cli_insight._load_developer_manager")
+    def test_unbookmark_nonexistent(self, mock_dm_factory, runner, chdir_project, project_dir):
+        from vibecollab.developer import DeveloperManager
+
+        dm = DeveloperManager(project_dir, yaml.safe_load(
+            (project_dir / "project.yaml").read_text(encoding="utf-8")
+        ))
+        with patch.object(dm, "get_current_developer", return_value="testdev"):
+            mock_dm_factory.return_value = dm
+            result = runner.invoke(insight, ["unbookmark", "INS-999"])
+
+        assert result.exit_code == 0
+        assert "未找到收藏" in result.output
+
+
+# ---------------------------------------------------------------------------
+# Tests: trace
+# ---------------------------------------------------------------------------
+
+class TestTraceInsight:
+    def test_trace_simple(self, runner, chdir_project):
+        from vibecollab.cli_insight import _load_insight_manager
+        mgr = _load_insight_manager()
+        mgr.create(title="Base", tags=["a"], category="technique",
+                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(title="Child", tags=["b"], category="technique",
+                    body={"scenario": "s", "approach": "a"}, created_by="testdev",
+                    derived_from=["INS-001"])
+
+        result = runner.invoke(insight, ["trace", "INS-001"])
+        assert result.exit_code == 0
+        assert "溯源树" in result.output
+        assert "INS-001" in result.output
+        assert "INS-002" in result.output
+
+    def test_trace_no_relations(self, runner, chdir_project):
+        from vibecollab.cli_insight import _load_insight_manager
+        mgr = _load_insight_manager()
+        mgr.create(title="Standalone", tags=["a"], category="technique",
+                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+
+        result = runner.invoke(insight, ["trace", "INS-001"])
+        assert result.exit_code == 0
+        assert "(无)" in result.output
+
+    def test_trace_json(self, runner, chdir_project):
+        from vibecollab.cli_insight import _load_insight_manager
+        mgr = _load_insight_manager()
+        mgr.create(title="Base", tags=["a"], category="technique",
+                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+
+        result = runner.invoke(insight, ["trace", "INS-001", "--json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["id"] == "INS-001"
+
+    def test_trace_not_found(self, runner, chdir_project):
+        result = runner.invoke(insight, ["trace", "INS-999"])
+        assert result.exit_code != 0
+        assert "未找到" in result.output
+
+
+# ---------------------------------------------------------------------------
+# Tests: who
+# ---------------------------------------------------------------------------
+
+class TestWhoInsight:
+    def test_who_basic(self, runner, chdir_project):
+        from vibecollab.cli_insight import _load_insight_manager
+        mgr = _load_insight_manager()
+        mgr.create(title="Who Test", tags=["a"], category="technique",
+                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.record_use("INS-001", used_by="otherdev")
+
+        result = runner.invoke(insight, ["who", "INS-001"])
+        assert result.exit_code == 0
+        assert "testdev" in result.output
+        assert "otherdev" in result.output
+
+    def test_who_json(self, runner, chdir_project):
+        from vibecollab.cli_insight import _load_insight_manager
+        mgr = _load_insight_manager()
+        mgr.create(title="Who Test", tags=["a"], category="technique",
+                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+
+        result = runner.invoke(insight, ["who", "INS-001", "--json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["created_by"] == "testdev"
+
+    def test_who_not_found(self, runner, chdir_project):
+        result = runner.invoke(insight, ["who", "INS-999"])
+        assert result.exit_code != 0
+        assert "未找到" in result.output
+
+
+# ---------------------------------------------------------------------------
+# Tests: stats
+# ---------------------------------------------------------------------------
+
+class TestStatsInsight:
+    def test_stats_empty(self, runner, chdir_project):
+        result = runner.invoke(insight, ["stats"])
+        assert result.exit_code == 0
+        assert "共享统计" in result.output
+        assert "0" in result.output
+
+    def test_stats_with_data(self, runner, chdir_project):
+        from vibecollab.cli_insight import _load_insight_manager
+        mgr = _load_insight_manager()
+        mgr.create(title="A", tags=["a"], category="technique",
+                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.record_use("INS-001", used_by="testdev")
+
+        result = runner.invoke(insight, ["stats"])
+        assert result.exit_code == 0
+        assert "1" in result.output
+
+    def test_stats_json(self, runner, chdir_project):
+        result = runner.invoke(insight, ["stats", "--json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "summary" in data
+        assert "developers" in data
+        assert "insights" in data
