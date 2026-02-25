@@ -6,21 +6,22 @@
 - **上次更新**: 2026-02-25
 
 ## 当前任务
-- **v0.7.0 Insight 沉淀系统**: 核心功能全部完成，进入收尾
+- **REQ-011: AI Agent 接入引导与行动建议**: 已完成 onboard + next 命令
 
 ## 最近完成
-- ✅ **DECISION-012 (S 级)**: 砍掉 Web UI，确立 Insight 沉淀系统两层分离架构
-- ✅ **Insight 核心**: Schema + InsightManager + 71 tests
-- ✅ **Developer 扩展**: tags/contributed/bookmarks CRUD + 88 tests（含 21 新增）
-- ✅ **CLI 命令组**: `vibecollab insight` 13 子命令 + 45 tests
-- ✅ **一致性校验集成**: `vibecollab check --insights`
-- ✅ **跨 Developer 共享**: bookmark/unbookmark/who/stats + get_insight_developers/get_cross_developer_stats
-- ✅ **溯源 CLI 可视化**: trace 命令 + ASCII 树渲染 + get_full_trace
-- ✅ **Git 历史修复**: 所有 ocarmihe/Ocarina commit 统一为 ocarina，force push 完成
+- ✅ **vibecollab onboard**: 项目全貌引导（概况/进度/决策/待办/开发者视角/关键文件）
+- ✅ **vibecollab next**: 行动建议（关联文档同步/超时检查/commit建议/缺失文件）
+- ✅ **文档一致性检查增强**: linked_groups 三级检查(local_mtime/git_commit/release)
+- ✅ **update_threshold_hours**: 从24h改为15min(可配置)
+- ✅ **技术债务清理**: 版本号统一v0.7.0-dev, 项目名→VibeCollab
+- ✅ **Insight 沉淀系统核心**: Schema + InsightManager + CLI 13子命令
+- ✅ **自举 Dogfooding**: 10条 Insight + registry + developer tags
+- ✅ **自描述溯源协议**: origin.context + source.description/url/project
+- ✅ **跨 Developer 共享**: bookmark/unbookmark/who/stats + trace
 
 ## 接下来计划
-- **文档同步**: 关键文件职责表中所有 9 个文件更新确认
-- **commit**: 记录 v0.7.0-dev 最终产出
+- 文档同步确认（CONTRIBUTING_AI.md 补全 onboard/next/insight/health 命令）
+- v0.7.0 正式发布准备
 
 ## 技术债务
 - (已清零)

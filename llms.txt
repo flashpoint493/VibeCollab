@@ -20,8 +20,16 @@ VibeCollab is a Python-based project collaboration framework that generates AI c
   - Two-layer architecture: Insight body (portable) + Registry (project-level state)
   - Tag-driven matching (Jaccard × weight), decay/reward lifecycle, derived tracing
   - CLI: `vibecollab insight list/show/add/search/use/decay/check/delete/bookmark/unbookmark/trace/who/stats`
+- **Agent Guidance** (v0.7.0):
+  - `vibecollab onboard`: AI Agent onboarding — project overview, progress, decisions, read-files list
+  - `vibecollab next`: Action suggestions — document sync, overdue files, commit message, missing files
+- **Consistency Checking**:
+  - `vibecollab check [--insights] [--strict]`: Protocol compliance + Insight consistency
+  - Linked document groups with three-level checking (local_mtime / git_commit / release)
+  - Configurable update threshold (default 15min)
 - **Project Lifecycle**: Stage-based development (demo → production → scaling)
 - **LLM Client**: Provider-agnostic (OpenAI-compatible + Anthropic Claude)
+- **CLI Commands**: init, generate, validate, check, health, onboard, next, dev, ai, insight, lifecycle
 
 ## Quick Start
 
