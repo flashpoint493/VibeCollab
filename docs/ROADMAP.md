@@ -149,7 +149,7 @@
 - [x] developer.py 单元测试补齐 (67 tests) ✅
 - [x] Developer metadata 扩展（tags / contributed / bookmarks + 21 tests）✅
 - [x] CLI 命令封装（`vibecollab insight list/show/add/search/use/decay/check/delete` + 21 tests）✅
-- [ ] 跨 Developer 共享 + 溯源 CLI 可视化
+- [x] 跨 Developer 共享 + 溯源 CLI 可视化（bookmark/unbookmark/trace/who/stats + 24 tests）✅
 - [x] 一致性校验集成到 `vibecollab check --insights` ✅
 
 ### v1.0.0 - 正式版（待规划）

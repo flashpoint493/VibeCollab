@@ -1,0 +1,24 @@
+kind: insight
+version: '1'
+id: INS-006
+title: 权重衰减 + 使用奖励的沉淀生命周期
+summary: 周期衰减（×0.95）+ 使用奖励（+0.1）驱动沉淀自然淘汰和活跃保持
+tags:
+- lifecycle
+- decay
+- reward
+- weight-management
+category: workflow
+body:
+  scenario: 长期不使用的沉淀应自动降低优先级直至停用，活跃使用的应保持高权重
+  approach: 每个衰减周期 weight *= decay_rate(0.95)，每次使用 weight += use_reward(0.1)。weight
+    < deactivate_threshold(0.1) 时自动设为 inactive。使用已停用的沉淀会重新激活
+  validation: test_apply_decay + test_apply_decay_deactivates + test_record_use_reactivates
+  constraints:
+  - 衰减率和阈值可通过 registry.yaml settings 调整
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-25'
+  context: VibeCollab v0.7.0 Insight 生命周期管理设计
+fingerprint: df2079ecee99eceddbf2b611c100f682109650ac5b88ddc5b4f304d958d19006

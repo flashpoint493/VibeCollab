@@ -32,15 +32,24 @@
   - `insight decay [--dry-run]` — 执行权重衰减
   - `insight check [--json]` — 一致性校验
   - `insight delete <id> [-y]` — 删除沉淀
+  - `insight bookmark <id>` — 收藏沉淀
+  - `insight unbookmark <id>` — 取消收藏
+  - `insight trace <id> [--json]` — 溯源树可视化（ASCII 树 + JSON）
+  - `insight who <id> [--json]` — 查看跨开发者使用信息
+  - `insight stats [--json]` — 跨开发者共享统计
+- **跨开发者共享** (`src/vibecollab/insight_manager.py`):
+  - `get_full_trace()`: 递归展开上下游派生树
+  - `get_insight_developers()`: 反查创建者/使用者/收藏者/贡献者
+  - `get_cross_developer_stats()`: 汇总跨开发者贡献/使用/收藏统计
 
 ### Testing
-- **新增 171 个单元测试** (全量 498 tests, 零回归):
+- **新增 195 个单元测试** (全量 522 tests, 零回归):
   - `tests/test_developer.py` (88 tests): developer.py 全覆盖（含 Tag 扩展）
     - 初始化(5), 名称标准化(7), 身份识别(8), 身份来源(4), switch/clear(6), 路径(5), 列表/创建/初始化(11), 元数据(4), ContextAggregator(8), 迁移函数(5), 边界情况(5), Tag(8), Contributed(5), Bookmarks(5), MetadataReadWrite(3)
-  - `tests/test_insight_manager.py` (62 tests): insight_manager.py 全覆盖
-    - Artifact(3), Origin(4), Insight(7), RegistryEntry(3), CRUD(11), Registry(8), Search(6), DerivedTree(3), Consistency(7), EventLog(4), EdgeCases(5)
-  - `tests/test_cli_insight.py` (21 tests): cli_insight.py 全覆盖
-    - List(4), Show(2), Add(2), Search(4), Use(2), Decay(2), Check(3), Delete(2)
+  - `tests/test_insight_manager.py` (71 tests): insight_manager.py 全覆盖
+    - Artifact(3), Origin(4), Insight(7), RegistryEntry(3), CRUD(11), Registry(8), Search(6), DerivedTree(3), FullTrace(5), CrossDeveloper(4), Consistency(7), EventLog(4), EdgeCases(5)
+  - `tests/test_cli_insight.py` (45 tests): cli_insight.py 全覆盖
+    - List(4), Show(2), Add(2), Search(4), Use(2), Decay(2), Check(3), Delete(2), Bookmark(3), Unbookmark(2), Trace(4), Who(3), Stats(3)
 
 ### Cleanup
 - `.gitignore` 添加 `Reference/` 排除外部参考仓库
