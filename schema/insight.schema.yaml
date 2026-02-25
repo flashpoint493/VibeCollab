@@ -112,7 +112,9 @@ insight:
     origin:
       type: object
       required: [created_by, created_at]
-      description: 来源追踪
+      description: |
+        来源追踪。设计原则：溯源信息必须自描述，不依赖任何项目的内部 ID 体系。
+        Insight 本体可能被跨项目复用，因此来源描述应使人类在无原始项目上下文时也能理解。
       properties:
         created_by:
           type: string
@@ -121,9 +123,17 @@ insight:
           type: string
           format: date
           description: 创建日期
+        context:
+          type: string
+          description: 创建背景的自然语言描述（如"VibeCollab v0.7.0 Insight 系统架构设计"）
         source:
           type: object
-          description: 沉淀的直接来源
+          description: |
+            沉淀的直接来源。所有字段均为可选，但建议至少填写 type + description。
+            - description 是自描述的自然语言，跨项目时任何人都能理解
+            - ref 是来源项目的内部 ID（仅作为 hint，跨项目时可忽略）
+            - url 是外部可访问链接（如 GitHub issue/PR/文档 URL）
+            - project 标注来源项目名
           properties:
             type:
               type: string
@@ -132,9 +142,19 @@ insight:
                 - decision    # 从某个决策中提炼
                 - insight     # 从已有沉淀组合派生
                 - external    # 从外部引入
+            description:
+              type: string
+              description: 来源的自然语言描述，确保跨项目可读
             ref:
               type: string
-              description: 来源 ID（如 TASK-DEV-001, DECISION-011, INS-003）
+              description: 来源项目内部 ID（可选 hint，如 DECISION-012、TASK-DEV-001）
+            url:
+              type: string
+              format: uri
+              description: 外部可访问链接（如 GitHub issue/PR URL）
+            project:
+              type: string
+              description: 来源项目名称
         derived_from:
           type: array
           items:

@@ -2,22 +2,19 @@
 InsightManager 全覆盖单元测试
 """
 
+
 import pytest
 import yaml
 
-from pathlib import Path
+from vibecollab.event_log import EventLog
 from vibecollab.insight_manager import (
     INSIGHT_ID_PATTERN,
-    VALID_CATEGORIES,
     Artifact,
-    ConsistencyReport,
     Insight,
     InsightManager,
     Origin,
     RegistryEntry,
 )
-from vibecollab.event_log import EventLog
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -104,6 +101,49 @@ class TestOrigin:
         assert o2.source_type == "decision"
         assert o2.source_ref == "DECISION-011"
         assert o2.derived_from == ["INS-001"]
+
+    def test_context_field(self):
+        o = Origin(created_by="alice", created_at="2026-02-25",
+                   context="VibeCollab v0.7.0 architecture design")
+        d = o.to_dict()
+        assert d["context"] == "VibeCollab v0.7.0 architecture design"
+        o2 = Origin.from_dict(d)
+        assert o2.context == "VibeCollab v0.7.0 architecture design"
+
+    def test_source_self_describing(self):
+        o = Origin(
+            created_by="alice", created_at="2026-02-25",
+            context="Refactoring session",
+            source_type="decision",
+            source_desc="砍掉 Web UI，转向两层分离的 Insight 沉淀系统",
+            source_ref="DECISION-012",
+            source_url="https://github.com/user/repo/issues/42",
+            source_project="VibeCollab",
+        )
+        d = o.to_dict()
+        assert d["context"] == "Refactoring session"
+        assert d["source"]["type"] == "decision"
+        assert d["source"]["description"] == "砍掉 Web UI，转向两层分离的 Insight 沉淀系统"
+        assert d["source"]["ref"] == "DECISION-012"
+        assert d["source"]["url"] == "https://github.com/user/repo/issues/42"
+        assert d["source"]["project"] == "VibeCollab"
+        # Roundtrip
+        o2 = Origin.from_dict(d)
+        assert o2.source_desc == o.source_desc
+        assert o2.source_url == o.source_url
+        assert o2.source_project == o.source_project
+
+    def test_source_without_ref(self):
+        """source 可以只有 description 没有 ref — 跨项目可移植"""
+        o = Origin(
+            created_by="bob", created_at="2026-02-25",
+            source_type="external",
+            source_desc="Learned from Martin Fowler's refactoring catalog",
+        )
+        d = o.to_dict()
+        assert d["source"]["description"] == "Learned from Martin Fowler's refactoring catalog"
+        assert "ref" not in d["source"]
+        assert "project" not in d["source"]
 
 
 # ===========================================================================
@@ -449,6 +489,123 @@ class TestDerivedTree:
         tree = mgr.get_derived_tree("INS-999")
         assert tree["derived_from"] == []
         assert tree["derived_by"] == []
+
+
+# ===========================================================================
+# InsightManager — 完整溯源
+# ===========================================================================
+
+class TestFullTrace:
+    def test_simple_trace(self, mgr):
+        mgr.create(title="Base", tags=["a"], category="technique",
+                    body=_body(), created_by="alice")
+        mgr.create(title="Child", tags=["b"], category="technique",
+                    body=_body(), created_by="bob",
+                    derived_from=["INS-001"])
+        trace = mgr.get_full_trace("INS-001")
+        assert trace["id"] == "INS-001"
+        assert trace["title"] == "Base"
+        assert trace["upstream"] == []
+        assert len(trace["downstream"]) == 1
+        assert trace["downstream"][0]["id"] == "INS-002"
+
+    def test_trace_upstream(self, mgr):
+        mgr.create(title="Base", tags=["a"], category="technique",
+                    body=_body(), created_by="alice")
+        mgr.create(title="Child", tags=["b"], category="technique",
+                    body=_body(), created_by="bob",
+                    derived_from=["INS-001"])
+        trace = mgr.get_full_trace("INS-002")
+        assert len(trace["upstream"]) == 1
+        assert trace["upstream"][0]["id"] == "INS-001"
+        assert trace["upstream"][0]["title"] == "Base"
+
+    def test_trace_chain(self, mgr):
+        mgr.create(title="A", tags=["a"], category="technique",
+                    body=_body(), created_by="alice")
+        mgr.create(title="B", tags=["b"], category="technique",
+                    body=_body(), created_by="bob",
+                    derived_from=["INS-001"])
+        mgr.create(title="C", tags=["c"], category="technique",
+                    body=_body(), created_by="charlie",
+                    derived_from=["INS-002"])
+        trace = mgr.get_full_trace("INS-002")
+        assert len(trace["upstream"]) == 1
+        assert len(trace["downstream"]) == 1
+        assert trace["downstream"][0]["id"] == "INS-003"
+
+    def test_trace_missing_parent(self, mgr):
+        mgr.create(title="Child", tags=["a"], category="technique",
+                    body=_body(), created_by="alice",
+                    derived_from=["INS-999"])
+        trace = mgr.get_full_trace("INS-001")
+        assert len(trace["upstream"]) == 1
+        assert trace["upstream"][0]["title"] == "(missing)"
+
+    def test_trace_nonexistent(self, mgr):
+        trace = mgr.get_full_trace("INS-999")
+        assert trace["title"] == "(missing)"
+        assert trace["downstream"] == []
+
+
+# ===========================================================================
+# InsightManager — 跨开发者共享
+# ===========================================================================
+
+class TestCrossDeveloper:
+    def test_get_insight_developers(self, mgr, project_dir):
+        mgr.create(title="T", tags=["a"], category="technique",
+                    body=_body(), created_by="alice")
+        mgr.record_use("INS-001", used_by="bob")
+        # Setup developer metadata
+        alice_dir = project_dir / "docs" / "developers" / "alice"
+        alice_dir.mkdir(parents=True, exist_ok=True)
+        (alice_dir / ".metadata.yaml").write_text(
+            "developer: alice\ncontributed:\n  - INS-001\nbookmarks: []\n",
+            encoding="utf-8",
+        )
+        bob_dir = project_dir / "docs" / "developers" / "bob"
+        bob_dir.mkdir(parents=True, exist_ok=True)
+        (bob_dir / ".metadata.yaml").write_text(
+            "developer: bob\ncontributed: []\nbookmarks:\n  - INS-001\n",
+            encoding="utf-8",
+        )
+        info = mgr.get_insight_developers("INS-001")
+        assert info["created_by"] == "alice"
+        assert "bob" in info["used_by"]
+        assert "bob" in info["bookmarked_by"]
+        assert "alice" in info["contributed_by"]
+
+    def test_get_insight_developers_nonexistent(self, mgr):
+        info = mgr.get_insight_developers("INS-999")
+        assert info["created_by"] is None
+        assert info["used_by"] == []
+
+    def test_get_cross_developer_stats(self, mgr, project_dir):
+        mgr.create(title="A", tags=["a"], category="technique",
+                    body=_body(), created_by="alice")
+        mgr.create(title="B", tags=["b"], category="workflow",
+                    body=_body(), created_by="bob")
+        mgr.record_use("INS-001", used_by="bob")
+        mgr.record_use("INS-001", used_by="charlie")
+        # Setup developer directories
+        for dev in ("alice", "bob"):
+            d = project_dir / "docs" / "developers" / dev
+            d.mkdir(parents=True, exist_ok=True)
+            (d / ".metadata.yaml").write_text(
+                f"developer: {dev}\ncontributed: []\nbookmarks: []\n",
+                encoding="utf-8",
+            )
+        stats = mgr.get_cross_developer_stats()
+        assert stats["summary"]["total_insights"] == 2
+        assert stats["summary"]["total_uses"] == 2
+        assert stats["summary"]["most_used"] == "INS-001"
+
+    def test_cross_developer_stats_empty(self, mgr):
+        stats = mgr.get_cross_developer_stats()
+        assert stats["summary"]["total_insights"] == 0
+        assert stats["summary"]["total_uses"] == 0
+        assert stats["summary"]["most_used"] is None
 
 
 # ===========================================================================
