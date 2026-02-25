@@ -69,6 +69,10 @@
 ### Cleanup
 - `.gitignore` 添加 `Reference/` 排除外部参考仓库
 - 清理 ROADMAP.md / DECISIONS.md 中的外部专有术语引用
+- **protocol_checker 多开发者动态发现**: `_check_multi_developer_protocol()` 从 `docs/developers/` 目录自动扫描开发者，无需静态 `multi_developer.developers` 配置
+- **CONTRIBUTING_AI.md 命令文档补全**: 新增 onboard/next/insight(13 子命令)/health/check --insights 到 CLI 命令参考
+- **ROADMAP.md 同步**: 添加 v0.7.0 全部已完成项（一致性检查/Agent 引导/技术债务/动态发现）
+- **自举全量验证**: onboard → next → check → insight 全链路在项目自身上正常工作
 
 ---
 
