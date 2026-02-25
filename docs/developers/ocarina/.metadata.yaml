@@ -2,3 +2,29 @@ developer: ocarina
 created_at: '2026-02-10T23:08:53.530357'
 last_updated: '2026-02-10T23:08:53.530357'
 total_updates: 0
+tags:
+- arch:protocol-designer
+- role:maintainer
+- lang:python
+- tool:click
+- tool:jinja2
+- tool:pyyaml
+- prefers:incremental
+- prefers:test-first
+- focus:ai-collaboration
+- focus:insight-system
+contributed:
+- INS-001
+- INS-002
+- INS-003
+- INS-004
+- INS-005
+- INS-006
+- INS-007
+- INS-008
+- INS-009
+- INS-010
+bookmarks:
+- INS-001
+- INS-003
+- INS-008

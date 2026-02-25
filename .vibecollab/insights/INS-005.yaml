@@ -1,0 +1,25 @@
+kind: insight
+version: '1'
+id: INS-005
+title: SHA-256 内容指纹机制
+summary: canonical JSON → SHA-256 生成内容指纹，一致性校验自动检测篡改
+tags:
+- security
+- integrity
+- sha256
+- fingerprint
+category: technique
+body:
+  scenario: 需要检测沉淀文件是否被意外或恶意修改
+  approach: 将 Insight 的所有内容字段序列化为 canonical JSON（sort_keys=True），计算 SHA-256 哈希作为 fingerprint
+    写入文件。一致性校验时重新计算并比对
+  validation: test_fingerprint_deterministic + test_fingerprint_mismatch 验证
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-25'
+  context: VibeCollab v0.5.5 EventLog 指纹机制复用
+  source:
+    type: insight
+    description: 从 EventLog 审计日志借鉴的内容指纹防篡改机制
+fingerprint: 58744f6ac6da4949fd919b430bcd46cd94166130c5fdb9e14db33a17cc293d5c

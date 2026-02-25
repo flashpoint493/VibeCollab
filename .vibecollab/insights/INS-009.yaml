@@ -1,0 +1,30 @@
+kind: insight
+version: '1'
+id: INS-009
+title: Manifest 驱动的 Jinja2 模板引擎
+summary: manifest.yaml 声明式控制 + Jinja2 模板 + ChoiceLoader 本地覆盖，替代 27 个硬编码方法
+tags:
+- template
+- jinja2
+- manifest
+- pattern-engine
+- code-generation
+category: technique
+body:
+  scenario: generator.py 中 27 个硬编码 _add_*() 方法导致维护困难，修改一个章节可能影响其他
+  approach: manifest.yaml 声明章节顺序、模板映射、条件渲染。PatternEngine 通过 ChoiceLoader 支持本地覆盖（.vibecollab/patterns/）优先于内置模板。条件语法支持
+    config.x.enabled|true 默认值
+  validation: 40 PatternEngine tests，generator.py 从 1713 行精简至 83 行
+  constraints:
+  - manifest 合并支持 override/insert(after)/exclude 三种操作
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-25'
+  context: VibeCollab v0.5.9 generator.py 重构为模板引擎
+  source:
+    type: decision
+    description: 用 Jinja2 模板 + manifest.yaml 替代 27 个硬编码生成方法
+    project: VibeCollab
+    ref: DECISION-011
+fingerprint: 088c0b21010a80d99a64c373c0408571b36c31df906dc0f25930c7a19a25cc49

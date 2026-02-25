@@ -1,0 +1,21 @@
+kind: insight
+version: '1'
+id: INS-003
+title: Jaccard 相似度 × 权重的搜索排序算法
+summary: 搜索结果按 Jaccard(tags) × registry_weight 排序，兼顾匹配度和使用频率
+tags:
+- search
+- algorithm
+- jaccard
+- weighted-ranking
+category: technique
+body:
+  scenario: 按标签搜索沉淀时需要既考虑匹配度又考虑沉淀质量
+  approach: 计算查询标签与沉淀标签的 Jaccard 相似度（交集/并集），乘以注册表权重得到最终分数。权重通过使用奖励（+0.1/次）和周期衰减（×0.95）动态调整
+  validation: test_search_weighted_order 验证高权重沉淀排序靠前
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-25'
+  context: VibeCollab v0.7.0 Insight 搜索算法设计
+fingerprint: 53f788d8384f25a1f7c044ff412924992dd873cf0e6c627ba5e619ea66a0cb9b

@@ -256,6 +256,12 @@
   - Tag 搜索: Jaccard 相似度 × 注册表权重排序
   - Category 搜索: 精确匹配 + 权重排序
   - 溯源链: `origin.derived_from` 追踪派生关系，`get_derived_tree()` 构建上下游关系
+  - **自描述溯源协议**: origin.source 结构不依赖项目内部 ID 体系
+    - `context`: 创建背景自然语言描述
+    - `source.description`: 来源的自描述（必填当 source 存在时），跨项目可读
+    - `source.ref`: 来源项目内部 ID（降级为可选 hint）
+    - `source.url`: 外部可访问链接（可选）
+    - `source.project`: 来源项目名（可选）
 - **权重衰减机制**:
   - `decay_rate` × 周期衰减，`use_reward` 使用奖励，`deactivate_threshold` 自动停用
   - 生命周期状态（weight/used_count/active）完全属于项目级注册表，不属于沉淀本体
@@ -281,7 +287,9 @@
   - Developer metadata 扩展 — tags/contributed/bookmarks CRUD ✅
   - `src/vibecollab/cli_insight.py` — CLI 命令组 (list/show/add/search/use/decay/check/delete) ✅
   - `tests/test_cli_insight.py` — 21 单元测试 ✅
-  - 待完成：跨 Developer 共享 + 溯源 CLI 可视化、一致性校验集成到 `vibecollab check`
+  - 一致性校验集成到 `vibecollab check --insights` ✅
+  - 跨 Developer 共享 + 溯源 CLI 可视化（bookmark/unbookmark/trace/who/stats）✅
+  - InsightManager 扩展: get_full_trace / get_insight_developers / get_cross_developer_stats ✅
 
 ---
 *决策记录格式见 CONTRIBUTING_AI.md*

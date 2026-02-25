@@ -418,6 +418,30 @@ documentation:
   context_file: docs/CONTEXT.md
   changelog_file: docs/CHANGELOG.md
   decisions_file: docs/DECISIONS.md
+  consistency:
+    enabled: true
+    default_level: local_mtime
+    linked_groups:
+    - name: PRD-DECISIONS
+      description: 需求文档与决策文档强关联，决策变更时需检查需求是否同步
+      files:
+      - docs/PRD.md
+      - docs/DECISIONS.md
+      level: local_mtime
+      threshold_minutes: 15
+    - name: ROADMAP-CHANGELOG
+      description: 路线图与变更日志关联，版本发布时应保持一致
+      files:
+      - docs/ROADMAP.md
+      - docs/CHANGELOG.md
+      level: git_commit
+    - name: CONTEXT-CHANGELOG
+      description: 上下文与变更日志在对话结束时应同步更新
+      files:
+      - docs/CONTEXT.md
+      - docs/CHANGELOG.md
+      level: local_mtime
+      threshold_minutes: 15
 multi_developer:
   enabled: true
   identity:
@@ -460,7 +484,7 @@ protocol_check:
       enabled: true
       check_file_existence: true
       check_update_frequency: true
-      update_threshold_hours: 24
+      update_threshold_hours: 0.25
     dialogue:
       enabled: true
       check_required_files: true

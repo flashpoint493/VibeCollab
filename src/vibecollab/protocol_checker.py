@@ -4,7 +4,7 @@ Protocol Checker - 协议遵循情况检查器
 """
 
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -49,6 +49,9 @@ class ProtocolChecker:
 
         # 检查多开发者协议
         results.extend(self._check_multi_developer_protocol())
+
+        # 检查关联文档一致性
+        results.extend(self._check_document_consistency())
 
         return results
 
@@ -97,6 +100,10 @@ class ProtocolChecker:
         """检查文档更新协议"""
         results = []
 
+        # 从配置读取更新阈值，默认 0.25 小时 = 15 分钟
+        check_config = self.config.get("protocol_check", {}).get("checks", {}).get("documentation", {})
+        threshold_hours = check_config.get("update_threshold_hours", 0.25)
+
         dialogue_protocol = self.config.get("dialogue_protocol", {})
         on_end = dialogue_protocol.get("on_end", {})
         required_files = on_end.get("update_files", [])
@@ -113,15 +120,19 @@ class ProtocolChecker:
                 ))
                 continue
 
-            # 检查文件是否最近更新（24小时内）
+            # 检查文件是否在阈值时间内更新
             file_mtime = datetime.fromtimestamp(full_path.stat().st_mtime)
             hours_since_update = (datetime.now() - file_mtime).total_seconds() / 3600
 
-            if hours_since_update > 24:
+            if hours_since_update > threshold_hours:
+                if threshold_hours < 1:
+                    time_desc = f"{int(threshold_hours * 60)} 分钟"
+                else:
+                    time_desc = f"{int(threshold_hours)} 小时"
                 results.append(CheckResult(
                     name=f"文档更新: {file_path}",
                     passed=False,
-                    message=f"文档 {file_path} 超过 24 小时未更新",
+                    message=f"文档 {file_path} 超过 {time_desc} 未更新",
                     severity="warning",
                     suggestion=f"根据协议，对话结束后应更新 {file_path}。如果最近有对话，请更新此文档"
                 ))
@@ -333,6 +344,273 @@ class ProtocolChecker:
                 severity="warning",
                 suggestion="建议启用冲突检测以避免多个开发者修改同一文件产生冲突"
             ))
+
+        return results
+
+    def _check_document_consistency(self) -> List[CheckResult]:
+        """检查关联文档之间的一致性
+
+        通过 project.yaml 中 documentation.consistency.linked_groups 配置关联文档组，
+        检查同组文档的修改时间是否同步。
+
+        支持三级检查粒度 (consistency_level):
+          - local_mtime: 本地文件修改时间级别（最敏感，默认 15min 差异阈值）
+          - git_commit:  git 提交时间级别（检查最近一次 commit 是否同步修改了组内文件）
+          - release:     发布版本级别（最宽松，仅检查标签时的文件状态）
+        """
+        results = []
+
+        doc_config = self.config.get("documentation", {})
+        consistency_config = doc_config.get("consistency", {})
+        if not consistency_config.get("enabled", False):
+            return results
+
+        linked_groups = consistency_config.get("linked_groups", [])
+        default_level = consistency_config.get("default_level", "local_mtime")
+
+        for group in linked_groups:
+            group_name = group.get("name", "未命名组")
+            files = group.get("files", [])
+            level = group.get("level", default_level)
+            threshold_minutes = group.get("threshold_minutes", 15)
+
+            if len(files) < 2:
+                continue
+
+            if level == "local_mtime":
+                results.extend(
+                    self._check_mtime_consistency(group_name, files, threshold_minutes)
+                )
+            elif level == "git_commit":
+                results.extend(
+                    self._check_git_commit_consistency(group_name, files)
+                )
+            elif level == "release":
+                results.extend(
+                    self._check_release_consistency(group_name, files)
+                )
+
+        # 检查 key_files 中声明的所有文件存在性
+        key_files = doc_config.get("key_files", [])
+        for kf in key_files:
+            path = kf.get("path", "")
+            if not path:
+                continue
+            full_path = self.project_root / path
+            if not full_path.exists():
+                results.append(CheckResult(
+                    name=f"关键文档存在性: {path}",
+                    passed=False,
+                    message=f"关键文档不存在: {path} (用途: {kf.get('purpose', '未知')})",
+                    severity="warning",
+                    suggestion=f"创建 {path}，它被声明为关键文档"
+                ))
+
+        return results
+
+    def _check_mtime_consistency(
+        self, group_name: str, files: List[str], threshold_minutes: float
+    ) -> List[CheckResult]:
+        """本地文件修改时间级别的一致性检查
+
+        检查同组文件的 mtime 差异是否超过阈值。如果某个文件刚被修改，
+        而关联文件没有跟随修改，产生 warning。
+        """
+        results = []
+        file_mtimes: Dict[str, datetime] = {}
+
+        for f in files:
+            full_path = self.project_root / f
+            if full_path.exists():
+                file_mtimes[f] = datetime.fromtimestamp(full_path.stat().st_mtime)
+
+        if len(file_mtimes) < 2:
+            return results
+
+        # 找到最近修改和最早修改的文件
+        sorted_files = sorted(file_mtimes.items(), key=lambda x: x[1], reverse=True)
+        newest_file, newest_time = sorted_files[0]
+        oldest_file, oldest_time = sorted_files[-1]
+
+        diff_minutes = (newest_time - oldest_time).total_seconds() / 60
+
+        if diff_minutes > threshold_minutes:
+            # 检查最近修改的文件是否在阈值时间内（表示最近有活跃编辑）
+            hours_since_newest = (datetime.now() - newest_time).total_seconds() / 3600
+            # 只有当最近文件确实是"新鲜"的（24h 内修改过）才报 warning
+            # 否则组内所有文件都很久没改了，不需要告警
+            if hours_since_newest < 24:
+                stale_files = [
+                    f for f, t in sorted_files[1:]
+                    if (newest_time - t).total_seconds() / 60 > threshold_minutes
+                ]
+                for stale_f in stale_files:
+                    stale_t = file_mtimes[stale_f]
+                    diff_min = int((newest_time - stale_t).total_seconds() / 60)
+                    results.append(CheckResult(
+                        name=f"文档关联性: {group_name}",
+                        passed=False,
+                        message=(
+                            f"{newest_file} 已修改，但关联文档 {stale_f} "
+                            f"落后 {diff_min} 分钟未同步更新"
+                        ),
+                        severity="warning",
+                        suggestion=(
+                            f"关联组 [{group_name}] 要求同步更新。"
+                            f"请检查 {stale_f} 是否需要跟随修改"
+                        )
+                    ))
+
+        return results
+
+    def _check_git_commit_consistency(
+        self, group_name: str, files: List[str]
+    ) -> List[CheckResult]:
+        """Git 提交时间级别的一致性检查
+
+        检查同组文件在最近一次 commit 中是否同时被修改。
+        如果某文件在最近 commit 中被修改了，但关联文件不在同一次 commit 中，产生 warning。
+        """
+        results = []
+
+        if not is_git_repo(self.project_root):
+            return results
+
+        # 获取每个文件最近一次被修改的 commit hash
+        file_last_commits: Dict[str, Optional[str]] = {}
+        for f in files:
+            full_path = self.project_root / f
+            if not full_path.exists():
+                continue
+            try:
+                result = subprocess.run(
+                    ["git", "log", "-1", "--format=%H", "--", f],
+                    cwd=self.project_root,
+                    capture_output=True, text=True
+                )
+                commit_hash = result.stdout.strip() if result.returncode == 0 else None
+                file_last_commits[f] = commit_hash
+            except Exception:
+                file_last_commits[f] = None
+
+        if len(file_last_commits) < 2:
+            return results
+
+        # 找到最近被 commit 的文件
+        commits_with_time: Dict[str, Optional[datetime]] = {}
+        for f, commit_hash in file_last_commits.items():
+            if commit_hash:
+                try:
+                    result = subprocess.run(
+                        ["git", "log", "-1", "--format=%ct", commit_hash],
+                        cwd=self.project_root,
+                        capture_output=True, text=True
+                    )
+                    if result.returncode == 0 and result.stdout.strip():
+                        commits_with_time[f] = datetime.fromtimestamp(
+                            int(result.stdout.strip())
+                        )
+                    else:
+                        commits_with_time[f] = None
+                except Exception:
+                    commits_with_time[f] = None
+            else:
+                commits_with_time[f] = None
+
+        # 找到最近 commit 的文件
+        valid_entries = [(f, t) for f, t in commits_with_time.items() if t is not None]
+        if len(valid_entries) < 2:
+            return results
+
+        valid_entries.sort(key=lambda x: x[1], reverse=True)
+        newest_file, newest_time = valid_entries[0]
+        newest_commit = file_last_commits[newest_file]
+
+        # 检查其他文件是否在同一次 commit 中
+        for f, commit_hash in file_last_commits.items():
+            if f == newest_file:
+                continue
+            if commit_hash != newest_commit:
+                results.append(CheckResult(
+                    name=f"文档 Git 关联性: {group_name}",
+                    passed=False,
+                    message=(
+                        f"{newest_file} 在最近 commit 中被修改，"
+                        f"但关联文档 {f} 不在同一次 commit 中"
+                    ),
+                    severity="warning",
+                    suggestion=(
+                        f"关联组 [{group_name}] 要求 git 提交同步。"
+                        f"建议在修改 {newest_file} 时同步更新 {f}"
+                    )
+                ))
+
+        return results
+
+    def _check_release_consistency(
+        self, group_name: str, files: List[str]
+    ) -> List[CheckResult]:
+        """发布版本级别的一致性检查
+
+        检查在最近的版本标签时，组内所有文件是否都有被修改（相比上个标签）。
+        这是最宽松的检查，适合文档间不需要每次都同步但版本发布时应一致的场景。
+        """
+        results = []
+
+        if not is_git_repo(self.project_root):
+            return results
+
+        try:
+            # 获取最近两个版本标签
+            tag_result = subprocess.run(
+                ["git", "tag", "--sort=-v:refname", "-l", "v*"],
+                cwd=self.project_root,
+                capture_output=True, text=True
+            )
+            if tag_result.returncode != 0:
+                return results
+
+            tags = [t.strip() for t in tag_result.stdout.strip().split("\n") if t.strip()]
+            if len(tags) < 2:
+                return results
+
+            latest_tag = tags[0]
+            prev_tag = tags[1]
+
+            # 获取两个标签之间修改的文件
+            diff_result = subprocess.run(
+                ["git", "diff", "--name-only", prev_tag, latest_tag],
+                cwd=self.project_root,
+                capture_output=True, text=True
+            )
+            if diff_result.returncode != 0:
+                return results
+
+            changed_files = set(diff_result.stdout.strip().split("\n"))
+
+            # 检查组内文件是否都在变更列表中
+            group_in_diff = {f: f in changed_files for f in files}
+            some_changed = any(group_in_diff.values())
+            all_changed = all(group_in_diff.values())
+
+            if some_changed and not all_changed:
+                missing = [f for f, changed in group_in_diff.items() if not changed]
+                for f in missing:
+                    results.append(CheckResult(
+                        name=f"文档版本关联性: {group_name}",
+                        passed=False,
+                        message=(
+                            f"版本 {prev_tag} → {latest_tag} 中，"
+                            f"关联组内部分文档已更新，但 {f} 未同步修改"
+                        ),
+                        severity="info",
+                        suggestion=(
+                            f"关联组 [{group_name}] 在版本发布时应保持一致。"
+                            f"请检查 {f} 是否需要更新"
+                        )
+                    ))
+        except Exception:
+            pass
 
         return results
 

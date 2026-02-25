@@ -531,6 +531,31 @@
   - Insight 错误计入退出码
 - **状态**: 🟢 (需手动验证)
 
+### TC-INSIGHT-010: CLI insight bookmark/unbookmark/trace
+- **关联**: v0.7.0
+- **前置**: 至少 1 条沉淀
+- **步骤**:
+  1. `vibecollab insight bookmark INS-001`
+  2. `vibecollab insight bookmark INS-001`（重复收藏）
+  3. `vibecollab insight unbookmark INS-001`
+  4. `vibecollab insight trace INS-001 [--json]`
+- **预期**:
+  - bookmark: 收藏成功，重复收藏提示已存在
+  - unbookmark: 取消收藏成功
+  - trace: 显示 ASCII 溯源树（上游 + 本节点 + 下游）
+- **状态**: 🟢 (9 unit tests 覆盖)
+
+### TC-INSIGHT-011: CLI insight who/stats（跨 Developer 共享）
+- **关联**: v0.7.0
+- **前置**: 多开发者环境 + 至少 1 条沉淀
+- **步骤**:
+  1. `vibecollab insight who INS-001 [--json]`
+  2. `vibecollab insight stats [--json]`
+- **预期**:
+  - who: 显示创建者/使用者/收藏者/贡献者
+  - stats: 汇总沉淀总数、开发者总数、使用次数、最常使用/最多共享
+- **状态**: 🟢 (6 unit tests 覆盖)
+
 ---
 
 ## 已知问题

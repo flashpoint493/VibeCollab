@@ -1,0 +1,30 @@
+kind: insight
+version: '1'
+id: INS-001
+title: 本体与注册表分离架构
+summary: Insight 本体（可移植知识包）与 Registry 注册表（项目级状态）严格分离，实现跨项目可复用
+tags:
+- architecture
+- separation-of-concerns
+- portability
+- registry
+category: decision
+body:
+  scenario: 需要设计一种既可在项目内使用又可跨项目复用的知识存储结构
+  approach: 将 Insight 拆分为本体（可移植知识包，纯内容描述）和注册表（项目级使用状态：权重、计数、活跃状态）。本体文件 INS-xxx.yaml
+    不含任何项目特定状态，注册表 registry.yaml 集中管理生命周期
+  validation: 一致性校验 5 项全量检查确保双向同步
+  constraints:
+  - 本体文件不可包含项目特定字段
+  - 注册表仅记录使用状态不记录内容
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-25'
+  context: VibeCollab v0.7.0 Insight 沉淀系统架构设计
+  source:
+    type: decision
+    description: 砍掉 Web UI，转向两层分离的 Insight 沉淀系统
+    project: VibeCollab
+    ref: DECISION-012
+fingerprint: e3bc339ab9508f1a09183b688941be2f3c7d1627232d7202f3998d61e85b3ebe

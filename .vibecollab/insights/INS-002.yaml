@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-002
+title: Tag 驱动替代枚举字段
+summary: 开放式 Tag 替代枚举字段描述开发者特征，前缀约定实现语义化扩展
+tags:
+- tag-system
+- extensibility
+- developer-profile
+- metadata
+category: technique
+body:
+  scenario: 需要描述开发者特征（专长、偏好、关注点）但枚举字段过于僵化
+  approach: '使用开放式 Tag 体系（如 arch:protocol-designer、prefers:conservative）替代固定枚举。Tag
+    存于 .metadata.yaml，特定前缀可影响系统行为（如 prefers: 影响决策风险评估）'
+  validation: developer.py 中 get/set/add/remove_tag 全 CRUD 覆盖，88 unit tests
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-25'
+  context: VibeCollab v0.7.0 Developer 描述体系设计
+  source:
+    type: decision
+    description: 用开放式 Tag 替代枚举字段描述开发者特征
+    project: VibeCollab
+    ref: DECISION-012
+fingerprint: 8ab5a8c346c6929f634d53122269d6c188fff5ca03618a3d5635688d554956c4

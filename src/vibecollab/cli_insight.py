@@ -1,7 +1,7 @@
 """
 Insight CLI 命令组 — 沉淀系统的 CLI 接口
 
-提供沉淀的 CRUD、搜索、使用、衰减、一致性校验等功能。
+提供沉淀的 CRUD、搜索、使用、衰减、一致性校验、跨开发者共享、溯源可视化等功能。
 
 命令:
     vibecollab insight list               列出所有沉淀
@@ -11,6 +11,12 @@ Insight CLI 命令组 — 沉淀系统的 CLI 接口
     vibecollab insight use <id>           记录一次使用
     vibecollab insight decay              执行权重衰减
     vibecollab insight check              一致性校验
+    vibecollab insight delete <id>        删除沉淀
+    vibecollab insight bookmark <id>      收藏沉淀
+    vibecollab insight unbookmark <id>    取消收藏
+    vibecollab insight trace <id>         溯源树可视化
+    vibecollab insight who <id>           查看跨开发者使用信息
+    vibecollab insight stats              跨开发者共享统计
 """
 
 import sys
@@ -119,6 +125,19 @@ def show_insight(insight_id):
     if ins.summary:
         click.echo(f"Summary:  {ins.summary}")
     click.echo(f"Origin:   created by {ins.origin.created_by} on {ins.origin.created_at}")
+    if ins.origin.context:
+        click.echo(f"Context:  {ins.origin.context}")
+    if ins.origin.source_type:
+        source_info = f"Source:   [{ins.origin.source_type}]"
+        if ins.origin.source_desc:
+            source_info += f" {ins.origin.source_desc}"
+        if ins.origin.source_project:
+            source_info += f" (project: {ins.origin.source_project})"
+        if ins.origin.source_ref:
+            source_info += f" [ref: {ins.origin.source_ref}]"
+        click.echo(source_info)
+        if ins.origin.source_url:
+            click.echo(f"URL:      {ins.origin.source_url}")
     if ins.origin.derived_from:
         click.echo(f"Derived:  {', '.join(ins.origin.derived_from)}")
     click.echo("\n--- Body ---")
@@ -154,11 +173,16 @@ def show_insight(insight_id):
 @click.option("--approach", "-a", required=True, help="方法/步骤")
 @click.option("--summary", default="", help="一句话摘要")
 @click.option("--validation", default="", help="验证方法")
+@click.option("--context", "origin_context", default="", help="创建背景（自然语言描述）")
 @click.option("--source-type", default=None, type=click.Choice(["task", "decision", "insight", "external"]))
-@click.option("--source-ref", default=None, help="来源 ID（如 TASK-DEV-001）")
+@click.option("--source-desc", default=None, help="来源描述（自然语言，跨项目可读）")
+@click.option("--source-ref", default=None, help="来源内部 ID（可选 hint，如 DECISION-012）")
+@click.option("--source-url", default=None, help="来源外部链接（如 GitHub issue URL）")
+@click.option("--source-project", default=None, help="来源项目名")
 @click.option("--derived-from", default=None, help="派生自的 insight ID，逗号分隔")
 def add_insight(title, tags, category, scenario, approach, summary,
-                validation, source_type, source_ref, derived_from):
+                validation, origin_context, source_type, source_desc,
+                source_ref, source_url, source_project, derived_from):
     """创建新的沉淀条目"""
     mgr = _load_insight_manager()
     dm = _load_developer_manager()
@@ -178,8 +202,12 @@ def add_insight(title, tags, category, scenario, approach, summary,
         body=body,
         created_by=created_by,
         summary=summary,
+        context=origin_context,
         source_type=source_type,
+        source_desc=source_desc,
         source_ref=source_ref,
+        source_url=source_url,
+        source_project=source_project,
         derived_from=derived_list,
     )
 
@@ -328,3 +356,162 @@ def delete_insight(insight_id, yes):
     dm.remove_contributed(insight_id, deleted_by)
 
     click.echo(f"已删除: {insight_id}")
+
+
+@insight.command("bookmark")
+@click.argument("insight_id")
+def bookmark_insight(insight_id):
+    """收藏沉淀"""
+    mgr = _load_insight_manager()
+    dm = _load_developer_manager()
+
+    ins = mgr.get(insight_id)
+    if not ins:
+        click.echo(f"未找到沉淀: {insight_id}", err=True)
+        sys.exit(1)
+
+    developer = dm.get_current_developer()
+    added = dm.add_bookmark(insight_id, developer)
+    if added:
+        click.echo(f"已收藏: {insight_id} ({ins.title})")
+        click.echo(f"  by: {developer}")
+    else:
+        click.echo(f"已存在收藏: {insight_id}")
+
+
+@insight.command("unbookmark")
+@click.argument("insight_id")
+def unbookmark_insight(insight_id):
+    """取消收藏沉淀"""
+    dm = _load_developer_manager()
+
+    developer = dm.get_current_developer()
+    removed = dm.remove_bookmark(insight_id, developer)
+    if removed:
+        click.echo(f"已取消收藏: {insight_id}")
+    else:
+        click.echo(f"未找到收藏: {insight_id}")
+
+
+@insight.command("trace")
+@click.argument("insight_id")
+@click.option("--json", "as_json", is_flag=True, default=False, help="JSON 格式输出")
+def trace_insight(insight_id, as_json):
+    """溯源树可视化 — 显示沉淀的派生关系"""
+    import json as json_mod
+
+    mgr = _load_insight_manager()
+    ins = mgr.get(insight_id)
+    if not ins:
+        click.echo(f"未找到沉淀: {insight_id}", err=True)
+        sys.exit(1)
+
+    trace = mgr.get_full_trace(insight_id)
+
+    if as_json:
+        click.echo(json_mod.dumps(trace, ensure_ascii=False, indent=2))
+        return
+
+    # ASCII 树形可视化
+    click.echo(f"\n溯源树: {insight_id} — {ins.title}\n")
+
+    # 上游
+    if trace["upstream"]:
+        click.echo("  上游 (derived from):")
+        _render_tree(trace["upstream"], prefix="    ", direction="up")
+    else:
+        click.echo("  上游: (无)")
+
+    click.echo(f"\n  ● {insight_id} — {ins.title}")
+
+    # 下游
+    if trace["downstream"]:
+        click.echo("\n  下游 (derived by):")
+        _render_tree(trace["downstream"], prefix="    ", direction="down")
+    else:
+        click.echo("\n  下游: (无)")
+
+    click.echo()
+
+
+def _render_tree(nodes, prefix="", direction="down"):
+    """递归渲染 ASCII 树"""
+    child_key = "downstream" if direction == "down" else "upstream"
+    for i, node in enumerate(nodes):
+        is_last = i == len(nodes) - 1
+        connector = "└── " if is_last else "├── "
+        click.echo(f"{prefix}{connector}{node['id']} — {node['title']}")
+        if node.get(child_key):
+            extension = "    " if is_last else "│   "
+            _render_tree(node[child_key], prefix=prefix + extension, direction=direction)
+
+
+@insight.command("who")
+@click.argument("insight_id")
+@click.option("--json", "as_json", is_flag=True, default=False, help="JSON 格式输出")
+def who_insight(insight_id, as_json):
+    """查看谁创建/使用/收藏了某条沉淀"""
+    import json as json_mod
+
+    mgr = _load_insight_manager()
+    ins = mgr.get(insight_id)
+    if not ins:
+        click.echo(f"未找到沉淀: {insight_id}", err=True)
+        sys.exit(1)
+
+    info = mgr.get_insight_developers(insight_id)
+
+    if as_json:
+        click.echo(json_mod.dumps(info, ensure_ascii=False, indent=2))
+        return
+
+    click.echo(f"\n{insight_id} — {ins.title}\n")
+    click.echo(f"  创建者:  {info['created_by'] or '(unknown)'}")
+    click.echo(f"  使用者:  {', '.join(info['used_by']) or '(无)'}")
+    click.echo(f"  收藏者:  {', '.join(info['bookmarked_by']) or '(无)'}")
+    click.echo(f"  贡献者:  {', '.join(info['contributed_by']) or '(无)'}")
+    click.echo()
+
+
+@insight.command("stats")
+@click.option("--json", "as_json", is_flag=True, default=False, help="JSON 格式输出")
+def stats_insights(as_json):
+    """跨开发者共享统计"""
+    import json as json_mod
+
+    mgr = _load_insight_manager()
+    stats = mgr.get_cross_developer_stats()
+
+    if as_json:
+        click.echo(json_mod.dumps(stats, ensure_ascii=False, indent=2))
+        return
+
+    summary = stats["summary"]
+    click.echo("\n=== Insight 共享统计 ===\n")
+    click.echo(f"  沉淀总数:    {summary['total_insights']}")
+    click.echo(f"  开发者总数:  {summary['total_developers']}")
+    click.echo(f"  总使用次数:  {summary['total_uses']}")
+    if summary["most_used"]:
+        click.echo(f"  最常使用:    {summary['most_used']}")
+    if summary["most_shared"]:
+        click.echo(f"  最多共享:    {summary['most_shared']}")
+
+    if stats["developers"]:
+        click.echo("\n--- 开发者 ---")
+        for dev, data in stats["developers"].items():
+            contributed = len(data["contributed"])
+            bookmarks = len(data["bookmarks"])
+            used = len(data["used"])
+            click.echo(f"  {dev}: 贡献 {contributed}, 收藏 {bookmarks}, 使用 {used}")
+
+    if stats["insights"]:
+        click.echo("\n--- 沉淀 ---")
+        for ins_id, data in stats["insights"].items():
+            click.echo(
+                f"  {ins_id}: "
+                f"贡献者 {data['contributors']}, "
+                f"使用者 {data['users']}, "
+                f"收藏 {data['bookmarks']}"
+            )
+
+    click.echo()

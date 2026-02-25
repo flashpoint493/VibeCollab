@@ -1,0 +1,22 @@
+kind: insight
+version: '1'
+id: INS-010
+title: 递归溯源树展开与 ASCII 可视化
+summary: 双向递归展开 derived_from 关系，visited 防环，ASCII 树形渲染
+tags:
+- traceability
+- derived-tree
+- visualization
+- recursion
+category: technique
+body:
+  scenario: Insight 间存在派生关系（derived_from），需要展示完整的上下游关系链
+  approach: get_full_trace() 使用两个递归函数分别向上（_trace_upstream）和向下（_trace_downstream）展开派生树，visited
+    集合防止循环。CLI trace 命令用 ├──/└── 渲染 ASCII 树
+  validation: TestFullTrace 5 个测试覆盖简单链、多级链、缺失父节点、不存在的 ID
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-25'
+  context: VibeCollab v0.7.0 溯源可视化设计
+fingerprint: 75d640b235a9c42aa1180ea7cdeab4d1ffa1a83a3e648549e0d1505bb90c11ef

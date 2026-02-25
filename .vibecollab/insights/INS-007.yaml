@@ -1,0 +1,25 @@
+kind: insight
+version: '1'
+id: INS-007
+title: git filter-branch 批量修复作者信息
+summary: filter-branch --env-filter 条件匹配 + 全量替换，修复历史 commit 作者信息
+tags:
+- git
+- filter-branch
+- author-fix
+- history-rewrite
+category: debug
+body:
+  scenario: 发现仓库历史中多条 commit 的作者名/邮箱拼写错误（如 ocarmihe、ocarine1024@gmail.com）
+  approach: 使用 git filter-branch -f --env-filter 匹配 GIT_AUTHOR_NAME/GIT_COMMITTER_NAME
+    条件替换，全量扫描所有 commit。修复后 git push --force 推送，git update-ref -d refs/original/ 清理备份
+  validation: git log --all --format | findstr 确认无异常作者
+  constraints:
+  - force push 前通知所有协作者
+  - tag 需要 --tag-name-filter cat 一并重写
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-25'
+  context: VibeCollab v0.6.1 Git 作者信息修复实战经验
+fingerprint: 45d77a7621fdecdcc8f72bd3c81b5f63582cd12849eda8471853659dbd3ee540
