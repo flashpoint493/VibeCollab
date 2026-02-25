@@ -1,6 +1,6 @@
 project:
   name: VibeCollab
-  version: v0.7.2
+  version: v0.8.0-dev
   domain: generic
   description: AI 协作开发框架，支持 Insight 沉淀、文档一致性检查、三模式 CLI
 philosophy:
