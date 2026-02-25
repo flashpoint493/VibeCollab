@@ -1,0 +1,250 @@
+# VibeCollab Insight Schema v1
+# 沉淀系统数据结构定义
+#
+# Insight = 从开发实践中提炼的可复用知识单元
+# 设计目标：
+#   - 沉淀本体与项目使用状态分离
+#   - 未来可作为独立包跨项目分发
+#   - 支持关联实际工具/脚本（artifacts）
+#   - 通过 Tag 体系驱动匹配和推荐
+
+# ============================================
+# 一、Insight 本体（知识单元，可移植）
+# ============================================
+insight:
+  type: object
+  required: [kind, version, id, title, tags, category, body, origin]
+  properties:
+    kind:
+      type: string
+      const: "insight"
+      description: 固定类型标识
+
+    version:
+      type: string
+      default: "1"
+      description: Schema 版本号，便于跨项目迁移时的兼容处理
+
+    id:
+      type: string
+      pattern: "^INS-\\d{3,}$"
+      description: 全局唯一 ID，格式 INS-001, INS-002, ...
+
+    # --- 描述 ---
+    title:
+      type: string
+      description: 简明标题
+
+    summary:
+      type: string
+      description: 一句话摘要
+
+    tags:
+      type: array
+      items:
+        type: string
+      minItems: 1
+      description: 标签列表，驱动匹配和推荐
+
+    category:
+      type: string
+      enum:
+        - technique      # 技术手法（如模板替换硬编码）
+        - workflow        # 工作流程（如 Plan→Execute→Solidify）
+        - decision        # 决策模式（如何做技术选型）
+        - debug           # 调试经验（如何排查某类问题）
+        - tool            # 工具用法（某工具的最佳实践）
+        - integration     # 集成模式（模块间如何协作）
+      description: 沉淀分类
+
+    # --- 知识体 ---
+    body:
+      type: object
+      required: [scenario, approach]
+      description: 知识主体，Jinja2 模板化，渲染时可注入上下文
+      properties:
+        scenario:
+          type: string
+          description: 适用场景描述
+        approach:
+          type: string
+          description: 方法/步骤（支持 Markdown 和多行文本）
+        validation:
+          type: string
+          description: 验证方法（如何确认此沉淀有效）
+        constraints:
+          type: array
+          items:
+            type: string
+          description: 使用约束/前提条件
+        notes:
+          type: string
+          description: 补充说明
+
+    # --- 工具/制品关联 ---
+    artifacts:
+      type: array
+      default: []
+      description: 关联的工具、脚本、配置等制品
+      items:
+        type: object
+        required: [path, type]
+        properties:
+          path:
+            type: string
+            description: 制品相对路径（相对于 insight 所在目录）
+          type:
+            type: string
+            enum:
+              - script       # 可执行脚本
+              - template     # Jinja2 模板
+              - config       # 配置文件
+              - schema       # Schema 定义
+              - reference    # 参考文档
+            description: 制品类型
+          runtime:
+            type: string
+            description: 执行环境（python3 / node / bash / ...）
+          description:
+            type: string
+
+    # --- 溯源 ---
+    origin:
+      type: object
+      required: [created_by, created_at]
+      description: 来源追踪
+      properties:
+        created_by:
+          type: string
+          description: 创造者（developer ID）
+        created_at:
+          type: string
+          format: date
+          description: 创建日期
+        source:
+          type: object
+          description: 沉淀的直接来源
+          properties:
+            type:
+              type: string
+              enum:
+                - task        # 从某个任务中提炼
+                - decision    # 从某个决策中提炼
+                - insight     # 从已有沉淀组合派生
+                - external    # 从外部引入
+            ref:
+              type: string
+              description: 来源 ID（如 TASK-DEV-001, DECISION-011, INS-003）
+        derived_from:
+          type: array
+          items:
+            type: string
+          default: []
+          description: 派生自哪些 insight ID（溯源链）
+
+    # --- 完整性 ---
+    fingerprint:
+      type: string
+      description: SHA-256 内容哈希，工具自动计算填充
+
+
+# ============================================
+# 二、项目注册表（项目级使用状态）
+# ============================================
+registry:
+  type: object
+  required: [schema_version, entries]
+  description: |
+    项目对沉淀库的使用状态。
+    与 insight 本体分离，同一 insight 在不同项目中有独立的注册状态。
+  properties:
+    schema_version:
+      type: string
+      default: "1"
+
+    entries:
+      type: object
+      additionalProperties:
+        type: object
+        required: [weight, active]
+        properties:
+          weight:
+            type: number
+            minimum: 0.0
+            default: 1.0
+            description: |
+              使用权重。
+              使用一次 +0.1（奖励），每个衰减周期 *decay_rate（衰减）。
+              weight < deactivate_threshold 时自动 active=false。
+          used_count:
+            type: integer
+            minimum: 0
+            default: 0
+            description: 被使用次数
+          last_used_at:
+            type: string
+            format: date-time
+            description: 最后一次使用时间
+          last_used_by:
+            type: string
+            description: 最后使用者（developer ID）
+          active:
+            type: boolean
+            default: true
+            description: 是否启用。weight 过低或手动关闭
+
+    # 注册表级配置
+    settings:
+      type: object
+      properties:
+        decay_rate:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.95
+          description: 每周期权重衰减系数
+        decay_interval_days:
+          type: integer
+          default: 30
+          description: 衰减周期（天）
+        use_reward:
+          type: number
+          default: 0.1
+          description: 每次使用的权重奖励
+        deactivate_threshold:
+          type: number
+          default: 0.1
+          description: 低于此权重自动停用
+
+
+# ============================================
+# 三、Developer Tag 扩展（.metadata.yaml 新增字段）
+# ============================================
+developer_tags:
+  type: object
+  description: |
+    Developer 的 Tag 体系扩展，追加到现有 .metadata.yaml 中。
+    Tag 是开放式的，不预定义枚举。
+    特定 Tag 可被流程引擎识别并影响决策行为。
+  properties:
+    tags:
+      type: array
+      items:
+        type: string
+      description: |
+        开发者标签列表。例：
+        - "arch"          → 擅长架构
+        - "python"        → 技术栈
+        - "test-first"    → 影响决策：先写测试
+        - "cautious"      → 影响决策：保守风格
+        - "no-breaking-change" → 影响决策：禁止破坏性变更
+    contributed:
+      type: array
+      items:
+        type: string
+      description: 该开发者创造的 insight ID 列表
+    bookmarks:
+      type: array
+      items:
+        type: string
+      description: 该开发者收藏/常用的 insight ID 列表

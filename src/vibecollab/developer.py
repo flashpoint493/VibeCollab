@@ -426,6 +426,116 @@ class DeveloperManager:
 
         return status
 
+    # ------------------------------------------------------------------
+    # Tag 体系扩展
+    # ------------------------------------------------------------------
+
+    def _read_metadata(self, developer: Optional[str] = None) -> Dict:
+        """读取 developer 的 metadata，返回 dict（不存在则返回空 dict）"""
+        if developer is None:
+            developer = self.get_current_developer()
+        metadata_file = self.get_developer_metadata_file(developer)
+        if not metadata_file.exists():
+            return {}
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            return yaml.safe_load(f) or {}
+
+    def _write_metadata(self, metadata: Dict, developer: Optional[str] = None) -> None:
+        """写入 developer 的 metadata"""
+        if developer is None:
+            developer = self.get_current_developer()
+        metadata_file = self.get_developer_metadata_file(developer)
+        metadata_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            yaml.dump(metadata, f, allow_unicode=True, sort_keys=False)
+
+    def get_tags(self, developer: Optional[str] = None) -> List[str]:
+        """获取开发者的标签列表"""
+        meta = self._read_metadata(developer)
+        return meta.get('tags', [])
+
+    def set_tags(self, tags: List[str], developer: Optional[str] = None) -> None:
+        """设置开发者的标签列表（完全覆盖）"""
+        meta = self._read_metadata(developer)
+        meta['tags'] = tags
+        self._write_metadata(meta, developer)
+
+    def add_tag(self, tag: str, developer: Optional[str] = None) -> bool:
+        """添加一个标签（不重复则添加，返回是否新增）"""
+        meta = self._read_metadata(developer)
+        tags = meta.get('tags', [])
+        if tag in tags:
+            return False
+        tags.append(tag)
+        meta['tags'] = tags
+        self._write_metadata(meta, developer)
+        return True
+
+    def remove_tag(self, tag: str, developer: Optional[str] = None) -> bool:
+        """移除一个标签（存在则移除，返回是否移除）"""
+        meta = self._read_metadata(developer)
+        tags = meta.get('tags', [])
+        if tag not in tags:
+            return False
+        tags.remove(tag)
+        meta['tags'] = tags
+        self._write_metadata(meta, developer)
+        return True
+
+    def get_contributed(self, developer: Optional[str] = None) -> List[str]:
+        """获取开发者贡献的 insight ID 列表"""
+        meta = self._read_metadata(developer)
+        return meta.get('contributed', [])
+
+    def add_contributed(self, insight_id: str, developer: Optional[str] = None) -> bool:
+        """记录开发者贡献了一个 insight（不重复则添加）"""
+        meta = self._read_metadata(developer)
+        contributed = meta.get('contributed', [])
+        if insight_id in contributed:
+            return False
+        contributed.append(insight_id)
+        meta['contributed'] = contributed
+        self._write_metadata(meta, developer)
+        return True
+
+    def remove_contributed(self, insight_id: str, developer: Optional[str] = None) -> bool:
+        """移除一条 contributed 记录"""
+        meta = self._read_metadata(developer)
+        contributed = meta.get('contributed', [])
+        if insight_id not in contributed:
+            return False
+        contributed.remove(insight_id)
+        meta['contributed'] = contributed
+        self._write_metadata(meta, developer)
+        return True
+
+    def get_bookmarks(self, developer: Optional[str] = None) -> List[str]:
+        """获取开发者收藏的 insight ID 列表"""
+        meta = self._read_metadata(developer)
+        return meta.get('bookmarks', [])
+
+    def add_bookmark(self, insight_id: str, developer: Optional[str] = None) -> bool:
+        """收藏一个 insight（不重复则添加）"""
+        meta = self._read_metadata(developer)
+        bookmarks = meta.get('bookmarks', [])
+        if insight_id in bookmarks:
+            return False
+        bookmarks.append(insight_id)
+        meta['bookmarks'] = bookmarks
+        self._write_metadata(meta, developer)
+        return True
+
+    def remove_bookmark(self, insight_id: str, developer: Optional[str] = None) -> bool:
+        """取消收藏一个 insight"""
+        meta = self._read_metadata(developer)
+        bookmarks = meta.get('bookmarks', [])
+        if insight_id not in bookmarks:
+            return False
+        bookmarks.remove(insight_id)
+        meta['bookmarks'] = bookmarks
+        self._write_metadata(meta, developer)
+        return True
+
 
 class ContextAggregator:
     """上下文聚合器，负责生成全局 CONTEXT.md"""

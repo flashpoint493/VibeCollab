@@ -170,16 +170,35 @@
 
 ---
 
+## REQ-010: Insight 沉淀系统
+
+**当前描述**:
+> 实现从开发实践中提炼可复用知识单元的沉淀系统（DECISION-012, S 级）：
+> 1. 两层分离架构：Insight 本体（可移植知识包）+ Registry 注册表（项目级使用状态）
+> 2. `InsightManager` 模块：CRUD、Registry（权重衰减/使用奖励）、搜索（Jaccard × 权重）、溯源、一致性校验
+> 3. Schema 定义：`schema/insight.schema.yaml`（本体 + Registry + Developer Tag 三部分）
+> 4. Developer metadata 扩展：tags/contributed/bookmarks 写入 .metadata.yaml
+> 5. CLI 命令组 `vibecollab insight`：list/show/add/search/use/decay/check/delete
+> 6. 一致性校验集成到 `vibecollab check --insights`
+> 7. SHA-256 内容指纹 + EventLog 审计集成
+
+**状态**: in_progress
+**优先级**: high
+**创建时间**: 2026-02-25
+**更新时间**: 2026-02-25
+
+---
+
 ## 需求统计
 
 | 状态 | 数量 |
 |------|------|
 | draft | 0 |
 | confirmed | 0 |
-| in_progress | 0 |
+| in_progress | 1 |
 | completed | 9 |
 | cancelled | 0 |
 
 ---
 
-*最后更新: 2026-02-24*
+*最后更新: 2026-02-25*
