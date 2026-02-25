@@ -18,11 +18,13 @@
 
 ### ocarina
 - **上次更新**: 2026-02-25
-- **当前任务**: REQ-011 AI Agent 接入引导与行动建议 — 已完成
+- **当前任务**: 自举全量实践 — 已完成
 - **最近完成**:
-  - vibecollab onboard + next 命令
-  - 文档一致性检查增强 (linked_groups 三级检查)
-  - Insight 沉淀系统核心 + 自举 + 自描述溯源协议
+  - 自举全量验证 (onboard/next/check/insight 全链路)
+  - protocol_checker 多开发者动态发现修复
+  - CONTRIBUTING_AI.md 命令文档补全 (onboard/next/insight/health)
+  - ROADMAP.md 同步
+  - Insight 全链路验证 (search → use → decay)
 
 ## 跨开发者协作
 (详见 docs/developers/COLLABORATION.md)
