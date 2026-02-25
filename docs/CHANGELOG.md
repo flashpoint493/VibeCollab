@@ -1,8 +1,14 @@
 # VibeCollab 变更日志
 
-## v0.7.0-dev (2026-02-25) - Insight 沉淀系统（开发中）
+## v0.7.0-dev (2026-02-25) - Insight 沉淀系统 + Agent 引导
 
 ### Architecture
+- **DECISION-012 (S 级)**: 砍掉 Web UI，转向 Insight 沉淀系统
+- **两层分离架构**: Insight 本体（可移植知识包）+ Registry 注册表（项目级使用状态）
+- **Tag 驱动 Developer 描述**: 开放式标签体系替代枚举字段
+- **自描述溯源协议**: origin.context + source.description/url/project, ref 降级为 hint
+- **关联文档一致性检查**: linked_groups 三级检查 (local_mtime / git_commit / release)
+- **Agent 引导系统**: onboard (接入引导) + next (行动建议)，从被动诊断进化为主动引导
 - **DECISION-012 (S 级)**: 砍掉 Web UI，转向 Insight 沉淀系统
 - **两层分离架构**: Insight 本体（可移植知识包）+ Registry 注册表（项目级使用状态）
 - **Tag 驱动 Developer 描述**: 开放式标签体系替代枚举字段
@@ -41,15 +47,24 @@
   - `get_full_trace()`: 递归展开上下游派生树
   - `get_insight_developers()`: 反查创建者/使用者/收藏者/贡献者
   - `get_cross_developer_stats()`: 汇总跨开发者贡献/使用/收藏统计
+- **Agent 引导命令** (`src/vibecollab/cli_guide.py`):
+  - `vibecollab onboard [-d <developer>] [--json]` — AI 接入引导（项目概况/进度/决策/待办/应读文件/开发者视角/关键文件清单）
+  - `vibecollab next [--json]` — 行动建议（关联文档同步P0/超时检查P1/commit建议P1/缺失文件P2/自检P3）
+- **文档一致性检查增强** (`src/vibecollab/protocol_checker.py`):
+  - `update_threshold_hours` 从 24h → 0.25h (15min)，可配置
+  - `_check_document_consistency()`: linked_groups 关联文档组检查
+  - `_check_mtime_consistency()`: 本地文件修改时间级别检查
+  - `_check_git_commit_consistency()`: git 提交同步检查
+  - `_check_release_consistency()`: 版本标签同步检查
+  - `key_files` 声明的文件存在性检查
 
 ### Testing
-- **新增 195 个单元测试** (全量 522 tests, 零回归):
+- **新增 266 个单元测试** (全量 566 tests, 零回归):
   - `tests/test_developer.py` (88 tests): developer.py 全覆盖（含 Tag 扩展）
-    - 初始化(5), 名称标准化(7), 身份识别(8), 身份来源(4), switch/clear(6), 路径(5), 列表/创建/初始化(11), 元数据(4), ContextAggregator(8), 迁移函数(5), 边界情况(5), Tag(8), Contributed(5), Bookmarks(5), MetadataReadWrite(3)
-  - `tests/test_insight_manager.py` (71 tests): insight_manager.py 全覆盖
-    - Artifact(3), Origin(4), Insight(7), RegistryEntry(3), CRUD(11), Registry(8), Search(6), DerivedTree(3), FullTrace(5), CrossDeveloper(4), Consistency(7), EventLog(4), EdgeCases(5)
+  - `tests/test_insight_manager.py` (74 tests): insight_manager.py 全覆盖
   - `tests/test_cli_insight.py` (45 tests): cli_insight.py 全覆盖
-    - List(4), Show(2), Add(2), Search(4), Use(2), Decay(2), Check(3), Delete(2), Bookmark(3), Unbookmark(2), Trace(4), Who(3), Stats(3)
+  - `tests/test_protocol_checker.py` (21 tests): protocol_checker.py 全覆盖（含一致性检查）
+  - `tests/test_cli_guide.py` (29 tests): cli_guide.py 全覆盖（onboard/next/helpers）
 
 ### Cleanup
 - `.gitignore` 添加 `Reference/` 排除外部参考仓库
