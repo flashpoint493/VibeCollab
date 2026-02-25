@@ -142,7 +142,7 @@
 ### ~~v0.7.0 - Web UI~~ ❌ 已砍掉 (DECISION-012)
 > 决策：Web UI 不是核心竞争力，不投入资源。资源转向经验系统。
 
-### v0.7.0 - Insight 沉淀系统（已完成）
+### v0.7.0 - Insight 沉淀系统（已完成 ✅）
 - [x] Insight Schema 设计（本体 + Registry + Developer Tag 三部分）✅
 - [x] InsightManager 核心模块（CRUD / Registry / 搜索 / 溯源 / 一致性校验）✅
 - [x] InsightManager 单元测试 (62 tests) ✅
@@ -156,7 +156,7 @@
 - [x] 技术债务清理（版本号统一 v0.7.0-dev、项目名 VibeCollab、REQ-010→completed）✅
 - [x] protocol_checker 多开发者动态发现（从文件系统扫描替代静态配置）✅
 
-### v0.7.1 - Task-Insight 自动关联（开发中）
+### v0.7.1 - Task-Insight 自动关联（已完成 ✅）
 - [x] TaskManager.create_task() 自动搜索关联 Insight ✅
 - [x] _extract_search_tags(): 从 feature/description/role 提取关键词 ✅
 - [x] _find_related_insights(): Jaccard × weight 匹配 + metadata 存储 ✅
@@ -165,6 +165,44 @@
 - [x] EventLog 记录关联 Insight ✅
 - [x] 向后兼容（无 InsightManager 时自动跳过）✅
 - [x] 28 个单元测试（含 CLI + 集成 + 向后兼容）✅
+
+### v0.8.0 - 稳定性验证 + 泛用性压力测试（规划中）
+> 目标：在正式 v1.0 之前，对高级特性进行广泛的真实场景测试和质量加固
+
+#### 测试覆盖率提升
+- [ ] 全量测试覆盖率 ≥ 80%（当前 ~68%）
+- [ ] Agent 模式 E2E 测试（agent plan/run/serve 全链路）
+- [ ] LLM Client mock 集成测试（OpenAI + Anthropic 双 provider）
+- [ ] CLI 命令全量 E2E 测试（所有子命令的 CliRunner 覆盖）
+
+#### Agent 模式稳定性
+- [ ] agent serve 长运行压力测试（100+ 周期、退避/断路器/内存阈值）
+- [ ] 并发安全验证（PID 锁、文件锁竞争）
+- [ ] agent run 失败恢复场景（测试回滚、网络超时、LLM 拒绝）
+- [ ] 自适应退避算法的边界条件测试
+
+#### Insight 系统泛用性
+- [ ] 大规模 Insight 压力测试（100+ 条沉淀的搜索/衰减性能）
+- [ ] 跨项目 Insight 可移植性验证（导出→导入→保持完整性）
+- [ ] Task-Insight 关联精度评估（中英文混合场景、长文本、边界输入）
+- [ ] 衰减/奖励长期运行模拟（多轮 decay 后的权重分布合理性）
+
+#### 人机交互质量
+- [ ] vibecollab ai ask/chat 在不同 terminal 环境下的 Unicode 兼容
+- [ ] Rich 面板在 Windows PowerShell/CMD/WSL 的渲染验证
+- [ ] onboard/next 在大型项目（多开发者、多文件）上的输出质量
+- [ ] 错误信息友好度审查（所有 CLI 命令的异常路径）
+
+#### 泛用性验证
+- [ ] 在 3+ 个真实外部项目上运行 `vibecollab init` + `generate` + `check`
+- [ ] 不同 Python 版本兼容性（3.8 / 3.9 / 3.10 / 3.11 / 3.12）
+- [ ] 不同 OS 兼容性（Windows / macOS / Linux）
+- [ ] 极简项目（空 project.yaml）和复杂项目（全量配置）的边界测试
+
+#### 文档与质量
+- [ ] QA_TEST_CASES.md 全量更新（覆盖 v0.7.x 新功能）
+- [ ] README.md 更新（安装/快速开始/功能列表同步）
+- [ ] 已知问题清零或标记延后
 
 ### v1.0.0 - 正式版（待规划）
 - [ ] 文档完善和中英文支持
@@ -214,4 +252,4 @@
 
 ---
 
-*最后更新: 2026-02-25 (v0.7.1-dev)*
+*最后更新: 2026-02-25 (v0.7.1)*

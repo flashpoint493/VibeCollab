@@ -1,6 +1,6 @@
 # VibeCollab 变更日志
 
-## v0.7.1-dev (2026-02-25) - Task-Insight 自动关联
+## v0.7.1 (2026-02-25) - Task-Insight 自动关联
 
 ### Architecture
 - **DECISION-014 (A 级)**: Task-Insight 单向自动关联 — Task 创建时自动搜索关联 Insight
@@ -29,7 +29,7 @@
 
 ---
 
-## v0.7.0-dev (2026-02-25) - Insight 沉淀系统 + Agent 引导
+## v0.7.0 (2026-02-25) - Insight 沉淀系统 + Agent 引导
 
 ### Architecture
 - **DECISION-012 (S 级)**: 砍掉 Web UI，转向 Insight 沉淀系统
