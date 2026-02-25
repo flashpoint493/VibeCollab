@@ -316,4 +316,30 @@
   - update_threshold_hours 从 24h → 15min
 
 ---
+
+### DECISION-014: Task-Insight 自动关联系统
+- **发起人**: user
+- **参与者**: user, AI
+- **等级**: A
+- **角色**: [ARCH]
+- **问题**: Insight 沉淀与 Task 系统之间仅有元数据标注的间接关联，如何建立直接的知识-任务链接？
+- **选项**:
+  - A: 保持间接关联（仅 origin.source_type="task" 元数据）
+  - B: Task 创建时自动搜索关联 Insight，存入 metadata（选择）
+  - C: 全双向绑定（Insight 反向引用 Task）
+- **决策**: B — 单向自动关联（Task → Insight）
+- **理由**:
+  - 零配置：InsightManager 可选注入，无 InsightManager 时自动退化
+  - 低侵入：仅在 create_task() 追加 metadata，不改变返回类型和现有 API
+  - 高价值：Agent 创建 Task 时自动获得知识上下文，减少重复劳动
+  - 从 feature/description 提取关键词 + Jaccard × weight 匹配，复用已有搜索逻辑
+- **日期**: 2026-02-25
+- **状态**: CONFIRMED
+- **影响**:
+  - `task_manager.py` 增强: insight_manager 参数 + _find_related_insights() + suggest_insights()
+  - 新增 `src/vibecollab/cli_task.py` (task create/list/show/suggest)
+  - 新增 `tests/test_task_insight_integration.py` (28 tests)
+  - 完全向后兼容
+
+---
 *决策记录格式见 CONTRIBUTING_AI.md*

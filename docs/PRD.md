@@ -207,6 +207,24 @@
 
 ---
 
+## REQ-012: Task-Insight 自动关联
+
+**当前描述**:
+> 创建 Task 时自动搜索关联的 Insight 沉淀，建立知识与任务的直接链接：
+> 1. TaskManager.create_task() 新增可选 insight_manager 参数
+> 2. 从 feature/description/role 提取关键词，调用 search_by_tags 匹配
+> 3. 匹配结果存入 task.metadata["related_insights"]，EventLog 同步记录
+> 4. 新增 suggest_insights() 方法供手动查询
+> 5. 新增 `vibecollab task create/list/show/suggest` CLI 命令
+> 6. 完全向后兼容（无 InsightManager 时自动跳过）
+
+**状态**: completed
+**优先级**: high
+**创建时间**: 2026-02-25
+**更新时间**: 2026-02-25
+
+---
+
 ## 需求统计
 
 | 状态 | 数量 |
@@ -214,7 +232,7 @@
 | draft | 0 |
 | confirmed | 0 |
 | in_progress | 0 |
-| completed | 11 |
+| completed | 12 |
 | cancelled | 0 |
 
 ---

@@ -1,5 +1,5 @@
 # VibeCollab AI 协作开发规则
-## LLM Collaboration Protocol v0.7.0-dev
+## LLM Collaboration Protocol v0.7.1-dev
 
 ---
 
@@ -968,6 +968,12 @@ vibecollab insight trace <id>            # 溯源树可视化
 vibecollab insight who <id>              # 跨开发者使用信息
 vibecollab insight stats                 # 跨开发者共享统计
 
+# Task 管理 + Insight 自动关联 (v0.7.1+)
+vibecollab task create --id TASK-DEV-001 --role DEV --feature "..."  # 创建任务(自动关联 Insight)
+vibecollab task list [--status TODO] [--assignee x]                  # 列出任务
+vibecollab task show <id>                # 查看任务详情(含关联 Insight)
+vibecollab task suggest <id> [-n 5]      # 为已有任务推荐 Insight
+
 # 协议自检 + 健康
 vibecollab check                         # 协议遵循检查
 vibecollab check --strict                # 严格模式
@@ -1402,5 +1408,5 @@ git log --follow -p <file>
 
 
 *本文档是活文档，记录人机协作的演进过程。*
-*生成时间: 2026-02-25 17:42:23*
+*生成时间: 2026-02-25 18:30:59*
 *最珍贵的不是结果，而是我们共同思考的旅程。*
