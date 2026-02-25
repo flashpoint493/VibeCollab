@@ -139,11 +139,18 @@
 
 ## 未来里程碑
 
-### v0.7.0 - Web UI （待规划）
-- [ ] Web 界面查看项目状态
-- [ ] 可视化冲突检测结果
-- [ ] 协作关系图谱
-- [ ] 实时多开发者状态监控
+### ~~v0.7.0 - Web UI~~ ❌ 已砍掉 (DECISION-012)
+> 决策：Web UI 不是核心竞争力，不投入资源。资源转向经验系统。
+
+### v0.7.0 - Insight 沉淀系统（开发中）
+- [x] Insight Schema 设计（本体 + Registry + Developer Tag 三部分）✅
+- [x] InsightManager 核心模块（CRUD / Registry / 搜索 / 溯源 / 一致性校验）✅
+- [x] InsightManager 单元测试 (62 tests) ✅
+- [x] developer.py 单元测试补齐 (67 tests) ✅
+- [x] Developer metadata 扩展（tags / contributed / bookmarks + 21 tests）✅
+- [x] CLI 命令封装（`vibecollab insight list/show/add/search/use/decay/check/delete` + 21 tests）✅
+- [ ] 跨 Developer 共享 + 溯源 CLI 可视化
+- [x] 一致性校验集成到 `vibecollab check --insights` ✅
 
 ### v1.0.0 - 正式版（待规划）
 - [ ] 文档完善和中英文支持
@@ -193,4 +200,4 @@
 
 ---
 
-*最后更新: 2026-02-24 (v0.5.9)*
+*最后更新: 2026-02-25 (v0.7.0-dev)*
