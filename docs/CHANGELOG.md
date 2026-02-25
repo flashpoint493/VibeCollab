@@ -1,5 +1,18 @@
 # VibeCollab 变更日志
 
+## v0.7.2 (2026-02-25) - README 全面更新
+
+### Documentation
+- **README.md 全面重写**: 特性说明从 v0.5.x 更新到 v0.7.1
+  - 特性列表重组为 5 大分类（知识沉淀/协作引擎/项目管理/多开发者/基础设施）
+  - 工作流程图新增 Task-Insight 自动关联 + Insight 沉淀 + Agent 引导节点
+  - CLI 命令新增 insight (13 子命令) / task (4 子命令) / onboard / next
+  - 项目结构新增 insight_manager / cli_insight / cli_task / cli_guide / insight.schema
+  - 版本历史更新至 v0.7.1
+- PyPI 项目描述同步更新（README.md 作为 long_description）
+
+---
+
 ## v0.7.1 (2026-02-25) - Task-Insight 自动关联
 
 ### Architecture
