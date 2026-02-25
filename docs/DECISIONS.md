@@ -291,5 +291,29 @@
   - 跨 Developer 共享 + 溯源 CLI 可视化（bookmark/unbookmark/trace/who/stats）✅
   - InsightManager 扩展: get_full_trace / get_insight_developers / get_cross_developer_stats ✅
 
+### DECISION-013: AI Agent 接入引导与行动建议系统
+- **发起人**: user
+- **参与者**: user, AI
+- **等级**: A
+- **角色**: [ARCH]
+- **问题**: AI Agent 接入项目后如何确保理解项目全貌？修改文件后如何知道下一步做什么？
+- **选项**:
+  - A: 仅依赖 CONTRIBUTING_AI.md 文档（现状，被动）
+  - B: 新增 onboard + next 命令实现主动引导（选择）
+- **决策**: 新增 `vibecollab onboard` 和 `vibecollab next` 两个核心命令
+- **理由**:
+  - **onboard**: 解决"AI 不知道从哪开始"问题，提供项目概况/进度/决策/待办/应读文件
+  - **next**: 解决"改了文件不知道下一步"问题，基于 git diff + mtime + linked_groups 生成行动建议
+  - 从被动诊断（check 告诉你哪里错了）进化为主动引导（onboard/next 告诉你该做什么）
+  - 同时增强文档一致性检查：linked_groups 三级检查（local_mtime/git_commit/release）
+- **日期**: 2026-02-25
+- **状态**: CONFIRMED
+- **影响**:
+  - 新增 `src/vibecollab/cli_guide.py` (~570 行)
+  - 新增 `tests/test_cli_guide.py` (29 tests)
+  - `protocol_checker.py` 增强: _check_document_consistency() + 三级检查方法
+  - `project.yaml` 新增 `documentation.consistency` 配置块
+  - update_threshold_hours 从 24h → 15min
+
 ---
 *决策记录格式见 CONTRIBUTING_AI.md*
