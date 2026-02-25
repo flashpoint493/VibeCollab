@@ -811,6 +811,12 @@ from .cli_insight import insight as insight_group  # noqa: E402
 
 main.add_command(insight_group)
 
+# 导入 AI 引导命令 (onboard + next)
+from .cli_guide import next_step, onboard  # noqa: E402
+
+main.add_command(onboard)
+main.add_command(next_step, name="next")
+
 
 # ============================================
 # 多开发者管理命令组 (v0.5.0+)
