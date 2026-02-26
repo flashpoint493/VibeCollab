@@ -49,6 +49,11 @@
   - `test_llm_client.py` (+26 tests): 配置文件三层解析 (文件回退/env 覆盖/显式覆盖/异常降级)、OpenAI+Anthropic 双 provider 深度 (URL 拼接/header 验证/未知 provider 降级/空 choices/多 system 消息/多内容块)、build_project_context 边界 (tasks 损坏/events 损坏/空文件/全 DONE)、ask() 路径 (双参数/temperature/默认构造)
   - 发现并修复 OpenAI 空 choices IndexError bug
   - 全量 868/868 passed (连续两次稳定)
+- **Agent 稳定性压力测试**: 13 个新测试覆盖长运行/并发/回滚/退避
+  - `test_agent_executor.py` (+13 tests): 100 周期连续 apply、交替成功/失败周期、多实例文件操作隔离、PID 锁获取/释放/陈旧接管/活跃拒绝、自适应退避不超 max/成功重置、回滚恢复/移除新文件/多文件回滚/无效输出/受保护文件
+- **Insight 系统泛用性测试**: 20 个新测试覆盖大规模/衰减/关联/循环保护
+  - `test_insight_manager.py` (+20 tests): 100 条 Insight 创建/搜索/列出/衰减、多 tags 搜索、10 层溯源链、50 轮衰减收敛、衰减+奖励稳态、大量 record_use 增长、权重精度验证、停用→激活→再衰减、阈值边界、中文标签、大小写不敏感、部分重叠、空标签、循环引用保护
+  - 全量 899/899 passed
 - **CLI E2E 测试全量覆盖**: 48 个 CLI 命令中 12 个缺失测试已全部补齐
   - `tests/test_cli_dev.py` (17 tests): dev 命令组 7 个子命令（whoami/list/status/sync/init/switch/conflicts）
   - `tests/test_cli.py` (+10 tests): 顶层命令（templates/export-template/version-info/check/health）
