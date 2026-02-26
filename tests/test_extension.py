@@ -1,257 +1,297 @@
-"""
-扩展机制单元测试
-"""
+"""Tests for ExtensionProcessor."""
 
-import tempfile
+import yaml
+import pytest
 from pathlib import Path
 
-from vibecollab.extension import Context, Extension, ExtensionProcessor, Hook
+from vibecollab.extension import (
+    Context,
+    Hook,
+    Extension,
+    ExtensionProcessor,
+    load_extension_from_file,
+)
 
 
-class TestExtensionProcessor:
-    """测试扩展处理器"""
+@pytest.fixture
+def processor(tmp_path):
+    return ExtensionProcessor(project_root=tmp_path)
 
-    def test_load_extension(self):
-        """测试加载扩展"""
-        processor = ExtensionProcessor()
 
+@pytest.fixture
+def sample_ext_data():
+    return {
+        "hooks": [
+            {"trigger": "dialogue.start", "action": "inject_context",
+             "context_id": "ctx1", "priority": 10},
+            {"trigger": "dialogue.end", "action": "update_file",
+             "condition": "files.exists('README.md')", "priority": 5},
+        ],
+        "contexts": {
+            "ctx1": {
+                "type": "template",
+                "content": "Hello {name}!",
+                "description": "Greeting",
+            },
+            "ctx2": {
+                "type": "reference",
+                "source": "docs/guide.md",
+                "section": "Setup",
+                "inline_if_short": True,
+            },
+            "ctx3": {
+                "type": "file_list",
+                "pattern": "*.py",
+                "description": "Python files",
+            },
+            "ctx4": {
+                "type": "computed",
+                "from": "project.features",
+            },
+        },
+        "additional_files": [{"path": "extra.md"}],
+        "config": {"version": "1.0"},
+    }
+
+
+class TestLoadExtension:
+    def test_load_hooks(self, processor, sample_ext_data):
+        ext = processor.load_extension(sample_ext_data, "python")
+        assert len(ext.hooks) == 2
+        assert ext.hooks[0].trigger == "dialogue.start"
+        assert ext.hooks[0].priority == 10
+
+    def test_load_contexts(self, processor, sample_ext_data):
+        ext = processor.load_extension(sample_ext_data, "python")
+        assert "ctx1" in ext.contexts
+        assert ext.contexts["ctx1"].type == "template"
+        assert ext.contexts["ctx2"].type == "reference"
+
+    def test_load_additional_files(self, processor, sample_ext_data):
+        ext = processor.load_extension(sample_ext_data, "python")
+        assert len(ext.additional_files) == 1
+
+    def test_load_config(self, processor, sample_ext_data):
+        ext = processor.load_extension(sample_ext_data, "python")
+        assert ext.config["version"] == "1.0"
+
+
+class TestLoadFromConfig:
+    def test_loads_domain_extensions(self, processor, sample_ext_data):
+        config = {"domain_extensions": {"python": sample_ext_data}}
+        processor.load_from_config(config)
+        assert "python" in processor.extensions
+
+    def test_empty_domain(self, processor):
+        config = {"domain_extensions": {"empty": None}}
+        processor.load_from_config(config)
+        assert "empty" not in processor.extensions
+
+    def test_roles_override(self, processor, sample_ext_data):
+        config = {
+            "domain_extensions": {"python": sample_ext_data},
+            "roles_override": [{"role": "dev"}],
+        }
+        processor.load_from_config(config)
+        assert processor.extensions["python"].roles_override == [{"role": "dev"}]
+
+
+class TestGetHooksForTrigger:
+    def test_returns_matching_hooks(self, processor, sample_ext_data):
+        processor.load_extension(sample_ext_data, "python")
+        hooks = processor.get_hooks_for_trigger("dialogue.start")
+        assert len(hooks) == 1
+        assert hooks[0].context_id == "ctx1"
+
+    def test_no_matching_hooks(self, processor, sample_ext_data):
+        processor.load_extension(sample_ext_data, "python")
+        hooks = processor.get_hooks_for_trigger("build.pre")
+        assert hooks == []
+
+    def test_sorted_by_priority(self, processor):
         ext_data = {
             "hooks": [
-                {
-                    "trigger": "qa.list_test_cases",
-                    "action": "inject_context",
-                    "context_id": "gm_commands",
-                    "condition": "files.exists('docs/GM.md')",
-                }
+                {"trigger": "dialogue.start", "action": "inject_context", "priority": 1},
+                {"trigger": "dialogue.start", "action": "inject_context", "priority": 10},
+                {"trigger": "dialogue.start", "action": "inject_context", "priority": 5},
             ],
-            "contexts": {
-                "gm_commands": {
-                    "type": "reference",
-                    "source": "docs/GM.md",
-                    "description": "GM 命令",
-                }
-            },
-            "config": {
-                "gm_trigger_key": "/",
-            }
+            "contexts": {},
         }
+        processor.load_extension(ext_data, "test")
+        hooks = processor.get_hooks_for_trigger("dialogue.start")
+        assert [h.priority for h in hooks] == [10, 5, 1]
 
-        ext = processor.load_extension(ext_data, "game")
 
-        assert ext.domain == "game"
-        assert len(ext.hooks) == 1
-        assert ext.hooks[0].trigger == "qa.list_test_cases"
-        assert "gm_commands" in ext.contexts
-        assert ext.config["gm_trigger_key"] == "/"
+class TestEvaluateCondition:
+    def test_no_condition(self, processor):
+        assert processor.evaluate_condition(None, {}) is True
 
-    def test_get_hooks_for_trigger(self):
-        """测试获取触发点钩子"""
-        processor = ExtensionProcessor()
+    def test_files_exists_true(self, processor, tmp_path):
+        (tmp_path / "README.md").touch()
+        assert processor.evaluate_condition("files.exists('README.md')", {}) is True
 
-        # 添加多个扩展
-        processor.load_extension({
-            "hooks": [
-                {"trigger": "qa.list_test_cases", "action": "inject_context", "priority": 1},
-                {"trigger": "build.pre", "action": "append_checklist"},
-            ]
-        }, "game")
+    def test_files_exists_false(self, processor):
+        assert processor.evaluate_condition("files.exists('nope.md')", {}) is False
 
-        processor.load_extension({
-            "hooks": [
-                {"trigger": "qa.list_test_cases", "action": "inject_context", "priority": 10},
-            ]
-        }, "web")
+    def test_project_has_feature_true(self, processor):
+        processor._project_config = {"project": {"features": ["auth", "api"]}}
+        assert processor.evaluate_condition("project.has_feature('auth')", {}) is True
 
-        hooks = processor.get_hooks_for_trigger("qa.list_test_cases")
+    def test_project_has_feature_false(self, processor):
+        processor._project_config = {"project": {"features": ["api"]}}
+        assert processor.evaluate_condition("project.has_feature('auth')", {}) is False
 
-        assert len(hooks) == 2
-        # 应按优先级降序排列
-        assert hooks[0].priority == 10
-        assert hooks[1].priority == 1
+    def test_project_domain_match(self, processor):
+        processor._project_config = {"project": {"domain": "web"}}
+        assert processor.evaluate_condition("project.domain == 'web'", {}) is True
 
-    def test_evaluate_condition_files_exists(self):
-        """测试文件存在条件"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            processor = ExtensionProcessor(Path(tmpdir))
+    def test_project_domain_no_match(self, processor):
+        processor._project_config = {"project": {"domain": "mobile"}}
+        assert processor.evaluate_condition("project.domain == 'web'", {}) is False
 
-            # 文件不存在
-            assert not processor.evaluate_condition(
-                "files.exists('docs/GM.md')", {}
-            )
+    def test_topic_relates_to(self, processor):
+        assert processor.evaluate_condition(
+            "topic.relates_to('database')", {"topic": "Database migration"}
+        ) is True
 
-            # 创建文件
-            docs_dir = Path(tmpdir) / "docs"
-            docs_dir.mkdir()
-            (docs_dir / "GM.md").write_text("# GM")
+    def test_topic_relates_to_no_match(self, processor):
+        assert processor.evaluate_condition(
+            "topic.relates_to('database')", {"topic": "UI design"}
+        ) is False
 
-            # 文件存在
-            assert processor.evaluate_condition(
-                "files.exists('docs/GM.md')", {}
-            )
+    def test_unknown_condition(self, processor):
+        assert processor.evaluate_condition("unknown.thing()", {}) is True
 
-    def test_evaluate_condition_project_domain(self):
-        """测试项目域条件"""
-        processor = ExtensionProcessor()
-        processor._project_config = {"project": {"domain": "game"}}
 
-        assert processor.evaluate_condition("project.domain == 'game'", {})
-        assert not processor.evaluate_condition("project.domain == 'web'", {})
+class TestResolveContext:
+    def test_resolve_template(self, processor):
+        ctx = Context(id="t", type="template", content="Hi {name}!")
+        result = processor.resolve_context(ctx, {"name": "World"})
+        assert result == "Hi World!"
 
-    def test_evaluate_condition_has_feature(self):
-        """测试功能特性条件"""
-        processor = ExtensionProcessor()
-        processor._project_config = {
-            "project": {"features": ["gm_console", "debug_mode"]}
-        }
+    def test_resolve_template_empty(self, processor):
+        ctx = Context(id="t", type="template", content=None)
+        assert processor.resolve_context(ctx, {}) == ""
 
-        assert processor.evaluate_condition("project.has_feature('gm_console')", {})
-        assert not processor.evaluate_condition("project.has_feature('multiplayer')", {})
+    def test_resolve_reference_file_exists(self, processor, tmp_path):
+        (tmp_path / "doc.md").write_text("short content", encoding="utf-8")
+        ctx = Context(id="r", type="reference", source="doc.md")
+        result = processor.resolve_context(ctx, {})
+        assert "short content" in result
 
-    def test_resolve_template_context(self):
-        """测试模板上下文解析"""
-        processor = ExtensionProcessor()
+    def test_resolve_reference_file_missing(self, processor):
+        ctx = Context(id="r", type="reference", source="missing.md")
+        result = processor.resolve_context(ctx, {})
+        assert "不存在" in result
 
-        ctx = Context(
-            id="test",
-            type="template",
-            content="测试 {name}，按 {key} 打开",
+    def test_resolve_reference_no_source(self, processor):
+        ctx = Context(id="r", type="reference", source=None)
+        assert processor.resolve_context(ctx, {}) == ""
+
+    def test_resolve_reference_long_content(self, processor, tmp_path):
+        (tmp_path / "long.md").write_text("x" * 600, encoding="utf-8")
+        ctx = Context(id="r", type="reference", source="long.md", inline_if_short=True)
+        result = processor.resolve_context(ctx, {})
+        assert "见" in result  # should show reference link, not inline
+
+    def test_resolve_reference_with_section(self, processor, tmp_path):
+        content = "# Top\n## Setup\nsetup text\n## Other\nother text"
+        (tmp_path / "guide.md").write_text(content, encoding="utf-8")
+        ctx = Context(id="r", type="reference", source="guide.md", section="Setup")
+        result = processor.resolve_context(ctx, {})
+        assert "setup text" in result
+
+    def test_resolve_file_list(self, processor, tmp_path):
+        (tmp_path / "a.py").touch()
+        (tmp_path / "b.py").touch()
+        ctx = Context(id="f", type="file_list", pattern="*.py", description="Python files")
+        result = processor.resolve_context(ctx, {})
+        assert "Python files" in result
+        assert "a.py" in result
+
+    def test_resolve_file_list_no_matches(self, processor):
+        ctx = Context(id="f", type="file_list", pattern="*.xyz")
+        result = processor.resolve_context(ctx, {})
+        assert "未找到" in result
+
+    def test_resolve_file_list_no_pattern(self, processor):
+        ctx = Context(id="f", type="file_list", pattern=None)
+        assert processor.resolve_context(ctx, {}) == ""
+
+    def test_resolve_computed_list(self, processor):
+        processor._project_config = {"project": {"features": ["auth", "api"]}}
+        ctx = Context(id="c", type="computed", from_path="project.features")
+        result = processor.resolve_context(ctx, {})
+        assert "auth" in result
+        assert "api" in result
+
+    def test_resolve_computed_string(self, processor):
+        processor._project_config = {"project": {"name": "Test"}}
+        ctx = Context(id="c", type="computed", from_path="project.name")
+        result = processor.resolve_context(ctx, {})
+        assert result == "Test"
+
+    def test_resolve_computed_no_path(self, processor):
+        ctx = Context(id="c", type="computed", from_path=None)
+        assert processor.resolve_context(ctx, {}) == ""
+
+    def test_resolve_computed_missing_path(self, processor):
+        processor._project_config = {}
+        ctx = Context(id="c", type="computed", from_path="a.b.c")
+        assert processor.resolve_context(ctx, {}) == ""
+
+    def test_resolve_unknown_type(self, processor):
+        ctx = Context(id="u", type="unknown")
+        assert processor.resolve_context(ctx, {}) == ""
+
+
+class TestProcessTrigger:
+    def test_injects_context(self, processor, sample_ext_data, tmp_path):
+        processor.load_extension(sample_ext_data, "python")
+        results = processor.process_trigger(
+            "dialogue.start", variables={"name": "Alice"}
         )
+        assert len(results) == 1
+        assert results[0]["content"] == "Hello Alice!"
+        assert results[0]["source"] == "python"
 
-        result = processor.resolve_context(ctx, {"name": "GM", "key": "/"})
-
-        assert "测试 GM" in result
-        assert "按 / 打开" in result
-
-    def test_resolve_reference_context(self):
-        """测试引用上下文解析"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            processor = ExtensionProcessor(Path(tmpdir))
-
-            # 创建引用文件（短内容，应内联）
-            docs_dir = Path(tmpdir) / "docs"
-            docs_dir.mkdir()
-            (docs_dir / "SHORT.md").write_text("This is short content", encoding="utf-8")
-
-            ctx = Context(
-                id="short",
-                type="reference",
-                source="docs/SHORT.md",
-                inline_if_short=True,
-            )
-
-            result = processor.resolve_context(ctx, {})
-            assert "short content" in result
-
-    def test_resolve_file_list_context(self):
-        """测试文件列表上下文解析"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            processor = ExtensionProcessor(Path(tmpdir))
-
-            # 创建匹配文件
-            docs_dir = Path(tmpdir) / "docs"
-            docs_dir.mkdir()
-            (docs_dir / "GDD_Core.md").write_text("# Core")
-            (docs_dir / "GDD_UI.md").write_text("# UI")
-            (docs_dir / "README.md").write_text("# README")  # 不匹配
-
-            ctx = Context(
-                id="gdd",
-                type="file_list",
-                pattern="docs/GDD_*.md",
-                description="游戏设计文档",
-            )
-
-            result = processor.resolve_context(ctx, {})
-            assert "GDD_Core.md" in result
-            assert "GDD_UI.md" in result
-            assert "README.md" not in result
-
-    def test_process_trigger(self):
-        """测试触发点处理"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            processor = ExtensionProcessor(Path(tmpdir))
-
-            # 创建引用文件
-            docs_dir = Path(tmpdir) / "docs"
-            docs_dir.mkdir()
-            (docs_dir / "GM.md").write_text("# GM Commands")
-
-            processor.load_extension({
-                "hooks": [
-                    {
-                        "trigger": "qa.list_test_cases",
-                        "action": "inject_context",
-                        "context_id": "gm_commands",
-                        "condition": "files.exists('docs/GM.md')",
-                    }
-                ],
-                "contexts": {
-                    "gm_commands": {
-                        "type": "reference",
-                        "source": "docs/GM.md",
-                    }
-                }
-            }, "game")
-
-            results = processor.process_trigger("qa.list_test_cases")
-
-            assert len(results) == 1
-            assert results[0]["action"] == "inject_context"
-            assert "GM Commands" in results[0]["content"]
-
-    def test_process_trigger_condition_not_met(self):
-        """测试条件不满足时不触发"""
-        processor = ExtensionProcessor()
-
-        processor.load_extension({
-            "hooks": [
-                {
-                    "trigger": "qa.list_test_cases",
-                    "action": "inject_context",
-                    "context_id": "gm_commands",
-                    "condition": "files.exists('docs/NONEXISTENT.md')",
-                }
-            ],
-            "contexts": {
-                "gm_commands": {"type": "template", "content": "test"}
-            }
-        }, "game")
-
-        results = processor.process_trigger("qa.list_test_cases")
-
-        # 条件不满足，不应返回结果
+    def test_condition_prevents_execution(self, processor, sample_ext_data):
+        processor.load_extension(sample_ext_data, "python")
+        # dialogue.end has condition files.exists('README.md') — file doesn't exist
+        results = processor.process_trigger("dialogue.end")
         assert len(results) == 0
 
+    def test_no_hooks_returns_empty(self, processor, sample_ext_data):
+        processor.load_extension(sample_ext_data, "python")
+        results = processor.process_trigger("build.pre")
+        assert results == []
 
-class TestExtension:
-    """测试扩展数据类"""
 
-    def test_extension_dataclass(self):
-        """测试 Extension 数据类"""
-        ext = Extension(domain="game")
+class TestGenerateExtensionSection:
+    def test_generates_content(self, processor, sample_ext_data):
+        processor.load_extension(sample_ext_data, "python")
+        section = processor.generate_extension_section("python")
+        assert "PYTHON" in section
+        assert "dialogue.start" in section
+        assert "ctx1" in section
+        assert "Greeting" in section
 
-        assert ext.domain == "game"
-        assert ext.hooks == []
-        assert ext.contexts == {}
+    def test_unknown_domain_returns_empty(self, processor):
+        assert processor.generate_extension_section("unknown") == ""
 
-    def test_hook_dataclass(self):
-        """测试 Hook 数据类"""
-        hook = Hook(
-            trigger="qa.list_test_cases",
-            action="inject_context",
-            context_id="test",
-        )
 
-        assert hook.trigger == "qa.list_test_cases"
-        assert hook.priority == 0  # 默认值
+class TestLoadExtensionFromFile:
+    def test_load_yaml_file(self, tmp_path):
+        data = {
+            "domain_extensions": {
+                "web": {
+                    "hooks": [{"trigger": "dialogue.start", "action": "inject_context"}],
+                    "contexts": {"c1": {"type": "template", "content": "hi"}},
+                }
+            }
+        }
+        path = tmp_path / "ext.yaml"
+        path.write_text(yaml.dump(data), encoding="utf-8")
 
-    def test_context_dataclass(self):
-        """测试 Context 数据类"""
-        ctx = Context(
-            id="test",
-            type="reference",
-            source="docs/TEST.md",
-        )
-
-        assert ctx.id == "test"
-        assert ctx.inline_if_short  # 默认值
+        proc = load_extension_from_file(path, project_root=tmp_path)
+        assert "web" in proc.extensions
