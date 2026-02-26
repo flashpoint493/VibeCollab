@@ -4,7 +4,7 @@ Protocol Checker - 协议遵循情况检查器
 """
 
 import subprocess
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional

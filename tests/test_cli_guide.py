@@ -11,6 +11,7 @@ import yaml
 from click.testing import CliRunner
 
 from vibecollab.cli_guide import (
+    _check_insight_opportunity,
     _check_linked_groups_freshness,
     _extract_pending_from_roadmap,
     _get_read_files_list,
@@ -19,7 +20,6 @@ from vibecollab.cli_guide import (
     next_step,
     onboard,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -327,3 +327,87 @@ class TestSuggestCommitMessage:
 
     def test_mixed_unknown(self):
         assert _suggest_commit_message(["random_file"]) == "[VIBE]"
+
+
+# ---------------------------------------------------------------------------
+# _check_insight_opportunity Tests
+# ---------------------------------------------------------------------------
+
+class TestCheckInsightOpportunity:
+    """Tests for Insight 沉淀提示逻辑"""
+
+    def test_no_diff_files(self, tmp_path):
+        """无变更文件时不提示"""
+        assert _check_insight_opportunity(tmp_path, []) is None
+
+    def test_single_py_file(self, tmp_path):
+        """单个 .py 文件变更，已有 Insight，无特殊信号 → 不提示"""
+        insights_dir = tmp_path / ".vibecollab" / "insights"
+        insights_dir.mkdir(parents=True)
+        (insights_dir / "INS-001.yaml").write_text("id: INS-001")
+        assert _check_insight_opportunity(tmp_path, ["src/app.py"]) is None
+
+    def test_multi_type_with_tests(self, tmp_path):
+        """多类型 + 测试文件 → 提示"""
+        diff_files = ["src/app.py", "tests/test_app.py", "config.yaml"]
+        result = _check_insight_opportunity(tmp_path, diff_files)
+        assert result is not None
+        assert "多种文件类型" in result or "测试" in result
+
+    def test_test_changes_only(self, tmp_path):
+        """仅测试文件变更 → 提示 bug/模式"""
+        diff_files = ["tests/test_foo.py", "tests/test_bar.py"]
+        result = _check_insight_opportunity(tmp_path, diff_files)
+        assert result is not None
+        assert "测试" in result
+
+    def test_config_changes(self, tmp_path):
+        """配置文件变更 → 提示工具/工作流经验"""
+        diff_files = ["src/main.py", ".github/workflows/ci.yml"]
+        result = _check_insight_opportunity(tmp_path, diff_files)
+        assert result is not None
+        assert "配置" in result
+
+    def test_large_changeset(self, tmp_path):
+        """大量文件变更 → 提示回顾"""
+        insights_dir = tmp_path / ".vibecollab" / "insights"
+        insights_dir.mkdir(parents=True)
+        (insights_dir / "INS-001.yaml").write_text("id: INS-001")
+        diff_files = [f"src/module_{i}.py" for i in range(10)]
+        result = _check_insight_opportunity(tmp_path, diff_files)
+        assert result is not None
+        assert "10" in result
+
+    def test_no_insights_yet(self, tmp_path):
+        """项目尚无 Insight → 引导首次沉淀"""
+        diff_files = ["src/app.py", "src/utils.py"]
+        result = _check_insight_opportunity(tmp_path, diff_files)
+        assert result is not None
+        assert "尚无" in result
+
+    def test_with_existing_insights(self, tmp_path):
+        """已有 Insight + 无特殊信号 → 不提示"""
+        insights_dir = tmp_path / ".vibecollab" / "insights"
+        insights_dir.mkdir(parents=True)
+        (insights_dir / "INS-001.yaml").write_text("id: INS-001")
+        diff_files = ["src/app.py"]
+        result = _check_insight_opportunity(tmp_path, diff_files)
+        assert result is None
+
+    def test_yaml_config_extension(self, tmp_path):
+        """YAML 配置文件检测"""
+        diff_files = ["pyproject.toml", "src/app.py"]
+        result = _check_insight_opportunity(tmp_path, diff_files)
+        assert result is not None
+        assert "配置" in result
+
+    def test_combined_signals(self, tmp_path):
+        """多种信号组合"""
+        diff_files = [
+            "src/app.py", "tests/test_app.py", "config.yaml",
+            "docs/README.md", "pyproject.toml",
+        ]
+        result = _check_insight_opportunity(tmp_path, diff_files)
+        assert result is not None
+        # 应该包含多个原因（用 ；分隔）
+        assert "；" in result or len(result) > 20

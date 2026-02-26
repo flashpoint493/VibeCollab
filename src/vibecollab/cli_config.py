@@ -8,7 +8,6 @@ CLI Config 命令 — LLM 配置管理
 - vibecollab config path     — 显示配置文件路径
 """
 
-import sys
 
 import click
 from rich.console import Console
@@ -16,7 +15,6 @@ from rich.panel import Panel
 from rich.table import Table
 
 from ._compat import EMOJI
-
 
 # 短别名（兼容此模块原有 _E 变量名）
 _E = EMOJI
@@ -60,7 +58,7 @@ def config_setup():
 
         vibecollab config setup
     """
-    from .config_manager import get_config_path, load_config, save_config
+    from .config_manager import load_config, save_config
 
     console.print()
     console.print(Panel.fit(
@@ -109,7 +107,7 @@ def config_setup():
     if not api_key:
         console.print(f"  [red]{_E['err']} API Key 不能为空[/red]")
         raise SystemExit(1)
-    console.print(f"  -> [cyan]{api_key[:8]}...{api_key[-4:]}[/cyan]" if len(api_key) > 12 else f"  -> [cyan]***[/cyan]")
+    console.print(f"  -> [cyan]{api_key[:8]}...{api_key[-4:]}[/cyan]" if len(api_key) > 12 else "  -> [cyan]***[/cyan]")
     console.print()
 
     # Step 3: Base URL (for OpenAI provider)

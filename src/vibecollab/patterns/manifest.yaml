@@ -110,6 +110,11 @@ sections:
     template: 25_git_history.md.j2
     description: "Git 提交历史参考"
 
+  - id: insight_workflow
+    template: 27_insight_workflow.md.j2
+    description: "经验沉淀工作流 (Insight 何时/如何创建)"
+    condition: "config.insight.enabled|true"
+
   - id: footer
     template: 26_footer.md.j2
     description: "文档尾部"
