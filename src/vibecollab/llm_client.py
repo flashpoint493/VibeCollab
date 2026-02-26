@@ -8,7 +8,7 @@ VibeCollab's existing offline functionality.
 Design principles:
 - Zero impact on existing offline features (pure additive module)
 - Provider-agnostic: any OpenAI-compatible endpoint or Anthropic API
-- Config via environment variables (no secrets in project files)
+- Three-layer config: env vars > ~/.vibecollab/config.yaml > defaults
 - Lazy dependency: httpx imported only when LLM is actually called
 - Context-aware: automatically builds project context for prompts
 """
@@ -43,9 +43,11 @@ DEFAULT_MAX_TOKENS = 4096
 
 @dataclass
 class LLMConfig:
-    """LLM configuration, resolved from environment variables.
+    """LLM configuration, resolved from multiple sources.
 
-    Priority: explicit init args > env vars > defaults.
+    Priority: explicit init args > env vars > config file > defaults.
+
+    Config file: ~/.vibecollab/config.yaml (created by `vibecollab config setup`)
     """
     provider: str = ""
     api_key: str = ""
@@ -54,14 +56,35 @@ class LLMConfig:
     max_tokens: int = 0
 
     def __post_init__(self):
-        self.provider = self.provider or os.getenv(ENV_PROVIDER, DEFAULT_PROVIDER)
-        self.api_key = self.api_key or os.getenv(ENV_API_KEY, "")
-        self.base_url = self.base_url or os.getenv(ENV_BASE_URL, "")
-        self.max_tokens = self.max_tokens or int(
-            os.getenv(ENV_MAX_TOKENS, str(DEFAULT_MAX_TOKENS)))
+        # Load config file values as fallback (lowest priority layer)
+        file_cfg = {}
+        try:
+            from .config_manager import resolve_llm_config
+            file_cfg = resolve_llm_config()
+        except Exception:
+            pass
+
+        self.provider = (self.provider
+                         or os.getenv(ENV_PROVIDER)
+                         or file_cfg.get("provider")
+                         or DEFAULT_PROVIDER)
+        self.api_key = (self.api_key
+                        or os.getenv(ENV_API_KEY)
+                        or file_cfg.get("api_key")
+                        or "")
+        self.base_url = (self.base_url
+                         or os.getenv(ENV_BASE_URL)
+                         or file_cfg.get("base_url")
+                         or "")
+        self.max_tokens = (self.max_tokens
+                           or int(os.getenv(ENV_MAX_TOKENS, "0"))
+                           or int(file_cfg.get("max_tokens", "0") or "0")
+                           or DEFAULT_MAX_TOKENS)
 
         if not self.model:
-            self.model = os.getenv(ENV_MODEL, "")
+            self.model = (os.getenv(ENV_MODEL)
+                          or file_cfg.get("model")
+                          or "")
             if not self.model:
                 self.model = (DEFAULT_MODEL_ANTHROPIC
                               if self.provider == PROVIDER_ANTHROPIC

@@ -1,5 +1,37 @@
 # VibeCollab 变更日志
 
+## v0.8.0-dev (开发中) - Config 配置管理系统
+
+### Architecture
+- **三层配置架构**: `环境变量 > ~/.vibecollab/config.yaml > 内置默认值`
+- 配置文件存放在用户 home 目录（`~/.vibecollab/config.yaml`），不进 git
+- 轻量 .env 解析：自实现 `parse_dotenv()`，仅提取 `VIBECOLLAB_*` 前缀变量
+
+### New Feature
+- **`vibecollab config setup`**: 交互式 LLM 配置向导
+  - Provider 选择（OpenAI / Anthropic）
+  - API Key 安全输入（隐藏输入）
+  - Base URL 预设（OpenAI 官方 / OpenRouter / DeepSeek / 阿里云百炼 / 自定义）
+  - 可选模型名设置
+- **`vibecollab config show`**: 查看当前配置（三层合并结果 + 来源标识）
+- **`vibecollab config set <key> <value>`**: 单项配置设置
+- **`vibecollab config path`**: 显示配置文件路径
+- **`resolve_llm_config()`**: 统一三层配置解析函数
+- **`LLMConfig.__post_init__`**: 改为三层优先级（显式参数 > 环境变量 > 配置文件 > 默认值）
+- **改进错误提示**: `_ensure_llm_configured()` 提供三种配置方式指引
+
+### Testing
+- **新增 38 个单元测试** (`tests/test_config_manager.py`):
+  - `TestConfigPaths` (2): 路径正确性
+  - `TestLoadSaveConfig` (5): 文件操作
+  - `TestGetSetConfigValue` (5): 嵌套读写
+  - `TestParseDotenv` (8): .env 解析
+  - `TestResolveLLMConfig` (7): 三层合并
+  - `TestLLMConfigWithFile` (4): LLMConfig 集成
+  - `TestCLIConfig` (7): CLI 命令端到端
+
+---
+
 ## v0.7.2 (2026-02-25) - README 全面更新
 
 ### Documentation
