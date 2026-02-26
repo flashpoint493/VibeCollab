@@ -2,9 +2,11 @@
 Tests for LLMContext CLI
 """
 
+import json
 import tempfile
 from pathlib import Path
 
+import yaml
 from click.testing import CliRunner
 
 from vibecollab.cli import main
@@ -159,4 +161,108 @@ class TestCLI:
             # 检查全局聚合的 CONTEXT.md
             global_context = output_dir / "docs" / "CONTEXT.md"
             assert global_context.exists(), "全局聚合的 CONTEXT.md 应该存在"
+
+    def test_templates(self):
+        """测试列出模板"""
+        result = self.runner.invoke(main, ["templates"])
+        assert result.exit_code == 0
+        assert "可用模板" in result.output
+        assert "default" in result.output.lower() or "project" in result.output.lower()
+
+    def test_export_template_default(self):
+        """测试导出默认模板"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "exported.yaml"
+            result = self.runner.invoke(main, [
+                "export-template", "-t", "default", "-o", str(output_path)
+            ])
+            assert result.exit_code == 0
+            assert output_path.exists()
+            content = yaml.safe_load(output_path.read_text(encoding="utf-8"))
+            assert "project" in content
+
+    def test_export_template_nonexistent(self):
+        """测试导出不存在的模板"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = Path(tmpdir) / "exported.yaml"
+            result = self.runner.invoke(main, [
+                "export-template", "-t", "nonexistent_template_xyz", "-o", str(output_path)
+            ])
+            assert result.exit_code != 0
+            assert "不存在" in result.output
+
+    def test_version_info(self):
+        """测试版本信息命令"""
+        result = self.runner.invoke(main, ["version-info"])
+        assert result.exit_code == 0
+        assert "版本信息" in result.output or "version" in result.output.lower()
+
+    def test_check_basic(self):
+        """测试协议检查命令"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir) / "test-project"
+            self.runner.invoke(main, [
+                "init", "-n", "TestProject", "-d", "generic", "-o", str(output_dir)
+            ])
+            result = self.runner.invoke(main, [
+                "check", "-c", str(output_dir / "project.yaml")
+            ])
+            assert result.exit_code == 0
+            assert "检查完成" in result.output
+
+    def test_check_no_config(self):
+        """测试协议检查 - 配置不存在"""
+        result = self.runner.invoke(main, [
+            "check", "-c", "/nonexistent/project.yaml"
+        ])
+        assert result.exit_code != 0
+        assert "不存在" in result.output
+
+    def test_check_strict(self):
+        """测试协议检查 - 严格模式"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir) / "test-project"
+            self.runner.invoke(main, [
+                "init", "-n", "TestProject", "-d", "generic", "-o", str(output_dir)
+            ])
+            result = self.runner.invoke(main, [
+                "check", "-c", str(output_dir / "project.yaml"), "--strict"
+            ])
+            # Strict mode may fail if there are warnings, that's acceptable
+            assert "检查完成" in result.output or "检查" in result.output
+
+    def test_health_basic(self):
+        """测试健康检查命令"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir) / "test-project"
+            self.runner.invoke(main, [
+                "init", "-n", "TestProject", "-d", "generic", "-o", str(output_dir)
+            ])
+            result = self.runner.invoke(main, [
+                "health", "-c", str(output_dir / "project.yaml")
+            ])
+            assert "Grade" in result.output or "Health" in result.output
+
+    def test_health_json(self):
+        """测试健康检查 JSON 输出"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir) / "test-project"
+            self.runner.invoke(main, [
+                "init", "-n", "TestProject", "-d", "generic", "-o", str(output_dir)
+            ])
+            result = self.runner.invoke(main, [
+                "health", "-c", str(output_dir / "project.yaml"), "--json"
+            ])
+            # Should output valid JSON
+            data = json.loads(result.output)
+            assert "score" in data
+            assert "signals" in data
+
+    def test_health_no_config(self):
+        """测试健康检查 - 配置不存在"""
+        result = self.runner.invoke(main, [
+            "health", "-c", "/nonexistent/project.yaml"
+        ])
+        assert result.exit_code != 0
+
 

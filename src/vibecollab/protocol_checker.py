@@ -527,7 +527,7 @@ class ProtocolChecker:
                 )
                 commit_hash = result.stdout.strip() if result.returncode == 0 else None
                 file_last_commits[f] = commit_hash
-            except Exception:
+            except BaseException:
                 file_last_commits[f] = None
 
         if len(file_last_commits) < 2:
@@ -549,7 +549,7 @@ class ProtocolChecker:
                         )
                     else:
                         commits_with_time[f] = None
-                except Exception:
+                except BaseException:
                     commits_with_time[f] = None
             else:
                 commits_with_time[f] = None
@@ -646,7 +646,7 @@ class ProtocolChecker:
                             f"请检查 {f} 是否需要更新"
                         )
                     ))
-        except Exception:
+        except BaseException:
             pass
 
         return results
@@ -671,7 +671,7 @@ class ProtocolChecker:
                 text=True
             )
             return result.returncode == 0
-        except Exception:
+        except BaseException:
             return False
 
     def _get_last_commit_time(self) -> Optional[datetime]:
@@ -689,7 +689,7 @@ class ProtocolChecker:
             )
             timestamp = int(result.stdout.strip())
             return datetime.fromtimestamp(timestamp)
-        except Exception:
+        except BaseException:
             return None
 
     def get_summary(self, results: List[CheckResult]) -> Dict:

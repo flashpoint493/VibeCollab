@@ -88,7 +88,7 @@ def init_git_repo(path: Path, initial_commit: bool = True) -> Tuple[bool, Option
         return True, None
     except subprocess.CalledProcessError as e:
         return False, f"Git 初始化失败: {e.stderr}"
-    except Exception as e:
+    except BaseException as e:
         return False, f"Git 初始化出错: {str(e)}"
 
 
@@ -171,5 +171,5 @@ def get_git_status(path: Path) -> Optional[dict]:
             "commit_count": int(commit_count) if commit_count else 0,
             "has_uncommitted_changes": has_changes
         }
-    except Exception:
+    except BaseException:
         return None

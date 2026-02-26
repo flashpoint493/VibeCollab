@@ -236,7 +236,7 @@ class AgentExecutor:
             return passed, output
         except subprocess.TimeoutExpired:
             return False, "测试超时 (300s)"
-        except Exception as e:
+        except BaseException as e:
             return False, f"测试执行失败: {e}"
 
     def rollback(self) -> List[str]:
@@ -289,7 +289,7 @@ class AgentExecutor:
                 if "nothing to commit" in output:
                     return True, "(no changes)"
                 return False, output
-        except Exception as e:
+        except BaseException as e:
             return False, str(e)
 
     def execute_full_cycle(

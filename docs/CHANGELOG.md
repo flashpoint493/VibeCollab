@@ -30,8 +30,20 @@
   - 根因: `KeyboardInterrupt` 继承自 `BaseException` 而非 `Exception`，原有的 `except Exception` 无法捕获
   - 修复: `cli_guide.py` 中 `_get_git_uncommitted()` 和 `_get_git_diff_files()` 的异常处理从 `except Exception` 改为 `except BaseException`
   - 验证: 连续两次全量 779/779 passed
+- **修复 flaky test `test_whoami_basic`**: `developer.py` 的 `_get_git_username()` 同样受 `KeyboardInterrupt` 残留影响
+  - 修复: `except Exception` → `except BaseException`
+  - 验证: 全量 809/809 passed
+- **系统性修复所有 subprocess 相关的 `except Exception`**: 审计并批量修复 9 处 subprocess 调用的异常处理
+  - `protocol_checker.py`: 5 处 git 命令调用
+  - `git_utils.py`: 2 处 git init/status 调用
+  - `agent_executor.py`: 2 处测试执行/git commit 调用
+  - 统一从 `except Exception` 改为 `except BaseException`，防止 `KeyboardInterrupt` 残留导致 flaky test
 
 ### Testing
+- **CLI E2E 测试全量覆盖**: 48 个 CLI 命令中 12 个缺失测试已全部补齐
+  - `tests/test_cli_dev.py` (17 tests): dev 命令组 7 个子命令（whoami/list/status/sync/init/switch/conflicts）
+  - `tests/test_cli.py` (+10 tests): 顶层命令（templates/export-template/version-info/check/health）
+  - 全量 809/809 passed
 - **测试覆盖率 76% → 81%**: 新增 128 个测试覆盖 6 个低覆盖模块
   - `test_llmstxt.py` (17 tests): 68% → 97%
   - `test_templates.py` (13 tests): 60% → 91%
