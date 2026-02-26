@@ -9,8 +9,9 @@
 - **v0.8.0 稳定性验证 + 泛用性压力测试**: 进行中
 
 ## 最近完成
-- ✅ **CLI E2E 测试全量覆盖**: 48/48 命令 CliRunner 覆盖 (27 新测试: test_cli_dev 17 + test_cli +10)
-- ✅ **系统性 subprocess 异常处理修复**: 12 处 `except Exception` → `except BaseException` (cli_guide 2 + developer 1 + protocol_checker 5 + git_utils 2 + agent_executor 2)
+- ✅ **Agent 模式 E2E 测试**: 35 新测试 (executor 21 + cli_ai 14), 844/844 passed
+- ✅ **CLI E2E 测试全量覆盖**: 48/48 命令 CliRunner 覆盖 (27 新测试)
+- ✅ **系统性 subprocess 异常处理修复**: 12 处 `except Exception` → `except BaseException`
 - ✅ **Flaky test 修复**: test_onboard_basic + test_whoami_basic, 全量 809/809 passed
 - ✅ **key_files 陈旧性检查**: max_stale_days 功能 (schema + checker + config + 3 tests)
 - ✅ **测试覆盖率 76% → 81%**: 128 新测试 (llmstxt/templates/git_utils/lifecycle/extension/cli_lifecycle)

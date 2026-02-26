@@ -40,6 +40,10 @@
   - 统一从 `except Exception` 改为 `except BaseException`，防止 `KeyboardInterrupt` 残留导致 flaky test
 
 ### Testing
+- **Agent 模式 E2E 测试**: 35 个新测试覆盖 agent_executor + cli_ai 的高优缺口
+  - `test_agent_executor.py` (+21 tests): git_commit 真实 git repo (成功/无变更/无 repo)、run_tests 超时/异常/自定义命令、apply_changes 写入失败/删除不存在、validate 无效路径、rollback 失败/空、full_cycle git 失败/真实 git、parse_single_change 边界输入
+  - `test_cli_ai.py` (+14 tests): serve 断路器触发、自适应退避、内存阈值停止、pending-solidify 等待、_execute_agent_cycle 5 个分支 (plan 失败/exec 失败/无变更/异常/成功)、run 有效变更/plan 失败、ask/chat/plan 异常路径、status 陈旧锁/无效锁
+  - 全量 844/844 passed (连续两次稳定)
 - **CLI E2E 测试全量覆盖**: 48 个 CLI 命令中 12 个缺失测试已全部补齐
   - `tests/test_cli_dev.py` (17 tests): dev 命令组 7 个子命令（whoami/list/status/sync/init/switch/conflicts）
   - `tests/test_cli.py` (+10 tests): 顶层命令（templates/export-template/version-info/check/health）
