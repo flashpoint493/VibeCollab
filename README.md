@@ -638,6 +638,9 @@ VibeCollab/
 │   ├── cli_task.py              # Task 管理 CLI (create/list/show/suggest)
 │   ├── cli_guide.py             # Agent 引导 CLI (onboard/next)
 │   ├── cli_lifecycle.py         # 项目生涯管理命令
+│   ├── cli_config.py            # Config 配置管理 CLI
+│   ├── _compat.py               # Windows GBK 编码兼容层
+│   ├── config_manager.py        # 三层配置管理 (env > config file > defaults)
 │   ├── pattern_engine.py        # Jinja2 Pattern Engine (manifest 驱动)
 │   ├── generator.py             # 文档生成器 (粘合层)
 │   ├── extension.py             # 扩展处理器
@@ -672,7 +675,7 @@ VibeCollab/
 │   ├── DECISIONS.md
 │   ├── PRD.md
 │   └── ROADMAP.md
-└── tests/                       # 590+ tests
+└── tests/                       # 914 tests
 ```
 
 ---
@@ -705,6 +708,7 @@ vibecollab health
 
 | 版本 | 日期 | 主要特性 |
 |------|------|---------|
+| v0.8.0-dev | 开发中 | Config 配置管理 + 914 tests + Windows GBK 兼容层 + OpenAI bug 修复 |
 | v0.7.1 | 2026-02-25 | Task-Insight 自动关联 + Task CLI 命令组 + 28 tests |
 | v0.7.0 | 2026-02-25 | Insight 沉淀系统 + Agent 引导 (onboard/next) + 266 tests |
 | v0.6.0 | 2026-02-24 | 测试覆盖率 58%→68%，冲突检测 + PRD 管理全覆盖 |
@@ -727,4 +731,4 @@ MIT
 
 ---
 
-*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.7.1。*
+*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.8.0-dev。*
