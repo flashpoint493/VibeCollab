@@ -183,11 +183,15 @@ def _ensure_llm_configured() -> LLMClient:
     if not config.is_configured:
         console.print(
             f"[red]{EMOJI['err']} LLM 未配置。[/red]\n\n"
-            f"请设置环境变量:\n"
+            f"[bold]方式一 (推荐): 交互式配置向导[/bold]\n"
+            f"  vibecollab config setup\n\n"
+            f"[bold]方式二: 手动设置环境变量[/bold]\n"
             f"  export VIBECOLLAB_LLM_API_KEY=your-api-key\n"
             f"  export VIBECOLLAB_LLM_PROVIDER=openai  # 或 anthropic\n"
             f"  export VIBECOLLAB_LLM_BASE_URL=https://openrouter.ai/api/v1  # 可选\n\n"
-            f"或安装 LLM 依赖: pip install vibe-collab[llm]"
+            f"[bold]方式三: 配置文件[/bold]\n"
+            f"  vibecollab config set llm.api_key your-api-key\n"
+            f"  vibecollab config set llm.provider openai"
         )
         raise SystemExit(1)
     return LLMClient(config)
