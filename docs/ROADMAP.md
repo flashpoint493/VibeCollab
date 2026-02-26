@@ -178,7 +178,7 @@
 - [x] 38 个单元测试 ✅
 
 #### 测试覆盖率提升
-- [ ] 全量测试覆盖率 ≥ 80%（当前 ~68%）
+- [x] 全量测试覆盖率 ≥ 80%（81% ✅）
 - [ ] Agent 模式 E2E 测试（agent plan/run/serve 全链路）
 - [ ] LLM Client mock 集成测试（OpenAI + Anthropic 双 provider）
 - [ ] CLI 命令全量 E2E 测试（所有子命令的 CliRunner 覆盖）

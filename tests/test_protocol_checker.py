@@ -591,3 +591,79 @@ class TestDocumentConsistency:
             consistency_results = [r for r in results if "文档关联性" in r.name]
             assert len(consistency_results) == 0
 
+    def test_key_files_staleness_triggered(self):
+        """key_files 配置 max_stale_days 且文件过期，应告警"""
+        import os
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+            qa_file = project_root / "docs" / "QA.md"
+            qa_file.write_text("# QA\n", encoding="utf-8")
+            old_time = time.time() - 10 * 86400
+            os.utime(qa_file, (old_time, old_time))
+
+            config = {
+                "documentation": {
+                    "key_files": [
+                        {"path": "docs/QA.md", "purpose": "QA测试",
+                         "update_trigger": "功能完成时", "max_stale_days": 7},
+                    ],
+                    "consistency": {"enabled": True, "linked_groups": []},
+                },
+            }
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_document_consistency()
+
+            stale_results = [r for r in results if "关键文档陈旧" in r.name]
+            assert len(stale_results) == 1
+            assert "QA.md" in stale_results[0].message
+            assert "7 天" in stale_results[0].message
+            assert "功能完成时" in stale_results[0].suggestion
+
+    def test_key_files_staleness_not_triggered(self):
+        """key_files 配置 max_stale_days 且文件刚更新，不应告警"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+            (project_root / "docs" / "QA.md").write_text("# QA\n", encoding="utf-8")
+
+            config = {
+                "documentation": {
+                    "key_files": [
+                        {"path": "docs/QA.md", "purpose": "QA测试",
+                         "max_stale_days": 7},
+                    ],
+                    "consistency": {"enabled": True, "linked_groups": []},
+                },
+            }
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_document_consistency()
+
+            stale_results = [r for r in results if "关键文档陈旧" in r.name]
+            assert len(stale_results) == 0
+
+    def test_key_files_no_max_stale_days(self):
+        """key_files 未配置 max_stale_days，不做陈旧性检查"""
+        import os
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+            qa_file = project_root / "docs" / "QA.md"
+            qa_file.write_text("# QA\n", encoding="utf-8")
+            old_time = time.time() - 30 * 86400
+            os.utime(qa_file, (old_time, old_time))
+
+            config = {
+                "documentation": {
+                    "key_files": [
+                        {"path": "docs/QA.md", "purpose": "QA测试"},
+                    ],
+                    "consistency": {"enabled": True, "linked_groups": []},
+                },
+            }
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_document_consistency()
+
+            stale_results = [r for r in results if "关键文档陈旧" in r.name]
+            assert len(stale_results) == 0
+
