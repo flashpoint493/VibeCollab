@@ -17,9 +17,10 @@
 - **遗留**: TASK-DEV-005 (switch 命令测试和文档)
 
 ### ocarina
-- **上次更新**: 2026-02-25
-- **当前任务**: REQ-012 Task-Insight 自动关联 — 已完成
+- **上次更新**: 2026-02-26
+- **当前任务**: Config 配置管理系统 — 已完成
 - **最近完成**:
+  - Config 三层配置系统 (config_manager + cli_config + LLMConfig 集成 + 38 tests)
   - Task-Insight 自动关联 (create_task 自动搜索 + CLI task 命令组 + 28 tests)
   - 自举全量验证 (onboard/next/check/insight 全链路)
   - protocol_checker 多开发者动态发现修复
