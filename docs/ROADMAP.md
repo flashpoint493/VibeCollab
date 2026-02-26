@@ -166,8 +166,16 @@
 - [x] 向后兼容（无 InsightManager 时自动跳过）✅
 - [x] 28 个单元测试（含 CLI + 集成 + 向后兼容）✅
 
-### v0.8.0 - 稳定性验证 + 泛用性压力测试（规划中）
+### v0.8.0 - 稳定性验证 + 泛用性压力测试（开发中）
 > 目标：在正式 v1.0 之前，对高级特性进行广泛的真实场景测试和质量加固
+
+#### Config 配置管理系统 ✅
+- [x] 三层配置架构 (env > ~/.vibecollab/config.yaml > defaults) ✅
+- [x] `vibecollab config setup` 交互式向导 ✅
+- [x] `vibecollab config show/set/path` 命令 ✅
+- [x] `resolve_llm_config()` 统一解析 + LLMConfig 三层集成 ✅
+- [x] 轻量 .env 解析 (VIBECOLLAB_* 前缀) ✅
+- [x] 38 个单元测试 ✅
 
 #### 测试覆盖率提升
 - [ ] 全量测试覆盖率 ≥ 80%（当前 ~68%）
@@ -252,4 +260,4 @@
 
 ---
 
-*最后更新: 2026-02-25 (v0.7.1)*
+*最后更新: 2026-02-26 (v0.8.0-dev)*
