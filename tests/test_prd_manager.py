@@ -15,7 +15,6 @@ import pytest
 # Import local modules
 from vibecollab.prd_manager import PRDManager, Requirement
 
-
 # ============================================================================
 # Test: Requirement dataclass
 # ============================================================================
@@ -536,7 +535,7 @@ class TestPRDManagerEdgeCases:
             prd_path = Path(tmpdir) / "PRD.md"
             manager = PRDManager(prd_path)
 
-            req = manager.add_requirement(
+            manager.add_requirement(
                 "Feature with: colons & special <chars>",
                 "Description with \"quotes\" and 'apostrophes'"
             )
@@ -553,7 +552,7 @@ class TestPRDManagerEdgeCases:
             prd_path = Path(tmpdir) / "PRD.md"
             manager = PRDManager(prd_path)
 
-            req = manager.add_requirement(
+            manager.add_requirement(
                 "功能：用户认证 🔐",
                 "实现用户登录和注册功能，支持多语言 🌍"
             )
@@ -572,7 +571,7 @@ class TestPRDManagerEdgeCases:
             manager = PRDManager(prd_path)
 
             long_desc = "This is a very long description. " * 100
-            req = manager.add_requirement("Long Feature", long_desc)
+            manager.add_requirement("Long Feature", long_desc)
 
             manager.save()
 

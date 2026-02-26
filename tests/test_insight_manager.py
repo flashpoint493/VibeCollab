@@ -663,8 +663,8 @@ class TestConsistency:
         assert any("INS-999" in e and "bookmarks" in e for e in report.errors)
 
     def test_fingerprint_mismatch(self, mgr):
-        ins = mgr.create(title="T", tags=["a"], category="technique",
-                         body=_body(), created_by="alice")
+        mgr.create(title="T", tags=["a"], category="technique",
+                   body=_body(), created_by="alice")
         # Tamper with the file
         path = mgr.insights_dir / "INS-001.yaml"
         data = yaml.safe_load(path.read_text(encoding="utf-8"))

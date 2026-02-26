@@ -1,0 +1,23 @@
+kind: insight
+version: '1'
+id: INS-012
+title: Python 3.8 EOL 导致 GitHub Actions CI 失败
+summary: Python EOL 版本会导致 setup-python action 失败，需同步更新 CI 矩阵和 requires-python
+tags:
+- ci
+- python
+- github-actions
+- eol
+- compatibility
+category: debug
+body:
+  scenario: CI 在 GitHub Actions 上持续失败，Python 3.8 矩阵任务报错
+  approach: 1)确认 Python 3.8 于 2024-10 EOL 2)actions/setup-python@v5 不再支持 3.8 3)CI
+    矩阵移除 3.8 添加 3.13 4)pyproject.toml requires-python 改为 >=3.9 5)classifiers 同步更新
+    6)检查版本号一致性(init.py vs pyproject.toml)
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-26'
+  context: v0.8.0 开发期间 CI 一直失败，同时发现 init.py 版本号停留在 0.5.9
+fingerprint: 3470419441c4e9eae1d1ea49d318237d74ecd1650dc714365dd180457735a026

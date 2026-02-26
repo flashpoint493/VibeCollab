@@ -1,8 +1,8 @@
 """Tests for TemplateManager."""
 
-import yaml
+
 import pytest
-from pathlib import Path
+import yaml
 
 from vibecollab.templates import TemplateManager
 

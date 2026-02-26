@@ -2,7 +2,6 @@
 Tests for `vibecollab dev` CLI command group (7 subcommands).
 """
 
-import os
 import tempfile
 from pathlib import Path
 

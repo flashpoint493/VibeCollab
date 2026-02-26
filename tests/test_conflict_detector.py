@@ -8,20 +8,18 @@ ConflictDetector 模块单元测试
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # Import third-party modules
 import pytest
 
 # Import local modules
 from vibecollab.conflict_detector import (
-    EMOJI_MAP,
     Conflict,
     ConflictDetector,
     ConflictType,
     is_windows_gbk,
 )
-
 
 # ============================================================================
 # Test: is_windows_gbk

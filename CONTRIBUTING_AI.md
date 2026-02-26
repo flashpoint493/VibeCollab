@@ -121,6 +121,11 @@ QA 职能贯穿整个开发流程：
 4. 确认用户本次对话目标
 ```
 
+**Insight 检索（推荐）**：
+- 如果项目存在 `.vibecollab/insights/` 目录，执行 `vibecollab insight search --tags <当前任务关键词>` 检索相关经验
+- 检索结果可帮助避免重复踩坑、复用已验证的方案
+- 也可用 `vibecollab insight list` 浏览全部沉淀
+
 **项目初始化约束**：
 - 如果是新项目且没有 `.git` 目录，必须执行 `git init` 初始化 Git 仓库
 - 初始化后立即执行首次提交：`git add -A && git commit -m "init: 项目初始化"`
@@ -130,10 +135,10 @@ QA 职能贯穿整个开发流程：
 
 > **每次对话结束前，AI 必须保存当前状态**
 
-```
-1. 更新 docs/CONTEXT.md
+```1. 更新 docs/CONTEXT.md
 2. 更新 docs/CHANGELOG.md
-3. Git commit → 记录对话成果
+3. 经验沉淀检查 → 是否有值得记录的 Insight？(vibecollab insight add)
+4. Git commit → 记录对话成果
 ```
 
 ### 4.2.2 标准对话中流程
@@ -1385,7 +1390,7 @@ vibecollab check
 
 | 版本 | 日期 | 变更内容 |
 |-----|------|---------|
-| v1.0 | 2026-02-26 | 初始版本 |
+| v1.0 | 2026-02-27 | 初始版本 |
 
 ---
 
@@ -1406,7 +1411,78 @@ git log --follow -p <file>
 
 ---
 
+# 经验沉淀工作流 (Insight Workflow)
+
+## 沉淀的意义
+
+> **每次对话都可能产生值得沉淀的经验。无论是 AI Agent 自主执行还是人类在 IDE 中对话驱动开发，经验沉淀的习惯应贯穿始终。**
+
+Insight 系统是项目的"组织记忆"——它将分散在对话、代码和文档中的经验提取为结构化知识，供后续开发者（人或 AI）检索复用。
+
+## 何时应该沉淀
+
+在以下场景中，应主动考虑创建 Insight：
+
+| 场景 | 示例 | 建议 category |
+|------|------|--------------|
+| **解决了一个棘手 bug** | 发现 GBK 编码导致 emoji 崩溃 | `debug` |
+| **发现了更好的做法** | 用 dataclass 替代 dict 提升类型安全 | `technique` |
+| **做出了重要的架构/设计决策** | 选择 Jinja2 而非 Mako 作为模板引擎 | `decision` |
+| **总结了工具/框架的使用经验** | pytest fixture 的 scope 选择策略 | `tool` |
+| **建立了可复用的工作流** | CI/CD 配置从 3.8 升级到 3.9+ 的检查清单 | `workflow` |
+| **发现了跨模块的集成要点** | EventLog 与 InsightManager 的协作模式 | `integration` |
+
+## 沉淀流程
+
+### IDE 对话模式（人类 + AI 对话）
+
+在对话接近结束时，执行以下检查：
+
+```
+1. 回顾本次对话的主要成果
+2. 判断是否有值得沉淀的经验（参考上方场景表）
+3. 如有 → 使用 vibecollab insight add 创建 Insight
+4. 如无 → 跳过，继续正常的对话结束流程
+```
+
+**创建命令示例**：
+```bash
+vibecollab insight add \
+  --title "Windows GBK 编码兼容方案" \
+  --tags "windows,encoding,gbk,unicode" \
+  --category debug \
+  --body "在 Windows GBK 终端下，直接输出 emoji 字符会导致 UnicodeEncodeError。解决方案：创建共享的 _compat.py 模块，统一 EMOJI 字典和 BULLET 变量，GBK 环境下自动降级为 ASCII 替代符。"
+```
+
+### Agent 自主模式
+
+Agent 在完成任务后，应自动评估是否有值得沉淀的经验，并在适当时调用 `vibecollab insight add`。
+
+### 查看与检索
+
+```bash
+# 列出所有 Insight
+vibecollab insight list
+
+# 按标签搜索
+vibecollab insight search --tags "encoding,windows"
+
+# 查看详情
+vibecollab insight show INS-001
+```
+
+## AI 对话结束检查清单
+
+在执行正常的对话结束流程（更新文档 → git commit）**之前**，请先完成：
+
+- [ ] **经验检查**：本次对话是否产生了新的、值得沉淀的经验？
+- [ ] **已有检索**：是否已有类似的 Insight？（避免重复沉淀）
+- [ ] **沉淀执行**：如有新经验 → `vibecollab insight add`
+
+> 💡 **提示**：宁可多沉淀也不要遗漏。Insight 有自动衰减机制，不常被检索的经验会自然降低权重。
+
+---
 
 *本文档是活文档，记录人机协作的演进过程。*
-*生成时间: 2026-02-26 13:20:53*
+*生成时间: 2026-02-27 00:55:06*
 *最珍贵的不是结果，而是我们共同思考的旅程。*

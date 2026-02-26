@@ -455,3 +455,48 @@ class TestTemplateOverlay:
         assert ids.index("d") == ids.index("a") + 1
         # c 仍在
         assert "c" in ids
+
+
+# ---------------------------------------------------------------------------
+# Insight 工作流模板渲染
+# ---------------------------------------------------------------------------
+
+class TestInsightWorkflowTemplate:
+    """Tests for 27_insight_workflow.md.j2 template rendering."""
+
+    def test_insight_section_in_manifest(self, minimal_config):
+        """manifest 中应包含 insight_workflow 章节"""
+        engine = PatternEngine(minimal_config)
+        ids = [s["id"] for s in engine.manifest["sections"]]
+        assert "insight_workflow" in ids
+
+    def test_insight_rendered_by_default(self, minimal_config):
+        """insight 默认开启，应出现在渲染输出中"""
+        engine = PatternEngine(minimal_config)
+        output = engine.render()
+        assert "经验沉淀" in output
+        assert "vibecollab insight add" in output
+
+    def test_insight_disabled(self, minimal_config):
+        """insight.enabled=false 时不渲染"""
+        minimal_config["insight"] = {"enabled": False}
+        engine = PatternEngine(minimal_config)
+        output = engine.render()
+        assert "经验沉淀工作流" not in output
+
+    def test_insight_section_position(self, minimal_config):
+        """insight_workflow 应在 footer 之前"""
+        engine = PatternEngine(minimal_config)
+        ids = [s["id"] for s in engine.manifest["sections"]]
+        assert ids.index("insight_workflow") < ids.index("footer")
+
+    def test_dialogue_protocol_includes_insight_step(self, minimal_config):
+        """对话结束流程中应包含 Insight 沉淀检查步骤"""
+        minimal_config["dialogue_protocol"] = {
+            "on_start": {"read_files": ["CONTRIBUTING_AI.md"]},
+            "on_end": {"update_files": ["docs/CONTEXT.md"], "git_commit": True},
+            "standard_flow": [],
+        }
+        engine = PatternEngine(minimal_config)
+        output = engine.render()
+        assert "经验沉淀检查" in output

@@ -1,0 +1,22 @@
+kind: insight
+version: '1'
+id: INS-011
+title: Insight 系统融入 IDE 对话模式的三层方案
+summary: 通过协议+工具+模板三层融入，让 Insight 沉淀成为对话结束的自然环节
+tags:
+- insight
+- architecture
+- pattern-engine
+- cli
+- protocol
+category: workflow
+body:
+  scenario: 需要让 Insight 沉淀从纯手动 CLI 命令自然融入 IDE 对话模式和 Agent 模式
+  approach: 三层方案：1)协议层-对话结束流程增加沉淀检查步骤 2)工具层-vibecollab next 增加 5 种信号自动检测提示 3)Pattern
+    层-新增 insight_workflow.md.j2 模板章节。关键：不改 InsightManager 核心代码，让协议指引行为而非代码强制行为
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-26'
+  context: v0.8.0 开发中发现 Insight 系统建好了但没人住，创建入口是 100% 手动的
+fingerprint: a3b152903fbc3e45a25e99aa883a70054faa146bf82a8f05bbb985ecf3da80d1

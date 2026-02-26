@@ -24,7 +24,7 @@ from pathlib import Path
 import click
 import yaml
 
-from ._compat import BULLET, EMOJI
+from ._compat import EMOJI
 
 
 def _load_insight_manager(config_path: str = "project.yaml"):

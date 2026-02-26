@@ -18,10 +18,8 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from vibecollab.event_log import EventLog
-from vibecollab.insight_manager import Insight, InsightManager, Origin
+from vibecollab.insight_manager import InsightManager
 from vibecollab.task_manager import TaskManager, TaskStatus
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -240,7 +238,7 @@ class TestInsightAutoLink:
             feature="Add module",
             actor="test",
         )
-        r1 = t1.metadata.get("related_insights", [])
+        t1.metadata.get("related_insights", [])  # noqa: F841 - exercise the code path
 
         t2 = mgr_with_insights.create_task(
             id="TASK-DEV-006", role="DEV",
@@ -375,6 +373,7 @@ class TestCLI:
 
     def test_create_and_show(self):
         import os
+
         from vibecollab.cli_task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -406,6 +405,7 @@ class TestCLI:
 
     def test_list(self):
         import os
+
         from vibecollab.cli_task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -431,6 +431,7 @@ class TestCLI:
 
     def test_suggest(self):
         import os
+
         from vibecollab.cli_task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -454,6 +455,7 @@ class TestCLI:
 
     def test_create_invalid_id(self):
         import os
+
         from vibecollab.cli_task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -472,6 +474,7 @@ class TestCLI:
 
     def test_show_nonexistent(self):
         import os
+
         from vibecollab.cli_task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -489,6 +492,7 @@ class TestCLI:
 
     def test_list_empty(self):
         import os
+
         from vibecollab.cli_task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -505,6 +509,7 @@ class TestCLI:
 
     def test_create_rich_output(self):
         import os
+
         from vibecollab.cli_task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
