@@ -394,8 +394,11 @@ class ProtocolChecker:
                 continue
 
             if level == "local_mtime":
+                max_inactive = group.get("max_inactive_hours", 0)
                 results.extend(
-                    self._check_mtime_consistency(group_name, files, threshold_minutes)
+                    self._check_mtime_consistency(
+                        group_name, files, threshold_minutes, max_inactive
+                    )
                 )
             elif level == "git_commit":
                 results.extend(
@@ -443,15 +446,44 @@ class ProtocolChecker:
                         )
                     ))
 
+            # 可选跟随检查: watch_files — 当 watch 的文件更新了但本文件没跟上时告警
+            watch_files = kf.get("watch_files", [])
+            if watch_files and full_path.exists():
+                my_mtime = datetime.fromtimestamp(full_path.stat().st_mtime)
+                for wf in watch_files:
+                    wf_path = self.project_root / wf
+                    if wf_path.exists():
+                        wf_mtime = datetime.fromtimestamp(wf_path.stat().st_mtime)
+                        lag_minutes = (wf_mtime - my_mtime).total_seconds() / 60
+                        if lag_minutes > 15:
+                            results.append(CheckResult(
+                                name=f"关键文档滞后: {path}",
+                                passed=False,
+                                message=(
+                                    f"{wf} 已更新，但 {path} 落后 "
+                                    f"{int(lag_minutes)} 分钟未同步"
+                                ),
+                                severity="warning",
+                                suggestion=(
+                                    f"触发条件「{kf.get('update_trigger', '未知')}」"
+                                    f"可能已满足，请检查 {path} 是否需要更新"
+                                )
+                            ))
+
         return results
 
     def _check_mtime_consistency(
-        self, group_name: str, files: List[str], threshold_minutes: float
+        self, group_name: str, files: List[str], threshold_minutes: float,
+        max_inactive_hours: float = 0
     ) -> List[CheckResult]:
         """本地文件修改时间级别的一致性检查
 
         检查同组文件的 mtime 差异是否超过阈值。如果某个文件刚被修改，
         而关联文件没有跟随修改，产生 warning。
+
+        Args:
+            max_inactive_hours: 组级可配置的非活跃窗口（小时）。
+                为 0 时使用默认值 24h。设为 -1 表示始终检查（禁用非活跃跳过）。
         """
         results = []
         file_mtimes: Dict[str, datetime] = {}
@@ -472,11 +504,13 @@ class ProtocolChecker:
         diff_minutes = (newest_time - oldest_time).total_seconds() / 60
 
         if diff_minutes > threshold_minutes:
-            # 检查最近修改的文件是否在阈值时间内（表示最近有活跃编辑）
             hours_since_newest = (datetime.now() - newest_time).total_seconds() / 3600
-            # 只有当最近文件确实是"新鲜"的（24h 内修改过）才报 warning
-            # 否则组内所有文件都很久没改了，不需要告警
-            if hours_since_newest < 24:
+            # max_inactive_hours: -1 = 始终检查; 0 = 默认 24h; >0 = 自定义
+            inactive_limit = (
+                float("inf") if max_inactive_hours < 0
+                else (max_inactive_hours if max_inactive_hours > 0 else 24)
+            )
+            if hours_since_newest < inactive_limit:
                 stale_files = [
                     f for f, t in sorted_files[1:]
                     if (newest_time - t).total_seconds() / 60 > threshold_minutes
