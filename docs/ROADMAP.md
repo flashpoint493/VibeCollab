@@ -196,10 +196,10 @@
 - [x] 衰减/奖励长期运行模拟（多轮 decay 后的权重分布合理性）✅
 
 #### 人机交互质量
-- [ ] vibecollab ai ask/chat 在不同 terminal 环境下的 Unicode 兼容
-- [ ] Rich 面板在 Windows PowerShell/CMD/WSL 的渲染验证
-- [ ] onboard/next 在大型项目（多开发者、多文件）上的输出质量
-- [ ] 错误信息友好度审查（所有 CLI 命令的异常路径）
+- [x] vibecollab ai ask/chat 在不同 terminal 环境下的 Unicode 兼容 ✅ `_compat.py` 统一兼容层
+- [ ] Rich 面板在 Windows PowerShell/CMD/WSL 的渲染验证 — 需手动验证
+- [ ] onboard/next 在大型项目（多开发者、多文件）上的输出质量 — 需手动验证
+- [x] 错误信息友好度审查（所有 CLI 命令的异常路径）✅ 审计完成 + insight 错误处理增强
 
 #### 泛用性验证
 - [ ] 在 3+ 个真实外部项目上运行 `vibecollab init` + `generate` + `check`

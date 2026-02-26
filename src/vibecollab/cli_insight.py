@@ -19,11 +19,12 @@ Insight CLI 命令组 — 沉淀系统的 CLI 接口
     vibecollab insight stats              跨开发者共享统计
 """
 
-import sys
 from pathlib import Path
 
 import click
 import yaml
+
+from ._compat import BULLET, EMOJI
 
 
 def _load_insight_manager(config_path: str = "project.yaml"):
@@ -32,7 +33,11 @@ def _load_insight_manager(config_path: str = "project.yaml"):
     from .insight_manager import InsightManager
 
     project_root = Path.cwd()
-    event_log = EventLog(project_root / ".vibecollab" / "events.jsonl")
+    vibecollab_dir = project_root / ".vibecollab"
+    if not vibecollab_dir.exists():
+        click.echo("错误: 未找到 .vibecollab/ 目录。请先运行 vibecollab init", err=True)
+        raise SystemExit(1)
+    event_log = EventLog(vibecollab_dir / "events.jsonl")
     return InsightManager(project_root=project_root, event_log=event_log)
 
 
@@ -113,7 +118,7 @@ def show_insight(insight_id):
     ins = mgr.get(insight_id)
     if not ins:
         click.echo(f"未找到沉淀: {insight_id}", err=True)
-        sys.exit(1)
+        raise SystemExit(1)
 
     entries, _ = mgr.get_registry()
     entry = entries.get(insight_id)
@@ -230,7 +235,7 @@ def search_insights(tags, category, include_inactive):
 
     if not tags and not category:
         click.echo("请指定 --tags 或 --category", err=True)
-        sys.exit(1)
+        raise SystemExit(1)
 
     results = []
     if tags:
@@ -263,7 +268,7 @@ def use_insight(insight_id):
     entry = mgr.record_use(insight_id, used_by=used_by)
     if not entry:
         click.echo(f"未找到注册条目: {insight_id}", err=True)
-        sys.exit(1)
+        raise SystemExit(1)
 
     click.echo(f"已记录使用: {insight_id}")
     click.echo(f"  weight: {entry.weight:.4f}  used_count: {entry.used_count}  by: {used_by}")
@@ -309,7 +314,7 @@ def check_insights(as_json):
     if as_json:
         click.echo(json_mod.dumps(report.to_dict(), ensure_ascii=False, indent=2))
         if not report.ok:
-            sys.exit(1)
+            raise SystemExit(1)
         return
 
     if report.ok and not report.warnings:
@@ -330,7 +335,7 @@ def check_insights(as_json):
         click.echo("\n校验结果: 通过（有警告）")
     else:
         click.echo(f"\n校验结果: 失败（{len(report.errors)} 个错误）")
-        sys.exit(1)
+        raise SystemExit(1)
 
 
 @insight.command("delete")
@@ -344,7 +349,7 @@ def delete_insight(insight_id, yes):
     ins = mgr.get(insight_id)
     if not ins:
         click.echo(f"未找到沉淀: {insight_id}", err=True)
-        sys.exit(1)
+        raise SystemExit(1)
 
     if not yes:
         click.confirm(f"确认删除 {insight_id} ({ins.title})?", abort=True)
@@ -368,7 +373,7 @@ def bookmark_insight(insight_id):
     ins = mgr.get(insight_id)
     if not ins:
         click.echo(f"未找到沉淀: {insight_id}", err=True)
-        sys.exit(1)
+        raise SystemExit(1)
 
     developer = dm.get_current_developer()
     added = dm.add_bookmark(insight_id, developer)
@@ -404,7 +409,7 @@ def trace_insight(insight_id, as_json):
     ins = mgr.get(insight_id)
     if not ins:
         click.echo(f"未找到沉淀: {insight_id}", err=True)
-        sys.exit(1)
+        raise SystemExit(1)
 
     trace = mgr.get_full_trace(insight_id)
 
@@ -422,7 +427,7 @@ def trace_insight(insight_id, as_json):
     else:
         click.echo("  上游: (无)")
 
-    click.echo(f"\n  ● {insight_id} — {ins.title}")
+    click.echo(f"\n  {EMOJI['circle']} {insight_id} — {ins.title}")
 
     # 下游
     if trace["downstream"]:
@@ -457,7 +462,7 @@ def who_insight(insight_id, as_json):
     ins = mgr.get(insight_id)
     if not ins:
         click.echo(f"未找到沉淀: {insight_id}", err=True)
-        sys.exit(1)
+        raise SystemExit(1)
 
     info = mgr.get_insight_developers(insight_id)
 
