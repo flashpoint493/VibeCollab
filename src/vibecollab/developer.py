@@ -211,7 +211,7 @@ class DeveloperManager:
             )
             if result.returncode == 0:
                 return result.stdout.strip()
-        except Exception:
+        except BaseException:
             pass
         return None
 

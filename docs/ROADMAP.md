@@ -181,7 +181,7 @@
 - [x] 全量测试覆盖率 ≥ 80%（81% ✅）
 - [ ] Agent 模式 E2E 测试（agent plan/run/serve 全链路）
 - [ ] LLM Client mock 集成测试（OpenAI + Anthropic 双 provider）
-- [ ] CLI 命令全量 E2E 测试（所有子命令的 CliRunner 覆盖）
+- [x] CLI 命令全量 E2E 测试（48/48 子命令 CliRunner 覆盖 ✅）
 
 #### Agent 模式稳定性
 - [ ] agent serve 长运行压力测试（100+ 周期、退避/断路器/内存阈值）
