@@ -63,6 +63,10 @@
 - **Insight 系统泛用性测试**: 20 个新测试覆盖大规模/衰减/关联/循环保护
   - `test_insight_manager.py` (+20 tests): 100 条 Insight 创建/搜索/列出/衰减、多 tags 搜索、10 层溯源链、50 轮衰减收敛、衰减+奖励稳态、大量 record_use 增长、权重精度验证、停用→激活→再衰减、阈值边界、中文标签、大小写不敏感、部分重叠、空标签、循环引用保护
   - 全量 899/899 passed
+- **极简/复杂项目边界测试**: 15 个新测试覆盖 init+generate+check+health+validate
+  - `TestMinimalProject` (7 tests): 最少参数 init、极简 generate、极简 check/health/validate、空 YAML、只有 project_name
+  - `TestComplexProject` (8 tests): 全量配置（多开发者+lifecycle+documentation）的 generate/check/health/upgrade/validate/JSON 输出、所有 domain 的 init
+  - 全量 914/914 passed
 - **CLI E2E 测试全量覆盖**: 48 个 CLI 命令中 12 个缺失测试已全部补齐
   - `tests/test_cli_dev.py` (17 tests): dev 命令组 7 个子命令（whoami/list/status/sync/init/switch/conflicts）
   - `tests/test_cli.py` (+10 tests): 顶层命令（templates/export-template/version-info/check/health）

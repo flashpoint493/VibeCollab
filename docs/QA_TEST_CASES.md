@@ -671,13 +671,12 @@
 (暂无)
 
 ### 🟡 中优先级问题
-- Windows 控制台编码问题（GBK）导致某些 Unicode 字符显示异常
-  - 影响: twine upload 时的进度条显示
-  - 状态: 已通过 --disable-progress-bar 缓解
+(暂无 — Windows GBK 兼容已通过 `_compat.py` 统一解决)
 
-### ⚪ 低优先级问题
-- 大项目生成速度可能较慢
-- 配置验证错误提示可以更详细
+### ⚪ 低优先级问题（延后到 v1.0）
+- 大项目（100+ 文件）生成速度可优化
+- `cli_insight.py` / `cli_task.py` 尚未迁移到 Rich 输出风格（功能正常，仅视觉不一致）
+- 跨项目 Insight 可移植性验证需先实现 export/import API
 
 ---
 
