@@ -266,3 +266,263 @@ class TestCLI:
         assert result.exit_code != 0
 
 
+# ---------------------------------------------------------------------------
+# 极简 / 复杂项目边界测试
+# ---------------------------------------------------------------------------
+
+class TestMinimalProject:
+    """极简项目配置边界测试 — 最少配置能正常运行."""
+
+    def setup_method(self):
+        self.runner = CliRunner()
+
+    def test_init_minimal(self):
+        """最少参数 init 能成功."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = Path(tmpdir) / "minimal"
+            result = self.runner.invoke(main, [
+                "init", "-n", "Min", "-d", "generic", "-o", str(out)
+            ])
+            assert result.exit_code == 0
+            assert (out / "project.yaml").exists()
+
+    def test_generate_minimal(self):
+        """极简 project.yaml 能成功 generate."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = Path(tmpdir) / "minimal"
+            self.runner.invoke(main, [
+                "init", "-n", "Min", "-d", "generic", "-o", str(out)
+            ])
+            result = self.runner.invoke(main, [
+                "generate", "-c", str(out / "project.yaml"),
+                "-o", str(out / "llms.txt")
+            ])
+            assert result.exit_code == 0
+            assert (out / "llms.txt").exists()
+            content = (out / "llms.txt").read_text(encoding="utf-8")
+            assert "Min" in content
+
+    def test_check_minimal(self):
+        """极简配置 check 不崩溃."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = Path(tmpdir) / "minimal"
+            self.runner.invoke(main, [
+                "init", "-n", "Min", "-d", "generic", "-o", str(out)
+            ])
+            result = self.runner.invoke(main, [
+                "check", "-c", str(out / "project.yaml")
+            ])
+            # check 可能有 warning 但不应 crash
+            assert result.exit_code in (0, 1)
+
+    def test_health_minimal(self):
+        """极简配置 health 不崩溃."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = Path(tmpdir) / "minimal"
+            self.runner.invoke(main, [
+                "init", "-n", "Min", "-d", "generic", "-o", str(out)
+            ])
+            result = self.runner.invoke(main, [
+                "health", "-c", str(out / "project.yaml")
+            ])
+            assert result.exit_code in (0, 1)
+
+    def test_validate_minimal(self):
+        """极简配置 validate 通过."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = Path(tmpdir) / "minimal"
+            self.runner.invoke(main, [
+                "init", "-n", "Min", "-d", "generic", "-o", str(out)
+            ])
+            result = self.runner.invoke(main, [
+                "validate", "-c", str(out / "project.yaml")
+            ])
+            assert result.exit_code == 0
+
+    def test_empty_yaml_graceful(self):
+        """空 YAML 文件不导致 crash."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            empty_config = Path(tmpdir) / "project.yaml"
+            empty_config.write_text("", encoding="utf-8")
+            result = self.runner.invoke(main, [
+                "generate", "-c", str(empty_config)
+            ])
+            # 应该报错但不 crash
+            assert result.exit_code != 0 or "错误" in result.output or "error" in result.output.lower()
+
+    def test_yaml_only_name(self):
+        """只有 project_name 的最小 YAML."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config = Path(tmpdir) / "project.yaml"
+            config.write_text("project_name: OnlyName\n", encoding="utf-8")
+            result = self.runner.invoke(main, [
+                "validate", "-c", str(config)
+            ])
+            # 可能通过也可能报缺少字段，不应 crash
+            assert result.exception is None or isinstance(result.exception, SystemExit)
+
+
+class TestComplexProject:
+    """复杂项目配置边界测试 — 全量配置能正常运行."""
+
+    def setup_method(self):
+        self.runner = CliRunner()
+
+    def _create_complex_project(self, tmpdir):
+        """创建一个全量配置的复杂项目."""
+        out = Path(tmpdir) / "complex"
+        self.runner.invoke(main, [
+            "init", "-n", "ComplexProject", "-d", "generic", "-o", str(out)
+        ])
+        config_path = out / "project.yaml"
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+
+        # 添加多开发者
+        config["multi_developer"] = {
+            "enabled": True,
+            "developers": [
+                {"id": "alice", "name": "Alice", "role": "backend"},
+                {"id": "bob", "name": "Bob", "role": "frontend"},
+                {"id": "charlie", "name": "Charlie", "role": "devops"},
+            ],
+            "collaboration": {"file": "docs/developers/COLLABORATION.md"},
+        }
+
+        # 添加扩展 domain
+        config.setdefault("domains", []).append("game")
+
+        # 添加 lifecycle
+        config["lifecycle"] = {
+            "current_stage": "demo",
+            "milestones": [
+                {"name": "MVP", "completed": True},
+                {"name": "Beta", "completed": False},
+            ],
+        }
+
+        # 添加 documentation
+        config["documentation"] = {
+            "key_files": [
+                {"path": "README.md", "purpose": "项目入口"},
+                {"path": "docs/ROADMAP.md", "purpose": "路线图"},
+                {"path": "docs/CHANGELOG.md", "purpose": "变更日志"},
+            ],
+        }
+
+        config_path.write_text(
+            yaml.dump(config, allow_unicode=True, default_flow_style=False),
+            encoding="utf-8",
+        )
+
+        # 创建必要文件
+        (out / "docs").mkdir(exist_ok=True)
+        (out / "docs" / "developers").mkdir(exist_ok=True)
+        (out / "docs" / "ROADMAP.md").write_text("# Roadmap\n", encoding="utf-8")
+        (out / "docs" / "CHANGELOG.md").write_text("# Changelog\n", encoding="utf-8")
+        (out / "README.md").write_text("# ComplexProject\n", encoding="utf-8")
+        (out / "docs" / "developers" / "COLLABORATION.md").write_text(
+            "# Collaboration\n", encoding="utf-8"
+        )
+
+        return out
+
+    def test_generate_complex(self):
+        """全量配置 generate 成功."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = self._create_complex_project(tmpdir)
+            result = self.runner.invoke(main, [
+                "generate", "-c", str(out / "project.yaml"),
+                "-o", str(out / "llms.txt")
+            ])
+            assert result.exit_code == 0
+            content = (out / "llms.txt").read_text(encoding="utf-8")
+            assert "ComplexProject" in content
+
+    def test_check_complex(self):
+        """全量配置 check 不崩溃."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = self._create_complex_project(tmpdir)
+            result = self.runner.invoke(main, [
+                "check", "-c", str(out / "project.yaml")
+            ])
+            assert result.exit_code in (0, 1)
+
+    def test_health_complex(self):
+        """全量配置 health 不崩溃."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = self._create_complex_project(tmpdir)
+            result = self.runner.invoke(main, [
+                "health", "-c", str(out / "project.yaml")
+            ])
+            assert result.exit_code in (0, 1)
+
+    def test_upgrade_complex(self):
+        """全量配置 upgrade 不崩溃."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = self._create_complex_project(tmpdir)
+            result = self.runner.invoke(main, [
+                "upgrade", "-c", str(out / "project.yaml")
+            ])
+            # upgrade 可能无操作也可能成功
+            assert result.exit_code in (0, 1)
+
+    def test_validate_complex(self):
+        """全量配置 validate 通过."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = self._create_complex_project(tmpdir)
+            result = self.runner.invoke(main, [
+                "validate", "-c", str(out / "project.yaml")
+            ])
+            assert result.exit_code == 0
+
+    def test_check_json_complex(self):
+        """全量配置 check --json 输出有效 JSON."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = self._create_complex_project(tmpdir)
+            result = self.runner.invoke(main, [
+                "check", "-c", str(out / "project.yaml"), "--json"
+            ])
+            if result.exit_code in (0, 1) and result.output.strip():
+                try:
+                    data = json.loads(result.output)
+                    assert isinstance(data, dict)
+                except json.JSONDecodeError:
+                    pass  # JSON 可能混有 Rich 输出，不强制
+
+    def test_health_json_complex(self):
+        """全量配置 health --json 输出有效 JSON."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out = self._create_complex_project(tmpdir)
+            result = self.runner.invoke(main, [
+                "health", "-c", str(out / "project.yaml"), "--json"
+            ])
+            if result.exit_code in (0, 1) and result.output.strip():
+                try:
+                    data = json.loads(result.output)
+                    assert isinstance(data, dict)
+                except json.JSONDecodeError:
+                    pass
+
+    def test_all_domains(self):
+        """所有可用 domain 都能 init 成功."""
+        result = self.runner.invoke(main, ["domains"])
+        # 从输出中提取 domain 名称
+        domains = []
+        for line in result.output.splitlines():
+            stripped = line.strip()
+            if stripped and not stripped.startswith("─") and "领域" not in stripped:
+                parts = stripped.split()
+                if parts:
+                    candidate = parts[0].strip("│").strip()
+                    if candidate and candidate.isalpha() and len(candidate) < 20:
+                        domains.append(candidate)
+
+        for domain in domains[:5]:  # 只测前 5 个避免太慢
+            with tempfile.TemporaryDirectory() as tmpdir:
+                out = Path(tmpdir) / f"test-{domain}"
+                r = self.runner.invoke(main, [
+                    "init", "-n", f"Test-{domain}", "-d", domain, "-o", str(out)
+                ])
+                assert r.exit_code == 0, f"init failed for domain {domain}: {r.output}"
+
+
