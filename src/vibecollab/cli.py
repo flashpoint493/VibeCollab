@@ -822,6 +822,11 @@ from .cli_task import task_group  # noqa: E402
 
 main.add_command(task_group)
 
+# 导入配置管理命令 (v0.8.0+)
+from .cli_config import config_group  # noqa: E402
+
+main.add_command(config_group)
+
 
 # ============================================
 # 多开发者管理命令组 (v0.5.0+)

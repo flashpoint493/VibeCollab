@@ -403,6 +403,12 @@ vibecollab health [--json]                     # 项目健康评分 (0-100)
 # Pattern Engine
 vibecollab patterns                            # 列出所有章节模板及来源
 
+# Config 配置管理 (v0.8.0+)
+vibecollab config setup                        # 交互式 LLM 配置向导
+vibecollab config show                         # 查看当前配置（三层合并结果）
+vibecollab config set <key> <value>            # 设置配置项 (如 llm.api_key)
+vibecollab config path                         # 显示配置文件路径
+
 # AI 人机交互 (v0.5.8+)
 vibecollab ai ask "问题"                       # 单轮 AI 提问 (自动注入项目上下文)
 vibecollab ai ask "问题" --no-context          # 不注入项目上下文
