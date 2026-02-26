@@ -1,7 +1,7 @@
 # VibeCollab 全局上下文
 
 > ⚠️ **此文件自动生成，请勿手动编辑**
-> 上次更新: 2026-02-25
+> 上次更新: 2026-02-26
 > 聚合自: alice, ocarina
 
 ## 项目整体状态
@@ -18,8 +18,10 @@
 
 ### ocarina
 - **上次更新**: 2026-02-26
-- **当前任务**: Config 配置管理系统 — 已完成
+- **当前任务**: v0.8.0 稳定性验证 + 泛用性压力测试
 - **最近完成**:
+  - Flaky test 修复 (_get_git_uncommitted BaseException 捕获, 779/779 passed)
+  - 测试覆盖率 76% → 81% (128 新测试, 6 模块覆盖率大幅提升)
   - Config 三层配置系统 (config_manager + cli_config + LLMConfig 集成 + 38 tests)
   - Task-Insight 自动关联 (create_task 自动搜索 + CLI task 命令组 + 28 tests)
   - 自举全量验证 (onboard/next/check/insight 全链路)

@@ -558,6 +558,113 @@
 
 ---
 
+## Phase 5 测试用例 (v0.7.1 — Task-Insight 自动关联)
+
+### TC-TASKINS-001: Task 创建自动关联 Insight
+- **关联**: v0.7.1
+- **前置**: InsightManager 有已创建的 Insight
+- **步骤**:
+  1. 创建 `TaskManager(project_root, event_log, insight_manager=im)`
+  2. `create_task(id=..., feature="重构缓存层", description="优化性能")`
+- **预期**:
+  - 自动从 feature/description 提取搜索标签
+  - Jaccard × weight 匹配相关 Insight
+  - 结果存入 `task.metadata["related_insights"]`
+  - EventLog 记录关联信息
+- **状态**: 🟢 (unit test 覆盖, 28 tests)
+
+### TC-TASKINS-002: Task Suggest 推荐
+- **关联**: v0.7.1
+- **前置**: 已有 Task + Insight 数据
+- **步骤**:
+  1. `vibecollab task suggest TASK-001`
+- **预期**:
+  - 显示推荐的关联 Insight 列表
+  - 按匹配分数排序
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-TASKINS-003: 向后兼容（无 InsightManager）
+- **关联**: v0.7.1
+- **前置**: 未初始化 InsightManager
+- **步骤**:
+  1. 创建 `TaskManager(project_root, event_log)` (无 insight_manager)
+  2. `create_task(id=..., feature=...)`
+- **预期**:
+  - 正常创建 Task，不抛异常
+  - `metadata["related_insights"]` 为空列表
+- **状态**: 🟢 (unit test 覆盖)
+
+---
+
+## Phase 6 测试用例 (v0.8.0 — Config 配置管理 + 质量加固)
+
+### TC-CONFIG-001: Config Setup 交互式向导
+- **关联**: v0.8.0
+- **前置**: 已安装 vibe-collab
+- **步骤**:
+  1. 运行 `vibecollab config setup`
+  2. 选择 Provider / 输入 API Key / 选择 Base URL
+- **预期**:
+  - 配置写入 `~/.vibecollab/config.yaml`
+  - API Key 安全存储
+- **状态**: 🟢 (unit test 覆盖, 38 tests)
+
+### TC-CONFIG-002: Config Show 查看配置
+- **关联**: v0.8.0
+- **前置**: 已有配置
+- **步骤**:
+  1. 运行 `vibecollab config show`
+- **预期**:
+  - 显示三层合并结果
+  - 标识每项的来源（env/config/default）
+  - API Key 遮蔽显示
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-CONFIG-003: Config Set 单项设置
+- **关联**: v0.8.0
+- **前置**: 已有配置文件
+- **步骤**:
+  1. 运行 `vibecollab config set llm.provider anthropic`
+  2. 运行 `vibecollab config show` 验证
+- **预期**:
+  - 配置文件中对应键更新
+  - show 输出反映新值
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-CONFIG-004: 三层配置优先级
+- **关联**: v0.8.0
+- **前置**: 同时设置环境变量和配置文件
+- **步骤**:
+  1. 设置 `VIBECOLLAB_LLM_PROVIDER=anthropic` 环境变量
+  2. 配置文件设置 `llm.provider: openai`
+  3. 调用 `resolve_llm_config()`
+- **预期**:
+  - 环境变量优先：结果为 anthropic
+  - 优先级: env > config file > defaults
+- **状态**: 🟢 (unit test 覆盖)
+
+### TC-FLAKY-001: test_onboard_basic 稳定性
+- **关联**: v0.8.0 Bug Fix
+- **前置**: 全量测试环境
+- **步骤**:
+  1. 运行 `python -m pytest` 全量测试（连续 2 次）
+- **预期**:
+  - 779/779 passed
+  - `test_onboard_basic` 不再因 `test_serve_lock_conflict` 污染而失败
+- **状态**: 🟢 (已修复验证)
+
+### TC-COV-001: 测试覆盖率 ≥ 80%
+- **关联**: v0.8.0
+- **前置**: 全量测试环境
+- **步骤**:
+  1. 运行 `python -m pytest --cov=vibecollab --cov-report=term`
+- **预期**:
+  - 总覆盖率 ≥ 80%（当前 81%）
+  - 关键模块: git_utils 100%, extension 100%, llmstxt 97%, lifecycle 93%, cli_lifecycle 92%, templates 91%
+- **状态**: 🟢
+
+---
+
 ## 已知问题
 
 ### 🔴 高优先级问题
@@ -574,4 +681,4 @@
 
 ---
 
-*最后更新: 2026-02-25 (v0.7.0-dev)*
+*最后更新: 2026-02-26 (v0.8.0-dev)*
