@@ -8,7 +8,6 @@ CLI Config 命令 — LLM 配置管理
 - vibecollab config path     — 显示配置文件路径
 """
 
-import platform
 import sys
 
 import click
@@ -16,26 +15,11 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-
-# Windows GBK 兼容
-def _is_windows_gbk():
-    if platform.system() != "Windows":
-        return False
-    try:
-        "✅⚠️❌".encode(sys.stdout.encoding or "utf-8")
-        return False
-    except (UnicodeEncodeError, LookupError):
-        return True
+from ._compat import EMOJI
 
 
-_USE_EMOJI = not _is_windows_gbk()
-_E = {
-    "ok": "OK" if not _USE_EMOJI else "✅",
-    "err": "X" if not _USE_EMOJI else "❌",
-    "warn": "!" if not _USE_EMOJI else "⚠️",
-    "key": ">" if not _USE_EMOJI else "🔑",
-    "gear": ">" if not _USE_EMOJI else "⚙️",
-}
+# 短别名（兼容此模块原有 _E 变量名）
+_E = EMOJI
 
 console = Console()
 

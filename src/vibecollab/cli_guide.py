@@ -20,6 +20,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from ._compat import BULLET
+
 console = Console()
 
 
@@ -331,7 +333,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         console.print()
         console.print("[bold]最近决策:[/bold]")
         for d in recent_decisions:
-            console.print(f"  • {d}")
+            console.print(f"  {BULLET} {d}")
 
     # 路线图待办
     if pending_roadmap:
@@ -382,7 +384,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
     suggestions.append("用 `vibecollab check --insights` 执行一致性自检")
 
     console.print(Panel(
-        "\n".join(f"  • {s}" for s in suggestions),
+        "\n".join(f"  {BULLET} {s}" for s in suggestions),
         title="建议的下一步",
         border_style="green"
     ))

@@ -2,7 +2,6 @@
 LLMContext CLI - 命令行接口
 """
 
-import platform
 import sys
 from pathlib import Path
 from typing import Optional, Tuple
@@ -14,6 +13,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from . import __version__
+from ._compat import BULLET, EMOJI, is_windows_gbk
 from .generator import LLMContextGenerator
 from .git_utils import is_git_repo
 from .llmstxt import LLMsTxtManager
@@ -22,33 +22,9 @@ from .protocol_checker import ProtocolChecker
 from .templates import TemplateManager
 
 
-# 检测是否为 Windows 且使用 GBK 编码
-def is_windows_gbk():
-    """检测是否为 Windows 且使用 GBK 编码"""
-    if platform.system() != "Windows":
-        return False
-    try:
-        # 尝试编码 emoji，如果失败说明不支持
-        "✅⚠️❌ℹ️".encode(sys.stdout.encoding or "utf-8")
-        return False
-    except (UnicodeEncodeError, LookupError):
-        return True
-
-# 根据环境选择是否使用 emoji
+# 兼容旧变量名
 USE_EMOJI = not is_windows_gbk()
-
-# emoji 和特殊字符替代方案
-EMOJI_MAP = {
-    "error": "X" if not USE_EMOJI else "❌",
-    "warning": "!" if not USE_EMOJI else "⚠️",
-    "info": "i" if not USE_EMOJI else "ℹ️",
-    "success": "OK" if not USE_EMOJI else "✅",
-    "lock": "[保留]" if not USE_EMOJI else "🔒",
-    "sparkles": "+" if not USE_EMOJI else "✨"
-}
-
-# bullet point 替代
-BULLET = "-" if is_windows_gbk() else "•"
+EMOJI_MAP = EMOJI
 
 console = Console()
 
@@ -449,7 +425,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
         console.print()
 
         if new_sections:
-            console.print("[bold]📦 将新增以下配置项:[/bold]")
+            console.print(f"[bold]{EMOJI['package']} 将新增以下配置项:[/bold]")
             for section in new_sections:
                 console.print(f"  [green]+ {section}[/green]")
         else:
@@ -588,7 +564,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
 
     if new_sections:
         console.print()
-        console.print("[bold]📦 新增配置项:[/bold]")
+        console.print(f"[bold]{EMOJI['package']} 新增配置项:[/bold]")
         for section in new_sections:
             console.print(f"  [green]+ {section}[/green]")
 

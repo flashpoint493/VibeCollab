@@ -16,7 +16,6 @@ AI CLI 命令 — 人机对话 + 自主 Agent 模式
 
 import json
 import os
-import platform
 import random
 import sys
 import time
@@ -45,28 +44,13 @@ def _log_event(event_log: EventLog, event_type: str, summary: str,
     ))
 
 # ---------------------------------------------------------------------------
-# Windows GBK 兼容 (与 cli.py / cli_lifecycle.py 保持一致)
+# Windows GBK 兼容 (从共享模块导入)
 # ---------------------------------------------------------------------------
 
-def is_windows_gbk():
-    if platform.system() != "Windows":
-        return False
-    try:
-        "✅⚠️❌ℹ️".encode(sys.stdout.encoding or "utf-8")
-        return False
-    except (UnicodeEncodeError, LookupError):
-        return True
+from ._compat import BULLET, EMOJI as _COMPAT_EMOJI, is_windows_gbk
 
 USE_EMOJI = not is_windows_gbk()
-EMOJI = {
-    "ok": "OK" if not USE_EMOJI else "✅",
-    "warn": "!" if not USE_EMOJI else "⚠️",
-    "err": "x" if not USE_EMOJI else "❌",
-    "bot": ">" if not USE_EMOJI else "🤖",
-    "user": ">" if not USE_EMOJI else "👤",
-    "think": "..." if not USE_EMOJI else "🧠",
-    "stop": "[STOP]" if not USE_EMOJI else "🛑",
-}
+EMOJI = _COMPAT_EMOJI
 
 console = Console()
 

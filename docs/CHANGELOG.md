@@ -7,6 +7,15 @@
 - 配置文件存放在用户 home 目录（`~/.vibecollab/config.yaml`），不进 git
 - 轻量 .env 解析：自实现 `parse_dotenv()`，仅提取 `VIBECOLLAB_*` 前缀变量
 
+### Refactor
+- **统一 Windows GBK 编码兼容层** (`_compat.py`): 提取 `is_windows_gbk()` / `EMOJI` / `BULLET` 到共享模块
+  - 消除 4 处重复定义（cli.py / cli_ai.py / cli_lifecycle.py / cli_config.py）
+  - 为 cli_guide.py / cli_insight.py 补充缺失的 GBK 兼容机制
+  - 修复 7 处硬编码 emoji（📦 ⏳ ● •），避免 Windows GBK 终端 UnicodeEncodeError
+  - 统一 cli_insight.py 的 `sys.exit(1)` → `raise SystemExit(1)`（9 处）
+  - 移除不再需要的 `import platform` / `import sys`
+- **cli_insight.py `_load_insight_manager()` 错误处理**: 检查 `.vibecollab/` 目录存在性，提供友好提示
+
 ### New Feature
 - **`vibecollab config setup`**: 交互式 LLM 配置向导
   - Provider 选择（OpenAI / Anthropic）
