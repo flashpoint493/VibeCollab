@@ -362,6 +362,9 @@ documentation:
             type: string
           update_trigger:
             type: string
+          max_stale_days:
+            type: number
+            description: "可选。文件最大允许未更新天数，超过则 check 报 warning"
     context_file:
       type: string
       default: "docs/CONTEXT.md"

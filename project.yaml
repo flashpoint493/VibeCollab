@@ -409,12 +409,14 @@ documentation:
   - path: docs/QA_TEST_CASES.md
     purpose: 产品QA测试用例
     update_trigger: 每个功能完成时
+    max_stale_days: 7
   - path: docs/PRD.md
     purpose: 产品需求文档
     update_trigger: 需求变更时
   - path: docs/ROADMAP.md
     purpose: 路线图+迭代建议
     update_trigger: 里程碑规划/反馈时
+    max_stale_days: 14
   context_file: docs/CONTEXT.md
   changelog_file: docs/CHANGELOG.md
   decisions_file: docs/DECISIONS.md

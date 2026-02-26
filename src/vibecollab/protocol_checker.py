@@ -406,7 +406,7 @@ class ProtocolChecker:
                     self._check_release_consistency(group_name, files)
                 )
 
-        # 检查 key_files 中声明的所有文件存在性
+        # 检查 key_files 中声明的所有文件存在性 + 可选陈旧性
         key_files = doc_config.get("key_files", [])
         for kf in key_files:
             path = kf.get("path", "")
@@ -421,6 +421,27 @@ class ProtocolChecker:
                     severity="warning",
                     suggestion=f"创建 {path}，它被声明为关键文档"
                 ))
+                continue
+
+            # 可选陈旧性检查: max_stale_days
+            max_stale_days = kf.get("max_stale_days")
+            if max_stale_days is not None and max_stale_days > 0:
+                file_mtime = datetime.fromtimestamp(full_path.stat().st_mtime)
+                days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
+                if days_since_update > max_stale_days:
+                    results.append(CheckResult(
+                        name=f"关键文档陈旧: {path}",
+                        passed=False,
+                        message=(
+                            f"关键文档 {path} 已超过 {max_stale_days} 天未更新"
+                            f"（上次更新: {int(days_since_update)} 天前）"
+                        ),
+                        severity="warning",
+                        suggestion=(
+                            f"根据触发条件「{kf.get('update_trigger', '未知')}」，"
+                            f"请检查 {path} 是否需要更新"
+                        )
+                    ))
 
         return results
 

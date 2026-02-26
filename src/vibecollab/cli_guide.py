@@ -58,7 +58,7 @@ def _get_git_uncommitted(project_root: Path) -> List[str]:
         if result.returncode == 0 and result.stdout.strip():
             return [line.strip() for line in result.stdout.strip().splitlines()]
         return []
-    except Exception:
+    except BaseException:
         return []
 
 
@@ -72,7 +72,7 @@ def _get_git_diff_files(project_root: Path) -> List[str]:
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout.strip().splitlines()
         return []
-    except Exception:
+    except BaseException:
         return []
 
 

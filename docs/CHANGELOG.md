@@ -19,8 +19,26 @@
 - **`resolve_llm_config()`**: 统一三层配置解析函数
 - **`LLMConfig.__post_init__`**: 改为三层优先级（显式参数 > 环境变量 > 配置文件 > 默认值）
 - **改进错误提示**: `_ensure_llm_configured()` 提供三种配置方式指引
+- **`vibecollab check` key_files 陈旧性检查**: 支持 `max_stale_days` 配置
+  - `documentation.key_files` 新增可选 `max_stale_days` 字段
+  - 文件存在但超过配置天数未更新时，报 warning 并提示 `update_trigger`
+  - `QA_TEST_CASES.md` 配置 7 天阈值，`ROADMAP.md` 配置 14 天阈值
+  - 3 个单元测试覆盖（触发/未触发/未配置）
+
+### Bug Fix
+- **修复 flaky test `test_onboard_basic`**: Windows 环境下 `test_serve_lock_conflict` 的 `SystemExit(1)` 导致 `subprocess.run` 内部线程残留 `KeyboardInterrupt`，污染后续 `onboard` 命令的 `_get_git_uncommitted()` 调用
+  - 根因: `KeyboardInterrupt` 继承自 `BaseException` 而非 `Exception`，原有的 `except Exception` 无法捕获
+  - 修复: `cli_guide.py` 中 `_get_git_uncommitted()` 和 `_get_git_diff_files()` 的异常处理从 `except Exception` 改为 `except BaseException`
+  - 验证: 连续两次全量 779/779 passed
 
 ### Testing
+- **测试覆盖率 76% → 81%**: 新增 128 个测试覆盖 6 个低覆盖模块
+  - `test_llmstxt.py` (17 tests): 68% → 97%
+  - `test_templates.py` (13 tests): 60% → 91%
+  - `test_git_utils.py` (21 tests): 52% → 100%
+  - `test_lifecycle.py` (25 tests): 28% → 93%
+  - `test_extension.py` (41 tests, 重写): 64% → 100%
+  - `test_cli_lifecycle.py` (11 tests): 23% → 92%
 - **新增 38 个单元测试** (`tests/test_config_manager.py`):
   - `TestConfigPaths` (2): 路径正确性
   - `TestLoadSaveConfig` (5): 文件操作
