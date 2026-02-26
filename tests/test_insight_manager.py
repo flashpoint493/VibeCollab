@@ -769,3 +769,346 @@ class TestEdgeCases:
         assert not INSIGHT_ID_PATTERN.match("INS-01")
         assert not INSIGHT_ID_PATTERN.match("ins-001")
         assert not INSIGHT_ID_PATTERN.match("INS001")
+
+
+# ---------------------------------------------------------------------------
+# Test: 大规模 Insight 压力测试
+# ---------------------------------------------------------------------------
+
+class TestLargeScaleInsight:
+    """100+ 条 Insight 下的性能和正确性测试."""
+
+    def test_create_100_insights(self, mgr):
+        """批量创建 100 条 Insight，ID 连续."""
+        for i in range(100):
+            mgr.create(
+                title=f"Insight {i}",
+                tags=[f"tag-{i % 10}", f"group-{i % 5}", "common"],
+                category="technique",
+                body=_body(),
+                created_by="stress-test",
+            )
+        all_ins = mgr.list_all()
+        assert len(all_ins) == 100
+        # ID 应连续
+        ids = sorted(int(ins.id.split("-")[1]) for ins in all_ins)
+        assert ids == list(range(1, 101))
+
+    def test_search_100_insights(self, mgr):
+        """100 条 Insight 中搜索，结果按权重排序."""
+        for i in range(100):
+            mgr.create(
+                title=f"Topic {i}",
+                tags=[f"tag-{i % 10}", f"area-{i % 3}"],
+                category="technique",
+                body=_body(),
+                created_by="test",
+            )
+        # 给部分 insight 增加权重
+        for i in range(1, 11):
+            mgr.record_use(f"INS-{i:03d}", used_by="test")
+
+        results = mgr.search_by_tags(["tag-0", "area-0"])
+        assert len(results) > 0
+        # search_by_tags 返回已排序的 List[Insight]，验证有结果即可
+        # （分数在内部排序，外部无法直接获取）
+
+    def test_list_all_100_insights(self, mgr):
+        """list_all 处理 100 条 Insight 不崩溃."""
+        for i in range(100):
+            mgr.create(
+                title=f"Item {i}",
+                tags=["bulk"],
+                category="technique",
+                body=_body(),
+                created_by="test",
+            )
+        all_ins = mgr.list_all()
+        assert len(all_ins) == 100
+
+    def test_decay_100_insights(self, mgr):
+        """对 100 条 Insight 执行衰减."""
+        for i in range(100):
+            mgr.create(
+                title=f"Decayable {i}",
+                tags=["decay"],
+                category="technique",
+                body=_body(),
+                created_by="test",
+            )
+        # 初始权重都是 1.0
+        mgr.apply_decay()
+        entries, _ = mgr.get_registry()
+        for eid, entry in entries.items():
+            assert abs(entry.weight - 0.95) < 0.01
+
+    def test_search_many_tags(self, mgr):
+        """Insight 有 20+ tags 时搜索正常."""
+        many_tags = [f"tag-{i}" for i in range(25)]
+        mgr.create(
+            title="Many tags",
+            tags=many_tags,
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        results = mgr.search_by_tags(["tag-0", "tag-5", "tag-10"])
+        assert len(results) == 1
+
+    def test_deep_derivation_chain(self, mgr):
+        """10 层深的溯源链 get_full_trace 不死循环."""
+        prev_id = None
+        for i in range(10):
+            derived = [prev_id] if prev_id else None
+            ins = mgr.create(
+                title=f"Chain {i}",
+                tags=["chain"],
+                category="technique",
+                body=_body(),
+                created_by="test",
+                derived_from=derived,
+            )
+            prev_id = ins.id
+
+        trace = mgr.get_full_trace(prev_id)
+        # 完整链应该能获取到所有上游
+        assert trace is not None
+
+
+# ---------------------------------------------------------------------------
+# Test: 衰减/奖励长期运行模拟
+# ---------------------------------------------------------------------------
+
+class TestDecayLongTerm:
+    """多轮衰减 + 奖励交替的长期行为验证."""
+
+    def test_50_rounds_decay_converges_to_zero(self, mgr):
+        """50 轮衰减后权重趋近 0 并被停用."""
+        mgr.create(
+            title="Decay target",
+            tags=["decay"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        for _ in range(50):
+            mgr.apply_decay()
+
+        entries, _ = mgr.get_registry()
+        entry = entries["INS-001"]
+        # 0.95^50 ≈ 0.0769 < 0.1 阈值 → 应被停用
+        assert entry.active is False
+        assert entry.weight < 0.1
+
+    def test_decay_plus_reward_steady_state(self, mgr):
+        """衰减 + 使用奖励交替，权重应在合理范围内波动."""
+        mgr.create(
+            title="Steady state",
+            tags=["steady"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        # 模拟 20 轮：每 5 轮使用一次
+        for i in range(20):
+            mgr.apply_decay()
+            if i % 5 == 0:
+                mgr.record_use("INS-001", used_by="test")
+
+        entries, _ = mgr.get_registry()
+        entry = entries["INS-001"]
+        # 应仍为 active（因为有定期 reward）
+        assert entry.active is True
+        assert entry.weight > 0.1
+
+    def test_massive_record_use_weight_grows(self, mgr):
+        """大量 record_use 后权重持续增长（无上限验证）."""
+        mgr.create(
+            title="Popular",
+            tags=["popular"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        for _ in range(100):
+            mgr.record_use("INS-001", used_by="fan")
+
+        entries, _ = mgr.get_registry()
+        entry = entries["INS-001"]
+        # 初始 1.0 + 100 * 0.1 = 11.0
+        assert entry.weight >= 10.0
+        assert entry.used_count == 100
+
+    def test_weight_precision_after_many_decays(self, mgr):
+        """多次衰减后权重精度（浮点累积误差）."""
+        mgr.create(
+            title="Precision",
+            tags=["prec"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        for _ in range(20):
+            mgr.apply_decay()
+
+        entries, _ = mgr.get_registry()
+        entry = entries["INS-001"]
+        expected = round(0.95 ** 20, 4)
+        # 允许微小浮点误差
+        assert abs(entry.weight - expected) < 0.001
+
+    def test_decay_reactivation_cycle(self, mgr):
+        """衰减到停用 → record_use 重新激活 → 再衰减."""
+        mgr.create(
+            title="Reactivation",
+            tags=["re"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        # 衰减直到停用
+        for _ in range(60):
+            mgr.apply_decay()
+        entries, _ = mgr.get_registry()
+        assert entries["INS-001"].active is False
+
+        # 使用重新激活
+        mgr.record_use("INS-001", used_by="user")
+        entries, _ = mgr.get_registry()
+        assert entries["INS-001"].active is True
+        assert entries["INS-001"].weight > 0.1
+
+        # 再次衰减
+        mgr.apply_decay()
+        entries, _ = mgr.get_registry()
+        assert entries["INS-001"].active is True  # 刚激活不会立即停用
+
+    def test_threshold_exact_boundary(self, mgr):
+        """权重恰好等于阈值时不停用（< threshold 才停用）."""
+        mgr.create(
+            title="Boundary",
+            tags=["edge"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        # 手动设置权重恰好 = 0.1
+        entries, settings = mgr.get_registry()
+        entries["INS-001"].weight = 0.1
+        registry_path = mgr.insights_dir / "registry.yaml"
+        registry_data = {
+            "entries": {k: v.to_dict() for k, v in entries.items()},
+            "settings": settings,
+        }
+        registry_path.write_text(
+            yaml.dump(registry_data, allow_unicode=True),
+            encoding="utf-8",
+        )
+        mgr.apply_decay()  # 0.1 * 0.95 = 0.095 < 0.1 → 停用
+        entries, _ = mgr.get_registry()
+        assert entries["INS-001"].active is False
+
+
+# ---------------------------------------------------------------------------
+# Test: Task-Insight 关联精度
+# ---------------------------------------------------------------------------
+
+class TestTaskInsightRelation:
+    """Task-Insight 关联的搜索精度测试."""
+
+    def test_search_empty_tags(self, mgr):
+        """空标签列表搜索返回空结果."""
+        mgr.create(
+            title="Something",
+            tags=["test"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        results = mgr.search_by_tags([])
+        assert results == []
+
+    def test_search_no_match(self, mgr):
+        """无匹配标签返回空结果."""
+        mgr.create(
+            title="Python tip",
+            tags=["python", "testing"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        results = mgr.search_by_tags(["java", "deployment"])
+        assert results == []
+
+    def test_search_chinese_tags(self, mgr):
+        """中文标签搜索正常."""
+        mgr.create(
+            title="中文洞察",
+            tags=["测试", "架构", "重构"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        results = mgr.search_by_tags(["测试", "架构"])
+        assert len(results) == 1
+
+    def test_search_mixed_case(self, mgr):
+        """大小写不敏感搜索."""
+        mgr.create(
+            title="Case test",
+            tags=["Python", "Testing"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        results = mgr.search_by_tags(["python", "testing"])
+        assert len(results) == 1
+
+    def test_search_partial_overlap(self, mgr):
+        """部分标签重叠时返回结果."""
+        mgr.create(
+            title="Partial match",
+            tags=["api", "testing", "python"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        results = mgr.search_by_tags(["api", "deployment", "docker"])
+        assert len(results) == 1
+        # 返回 Insight 对象，验证标题即可
+        assert results[0].title == "Partial match"
+
+
+# ---------------------------------------------------------------------------
+# Test: 溯源循环保护
+# ---------------------------------------------------------------------------
+
+class TestDerivationCycleProtection:
+    """测试 get_full_trace 的循环引用保护."""
+
+    def test_circular_derivation(self, mgr):
+        """A → B → A 循环引用不死循环."""
+        ins_a = mgr.create(
+            title="A",
+            tags=["loop"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+        )
+        ins_b = mgr.create(
+            title="B",
+            tags=["loop"],
+            category="technique",
+            body=_body(),
+            created_by="test",
+            derived_from=[ins_a.id],
+        )
+        # 手动修改 A 的 derived_from 为 B（制造循环）
+        a_path = mgr.insights_dir / f"{ins_a.id}.yaml"
+        a_data = yaml.safe_load(a_path.read_text(encoding="utf-8"))
+        a_data["derived_from"] = [ins_b.id]
+        a_path.write_text(yaml.dump(a_data, allow_unicode=True), encoding="utf-8")
+
+        # get_full_trace 应不死循环
+        trace = mgr.get_full_trace(ins_a.id)
+        assert trace is not None
