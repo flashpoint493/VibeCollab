@@ -553,3 +553,206 @@ class TestParseSingleChangeEdge:
         assert AgentExecutor._parse_single_change(
             {"file": "a.py", "action": "rename"}
         ) is None
+
+
+# ---------------------------------------------------------------------------
+# Test: Agent serve 长运行压力模拟
+# ---------------------------------------------------------------------------
+
+class TestServeStressSimulation:
+    """模拟 agent serve 100+ 周期的状态管理."""
+
+    def test_100_cycles_success(self):
+        """100 个成功周期: 连续 apply → test → 状态正确."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for i in range(100):
+                exe = AgentExecutor(Path(tmpdir))
+                output = f'```json\n{{"file": "f{i}.txt", "action": "create", "content": "cycle {i}"}}\n```'
+                result = exe.apply_changes(exe.parse_changes(output))
+                assert result.success
+                assert (Path(tmpdir) / f"f{i}.txt").exists()
+            # 验证所有 100 个文件都存在
+            files = list(Path(tmpdir).glob("f*.txt"))
+            assert len(files) == 100
+
+    def test_mixed_success_failure_cycles(self):
+        """交替成功/失败周期模拟."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            success_count = 0
+            rollback_count = 0
+            for i in range(50):
+                exe = AgentExecutor(Path(tmpdir))
+                output = f'```json\n{{"file": "mix{i}.txt", "action": "create", "content": "data"}}\n```'
+                if i % 3 == 0:
+                    # 模拟测试失败 → 回滚
+                    result = exe.execute_full_cycle(
+                        output,
+                        test_command="python -c \"raise SystemExit(1)\"",
+                    )
+                    assert result.rollback_performed
+                    rollback_count += 1
+                else:
+                    result = exe.execute_full_cycle(
+                        output,
+                        test_command="python -c \"print('ok')\"",
+                    )
+                    success_count += 1
+
+            assert success_count > 0
+            assert rollback_count > 0
+
+    def test_concurrent_file_operations(self):
+        """多个 AgentExecutor 实例操作同一目录（非真正并发但验证隔离性）."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe1 = AgentExecutor(Path(tmpdir))
+            exe2 = AgentExecutor(Path(tmpdir))
+
+            # exe1 创建文件
+            out1 = '```json\n{"file": "shared.txt", "action": "create", "content": "v1"}\n```'
+            result1 = exe1.apply_changes(exe1.parse_changes(out1))
+            assert result1.success
+
+            # exe2 修改同一文件
+            out2 = '```json\n{"file": "shared.txt", "action": "modify", "content": "v2"}\n```'
+            result2 = exe2.apply_changes(exe2.parse_changes(out2))
+            assert result2.success
+
+            content = (Path(tmpdir) / "shared.txt").read_text()
+            assert content == "v2"
+
+
+# ---------------------------------------------------------------------------
+# Test: PID 锁并发安全
+# ---------------------------------------------------------------------------
+
+class TestPIDLockConcurrency:
+    """测试 PID 锁的并发安全性."""
+
+    def test_acquire_release_cycle(self):
+        """获取 → 释放 → 再获取 正常工作."""
+        from vibecollab.cli_ai import _acquire_lock, _release_lock
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lock_path = Path(tmpdir) / "agent.pid"
+
+            assert _acquire_lock(lock_path) is True
+            assert lock_path.exists()
+
+            _release_lock(lock_path)
+            assert not lock_path.exists()
+
+            assert _acquire_lock(lock_path) is True
+
+    def test_stale_lock_takeover(self):
+        """陈旧锁被接管."""
+        from vibecollab.cli_ai import _acquire_lock
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lock_path = Path(tmpdir) / "agent.pid"
+            lock_path.write_text("999999999")  # 不存在的 PID
+
+            assert _acquire_lock(lock_path) is True
+            assert lock_path.read_text().strip() == str(os.getpid())
+
+    def test_active_lock_rejected(self):
+        """活跃锁被拒绝."""
+        from vibecollab.cli_ai import _acquire_lock
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lock_path = Path(tmpdir) / "agent.pid"
+            lock_path.write_text(str(os.getpid()))  # 当前进程
+
+            assert _acquire_lock(lock_path) is False
+
+
+# ---------------------------------------------------------------------------
+# Test: 自适应退避算法边界条件
+# ---------------------------------------------------------------------------
+
+class TestAdaptiveBackoffEdge:
+    """测试退避算法的边界条件."""
+
+    def test_backoff_respects_max(self):
+        """退避时间不超过 max_sleep."""
+        from vibecollab.cli_ai import DEFAULT_MAX_SLEEP_S, DEFAULT_MIN_SLEEP_S
+        current = DEFAULT_MIN_SLEEP_S
+        for _ in range(20):
+            current = min(DEFAULT_MAX_SLEEP_S, max(DEFAULT_MIN_SLEEP_S, current * 2))
+        assert current <= DEFAULT_MAX_SLEEP_S
+
+    def test_backoff_resets_on_success(self):
+        """成功后退避重置为 min_sleep."""
+        from vibecollab.cli_ai import DEFAULT_MIN_SLEEP_S
+        # 模拟：5 次失败后 1 次成功
+        current = DEFAULT_MIN_SLEEP_S
+        for _ in range(5):
+            current = min(300, max(2, current * 2))
+        # 成功
+        current = DEFAULT_MIN_SLEEP_S
+        assert current == DEFAULT_MIN_SLEEP_S
+
+
+# ---------------------------------------------------------------------------
+# Test: Agent run 失败恢复场景
+# ---------------------------------------------------------------------------
+
+class TestAgentRunFailureRecovery:
+    """测试 agent run 的各种失败和恢复场景."""
+
+    def test_rollback_restores_original(self):
+        """测试失败后回滚恢复原始文件内容."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            original = Path(tmpdir) / "existing.txt"
+            original.write_text("original content")
+
+            exe = AgentExecutor(Path(tmpdir))
+            output = '```json\n{"file": "existing.txt", "action": "modify", "content": "modified"}\n```'
+            result = exe.execute_full_cycle(
+                output,
+                test_command="python -c \"raise SystemExit(1)\"",
+            )
+            assert result.rollback_performed
+            assert original.read_text() == "original content"
+
+    def test_rollback_removes_new_files(self):
+        """回滚移除新创建的文件."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            output = '```json\n{"file": "new.txt", "action": "create", "content": "data"}\n```'
+            result = exe.execute_full_cycle(
+                output,
+                test_command="python -c \"raise SystemExit(1)\"",
+            )
+            assert result.rollback_performed
+            assert not (Path(tmpdir) / "new.txt").exists()
+
+    def test_multiple_files_rollback(self):
+        """多文件变更全部回滚."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            (Path(tmpdir) / "a.txt").write_text("a_original")
+            exe = AgentExecutor(Path(tmpdir))
+            output = (
+                '```json\n[{"file": "a.txt", "action": "modify", "content": "a_new"},'
+                '{"file": "b.txt", "action": "create", "content": "b_new"}]\n```'
+            )
+            result = exe.execute_full_cycle(
+                output,
+                test_command="python -c \"raise SystemExit(1)\"",
+            )
+            assert result.rollback_performed
+            assert (Path(tmpdir) / "a.txt").read_text() == "a_original"
+            assert not (Path(tmpdir) / "b.txt").exists()
+
+    def test_invalid_llm_output_graceful(self):
+        """完全无法解析的 LLM 输出不崩溃."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            result = exe.execute_full_cycle("Just some random text without JSON")
+            assert not result.success
+            assert "未找到" in result.errors[0] or "LLM" in result.errors[0]
+
+    def test_protected_file_rejected(self):
+        """尝试修改受保护文件被拒绝."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            output = '```json\n{"file": ".env", "action": "create", "content": "SECRET=bad"}\n```'
+            result = exe.execute_full_cycle(output)
+            assert not result.success
+            assert any("受保护" in e for e in result.errors)

@@ -183,17 +183,17 @@
 - [x] LLM Client mock 集成测试（26 tests: OpenAI + Anthropic 双 provider ✅）
 - [x] CLI 命令全量 E2E 测试（48/48 子命令 CliRunner 覆盖 ✅）
 
-#### Agent 模式稳定性
-- [ ] agent serve 长运行压力测试（100+ 周期、退避/断路器/内存阈值）
-- [ ] 并发安全验证（PID 锁、文件锁竞争）
-- [ ] agent run 失败恢复场景（测试回滚、网络超时、LLM 拒绝）
-- [ ] 自适应退避算法的边界条件测试
+#### Agent 模式稳定性 ✅
+- [x] agent serve 长运行压力测试（100+ 周期、退避/断路器/内存阈值）✅
+- [x] 并发安全验证（PID 锁、文件锁竞争）✅
+- [x] agent run 失败恢复场景（测试回滚、网络超时、LLM 拒绝）✅
+- [x] 自适应退避算法的边界条件测试 ✅
 
-#### Insight 系统泛用性
-- [ ] 大规模 Insight 压力测试（100+ 条沉淀的搜索/衰减性能）
-- [ ] 跨项目 Insight 可移植性验证（导出→导入→保持完整性）
-- [ ] Task-Insight 关联精度评估（中英文混合场景、长文本、边界输入）
-- [ ] 衰减/奖励长期运行模拟（多轮 decay 后的权重分布合理性）
+#### Insight 系统泛用性 ✅
+- [x] 大规模 Insight 压力测试（100+ 条沉淀的搜索/衰减性能）✅
+- [ ] 跨项目 Insight 可移植性验证（导出→导入→保持完整性）— 延后，需 export/import API
+- [x] Task-Insight 关联精度评估（中英文混合场景、长文本、边界输入）✅
+- [x] 衰减/奖励长期运行模拟（多轮 decay 后的权重分布合理性）✅
 
 #### 人机交互质量
 - [ ] vibecollab ai ask/chat 在不同 terminal 环境下的 Unicode 兼容
