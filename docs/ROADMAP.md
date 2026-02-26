@@ -223,11 +223,160 @@
 - [x] **`vibecollab ai` 标记 experimental** ✅ — VibeCollab 定位为协议管理工具，不自建 LLM 运行时。Tool Use 交给 Cline/Cursor/Aider。`ai ask/chat/agent` 保留但冻结，不继续投入
 - [x] **Insight 读取路径规划** ✅ — 不在 `build_project_context()` 中注入，而是通过协议指引（CONTRIBUTING_AI.md）让 Cline/Cursor 在正确时机调用 `vibecollab insight search`
 
-### v1.0.0 - 正式版（待规划）
-- [ ] 文档完善和中英文支持
-- [ ] 完整的教程和示例
-- [ ] 社区反馈整合
-- [ ] 性能和稳定性达到生产级别
+## v0.8.x+ 后续开发规划
+
+> **核心方向**: VibeCollab 定位为**协议管理工具 + 结构化知识引擎**，不自建 LLM 运行时。
+> 后续版本围绕**自举能力、语义检索、IDE 集成、无监督运行**四条主线推进。
+
+### v0.9.0 - 语义检索引擎（Insight/文档向量化）
+
+> 目标：让 Insight 和项目文档可被语义搜索，替代纯标签 Jaccard 匹配
+
+#### 文档/代码向量化
+- [ ] `Embedder` 模块 — 轻量 embedding 抽象层
+  - 支持 OpenAI `text-embedding-3-small` / 本地 `sentence-transformers` 双后端
+  - 可选依赖 `pip install vibe-collab[embedding]`
+- [ ] `VectorStore` 模块 — 本地持久化向量存储
+  - 默认 SQLite + numpy 余弦相似度（零外部依赖方案）
+  - 可选 ChromaDB / FAISS 后端
+  - 存储路径 `.vibecollab/vectors/`
+- [ ] `vibecollab index` 命令 — 索引项目文档
+  - 增量索引 `CONTRIBUTING_AI.md`、`CONTEXT.md`、`DECISIONS.md`、`ROADMAP.md`、`PRD.md`
+  - Insight YAML 全量索引（标题 + body + tags）
+  - 代码文件可选索引（docstring / 函数签名）
+  - `--watch` 模式: 文件变更自动重建索引
+
+#### 语义搜索集成
+- [ ] `vibecollab insight search` 增强 — `--semantic` 模式
+  - 混合检索: 标签 Jaccard + 向量余弦 → 加权融合排序
+  - 保持纯标签搜索为默认（零依赖兼容）
+- [ ] `vibecollab search` 新命令 — 全局语义搜索
+  - 跨 Insight / 文档 / 代码 统一搜索
+  - 输出附带来源和相关度评分
+- [ ] `onboard` 增强 — 语义匹配当前任务相关 Insight
+  - 从 CONTEXT.md 提取当前任务描述 → 向量检索 Top-N 相关 Insight
+
+### v0.9.1 - 自举能力（VibeCollab 管理自身演进）
+
+> 目标：VibeCollab 能用自己的协议和工具来管理自身的开发过程
+
+#### 协议自举
+- [ ] `vibecollab bootstrap` — 用 VibeCollab 协议初始化 VibeCollab 自身
+  - 自动生成 VibeCollab 项目的 CONTRIBUTING_AI.md（吃自己的狗粮）
+  - 验证: `vibecollab check` 在 VibeCollab 仓库上的输出为全绿
+- [ ] 协议模板自测框架 — 模板变更后自动验证生成结果
+  - CI 中增加 `vibecollab generate && vibecollab check` 自测步骤
+  - 模板语法错误自动阻断发布
+
+#### 模型推理解析增强
+- [ ] `ContextBuilder` 重构 — 结构化上下文组装器
+  - 替代 `build_project_context()` 的纯字符串拼接
+  - 支持 Token 预算管理（按优先级截断）
+  - 自动选择注入哪些 Insight / 文档段落（基于向量相关度 + Token 预算）
+- [ ] Insight 自动生成 — 从 `git diff` + commit message 自动提炼候选 Insight
+  - `vibecollab insight suggest` — 分析最近 N 次 commit，推荐可沉淀的经验
+  - 人工 confirm 后入库（保持人在回路）
+
+### v0.10.0 - AI IDE 集成层
+
+> 目标：让 VibeCollab 成为 Cline/Cursor/Aider/OpenClaw 等 AI IDE 的"协议后端"
+
+#### MCP Server（Model Context Protocol）
+- [ ] `vibecollab mcp serve` — 标准 MCP Server 实现
+  - Tool 暴露: `insight_search`, `insight_add`, `task_list`, `check`, `next`, `onboard`
+  - Resource 暴露: `CONTRIBUTING_AI.md`, `CONTEXT.md`, `DECISIONS.md`, Insight YAML
+  - Prompt 暴露: 对话开始时的上下文注入模板
+- [ ] MCP 配置自动注入
+  - `vibecollab init` 自动生成 `.cursor/mcp.json` / `.cline/mcp_settings.json`
+  - 支持 `stdio` 和 `sse` 两种传输模式
+
+#### Cursor / Cline / CodeBuddy 适配
+- [ ] Cursor Skill 自动生成 — `vibecollab export cursor-skill`
+  - 从 `project.yaml` + `CONTRIBUTING_AI.md` 自动生成 `.cursor/skills/vibecollab/SKILL.md`
+  - 项目配置变更时自动重新生成
+- [ ] Cline Custom Instructions 适配 — `vibecollab export cline`
+  - 生成 `.cline/custom_instructions.md`
+- [ ] CodeBuddy Rule 适配 — `vibecollab export codebuddy`
+  - 生成 `.codebuddy/rules/vibecollab.md`
+
+#### OpenClaw 插件
+- [ ] `vibecollab-openclaw` 独立包
+  - 注册为 OpenClaw Agent 插件
+  - 暴露 VibeCollab CLI 能力为 OpenClaw Tool
+  - 协议检查结果作为 Agent 评估反馈
+
+### v0.10.1 - 无监督运行能力
+
+> 目标：VibeCollab 在 CI/CD 和 Git Hook 中无需人工干预地运行
+
+#### Git Hook 集成
+- [ ] `vibecollab hook install` — 自动注入 Git hooks
+  - `pre-commit`: `vibecollab check --strict` 阻断不合规提交
+  - `post-commit`: `vibecollab insight suggest --auto` 自动推荐 Insight
+  - `commit-msg`: 验证 commit message 格式是否符合协议 commit_prefixes
+
+#### CI/CD 无监督模式
+- [ ] `vibecollab ci` 命令组 — CI 环境优化
+  - `vibecollab ci check` — 非交互模式，JSON 输出，退出码表示成败
+  - `vibecollab ci report` — 生成 Markdown 格式的协议遵循报告（可作为 PR comment）
+  - `vibecollab ci gate` — 作为 PR merge 门控（协议检查 + Insight 覆盖率）
+- [ ] GitHub Action — `vibecollab-action`
+  - 封装为可复用的 GitHub Action
+  - 支持 PR 评论注入检查报告
+  - 支持 auto-label（基于变更范围自动打标签）
+
+#### 定时任务
+- [ ] `vibecollab cron` — 周期性无监督任务
+  - Insight 衰减周期执行 (`insight decay --all`)
+  - 文档一致性自动报告
+  - 向量索引增量更新
+
+### v0.11.0 - Agent 稳定性增强（experimental 模块升级）
+
+> 前提：v0.10.0 MCP 路径验证后，评估是否值得继续投入 agent 自建能力
+> 如果 MCP + 外部 IDE 已满足 95% 场景，此版本可降级或取消
+
+#### Agent 能力增强（条件性）
+- [ ] Tool Use 框架 — 结构化工具调用协议
+  - 定义 VibeCollab Tool Schema（JSON Schema）
+  - LLM 返回 tool_call → agent_executor 解析执行
+  - 支持 OpenAI function calling / Anthropic tool use 格式
+- [ ] Agent 记忆系统 — 跨会话上下文保持
+  - 短期: 对话内 token 管理（滑动窗口 + 摘要压缩）
+  - 中期: 会话间状态持久化 (`.vibecollab/agent_memory/`)
+  - 长期: Insight 系统作为永久记忆层
+- [ ] Agent 自我评估 — 执行后健康检查
+  - 每次 `agent run` 后自动执行 `vibecollab check`
+  - 检查结果反馈给下一轮 LLM prompt
+  - 连续 3 次 check 失败 → 自动暂停并通知
+
+#### Agent 安全加固
+- [ ] 沙箱执行环境 — 限制 agent 可操作范围
+  - 文件系统白名单（只允许操作项目目录内文件）
+  - 命令白名单（禁止 `rm -rf` 等危险操作）
+  - 网络访问限制（仅允许 LLM API 调用）
+- [ ] 人工审批门控 — 高风险操作确认
+  - S/A 级决策变更需人工确认
+  - 删除操作需人工确认
+  - 基于 git diff 的变更量阈值（超过 N 行自动暂停）
+
+### v1.0.0 - 正式发布
+
+> 前置条件：v0.9.x 语义检索 + v0.10.x IDE 集成 至少各完成核心功能
+
+#### 质量门槛
+- [ ] 测试覆盖率 ≥ 85%
+- [ ] 3+ 外部真实项目验证
+- [ ] 英文文档完善（README / Quick Start / API Reference）
+- [ ] PyPI 稳定版发布 + GitHub Release + Changelog
+- [ ] MCP Server 至少在 Cursor/Cline 中可用
+
+#### 正式功能集
+- [ ] 协议管理: init / generate / validate / check
+- [ ] 知识引擎: insight CRUD / 语义搜索 / 自动推荐
+- [ ] IDE 集成: MCP Server / Cursor Skill / Cline 适配
+- [ ] CI/CD: 无监督检查 / PR 门控 / Git Hook
+- [ ] 文档: 中英文 README / 教程 / API 文档
 
 ---
 
@@ -271,4 +420,4 @@
 
 ---
 
-*最后更新: 2026-02-26 (v0.8.0-dev)*
+*最后更新: 2026-02-27 (v0.8.0)*

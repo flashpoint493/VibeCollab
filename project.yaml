@@ -403,6 +403,10 @@ documentation:
   - path: docs/DECISIONS.md
     purpose: 重要决策记录
     update_trigger: 每次 S/A 级决策后
+    max_stale_days: 7
+    watch_files:
+    - docs/CHANGELOG.md
+    - docs/CONTEXT.md
   - path: docs/CHANGELOG.md
     purpose: 版本变更日志
     update_trigger: 每次有效对话后
@@ -413,6 +417,9 @@ documentation:
   - path: docs/PRD.md
     purpose: 产品需求文档
     update_trigger: 需求变更时
+    max_stale_days: 14
+    watch_files:
+    - docs/DECISIONS.md
   - path: docs/ROADMAP.md
     purpose: 路线图+迭代建议
     update_trigger: 里程碑规划/反馈时
@@ -431,6 +438,7 @@ documentation:
       - docs/DECISIONS.md
       level: local_mtime
       threshold_minutes: 15
+      max_inactive_hours: -1
     - name: ROADMAP-CHANGELOG
       description: 路线图与变更日志关联，版本发布时应保持一致
       files:

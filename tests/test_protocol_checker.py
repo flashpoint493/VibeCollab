@@ -667,3 +667,225 @@ class TestDocumentConsistency:
             stale_results = [r for r in results if "关键文档陈旧" in r.name]
             assert len(stale_results) == 0
 
+    def test_max_inactive_hours_always_check(self):
+        """max_inactive_hours=-1 时始终检查，即使组内文件都超过 24h 未改"""
+        import os
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+
+            prd = project_root / "docs" / "PRD.md"
+            dec = project_root / "docs" / "DECISIONS.md"
+
+            # DECISIONS.md 48h 前修改
+            dec.write_text("decisions\n", encoding="utf-8")
+            dec_time = time.time() - 48 * 3600
+            os.utime(dec, (dec_time, dec_time))
+
+            # PRD.md 72h 前修改（落后 DECISIONS 24h）
+            prd.write_text("prd\n", encoding="utf-8")
+            prd_time = time.time() - 72 * 3600
+            os.utime(prd, (prd_time, prd_time))
+
+            config = self._base_config([{
+                "name": "PRD-DECISIONS",
+                "files": ["docs/PRD.md", "docs/DECISIONS.md"],
+                "level": "local_mtime",
+                "threshold_minutes": 15,
+                "max_inactive_hours": -1,
+            }])
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_document_consistency()
+
+            # max_inactive_hours=-1 应始终检查，即使都超 24h
+            consistency_results = [r for r in results if "文档关联性" in r.name]
+            assert len(consistency_results) == 1
+            assert "PRD.md" in consistency_results[0].message
+
+    def test_max_inactive_hours_custom(self):
+        """max_inactive_hours=48 时，最新文件 30h 前修改仍应检查"""
+        import os
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+
+            a = project_root / "docs" / "A.md"
+            b = project_root / "docs" / "B.md"
+
+            # A 30h 前修改（在 48h 窗口内）
+            a.write_text("a\n", encoding="utf-8")
+            a_time = time.time() - 30 * 3600
+            os.utime(a, (a_time, a_time))
+
+            # B 60h 前修改
+            b.write_text("b\n", encoding="utf-8")
+            b_time = time.time() - 60 * 3600
+            os.utime(b, (b_time, b_time))
+
+            config = self._base_config([{
+                "name": "AB-GROUP",
+                "files": ["docs/A.md", "docs/B.md"],
+                "level": "local_mtime",
+                "threshold_minutes": 15,
+                "max_inactive_hours": 48,
+            }])
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_document_consistency()
+
+            # A 在 48h 窗口内，B 落后，应告警
+            consistency_results = [r for r in results if "文档关联性" in r.name]
+            assert len(consistency_results) == 1
+
+    def test_max_inactive_hours_default_24h(self):
+        """max_inactive_hours=0 (默认) 使用 24h，超过不检查"""
+        import os
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+
+            a = project_root / "docs" / "A.md"
+            b = project_root / "docs" / "B.md"
+
+            # A 30h 前修改（超过默认 24h）
+            a.write_text("a\n", encoding="utf-8")
+            a_time = time.time() - 30 * 3600
+            os.utime(a, (a_time, a_time))
+
+            # B 60h 前修改
+            b.write_text("b\n", encoding="utf-8")
+            b_time = time.time() - 60 * 3600
+            os.utime(b, (b_time, b_time))
+
+            config = self._base_config([{
+                "name": "AB-GROUP",
+                "files": ["docs/A.md", "docs/B.md"],
+                "level": "local_mtime",
+                "threshold_minutes": 15,
+                # 不设 max_inactive_hours，默认为 0 → 24h
+            }])
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_document_consistency()
+
+            # A 超过 24h，应跳过检查
+            consistency_results = [r for r in results if "文档关联性" in r.name]
+            assert len(consistency_results) == 0
+
+    def test_watch_files_triggered(self):
+        """watch_files 中的文件更新了但本文件没跟上，应告警"""
+        import os
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+
+            dec = project_root / "docs" / "DECISIONS.md"
+            changelog = project_root / "docs" / "CHANGELOG.md"
+
+            # DECISIONS.md 2h 前修改
+            dec.write_text("# Decisions\n", encoding="utf-8")
+            old_time = time.time() - 7200
+            os.utime(dec, (old_time, old_time))
+
+            # CHANGELOG.md 刚修改（比 DECISIONS.md 新）
+            changelog.write_text("# Changelog\n", encoding="utf-8")
+
+            config = {
+                "documentation": {
+                    "key_files": [
+                        {
+                            "path": "docs/DECISIONS.md",
+                            "purpose": "决策记录",
+                            "update_trigger": "每次 S/A 级决策后",
+                            "watch_files": ["docs/CHANGELOG.md"],
+                        },
+                    ],
+                    "consistency": {"enabled": True, "linked_groups": []},
+                },
+            }
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_document_consistency()
+
+            lag_results = [r for r in results if "关键文档滞后" in r.name]
+            assert len(lag_results) == 1
+            assert "DECISIONS.md" in lag_results[0].name
+            assert "CHANGELOG.md" in lag_results[0].message
+
+    def test_watch_files_not_triggered(self):
+        """watch_files 中的文件和本文件同步更新，不应告警"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+
+            dec = project_root / "docs" / "DECISIONS.md"
+            changelog = project_root / "docs" / "CHANGELOG.md"
+
+            # 两个文件同时创建
+            dec.write_text("# Decisions\n", encoding="utf-8")
+            changelog.write_text("# Changelog\n", encoding="utf-8")
+
+            config = {
+                "documentation": {
+                    "key_files": [
+                        {
+                            "path": "docs/DECISIONS.md",
+                            "purpose": "决策记录",
+                            "update_trigger": "每次 S/A 级决策后",
+                            "watch_files": ["docs/CHANGELOG.md"],
+                        },
+                    ],
+                    "consistency": {"enabled": True, "linked_groups": []},
+                },
+            }
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_document_consistency()
+
+            lag_results = [r for r in results if "关键文档滞后" in r.name]
+            assert len(lag_results) == 0
+
+    def test_watch_files_missing_watch_target(self):
+        """watch_files 指向不存在的文件，不崩溃不告警"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+
+            dec = project_root / "docs" / "DECISIONS.md"
+            dec.write_text("# Decisions\n", encoding="utf-8")
+
+            config = {
+                "documentation": {
+                    "key_files": [
+                        {
+                            "path": "docs/DECISIONS.md",
+                            "purpose": "决策记录",
+                            "watch_files": ["docs/NONEXISTENT.md"],
+                        },
+                    ],
+                    "consistency": {"enabled": True, "linked_groups": []},
+                },
+            }
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_document_consistency()
+
+            lag_results = [r for r in results if "关键文档滞后" in r.name]
+            assert len(lag_results) == 0
+
+    def test_watch_files_no_config(self):
+        """key_files 没有 watch_files 配置时不做跟随检查"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+            (project_root / "docs" / "DECISIONS.md").write_text("ok\n", encoding="utf-8")
+
+            config = {
+                "documentation": {
+                    "key_files": [
+                        {"path": "docs/DECISIONS.md", "purpose": "决策记录"},
+                    ],
+                    "consistency": {"enabled": True, "linked_groups": []},
+                },
+            }
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_document_consistency()
+
+            lag_results = [r for r in results if "关键文档滞后" in r.name]
+            assert len(lag_results) == 0
+
