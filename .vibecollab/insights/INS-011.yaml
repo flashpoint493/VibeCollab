@@ -1,0 +1,168 @@
+id: INS-011
+title: 避免过度设计 - 依靠 LLM 推理而非静态配置
+category: decision
+tags:
+  - architecture
+  - yagni
+  - llm
+  - minimalism
+weight: 1.0
+created_at: "2026-02-25T23:20:00Z"
+updated_at: "2026-02-25T23:20:00Z"
+
+origin:
+  created_by: jarvis01
+  created_at: "2026-02-25T23:20:00Z"
+  context: "在设计 Developer 打包方案时，意识到 LLM + 上下文系统已足够表达'经验'，过度依赖静态配置会增加复杂度"
+  source:
+    type: decision
+    description: "DECISION-003: 不将 Developer 作为包，采用 Profile 模式"
+  derived_from: []
+
+content: |
+  ## 问题背景
+
+  在设计系统架构时，容易陷入"过度设计"的陷阱：
+  - 试图用静态配置表达所有可能的场景
+  - 忽视 LLM 的推理能力
+  - 增加不必要的复杂性
+
+  ## 核心原则
+
+  ### 1. LLM + 上下文 > 静态配置
+
+  大语言模型的强项是推理，而非记忆：
+  - ✅ LLM 可以从上下文中理解和推导
+  - ✅ 动态推理比静态配置更灵活
+  - ❌ 试图把所有"经验"编码为配置是低效的
+
+  ### 2. YAGNI (You Aren't Gonna Need It)
+
+  - 只设计当前需要的功能
+  - 保留扩展性但不预实现
+  - 避免为"可能的需求"增加复杂度
+
+  ### 3. 最小化状态
+
+  - 静态配置应该最小化
+  - 动态状态应该在运行时推导
+  - 知识通过 Insight 传递，而非硬编码
+
+  ## 实践建议
+
+  ### 场景 1: Developer 经验表达
+
+  ❌ 错误方案：
+  ```yaml
+  developer_package:
+    skills:
+      - python: level: advanced
+      - frontend: level: intermediate
+    workflows:
+      - if_task_type == feature:
+          steps: [analyze, design, code, test]
+    # 过于详细，难以维护
+  ```
+
+  ✅ 正确方案：
+  ```yaml
+  developer_profile:
+    role: fullstack
+    preferred_insights:
+      - INS-001  # Python 最佳实践
+      - INS-005  # 前端模式
+    workflow_style: iterative
+  # 简洁，依赖 LLM 推理
+  ```
+
+  ### 场景 2: Agent 能力定义
+
+  ❌ 错误方案：
+  ```yaml
+  agent_capabilities:
+    can_debug:
+      enabled: true
+      methods: [log_analysis, stack_trace, hypothesis_test]
+    can_refactor:
+      enabled: true
+      complexity_limit: 5
+      # 过度细节化
+  ```
+
+  ✅ 正确方案：
+  ```yaml
+  agent_profile:
+    name: coding-specialist
+    expertise_insights:
+      - INS-002  # 调试方法论
+      - INS-008  # 重构策略
+  # LLM 根据 Insight 动态推导能力
+  ```
+
+  ### 场景 3: 配置扩展
+
+  ❌ 错误方案：
+  ```yaml
+  # 为每种可能的情况预设配置
+  templates:
+    web_project: {...}
+    ml_project: {...}
+    game_project: {...}
+    # 难以维护，扩展性差
+  ```
+
+  ✅ 正确方案：
+  ```yaml
+  # 提供默认值和适配器
+  adapter:
+    get_role(code): return default_roles.get(code)
+    get_field(path): return safe_get(config, path)
+  # LLM + 适配器处理各种情况
+  ```
+
+  ## 验证方法
+
+  1. **复杂度检查**：配置文件是否越来越长？
+  2. **依赖检查**：修改一个配置是否影响多个地方？
+  3. **灵活度检查**：新需求是否需要修改配置结构？
+
+  ## 反例
+
+  某项目试图为每个开发者创建"能力画像包"：
+  - 包含 50+ 个技能字段
+  - 100+ 行工作流配置
+  - 维护成本极高
+  - 实际 LLM 只需要 Insight 列表即可
+
+  ## 正例
+
+  另一项目采用 Profile + Insight 模式：
+  - Profile: 5-10 行核心配置
+  - Insight: 知识库独立管理
+  - LLM 动态组合和推理
+  - 灵活且易维护
+
+  ## 总结
+
+  > **静态配置应该做"骨架"，LLM + 上下文是"肌肉"**
+
+  - 配置定义"是什么"
+  - LLM 推导"怎么做"
+  - Insight 提供"知识"
+  - 避免过度细节化
+
+  ## 相关 Insight
+
+  - INS-005: 最小化状态原则
+  - INS-008: 适配器模式应用
+
+  ## 使用建议
+
+  当你发现自己正在添加越来越多的配置字段时：
+  1. 停下来思考：这个真的需要配置吗？
+  2. 考虑：LLM 能否从上下文中推导？
+  3. 尝试：用 Insight 表达知识
+  4. 采用：Profile 而非包
+
+artifacts: []
+runtime: null

@@ -1,0 +1,13 @@
+{%- set decisions = confirmed_decisions if confirmed_decisions is iterable and confirmed_decisions is not mapping else [] -%}
+# 已确认决策汇总
+
+{% if decisions -%}
+| ID | 决策 | 选择 | 理由 |
+|----|------|------|------|
+{% for d in decisions -%}
+| {{ d.get('id', '') }} | {{ d.get('title', '') }} | {{ d.get('choice', '') }} | {{ d.get('reason', '') }} |
+{% endfor -%}
+{% else -%}
+*暂无已确认决策，将在项目进行中记录*
+{% endif %}
+---

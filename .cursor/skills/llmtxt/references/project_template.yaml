@@ -1,0 +1,168 @@
+# LLMContext 项目配置模板
+# 用于快速生成 CONTRIBUTING_AI.md
+
+project:
+  name: "项目名称"
+  version: "v1.0"
+  domain: "generic"  # generic | game | web | data
+
+# 核心理念
+philosophy:
+  vibe_development:
+    enabled: true
+    principles:
+      - "AI 不是执行者，而是协作伙伴"
+      - "不急于产出代码，先对齐理解"
+      - "每个决策都是共同思考的结果"
+      - "对话本身就是设计过程的一部分"
+  decision_quality:
+    target_rate: 0.9
+    critical_tolerance: 0
+  long_term_dialogue: true
+
+# 职能角色
+roles:
+  - code: "DESIGN"
+    name: "产品设计"
+    focus: ["需求", "体验", "交互"]
+    triggers: ["设计", "需求", "产品"]
+  - code: "ARCH"
+    name: "架构师"
+    focus: ["系统设计", "模块划分", "技术选型"]
+    triggers: ["架构", "设计", "模块"]
+  - code: "DEV"
+    name: "开发者"
+    focus: ["实现", "调试", "优化"]
+    triggers: ["开发", "实现", "代码"]
+  - code: "QA"
+    name: "产品质量保证"
+    focus: ["验收测试", "用户体验验证"]
+    triggers: ["验收", "体验测试"]
+    is_gatekeeper: true
+  - code: "TEST"
+    name: "单元测试"
+    focus: ["代码测试", "覆盖率"]
+    triggers: ["单元测试", "pytest"]
+  - code: "PM"
+    name: "项目经理"
+    focus: ["规划", "优先级", "发布"]
+    triggers: ["规划", "发布", "里程碑"]
+
+# 决策分级
+decision_levels:
+  - level: "S"
+    name: "战略决策"
+    scope: "核心架构、技术路线"
+    review:
+      required: true
+      mode: "sync"
+  - level: "A"
+    name: "架构决策"
+    scope: "模块设计、接口定义"
+    review:
+      required: true
+      mode: "async"
+  - level: "B"
+    name: "实现决策"
+    scope: "具体实现方案"
+    review:
+      required: false
+      mode: "auto"
+  - level: "C"
+    name: "细节决策"
+    scope: "命名、格式"
+    review:
+      required: false
+      mode: "auto"
+
+# 对话协议
+dialogue_protocol:
+  on_start:
+    read_files:
+      - "CONTRIBUTING_AI.md"
+      - "docs/CONTEXT.md"
+    actions:
+      - "确认用户本次对话目标"
+  on_end:
+    update_files:
+      - "docs/CONTEXT.md"
+      - "docs/CHANGELOG.md"
+    git_commit: true
+
+# 需求澄清协议
+requirement_clarification:
+  enabled: true
+  trigger_conditions:
+    - "描述模糊或不完整"
+    - "缺少具体验收标准"
+    - "可能有多种理解方式"
+  clarification_questions:
+    - "你希望达到什么效果？"
+    - "有没有参考案例？"
+    - "这个功能谁会用？在什么场景下用？"
+    - "如何验证这个功能是否完成？"
+
+# Git 工作流
+git_workflow:
+  branches:
+    main: "main"
+    dev: "dev"
+    feature_prefix: "feature/"
+    fix_prefix: "fix/"
+  commit_prefixes:
+    - prefix: "[DESIGN]"
+      description: "设计变更"
+    - prefix: "[ARCH]"
+      description: "架构调整"
+    - prefix: "[FEAT]"
+      description: "新功能"
+    - prefix: "[FIX]"
+      description: "Bug修复"
+    - prefix: "[CONFIG]"
+      description: "配置调整"
+    - prefix: "[DOC]"
+      description: "文档更新"
+    - prefix: "[TEST]"
+      description: "测试相关"
+  commit_required: true
+
+# 测试体系
+testing:
+  unit_test:
+    enabled: true
+    framework: "pytest"
+    coverage_target: 0.8
+  product_qa:
+    enabled: true
+    test_case_file: "docs/QA_TEST_CASES.md"
+
+# 快速验收
+quick_acceptance:
+  enabled: true
+  start_command: "npm run dev"
+  reply_formats:
+    pass: "✅"
+    issue: "⚠️ 问题:"
+    skip: "跳过"
+
+# 构建配置
+build:
+  enabled: true
+  command: "npm run build"
+  dist_entry: "dist/index.html"
+
+# 文档管理
+documentation:
+  context_file: "docs/CONTEXT.md"
+  changelog_file: "docs/CHANGELOG.md"
+  decisions_file: "docs/DECISIONS.md"
+  key_files:
+    - path: "CONTRIBUTING_AI.md"
+      purpose: "协作规则"
+      update_trigger: "协作方式演进时"
+    - path: "docs/CONTEXT.md"
+      purpose: "当前上下文"
+      update_trigger: "每次对话结束"
+    - path: "docs/QA_TEST_CASES.md"
+      purpose: "测试用例"
+      update_trigger: "功能完成时"

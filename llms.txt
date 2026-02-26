@@ -1,0 +1,46 @@
+# VibeCollab
+
+> AI-powered project collaboration framework with three-mode CLI (IDE/interactive/agent) and Insight knowledge system
+
+## Overview
+
+VibeCollab is a Python-based project collaboration framework that generates AI collaboration protocols, manages multi-developer workflows, provides three-mode AI CLI integration (IDE dialogue, CLI human interaction, Agent autonomous), and includes an Insight system for capturing and reusing development knowledge.
+
+## Key Features
+
+- **Protocol Generation**: Generate `CONTRIBUTING_AI.md` from `project.yaml` configuration via PatternEngine (Jinja2 template-driven, manifest-controlled)
+- **Template Overlay**: Per-project template customization via `.vibecollab/patterns/` (local-first, builtin-fallback)
+- **Multi-Developer Workflow**: Developer context isolation, task management, event logging
+- **Three-Mode AI CLI** (v0.5.8):
+  - `vibecollab ai ask/chat`: Human-interactive CLI with project context injection
+  - `vibecollab ai agent plan/run/serve/status`: Autonomous agent mode with safety gates
+  - IDE dialogue: Reads CONTRIBUTING_AI.md for in-editor AI collaboration
+- **Insight System** (v0.7.0):
+  - Reusable knowledge units extracted from development practices
+  - Two-layer architecture: Insight body (portable) + Registry (project-level state)
+  - Tag-driven matching (Jaccard × weight), decay/reward lifecycle, derived tracing
+  - CLI: `vibecollab insight list/show/add/search/use/decay/check/delete/bookmark/unbookmark/trace/who/stats`
+- **Task-Insight Auto-Linking** (v0.7.1):
+  - Creating tasks auto-searches related Insights via tag extraction from feature/description
+  - Results stored in task.metadata["related_insights"] with Jaccard × weight scores
+  - CLI: `vibecollab task create/list/show/suggest`
+- **Agent Guidance** (v0.7.0):
+  - `vibecollab onboard`: AI Agent onboarding — project overview, progress, decisions, read-files list
+  - `vibecollab next`: Action suggestions — document sync, overdue files, commit message, missing files
+- **Consistency Checking**:
+  - `vibecollab check [--insights] [--strict]`: Protocol compliance + Insight consistency
+  - Linked document groups with three-level checking (local_mtime / git_commit / release)
+  - Configurable update threshold (default 15min)
+- **Project Lifecycle**: Stage-based development (demo → production → scaling)
+- **LLM Client**: Provider-agnostic (OpenAI-compatible + Anthropic Claude)
+- **CLI Commands**: init, generate, validate, check, health, onboard, next, dev, ai, insight, task, lifecycle
+
+## Quick Start
+
+See [AI Collaboration Guidelines](CONTRIBUTING_AI.md) for how to work with AI assistants on this project.
+
+## AI Collaboration
+
+- [AI Collaboration Guidelines](CONTRIBUTING_AI.md):
+  Collaboration protocol, decision levels, task units, and workflow rules for AI-assisted development.
+  This document defines how AI assistants should work with developers on this project.

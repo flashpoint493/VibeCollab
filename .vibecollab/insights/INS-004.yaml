@@ -1,0 +1,30 @@
+kind: insight
+version: '1'
+id: INS-004
+title: 独立文件 + add_command 的 CLI 命令组模式
+summary: 大型 CLI 按功能域拆分独立文件，通过 add_command 注册，保持主入口精简
+tags:
+- cli
+- click
+- architecture
+- modularity
+category: workflow
+body:
+  scenario: CLI 命令数量增长后需要按功能域分组，避免单文件过大
+  approach: 每个命令组独立文件（如 cli_insight.py、cli_ai.py），定义 @click.group()，在主 cli.py 中通过
+    main.add_command(group) 注册。辅助函数 _load_*_manager() 延迟导入依赖
+  validation: vibecollab insight/ai 两个命令组已验证此模式
+  constraints:
+  - 延迟导入避免循环依赖
+  - 辅助函数放在命令文件内而非公共模块
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-25'
+  context: VibeCollab v0.5.8-v0.7.0 CLI 架构演进
+  source:
+    type: decision
+    description: 三模式 AI 架构中 CLI 命令组的组织方式
+    project: VibeCollab
+    ref: DECISION-010
+fingerprint: 0bad5de3902573d1389f797b641fd0dcf62b8321173a1823cdeab9440146cfe0

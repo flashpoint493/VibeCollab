@@ -1,0 +1,43 @@
+{%- set ms = milestone if milestone else {} -%}
+{%- set lifecycle = ms.get('lifecycle', []) -%}
+{%- set priorities = ms.get('bug_priority', []) -%}
+{%- set tag_pattern = ms.get('tag_pattern', 'v{major}.{minor}.{patch}') -%}
+# 六、里程碑定义
+
+## 6.1 里程碑规范
+
+> **里程碑 = 多个特性 + Bug修复期 + 全量验收**
+
+### 里程碑生命周期
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   里程碑生命周期                          │
+├─────────────────────────────────────────────────────────┤
+{% for phase in lifecycle -%}
+│  {{ loop.index }}. {{ phase.get('phase', '') }} - {{ phase.get('description', '') }}
+{% for criteria in phase.get('exit_criteria', []) -%}
+│     └── {{ criteria }}
+{% endfor -%}
+{% if not loop.last -%}
+├─────────────────────────────────────────────────────────┤
+{% endif -%}
+{% endfor -%}
+└─────────────────────────────────────────────────────────┘
+```
+{% if priorities %}
+### Bug 优先级
+
+| 优先级 | 描述 |
+|-------|------|
+{% for p in priorities -%}
+| {{ p.get('level', '') }} | {{ p.get('description', '') }} |
+{% endfor -%}
+{% endif %}
+### 里程碑 Tag
+
+```bash
+git tag -a {{ tag_pattern }} -m "描述"
+```
+
+---
