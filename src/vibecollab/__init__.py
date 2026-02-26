@@ -22,6 +22,7 @@ from .profile import DeveloperProfile, PRESET_PROFILES
 from .profile_manager import ProfileManager
 from .project import Project
 from .task_manager import Task, TaskManager, TaskStatus, ValidationResult
+from .validator import ConfigValidator
 
 __all__ = [
     "LLMContextGenerator",
@@ -44,6 +45,7 @@ __all__ = [
     "TaskManager",
     "TaskStatus",
     "ValidationResult",
+    "ConfigValidator",
     "LLMClient",
     "LLMConfig",
     "LLMResponse",

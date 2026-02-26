@@ -301,8 +301,17 @@ def validate(config: str):
 
     with console.status("[bold green]正在验证配置..."):
         try:
-            generator = LLMContextGenerator.from_file(config_path)
-            errors = generator.validate()
+            # 使用新的 ConfigValidator
+            from .validator import ConfigValidator
+
+            # 加载配置
+            with open(config_path, "r", encoding="utf-8") as f:
+                config_data = yaml.safe_load(f)
+
+            # 创建验证器
+            validator = ConfigValidator(config_data)
+            result = validator.validate()
+
         except yaml.YAMLError as e:
             console.print(f"[red]错误:[/red] 配置文件 YAML 格式有误: {e}")
             raise SystemExit(1)
@@ -310,13 +319,33 @@ def validate(config: str):
             console.print(f"[red]错误:[/red] 配置解析失败: {e}")
             raise SystemExit(1)
 
-    if errors:
-        console.print(f"[red]{EMOJI_MAP['error']} 发现 {len(errors)} 个问题:[/red]")
-        for err in errors:
-            console.print(f"  - {err}")
-        raise SystemExit(1)
+    # 输出验证结果
+    console.print()
+
+    if result.errors:
+        console.print(f"[red]{EMOJI_MAP['error']} 发现 {len(result.errors)} 个错误:[/red]")
+        for error in result.errors:
+            console.print(f"  {error}")
+        console.print()
+
+    if result.warnings:
+        console.print(f"[yellow]{EMOJI_MAP['warning']} 发现 {len(result.warnings)} 个警告:[/yellow]")
+        for warning in result.warnings:
+            console.print(f"  {warning}")
+        console.print()
+
+    if result.infos:
+        console.print(f"[blue]{EMOJI_MAP['info']} 发现 {len(result.infos)} 个提示:[/blue]")
+        for info in result.infos:
+            console.print(f"  {info}")
+        console.print()
+
+    # 总结
+    if result.is_valid:
+        console.print(f"[green]{EMOJI_MAP['success']} 配置有效: {config}[/green]")
     else:
-        console.print(f"[green]{EMOJI_MAP['success']} 配置有效:[/green] {config}")
+        console.print(f"[red]❌ 配置无效，请修复上述错误后重试[/red]")
+        raise SystemExit(1)
 
 
 @main.command()
