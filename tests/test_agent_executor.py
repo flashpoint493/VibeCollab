@@ -1,7 +1,10 @@
 """Tests for the Agent Executor module."""
 
+import os
+import subprocess
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 from vibecollab.agent_executor import (
     MAX_FILES_PER_CYCLE,
@@ -334,3 +337,219 @@ class TestFullCycle:
             assert not result.success
             assert result.rollback_performed
             assert not (Path(tmpdir) / "bad.txt").exists()
+
+
+# ---------------------------------------------------------------------------
+# Test: git_commit — 真实 git repo 场景
+# ---------------------------------------------------------------------------
+
+class TestGitCommitReal:
+    """测试在真实 git repo 中的 git_commit 行为."""
+
+    def _init_git_repo(self, path):
+        """初始化一个临时 git repo."""
+        subprocess.run(["git", "init"], cwd=path, capture_output=True)
+        subprocess.run(["git", "config", "user.email", "test@test.com"],
+                       cwd=path, capture_output=True)
+        subprocess.run(["git", "config", "user.name", "Test"],
+                       cwd=path, capture_output=True)
+
+    def test_git_commit_success(self):
+        """创建文件后 git commit 成功返回 hash."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self._init_git_repo(tmpdir)
+            # 创建初始 commit
+            (Path(tmpdir) / "init.txt").write_text("init")
+            subprocess.run(["git", "add", "."], cwd=tmpdir, capture_output=True)
+            subprocess.run(["git", "commit", "-m", "init"], cwd=tmpdir, capture_output=True)
+
+            # 创建新文件
+            (Path(tmpdir) / "new.txt").write_text("hello")
+            exe = AgentExecutor(Path(tmpdir))
+            success, hash_or_err = exe.git_commit("[TEST] add new.txt")
+            assert success
+            assert len(hash_or_err) > 0  # 短 hash
+
+    def test_git_commit_nothing_to_commit(self):
+        """没有变更时 git commit 返回 (True, '(no changes)')."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self._init_git_repo(tmpdir)
+            (Path(tmpdir) / "init.txt").write_text("init")
+            subprocess.run(["git", "add", "."], cwd=tmpdir, capture_output=True)
+            subprocess.run(["git", "commit", "-m", "init"], cwd=tmpdir, capture_output=True)
+
+            exe = AgentExecutor(Path(tmpdir))
+            success, msg = exe.git_commit("[TEST] no changes")
+            assert success
+            assert msg == "(no changes)"
+
+    def test_git_commit_no_repo(self):
+        """在非 git 目录中 commit 失败."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            (Path(tmpdir) / "file.txt").write_text("data")
+            exe = AgentExecutor(Path(tmpdir))
+            success, err = exe.git_commit("[TEST] should fail")
+            assert not success
+            assert len(err) > 0  # 错误信息
+
+
+# ---------------------------------------------------------------------------
+# Test: run_tests — 超时和异常
+# ---------------------------------------------------------------------------
+
+class TestRunTestsEdgeCases:
+    def test_run_tests_timeout(self):
+        """测试超时处理."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            with mock.patch("vibecollab.agent_executor.subprocess.run",
+                            side_effect=subprocess.TimeoutExpired(cmd="test", timeout=300)):
+                passed, output = exe.run_tests("dummy_cmd")
+                assert not passed
+                assert "超时" in output
+
+    def test_run_tests_exception(self):
+        """测试执行异常处理."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            with mock.patch("vibecollab.agent_executor.subprocess.run",
+                            side_effect=OSError("command not found")):
+                passed, output = exe.run_tests("nonexistent_cmd")
+                assert not passed
+                assert "失败" in output
+
+    def test_run_tests_custom_command(self):
+        """自定义测试命令."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            passed, output = exe.run_tests("python -c \"print('custom test ok')\"")
+            assert passed
+            assert "custom test ok" in output
+
+
+# ---------------------------------------------------------------------------
+# Test: apply_changes — 异常路径
+# ---------------------------------------------------------------------------
+
+class TestApplyChangesEdgeCases:
+    def test_apply_write_failure(self):
+        """写入失败时错误被捕获到 result.errors."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            changes = [FileChange(file="test.txt", action="create", content="data")]
+
+            with mock.patch("pathlib.Path.write_text", side_effect=PermissionError("denied")):
+                result = exe.apply_changes(changes)
+                assert len(result.errors) > 0
+                assert "写入失败" in result.errors[0]
+
+    def test_apply_delete_nonexistent(self):
+        """删除不存在的文件跳过而非报错."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            changes = [FileChange(file="ghost.txt", action="delete")]
+            result = exe.apply_changes(changes)
+            assert "already absent" in result.changes_skipped[0]
+
+
+# ---------------------------------------------------------------------------
+# Test: validate_changes — 边界情况
+# ---------------------------------------------------------------------------
+
+class TestValidateChangesEdgeCases:
+    def test_validate_invalid_path(self):
+        """无效路径（NUL 字符）触发错误."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            changes = [FileChange(file="file\x00bad", action="create", content="x")]
+            errors = exe.validate_changes(changes)
+            assert len(errors) > 0
+
+
+# ---------------------------------------------------------------------------
+# Test: rollback — 边界情况
+# ---------------------------------------------------------------------------
+
+class TestRollbackEdgeCases:
+    def test_rollback_locked_file(self):
+        """回滚中如果写入失败，不抛异常（except Exception: pass）."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            # 模拟已有备份
+            exe._backups = {"test.txt": "original content"}
+            # 文件不可写（模拟异常）
+            with mock.patch("pathlib.Path.write_text", side_effect=PermissionError):
+                rolled = exe.rollback()
+                # 不抛异常，但也不标记为成功回滚
+                assert "test.txt" not in str(rolled) or len(rolled) == 0
+
+    def test_rollback_empty(self):
+        """无备份时回滚返回空列表."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            assert exe.rollback() == []
+
+
+# ---------------------------------------------------------------------------
+# Test: execute_full_cycle — git commit 失败路径
+# ---------------------------------------------------------------------------
+
+class TestFullCycleGitFailure:
+    def test_test_pass_but_git_fail(self):
+        """测试通过但 git commit 失败."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            exe = AgentExecutor(Path(tmpdir))
+            output = '```json\n{"file": "ok.txt", "action": "create", "content": "data"}\n```'
+
+            with mock.patch.object(exe, "git_commit", return_value=(False, "git error")):
+                result = exe.execute_full_cycle(
+                    output,
+                    test_command="python -c \"print('pass')\"",
+                )
+                assert not result.success
+                assert result.test_passed
+                assert not result.git_committed
+                assert any("Git commit 失败" in e for e in result.errors)
+
+    def test_full_cycle_with_real_git(self):
+        """完整周期: apply → test → git commit 全部成功."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            subprocess.run(["git", "init"], cwd=tmpdir, capture_output=True)
+            subprocess.run(["git", "config", "user.email", "t@t.com"],
+                           cwd=tmpdir, capture_output=True)
+            subprocess.run(["git", "config", "user.name", "T"],
+                           cwd=tmpdir, capture_output=True)
+            # 需要初始 commit
+            (Path(tmpdir) / "init.txt").write_text("init")
+            subprocess.run(["git", "add", "."], cwd=tmpdir, capture_output=True)
+            subprocess.run(["git", "commit", "-m", "init"], cwd=tmpdir, capture_output=True)
+
+            exe = AgentExecutor(Path(tmpdir))
+            output = '```json\n{"file": "hello.py", "action": "create", "content": "print(42)"}\n```'
+            result = exe.execute_full_cycle(
+                output,
+                test_command="python -c \"print('ok')\"",
+            )
+            assert result.success
+            assert result.test_passed
+            assert result.git_committed
+            assert len(result.git_hash) > 0
+
+
+# ---------------------------------------------------------------------------
+# Test: _parse_single_change — 边界输入
+# ---------------------------------------------------------------------------
+
+class TestParseSingleChangeEdge:
+    def test_non_dict_input(self):
+        assert AgentExecutor._parse_single_change("string") is None
+        assert AgentExecutor._parse_single_change(42) is None
+        assert AgentExecutor._parse_single_change(None) is None
+
+    def test_missing_action(self):
+        assert AgentExecutor._parse_single_change({"file": "a.py"}) is None
+
+    def test_invalid_action(self):
+        assert AgentExecutor._parse_single_change(
+            {"file": "a.py", "action": "rename"}
+        ) is None
