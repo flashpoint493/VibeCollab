@@ -1,23 +1,20 @@
 """Tests for config_manager and cli_config modules."""
 
-import os
 import textwrap
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 from vibecollab.config_manager import (
     get_config_dir,
     get_config_path,
-    load_config,
-    save_config,
     get_config_value,
-    set_config_value,
+    load_config,
     parse_dotenv,
     resolve_llm_config,
+    save_config,
+    set_config_value,
 )
-
 
 # ===========================================================================
 # Fixtures
@@ -302,6 +299,7 @@ class TestLLMConfigWithFile:
 class TestCLIConfig:
     def test_config_show_no_config(self, fake_home):
         from click.testing import CliRunner
+
         from vibecollab.cli_config import config_group
 
         runner = CliRunner()
@@ -312,6 +310,7 @@ class TestCLIConfig:
     def test_config_show_with_config(self, fake_home):
         save_config({"llm": {"provider": "openai", "api_key": "sk-testkey123456"}})
         from click.testing import CliRunner
+
         from vibecollab.cli_config import config_group
 
         runner = CliRunner()
@@ -324,6 +323,7 @@ class TestCLIConfig:
 
     def test_config_set_known_key(self, fake_home):
         from click.testing import CliRunner
+
         from vibecollab.cli_config import config_group
 
         runner = CliRunner()
@@ -333,6 +333,7 @@ class TestCLIConfig:
 
     def test_config_set_api_key_masked(self, fake_home):
         from click.testing import CliRunner
+
         from vibecollab.cli_config import config_group
 
         runner = CliRunner()
@@ -346,6 +347,7 @@ class TestCLIConfig:
 
     def test_config_path(self, fake_home):
         from click.testing import CliRunner
+
         from vibecollab.cli_config import config_group
 
         runner = CliRunner()
@@ -355,6 +357,7 @@ class TestCLIConfig:
 
     def test_config_setup_interactive(self, fake_home):
         from click.testing import CliRunner
+
         from vibecollab.cli_config import config_group
 
         runner = CliRunner()
@@ -370,6 +373,7 @@ class TestCLIConfig:
 
     def test_config_setup_anthropic(self, fake_home):
         from click.testing import CliRunner
+
         from vibecollab.cli_config import config_group
 
         runner = CliRunner()

@@ -8,7 +8,7 @@ version = "0.8.0.dev0"
 description = "AI-powered project collaboration framework with three-mode CLI (IDE/interactive/agent)"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
     { name = "VibeCollab Contributors" }
 ]
@@ -29,11 +29,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Documentation",
     "Topic :: Software Development :: Code Generators",
 ]
@@ -77,7 +77,7 @@ include = [
 
 [tool.black]
 line-length = 100
-target-version = ["py38"]
+target-version = ["py39"]
 
 [tool.ruff]
 line-length = 100

@@ -2,7 +2,6 @@
 LLMContext CLI - 命令行接口
 """
 
-import sys
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -20,7 +19,6 @@ from .llmstxt import LLMsTxtManager
 from .project import Project
 from .protocol_checker import ProtocolChecker
 from .templates import TemplateManager
-
 
 # 兼容旧变量名
 USE_EMOJI = not is_windows_gbk()

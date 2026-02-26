@@ -28,6 +28,8 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 
+from ._compat import EMOJI as _COMPAT_EMOJI
+from ._compat import is_windows_gbk
 from .event_log import Event, EventLog, EventType
 from .llm_client import LLMClient, LLMConfig, LLMResponse, Message, build_project_context
 from .task_manager import TaskManager, TaskStatus
@@ -46,8 +48,6 @@ def _log_event(event_log: EventLog, event_type: str, summary: str,
 # ---------------------------------------------------------------------------
 # Windows GBK 兼容 (从共享模块导入)
 # ---------------------------------------------------------------------------
-
-from ._compat import BULLET, EMOJI as _COMPAT_EMOJI, is_windows_gbk
 
 USE_EMOJI = not is_windows_gbk()
 EMOJI = _COMPAT_EMOJI
@@ -249,7 +249,12 @@ def _build_system_prompt(project_root: Path, agent_mode: bool = False) -> str:
 
 @click.group()
 def ai():
-    """AI 助手命令 — 人机对话 & Agent 自主模式"""
+    """[experimental] AI 助手命令 -- 人机对话 & Agent 自主模式
+
+    实验性功能。VibeCollab 的核心定位是协议管理工具，
+    LLM 通信和 Tool Use 建议交给 Cline/Cursor/Aider 等专业终端。
+    本命令组提供轻量替代，但不再作为主力开发方向。
+    """
     pass
 
 

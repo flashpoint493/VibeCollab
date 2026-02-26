@@ -7,6 +7,9 @@
 - 配置文件存放在用户 home 目录（`~/.vibecollab/config.yaml`），不进 git
 - 轻量 .env 解析：自实现 `parse_dotenv()`，仅提取 `VIBECOLLAB_*` 前缀变量
 
+### Decision
+- **`vibecollab ai` 命令组标记为 experimental**: VibeCollab 核心定位是协议管理工具，LLM 通信和 Tool Use 交给 Cline/Cursor/Aider 等专业终端。`ai ask/chat/agent` 保留作为轻量替代，但不再作为主力开发方向。受影响模块：`cli_ai.py`、`llm_client.py`、`agent_executor.py`、`config_manager.py`（均可干净隔离，核心功能零依赖）
+
 ### Refactor
 - **统一 Windows GBK 编码兼容层** (`_compat.py`): 提取 `is_windows_gbk()` / `EMOJI` / `BULLET` 到共享模块
   - 消除 4 处重复定义（cli.py / cli_ai.py / cli_lifecycle.py / cli_config.py）
@@ -15,8 +18,14 @@
   - 统一 cli_insight.py 的 `sys.exit(1)` → `raise SystemExit(1)`（9 处）
   - 移除不再需要的 `import platform` / `import sys`
 - **cli_insight.py `_load_insight_manager()` 错误处理**: 检查 `.vibecollab/` 目录存在性，提供友好提示
+- **Ruff lint 全量修复**: 68 errors → 0（61 auto-fix + 7 手动修复：E402 导入位置、F841 未使用变量、F401 未使用导入、I001 导入排序、F541 空 f-string）
 
 ### New Feature
+- **Insight 经验沉淀工作流** (IDE 对话模式融入):
+  - 新增 `27_insight_workflow.md.j2` 模板章节 — 定义何时/如何沉淀经验
+  - 对话结束流程增加"经验沉淀检查"步骤（`06_dialogue_protocol.md.j2` 更新）
+  - `vibecollab next` 命令增加 Insight 沉淀提示（基于 5 种信号自动检测）
+  - manifest.yaml 注册 `insight_workflow` 章节（默认开启，可通过 `insight.enabled: false` 关闭）
 - **`vibecollab config setup`**: 交互式 LLM 配置向导
   - Provider 选择（OpenAI / Anthropic）
   - API Key 安全输入（隐藏输入）
@@ -35,6 +44,11 @@
   - 3 个单元测试覆盖（触发/未触发/未配置）
 
 ### Bug Fix
+- **CI/CD 修复**: 
+  - `__init__.py` 版本号 `0.5.9` → `0.8.0.dev0`（与 pyproject.toml 同步）
+  - Python 矩阵从 `3.8-3.12` 更新为 `3.9-3.13`（3.8 已 EOL，`actions/setup-python@v5` 不支持）
+  - `requires-python` 从 `>=3.8` 更新为 `>=3.9`
+  - classifiers 移除 3.8、添加 3.13
 - **修复 OpenAI 空 choices 导致 IndexError**: `_call_openai()` 中 `data.get("choices", [{}])[0]` 在 API 返回空 `choices: []` 时崩溃，改为安全取值
 - **修复 flaky test `test_onboard_basic`**: Windows 环境下 `test_serve_lock_conflict` 的 `SystemExit(1)` 导致 `subprocess.run` 内部线程残留 `KeyboardInterrupt`，污染后续 `onboard` 命令的 `_get_git_uncommitted()` 调用
   - 根因: `KeyboardInterrupt` 继承自 `BaseException` 而非 `Exception`，原有的 `except Exception` 无法捕获
@@ -67,6 +81,10 @@
   - `TestMinimalProject` (7 tests): 最少参数 init、极简 generate、极简 check/health/validate、空 YAML、只有 project_name
   - `TestComplexProject` (8 tests): 全量配置（多开发者+lifecycle+documentation）的 generate/check/health/upgrade/validate/JSON 输出、所有 domain 的 init
   - 全量 914/914 passed
+- **Insight 工作流 + next 命令测试**: 16 个新测试覆盖 Insight 沉淀提示 + 模板渲染
+  - `TestCheckInsightOpportunity` (11 tests): 无变更/单文件/多类型+测试/仅测试/配置变更/大量变更/首次沉淀/已有 Insight/YAML 扩展名/组合信号
+  - `TestInsightWorkflowTemplate` (5 tests): manifest 注册/默认渲染/禁用/位置/对话协议集成
+  - 全量 929/929 passed
 - **CLI E2E 测试全量覆盖**: 48 个 CLI 命令中 12 个缺失测试已全部补齐
   - `tests/test_cli_dev.py` (17 tests): dev 命令组 7 个子命令（whoami/list/status/sync/init/switch/conflicts）
   - `tests/test_cli.py` (+10 tests): 顶层命令（templates/export-template/version-info/check/health）

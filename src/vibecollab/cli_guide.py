@@ -12,7 +12,7 @@ import json
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import click
 import yaml
@@ -261,11 +261,21 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
     # === 8. 关键文件清单 ===
     key_files = project_config.get("documentation", {}).get("key_files", [])
 
-    # === 9. Insight 统计（如果存在） ===
+    # === 9. Insight 统计 + Top-N 摘要 ===
     insight_count = 0
+    top_insights: List[Dict] = []
     insights_dir = project_root / ".vibecollab" / "insights"
     if insights_dir.exists():
-        insight_count = len(list(insights_dir.glob("INS-*.yaml")))
+        insight_files = sorted(insights_dir.glob("INS-*.yaml"), reverse=True)
+        insight_count = len(insight_files)
+        for ins_file in insight_files[:5]:
+            ins_data = _safe_load_yaml(ins_file)
+            if ins_data:
+                top_insights.append({
+                    "id": ins_data.get("id", ins_file.stem),
+                    "title": ins_data.get("title", ""),
+                    "tags": ins_data.get("tags", []),
+                })
 
     # === 输出 ===
     if as_json:
@@ -276,6 +286,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
             "pending_roadmap": pending_roadmap,
             "uncommitted_changes": len(uncommitted),
             "insight_count": insight_count,
+            "top_insights": top_insights,
             "key_files": [kf.get("path", "") for kf in key_files],
         }
         if developer_info:
@@ -351,10 +362,19 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         if len(uncommitted) > 8:
             console.print(f"  [dim]... 还有 {len(uncommitted) - 8} 个[/dim]")
 
-    # Insight 统计
+    # Insight 统计 + Top-N 摘要
     if insight_count > 0:
         console.print()
-        console.print(f"[dim]Insight 沉淀: {insight_count} 条 (vibecollab insight list 查看)[/dim]")
+        console.print(f"[bold]Insight 沉淀: {insight_count} 条[/bold]")
+        if top_insights:
+            for ins in top_insights:
+                tags_str = ", ".join(ins["tags"][:4]) if ins["tags"] else ""
+                tag_label = f" [dim]({tags_str})[/dim]" if tags_str else ""
+                console.print(f"  {BULLET} {ins['id']}: {ins['title']}{tag_label}")
+            if insight_count > 5:
+                console.print(f"  [dim]... 还有 {insight_count - 5} 条 (vibecollab insight list 查看)[/dim]")
+        else:
+            console.print(f"  [dim]vibecollab insight list 查看全部[/dim]")
 
     # 关键文件清单
     console.print()
@@ -388,6 +408,56 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         title="建议的下一步",
         border_style="green"
     ))
+
+
+# ============================================================
+# Insight 沉淀提示辅助
+# ============================================================
+
+def _check_insight_opportunity(project_root: Path, diff_files: List[str]) -> Optional[str]:
+    """检查当前工作区是否存在值得沉淀 Insight 的信号。
+
+    返回提示原因字符串，如果无需提示则返回 None。
+    """
+    if not diff_files:
+        return None
+
+    # 信号 1: 变更涉及多种文件类型 → 可能是跨模块集成经验
+    extensions = {Path(f).suffix for f in diff_files if Path(f).suffix}
+    multi_type = len(extensions) >= 3
+
+    # 信号 2: 变更涉及测试文件 → 可能修复了 bug 或发现了新模式
+    has_test_changes = any("test" in f.lower() for f in diff_files)
+
+    # 信号 3: 变更涉及配置/CI 文件 → 可能有工具/工作流经验
+    config_patterns = (".yml", ".yaml", ".toml", ".cfg", ".ini", ".json")
+    has_config_changes = any(Path(f).suffix in config_patterns for f in diff_files)
+
+    # 信号 4: 较大量的变更 → 可能是重要的重构或特性
+    large_changeset = len(diff_files) >= 8
+
+    # 信号 5: .vibecollab 目录尚无 Insight → 引导首次沉淀
+    insights_dir = project_root / ".vibecollab" / "insights"
+    no_insights_yet = not insights_dir.exists() or not list(insights_dir.glob("INS-*.yaml"))
+
+    reasons = []
+    if no_insights_yet:
+        reasons.append("项目尚无 Insight 沉淀，建议开始积累经验")
+    if multi_type and has_test_changes:
+        reasons.append("变更涉及多种文件类型+测试，可能有值得记录的调试/集成经验")
+    elif has_test_changes:
+        reasons.append("变更涉及测试文件，可能发现了 bug 或新测试模式")
+    elif multi_type:
+        reasons.append("变更涉及多种文件类型，可能有跨模块集成经验")
+    if has_config_changes:
+        reasons.append("变更涉及配置文件，可能有工具/工作流经验")
+    if large_changeset and not reasons:
+        reasons.append(f"本次变更涉及 {len(diff_files)} 个文件，建议回顾是否有值得沉淀的经验")
+
+    if not reasons:
+        return None
+
+    return "；".join(reasons)
 
 
 # ============================================================
@@ -495,6 +565,18 @@ def next_step(config: str, as_json: bool):
             "type": "create_file",
             "action": f"创建 {f}",
             "reason": "在 documentation.key_files 中声明但不存在",
+        })
+
+    # P2: Insight 沉淀提示
+    insight_prompt = _check_insight_opportunity(project_root, diff_files)
+    if insight_prompt:
+        priority += 1
+        actions.append({
+            "priority": f"P2-{priority}",
+            "type": "insight_review",
+            "action": "检查是否有值得沉淀的经验 (Insight)",
+            "reason": insight_prompt,
+            "suggestion": 'vibecollab insight add --title "<标题>" --tags "<标签>" --category <类别> --body "<经验描述>"',
         })
 
     # P3: 建议运行 check

@@ -1,9 +1,6 @@
 """Tests for LifecycleManager."""
 
-import pytest
 from vibecollab.lifecycle import (
-    DEFAULT_STAGES,
-    STAGE_ORDER,
     LifecycleManager,
 )
 

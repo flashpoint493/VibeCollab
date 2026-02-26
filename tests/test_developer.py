@@ -3,7 +3,6 @@ DeveloperManager + ContextAggregator + migrate_to_multi_developer 单元测试
 """
 
 import os
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -15,7 +14,6 @@ from vibecollab.developer import (
     DeveloperManager,
     migrate_to_multi_developer,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

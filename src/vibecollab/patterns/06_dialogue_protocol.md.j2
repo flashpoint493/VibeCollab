@@ -19,6 +19,11 @@
 {% endfor -%}
 ```
 
+**Insight 检索（推荐）**：
+- 如果项目存在 `.vibecollab/insights/` 目录，执行 `vibecollab insight search --tags <当前任务关键词>` 检索相关经验
+- 检索结果可帮助避免重复踩坑、复用已验证的方案
+- 也可用 `vibecollab insight list` 浏览全部沉淀
+
 **项目初始化约束**：
 - 如果是新项目且没有 `.git` 目录，必须执行 `git init` 初始化 Git 仓库
 - 初始化后立即执行首次提交：`git add -A && git commit -m "init: 项目初始化"`
@@ -29,11 +34,16 @@
 > **每次对话结束前，AI 必须保存当前状态**
 
 ```
+{%- set step_num = [0] -%}
 {% for f in update_files -%}
-{{ loop.index }}. 更新 {{ f }}
+{%- set _ = step_num.append(step_num.pop() + 1) -%}
+{{ step_num[0] }}. 更新 {{ f }}
 {% endfor -%}
+{%- set _ = step_num.append(step_num.pop() + 1) -%}
+{{ step_num[0] }}. 经验沉淀检查 → 是否有值得记录的 Insight？(vibecollab insight add)
 {% if on_end.get('git_commit', True) -%}
-{{ update_files | length + 1 }}. Git commit → 记录对话成果
+{%- set _ = step_num.append(step_num.pop() + 1) -%}
+{{ step_num[0] }}. Git commit → 记录对话成果
 {% endif -%}
 ```
 

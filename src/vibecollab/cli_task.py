@@ -15,7 +15,7 @@ import click
 import yaml
 
 from .insight_manager import InsightManager
-from .task_manager import Task, TaskManager, TaskStatus
+from .task_manager import TaskManager
 
 
 def _load_config(config_path: str) -> dict:

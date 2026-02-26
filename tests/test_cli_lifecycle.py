@@ -1,9 +1,9 @@
 """Tests for cli_lifecycle commands."""
 
-import yaml
+
 import pytest
+import yaml
 from click.testing import CliRunner
-from pathlib import Path
 
 from vibecollab.cli_lifecycle import lifecycle
 

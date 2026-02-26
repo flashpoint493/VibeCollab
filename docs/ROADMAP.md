@@ -195,6 +195,13 @@
 - [x] Task-Insight 关联精度评估（中英文混合场景、长文本、边界输入）✅
 - [x] 衰减/奖励长期运行模拟（多轮 decay 后的权重分布合理性）✅
 
+#### Insight 融入 IDE 对话模式 ✅
+- [x] `27_insight_workflow.md.j2` 经验沉淀工作流模板章节 ✅
+- [x] 对话结束流程增加"经验沉淀检查"步骤 ✅
+- [x] `vibecollab next` 命令增加 Insight 沉淀提示（5 种信号检测）✅
+- [x] manifest.yaml 注册 + 条件开关 (`insight.enabled|true`) ✅
+- [x] 16 个单元测试（沉淀提示逻辑 11 + 模板渲染 5）✅
+
 #### 人机交互质量
 - [x] vibecollab ai ask/chat 在不同 terminal 环境下的 Unicode 兼容 ✅ `_compat.py` 统一兼容层
 - [ ] Rich 面板在 Windows PowerShell/CMD/WSL 的渲染验证 — 需手动验证
@@ -203,7 +210,7 @@
 
 #### 泛用性验证
 - [ ] 在 3+ 个真实外部项目上运行 `vibecollab init` + `generate` + `check`
-- [ ] 不同 Python 版本兼容性（3.8 / 3.9 / 3.10 / 3.11 / 3.12）
+- [ ] 不同 Python 版本兼容性（3.9 / 3.10 / 3.11 / 3.12 / 3.13）— CI 已配置，待 push 验证
 - [ ] 不同 OS 兼容性（Windows / macOS / Linux）
 - [x] 极简项目（空 project.yaml）和复杂项目（全量配置）的边界测试 ✅ 15 tests
 
@@ -211,6 +218,10 @@
 - [ ] QA_TEST_CASES.md 全量更新（覆盖 v0.7.x 新功能）
 - [x] README.md 更新（安装/快速开始/功能列表同步）✅ 项目结构/测试数/版本历史同步
 - [x] 已知问题清零或标记延后 ✅
+
+#### 定位决策
+- [x] **`vibecollab ai` 标记 experimental** ✅ — VibeCollab 定位为协议管理工具，不自建 LLM 运行时。Tool Use 交给 Cline/Cursor/Aider。`ai ask/chat/agent` 保留但冻结，不继续投入
+- [x] **Insight 读取路径规划** ✅ — 不在 `build_project_context()` 中注入，而是通过协议指引（CONTRIBUTING_AI.md）让 Cline/Cursor 在正确时机调用 `vibecollab insight search`
 
 ### v1.0.0 - 正式版（待规划）
 - [ ] 文档完善和中英文支持

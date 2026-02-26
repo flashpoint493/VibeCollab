@@ -1,17 +1,14 @@
 """Tests for git_utils module."""
 
 import subprocess
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from vibecollab.git_utils import (
     check_git_installed,
-    is_git_repo,
-    init_git_repo,
     ensure_git_repo,
     get_git_status,
+    init_git_repo,
+    is_git_repo,
 )
 
 
@@ -147,8 +144,6 @@ class TestGetGitStatus:
 
     def test_returns_status(self, tmp_path):
         (tmp_path / ".git").mkdir()
-
-        call_count = [0]
 
         def mock_run(cmd, **kwargs):
             result = MagicMock()

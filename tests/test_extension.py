@@ -1,13 +1,11 @@
 """Tests for ExtensionProcessor."""
 
-import yaml
+
 import pytest
-from pathlib import Path
+import yaml
 
 from vibecollab.extension import (
     Context,
-    Hook,
-    Extension,
     ExtensionProcessor,
     load_extension_from_file,
 )
