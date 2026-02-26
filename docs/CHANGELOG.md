@@ -26,6 +26,7 @@
   - 3 个单元测试覆盖（触发/未触发/未配置）
 
 ### Bug Fix
+- **修复 OpenAI 空 choices 导致 IndexError**: `_call_openai()` 中 `data.get("choices", [{}])[0]` 在 API 返回空 `choices: []` 时崩溃，改为安全取值
 - **修复 flaky test `test_onboard_basic`**: Windows 环境下 `test_serve_lock_conflict` 的 `SystemExit(1)` 导致 `subprocess.run` 内部线程残留 `KeyboardInterrupt`，污染后续 `onboard` 命令的 `_get_git_uncommitted()` 调用
   - 根因: `KeyboardInterrupt` 继承自 `BaseException` 而非 `Exception`，原有的 `except Exception` 无法捕获
   - 修复: `cli_guide.py` 中 `_get_git_uncommitted()` 和 `_get_git_diff_files()` 的异常处理从 `except Exception` 改为 `except BaseException`
@@ -44,6 +45,10 @@
   - `test_agent_executor.py` (+21 tests): git_commit 真实 git repo (成功/无变更/无 repo)、run_tests 超时/异常/自定义命令、apply_changes 写入失败/删除不存在、validate 无效路径、rollback 失败/空、full_cycle git 失败/真实 git、parse_single_change 边界输入
   - `test_cli_ai.py` (+14 tests): serve 断路器触发、自适应退避、内存阈值停止、pending-solidify 等待、_execute_agent_cycle 5 个分支 (plan 失败/exec 失败/无变更/异常/成功)、run 有效变更/plan 失败、ask/chat/plan 异常路径、status 陈旧锁/无效锁
   - 全量 844/844 passed (连续两次稳定)
+- **LLM Client mock 集成测试**: 26 个新测试覆盖双 provider + 配置文件层 + 边界情况
+  - `test_llm_client.py` (+26 tests): 配置文件三层解析 (文件回退/env 覆盖/显式覆盖/异常降级)、OpenAI+Anthropic 双 provider 深度 (URL 拼接/header 验证/未知 provider 降级/空 choices/多 system 消息/多内容块)、build_project_context 边界 (tasks 损坏/events 损坏/空文件/全 DONE)、ask() 路径 (双参数/temperature/默认构造)
+  - 发现并修复 OpenAI 空 choices IndexError bug
+  - 全量 868/868 passed (连续两次稳定)
 - **CLI E2E 测试全量覆盖**: 48 个 CLI 命令中 12 个缺失测试已全部补齐
   - `tests/test_cli_dev.py` (17 tests): dev 命令组 7 个子命令（whoami/list/status/sync/init/switch/conflicts）
   - `tests/test_cli.py` (+10 tests): 顶层命令（templates/export-template/version-info/check/health）

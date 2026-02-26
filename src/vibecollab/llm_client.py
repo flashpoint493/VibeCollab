@@ -326,7 +326,8 @@ class LLMClient:
                 f"OpenAI API error {resp.status_code}: {resp.text[:500]}")
 
         data = resp.json()
-        choice = data.get("choices", [{}])[0]
+        choices = data.get("choices", [])
+        choice = choices[0] if choices else {}
         return LLMResponse(
             content=choice.get("message", {}).get("content", ""),
             model=data.get("model", self.config.model),
