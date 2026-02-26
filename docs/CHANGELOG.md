@@ -2,6 +2,62 @@
 
 ## v0.8.0-dev (开发中)
 
+### 2026-02-26 10:30
+
+#### 新增
+- ✅ Phase 2.4: 单元测试（完整实现）
+  - test_profile.py: 10 tests (Profile 创建、匹配、推荐)
+  - test_insight_collection.py: 14 tests (Collection 创建、匹配、学习路径)
+  - test_profile_manager.py: 15 tests (CRUD、搜索、推荐、自定义加载)
+
+#### 修复
+- ✅ PatternEngine roles 合并逻辑
+  - 使用 adapter.get_roles() 合并用户定义和默认角色
+- ✅ ProjectAdapter.get_roles() 角色格式兼容
+  - 支持列表格式: [{'code': 'DESIGN', ...}]
+  - 支持字典格式: {'DESIGN': {...}}
+- ✅ TaskManager.count() 方法
+  - 新增统计方法，支持按状态过滤
+- ✅ 测试用例 test_get_dot_notation
+  - 添加必需字段 project.version 和 project.domain
+
+#### 代码实现
+- `src/vibecollab/pattern_engine.py` (修改)
+  - _build_context() 使用 adapter.get_roles()
+- `src/vibecollab/project_adapter.py` (修改)
+  - get_roles() 支持列表和字典格式
+- `src/vibecollab/task_manager.py` (修改)
+  - 新增 count() 方法
+- `tests/test_pattern_engine.py` (修改)
+  - test_get_dot_notation 添加必需字段
+- `tests/test_profile.py` (新增)
+  - 10 个 Profile 测试用例
+- `tests/test_insight_collection.py` (新增)
+  - 14 个 Collection 测试用例
+- `tests/test_profile_manager.py` (新增)
+  - 15 个 ProfileManager 测试用例
+
+#### 测试结果
+```
+72 tests passed in 0.55s
+- test_pattern_engine.py: 14 tests
+- test_project_adapter.py: 16 tests
+- test_profile.py: 10 tests
+- test_insight_collection.py: 14 tests
+- test_profile_manager.py: 15 tests
+```
+
+#### 进度
+- ✅ Phase 1: ProjectAdapter (100%)
+- ✅ Phase 2: Profile System (100%)
+- ⏳ Phase 3: 配置验证 CLI (0%)
+
+#### 总体进度
+- Phase 1 (ProjectAdapter): 100% ✅
+- Phase 2 (Profile): 100% ✅
+- Phase 3 (Validate): 0% ⏸️
+- 总体: 80%
+
 ### 2026-02-26 01:20
 
 #### 新增
