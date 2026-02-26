@@ -20,13 +20,13 @@
 - **上次更新**: 2026-02-26
 - **当前任务**: v0.8.0 稳定性验证 + 泛用性压力测试
 - **最近完成**:
-  - Flaky test 修复 (_get_git_uncommitted BaseException 捕获, 779/779 passed)
+  - CLI E2E 测试全量覆盖 (48/48 命令, 27 新测试, 809/809 passed)
+  - 系统性 subprocess 异常处理修复 (12 处 except Exception → except BaseException)
+  - Flaky test 修复 (test_onboard_basic + test_whoami_basic)
+  - key_files 陈旧性检查 (max_stale_days 功能)
   - 测试覆盖率 76% → 81% (128 新测试, 6 模块覆盖率大幅提升)
   - Config 三层配置系统 (config_manager + cli_config + LLMConfig 集成 + 38 tests)
   - Task-Insight 自动关联 (create_task 自动搜索 + CLI task 命令组 + 28 tests)
-  - 自举全量验证 (onboard/next/check/insight 全链路)
-  - protocol_checker 多开发者动态发现修复
-  - CONTRIBUTING_AI.md 全量命令文档补全
 
 ## 跨开发者协作
 (详见 docs/developers/COLLABORATION.md)
