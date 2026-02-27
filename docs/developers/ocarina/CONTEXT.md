@@ -6,20 +6,20 @@
 - **上次更新**: 2026-02-27
 
 ## 当前任务
-- **v0.9.0 语义检索引擎**: 核心模块已完成，推进剩余功能 (onboard 增强 / 混合检索)
+- **v0.9.1 自举能力**: 协议自举 (`vibecollab bootstrap`) + 协议模板自测框架
 
 ## 最近完成
-- ✅ **v0.9.0 语义检索引擎核心**: Embedder + VectorStore + Indexer + CLI (index/search/insight search --semantic)，73 新测试，1029/1029 passed
+- ✅ **v0.9.0 语义检索引擎完成**: Embedder + VectorStore + Indexer + CLI (index/search/insight search --semantic) + onboard 语义增强，84 新测试，1040/1040 passed
+- ✅ **onboard 语义增强**: 从 CONTEXT.md/开发者上下文提取任务 → 向量检索 Top-N 相关 Insight，Rich 面板 + JSON 输出
 - ✅ **`vibecollab prompt` 命令**: LLM 上下文 prompt 生成器，23 新测试
 - ✅ **Protocol Checker watch_files 机制**: DECISIONS.md/PRD.md 跟随检查 + max_inactive_hours 可配置
 - ✅ **Config 三层配置系统**: config_manager + cli_config + LLMConfig 集成
 - ✅ **Task-Insight 自动关联**: create_task 自动搜索 + CLI task 命令组
 
 ## 接下来计划
-- v0.9.0 剩余: onboard 增强（语义匹配 Insight）、混合检索（Jaccard + 向量加权融合）
-- v0.9.1 协议自举 (`vibecollab bootstrap`)
+- v0.9.1 协议自举 (`vibecollab bootstrap`) + 协议模板自测框架
+- v0.9.1 `ContextBuilder` 重构 + `insight suggest`
 - v0.10.0 MCP Server + IDE 集成
-- 外部项目泛用性验证（3+ 项目 init/generate/check）
 
 ## 技术债务
 - 跨项目 Insight 可移植性验证 — 需先实现 export/import API（延后）

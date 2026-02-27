@@ -15,6 +15,10 @@
   - `vibecollab insight search --semantic` — Insight 语义搜索模式
   - 零外部依赖降级方案: pure_python trigram 哈希 embedding
   - 可选 `pip install vibe-collab[embedding]` 安装 sentence-transformers
+  - `onboard` 语义增强 — 从 CONTEXT.md/开发者上下文提取任务描述 → 向量检索 Top-N 相关 Insight
+    - Rich 面板 "与当前任务相关的 Insight (语义匹配)" + JSON `related_insights` 字段
+    - 开发者上下文优先于全局 CONTEXT.md 作为查询文本
+    - 11 个新增单元测试（_search_related_insights + onboard 集成）
 
 ### Decision
 - **`vibecollab ai` 命令组标记为 experimental**: VibeCollab 核心定位是协议管理工具，LLM 通信和 Tool Use 交给 Cline/Cursor/Aider 等专业终端。`ai ask/chat/agent` 保留作为轻量替代，但不再作为主力开发方向。受影响模块：`cli_ai.py`、`llm_client.py`、`agent_executor.py`、`config_manager.py`（均可干净隔离，核心功能零依赖）
