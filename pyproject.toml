@@ -48,6 +48,10 @@ dependencies = [
 llm = [
     "httpx>=0.25.0",
 ]
+embedding = [
+    "sentence-transformers>=2.0.0",
+    "numpy>=1.20.0",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
