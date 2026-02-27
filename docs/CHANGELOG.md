@@ -6,6 +6,15 @@
 - **三层配置架构**: `环境变量 > ~/.vibecollab/config.yaml > 内置默认值`
 - 配置文件存放在用户 home 目录（`~/.vibecollab/config.yaml`），不进 git
 - 轻量 .env 解析：自实现 `parse_dotenv()`，仅提取 `VIBECOLLAB_*` 前缀变量
+- **v0.9.0 语义检索引擎**:
+  - `Embedder` 模块 — 轻量 embedding 抽象层，支持 OpenAI / sentence-transformers / pure_python 三后端
+  - `VectorStore` 模块 — SQLite 持久化向量存储，纯 Python 余弦相似度
+  - `Indexer` 模块 — 项目文档 + Insight YAML 索引器（Markdown chunk 拆分）
+  - `vibecollab index` 命令 — 增量/重建索引
+  - `vibecollab search` 命令 — 全局语义搜索
+  - `vibecollab insight search --semantic` — Insight 语义搜索模式
+  - 零外部依赖降级方案: pure_python trigram 哈希 embedding
+  - 可选 `pip install vibe-collab[embedding]` 安装 sentence-transformers
 
 ### Decision
 - **`vibecollab ai` 命令组标记为 experimental**: VibeCollab 核心定位是协议管理工具，LLM 通信和 Tool Use 交给 Cline/Cursor/Aider 等专业终端。`ai ask/chat/agent` 保留作为轻量替代，但不再作为主力开发方向。受影响模块：`cli_ai.py`、`llm_client.py`、`agent_executor.py`、`config_manager.py`（均可干净隔离，核心功能零依赖）

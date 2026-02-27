@@ -41,6 +41,7 @@ publish_pypi.bat
 # VibeCollab local runtime data
 .vibecollab/events.jsonl
 .vibecollab/tasks.json
+.vibecollab/vectors/
 .vibecollab.local.yaml
 
 # Reference materials (not part of project source)

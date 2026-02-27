@@ -238,26 +238,31 @@
 > 目标：让 Insight 和项目文档可被语义搜索，替代纯标签 Jaccard 匹配
 
 #### 文档/代码向量化
-- [ ] `Embedder` 模块 — 轻量 embedding 抽象层
+- [x] `Embedder` 模块 — 轻量 embedding 抽象层 ✅
   - 支持 OpenAI `text-embedding-3-small` / 本地 `sentence-transformers` 双后端
+  - 纯 Python trigram 哈希降级方案（零外部依赖）
   - 可选依赖 `pip install vibe-collab[embedding]`
-- [ ] `VectorStore` 模块 — 本地持久化向量存储
-  - 默认 SQLite + numpy 余弦相似度（零外部依赖方案）
-  - 可选 ChromaDB / FAISS 后端
+- [x] `VectorStore` 模块 — 本地持久化向量存储 ✅
+  - SQLite + 纯 Python 余弦相似度（零外部依赖方案）
+  - struct pack/unpack 向量 blob 存储
   - 存储路径 `.vibecollab/vectors/`
-- [ ] `vibecollab index` 命令 — 索引项目文档
-  - 增量索引 `CONTRIBUTING_AI.md`、`CONTEXT.md`、`DECISIONS.md`、`ROADMAP.md`、`PRD.md`
-  - Insight YAML 全量索引（标题 + body + tags）
-  - 代码文件可选索引（docstring / 函数签名）
-  - `--watch` 模式: 文件变更自动重建索引
+- [x] `vibecollab index` 命令 — 索引项目文档 ✅
+  - 增量索引 `CONTRIBUTING_AI.md`、`CONTEXT.md`、`DECISIONS.md`、`ROADMAP.md`、`PRD.md`、`CHANGELOG.md`
+  - Insight YAML 全量索引（标题 + body + tags，支持结构化 dict body）
+  - `--rebuild` 模式: 清除旧索引后重建
+  - `--backend` 选择 embedding 后端
+  - 代码文件可选索引（docstring / 函数签名）— 延后
+  - `--watch` 模式: 文件变更自动重建索引 — 延后
 
 #### 语义搜索集成
-- [ ] `vibecollab insight search` 增强 — `--semantic` 模式
-  - 混合检索: 标签 Jaccard + 向量余弦 → 加权融合排序
+- [x] `vibecollab insight search --semantic` 增强 ✅
+  - 基于向量余弦相似度的 Insight 语义搜索
   - 保持纯标签搜索为默认（零依赖兼容）
-- [ ] `vibecollab search` 新命令 — 全局语义搜索
-  - 跨 Insight / 文档 / 代码 统一搜索
+  - 混合检索 (标签 Jaccard + 向量余弦 → 加权融合排序) — 延后
+- [x] `vibecollab search` 新命令 — 全局语义搜索 ✅
+  - 跨 Insight / 文档统一搜索
   - 输出附带来源和相关度评分
+  - `--type` 过滤来源类型，`--min-score` 阈值过滤
 - [ ] `onboard` 增强 — 语义匹配当前任务相关 Insight
   - 从 CONTEXT.md 提取当前任务描述 → 向量检索 Top-N 相关 Insight
 

@@ -228,13 +228,31 @@ def add_insight(title, tags, category, scenario, approach, summary,
 @insight.command("search")
 @click.option("--tags", default=None, help="按标签搜索，逗号分隔")
 @click.option("--category", default=None, help="按分类搜索")
+@click.option("--semantic", "-q", default=None, help="语义搜索 (需先 vibecollab index)")
 @click.option("--include-inactive", is_flag=True, default=False, help="包含非活跃沉淀")
-def search_insights(tags, category, include_inactive):
-    """搜索沉淀"""
+@click.option("--top", "-k", default=10, help="语义搜索返回数量")
+def search_insights(tags, category, semantic, include_inactive, top):
+    """搜索沉淀
+
+    支持标签搜索、分类搜索、语义搜索三种模式。
+
+    Examples:
+
+        vibecollab insight search --tags "python,encoding"
+
+        vibecollab insight search --category debug
+
+        vibecollab insight search --semantic "Windows 编码兼容"
+    """
+    # 语义搜索模式
+    if semantic:
+        _semantic_search_insights(semantic, top)
+        return
+
     mgr = _load_insight_manager()
 
     if not tags and not category:
-        click.echo("请指定 --tags 或 --category", err=True)
+        click.echo("请指定 --tags、--category 或 --semantic", err=True)
         raise SystemExit(1)
 
     results = []
@@ -255,6 +273,53 @@ def search_insights(tags, category, include_inactive):
         weight = f"{entry.weight:.2f}" if entry else "1.00"
         click.echo(f"  {ins.id}  [{ins.category}]  {ins.title}  (weight: {weight})")
         click.echo(f"          tags: {', '.join(ins.tags)}")
+
+
+def _semantic_search_insights(query: str, top_k: int):
+    """语义搜索 Insight（调用向量索引）"""
+    from pathlib import Path
+
+    project_root = Path.cwd()
+    db_path = project_root / ".vibecollab" / "vectors" / "index.db"
+    if not db_path.exists():
+        click.echo("语义索引不存在 — 请先运行 `vibecollab index`", err=True)
+        raise SystemExit(1)
+
+    import sqlite3
+    conn = sqlite3.connect(str(db_path))
+    row = conn.execute("SELECT dimensions FROM vectors LIMIT 1").fetchone()
+    conn.close()
+    if not row:
+        click.echo("索引为空 — 请先运行 `vibecollab index`", err=True)
+        raise SystemExit(1)
+
+    from .embedder import Embedder, EmbedderConfig
+    from .vector_store import VectorStore
+
+    dims = row[0]
+    embedder = Embedder(EmbedderConfig(backend="pure_python", dimensions=dims))
+    store = VectorStore(db_path=db_path, dimensions=dims)
+
+    query_vector = embedder.embed_text(query)
+    results = store.search(query_vector, top_k=top_k, source_type="insight")
+
+    if not results:
+        click.echo(f"未找到与 \"{query}\" 相关的 Insight。")
+        store.close()
+        return
+
+    click.echo(f"语义搜索: \"{query}\" (Top {len(results)})\n")
+    for i, r in enumerate(results, 1):
+        title = r.metadata.get("title", "")
+        tags = r.metadata.get("tags", [])
+        category = r.metadata.get("category", "")
+        tags_str = f"  tags: {', '.join(tags)}" if tags else ""
+        cat_str = f"  [{category}]" if category else ""
+        click.echo(f"  {i}. {r.doc_id}{cat_str}  {title}  (score: {r.score:.3f})")
+        if tags_str:
+            click.echo(f"     {tags_str}")
+
+    store.close()
 
 
 @insight.command("use")
