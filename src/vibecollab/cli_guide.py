@@ -1,10 +1,11 @@
 """
 Guide CLI 命令 — AI Agent 接入引导与行动建议
 
-提供两个核心命令，让 AI Agent 能自主理解项目、自主推进开发：
+提供三个核心命令，让 AI Agent 能自主理解项目、自主推进开发：
 
 命令:
-    vibecollab onboard              AI 接入时的上下文引导
+    vibecollab onboard              AI 接入时的上下文引导（Rich 面板）
+    vibecollab prompt               生成 LLM 可直接使用的上下文 prompt 文本
     vibecollab next                 修改后的下一步行动建议
 """
 
@@ -196,6 +197,70 @@ def _suggest_commit_message(diff_files: List[str]) -> str:
     return "[VIBE]"
 
 
+def _collect_project_context(
+    config_path: Path, developer: Optional[str] = None
+) -> Dict:
+    """收集项目上下文数据（onboard 和 prompt 共用）
+
+    Returns:
+        Dict 包含: project_root, project_name, project_version, project_desc,
+        context_text, recent_decisions, pending_roadmap, uncommitted,
+        read_files, developer_info, key_files, insight_count, top_insights,
+        project_config
+    """
+    project_root = config_path.parent if config_path.parent != Path(".") else Path.cwd()
+
+    project_config = _safe_load_yaml(config_path)
+    if not project_config:
+        return {}
+
+    proj = project_config.get("project", {})
+
+    # 开发者信息
+    developer_info = None
+    if developer:
+        dev_context_path = project_root / "docs" / "developers" / developer / "CONTEXT.md"
+        dev_meta_path = project_root / "docs" / "developers" / developer / ".metadata.yaml"
+        developer_info = {
+            "id": developer,
+            "context": _safe_read_text(dev_context_path, max_lines=20),
+            "metadata": _safe_load_yaml(dev_meta_path),
+        }
+
+    # Insight
+    insight_count = 0
+    top_insights: List[Dict] = []
+    insights_dir = project_root / ".vibecollab" / "insights"
+    if insights_dir.exists():
+        insight_files = sorted(insights_dir.glob("INS-*.yaml"), reverse=True)
+        insight_count = len(insight_files)
+        for ins_file in insight_files[:5]:
+            ins_data = _safe_load_yaml(ins_file)
+            if ins_data:
+                top_insights.append({
+                    "id": ins_data.get("id", ins_file.stem),
+                    "title": ins_data.get("title", ""),
+                    "tags": ins_data.get("tags", []),
+                })
+
+    return {
+        "project_root": project_root,
+        "project_config": project_config,
+        "project_name": proj.get("name", "Unknown"),
+        "project_version": proj.get("version", "Unknown"),
+        "project_desc": proj.get("description", ""),
+        "context_text": _safe_read_text(project_root / "docs" / "CONTEXT.md", max_lines=30),
+        "recent_decisions": _get_recent_decisions(project_root / "docs" / "DECISIONS.md", 3),
+        "pending_roadmap": _extract_pending_from_roadmap(project_root / "docs" / "ROADMAP.md"),
+        "uncommitted": _get_git_uncommitted(project_root),
+        "read_files": _get_read_files_list(project_config),
+        "developer_info": developer_info,
+        "key_files": project_config.get("documentation", {}).get("key_files", []),
+        "insight_count": insight_count,
+        "top_insights": top_insights,
+    }
+
+
 # ============================================================
 # vibecollab onboard
 # ============================================================
@@ -219,63 +284,24 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         vibecollab onboard --json           # 机器可读输出
     """
     config_path = Path(config)
-    project_root = config_path.parent if config_path.parent != Path(".") else Path.cwd()
-
-    project_config = _safe_load_yaml(config_path)
-    if not project_config:
+    ctx = _collect_project_context(config_path, developer)
+    if not ctx:
         console.print("[red]错误:[/red] 无法加载 project.yaml")
         raise SystemExit(1)
 
-    # === 1. 项目概况 ===
-    proj = project_config.get("project", {})
-    project_name = proj.get("name", "Unknown")
-    project_version = proj.get("version", "Unknown")
-    project_desc = proj.get("description", "")
-
-    # === 2. 当前进度（从 CONTEXT.md） ===
-    context_text = _safe_read_text(project_root / "docs" / "CONTEXT.md", max_lines=30)
-
-    # === 3. 最近决策 ===
-    recent_decisions = _get_recent_decisions(project_root / "docs" / "DECISIONS.md", 3)
-
-    # === 4. 未完成的路线图项 ===
-    pending_roadmap = _extract_pending_from_roadmap(project_root / "docs" / "ROADMAP.md")
-
-    # === 5. 未提交的变更 ===
-    uncommitted = _get_git_uncommitted(project_root)
-
-    # === 6. 应读文件列表 ===
-    read_files = _get_read_files_list(project_config)
-
-    # === 7. 开发者信息 ===
-    developer_info = None
-    if developer:
-        dev_context_path = project_root / "docs" / "developers" / developer / "CONTEXT.md"
-        dev_meta_path = project_root / "docs" / "developers" / developer / ".metadata.yaml"
-        developer_info = {
-            "id": developer,
-            "context": _safe_read_text(dev_context_path, max_lines=20),
-            "metadata": _safe_load_yaml(dev_meta_path),
-        }
-
-    # === 8. 关键文件清单 ===
-    key_files = project_config.get("documentation", {}).get("key_files", [])
-
-    # === 9. Insight 统计 + Top-N 摘要 ===
-    insight_count = 0
-    top_insights: List[Dict] = []
-    insights_dir = project_root / ".vibecollab" / "insights"
-    if insights_dir.exists():
-        insight_files = sorted(insights_dir.glob("INS-*.yaml"), reverse=True)
-        insight_count = len(insight_files)
-        for ins_file in insight_files[:5]:
-            ins_data = _safe_load_yaml(ins_file)
-            if ins_data:
-                top_insights.append({
-                    "id": ins_data.get("id", ins_file.stem),
-                    "title": ins_data.get("title", ""),
-                    "tags": ins_data.get("tags", []),
-                })
+    project_root = ctx["project_root"]
+    project_name = ctx["project_name"]
+    project_version = ctx["project_version"]
+    project_desc = ctx["project_desc"]
+    context_text = ctx["context_text"]
+    recent_decisions = ctx["recent_decisions"]
+    pending_roadmap = ctx["pending_roadmap"]
+    uncommitted = ctx["uncommitted"]
+    read_files = ctx["read_files"]
+    developer_info = ctx["developer_info"]
+    key_files = ctx["key_files"]
+    insight_count = ctx["insight_count"]
+    top_insights = ctx["top_insights"]
 
     # === 输出 ===
     if as_json:
@@ -408,6 +434,224 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         title="建议的下一步",
         border_style="green"
     ))
+
+
+# ============================================================
+# vibecollab prompt — 生成 LLM 上下文 prompt
+# ============================================================
+
+# 协议章节与 CONTRIBUTING_AI.md 的标题映射
+_SECTION_MAP = {
+    "protocol": [
+        "# 一、核心理念",
+        "# 三、决策分级制度",
+        "## 4.2 标准对话流程",
+    ],
+    "context": [],       # 动态生成，不从文件提取
+    "insight": [
+        "# 经验沉淀工作流 (Insight Workflow)",
+    ],
+    "roles": [
+        "# 二、职能角色定义",
+    ],
+    "testing": [
+        "# 五、测试体系",
+    ],
+    "git": [
+        "## 4.3 Git 协作规范",
+    ],
+}
+
+_ALL_SECTIONS = ["protocol", "context", "insight"]
+
+
+def _extract_md_sections(text: str, start_headings: List[str]) -> str:
+    """从 Markdown 文本中提取指定标题开始到下一个同级标题结束的内容"""
+    lines = text.splitlines()
+    result_parts: List[str] = []
+
+    for start_heading in start_headings:
+        # 确定标题级别
+        heading_level = len(start_heading) - len(start_heading.lstrip("#"))
+        capturing = False
+        section_lines: List[str] = []
+
+        for line in lines:
+            if line.strip() == start_heading.strip():
+                capturing = True
+                section_lines = [line]
+                continue
+
+            if capturing:
+                stripped = line.lstrip()
+                if stripped.startswith("#"):
+                    line_level = len(stripped) - len(stripped.lstrip("#"))
+                    if line_level <= heading_level:
+                        break
+                section_lines.append(line)
+
+        if section_lines:
+            result_parts.append("\n".join(section_lines))
+
+    return "\n\n".join(result_parts)
+
+
+def _build_prompt_text(
+    ctx: Dict,
+    sections: List[str],
+    compact: bool = False,
+) -> str:
+    """构建 LLM prompt 纯文本"""
+    parts: List[str] = []
+    project_root = ctx["project_root"]
+
+    # Header
+    parts.append(f"# 项目上下文: {ctx['project_name']} {ctx['project_version']}")
+    parts.append(f"> {ctx['project_desc']}")
+    parts.append("")
+
+    # Protocol section — 从 CONTRIBUTING_AI.md 提取关键章节
+    if "protocol" in sections:
+        contrib_path = project_root / "CONTRIBUTING_AI.md"
+        if contrib_path.exists():
+            contrib_text = _safe_read_text(contrib_path)
+            headings = _SECTION_MAP["protocol"]
+            if not compact:
+                # 完整模式: 加上更多章节
+                headings = headings + _SECTION_MAP.get("roles", []) + _SECTION_MAP.get("git", [])
+            extracted = _extract_md_sections(contrib_text, headings)
+            if extracted:
+                parts.append("---")
+                parts.append("## 协作协议")
+                parts.append(extracted)
+                parts.append("")
+
+    # Context section
+    if "context" in sections:
+        parts.append("---")
+        parts.append("## 当前状态")
+        parts.append("")
+
+        if ctx["context_text"]:
+            parts.append(ctx["context_text"])
+            parts.append("")
+
+        dev_info = ctx.get("developer_info")
+        if dev_info and dev_info.get("context"):
+            parts.append(f"### 开发者: {dev_info['id']}")
+            parts.append(dev_info["context"])
+            parts.append("")
+
+        if ctx["recent_decisions"]:
+            parts.append("### 最近决策")
+            for d in ctx["recent_decisions"]:
+                parts.append(f"- {d}")
+            parts.append("")
+
+        if not compact and ctx["pending_roadmap"]:
+            parts.append("### 路线图待办")
+            for item in ctx["pending_roadmap"][:10]:
+                parts.append(f"- [ ] {item}")
+            parts.append("")
+
+        if ctx["uncommitted"]:
+            parts.append(f"### 未提交变更: {len(ctx['uncommitted'])} 个文件")
+            parts.append("")
+
+    # Insight section
+    if "insight" in sections and ctx["top_insights"]:
+        parts.append("---")
+        parts.append(f"## Insight 沉淀 ({ctx['insight_count']} 条)")
+        parts.append("")
+        for ins in ctx["top_insights"]:
+            tags_str = ", ".join(ins["tags"][:4]) if ins["tags"] else ""
+            tag_part = f" ({tags_str})" if tags_str else ""
+            parts.append(f"- **{ins['id']}**: {ins['title']}{tag_part}")
+        if ctx["insight_count"] > 5:
+            parts.append(f"- ... 还有 {ctx['insight_count'] - 5} 条")
+        parts.append("")
+        parts.append("> 使用 `vibecollab insight search --tags <关键词>` 检索相关经验")
+        parts.append("")
+
+        # 在非 compact 模式下，附加 Insight 工作流说明
+        if not compact:
+            contrib_path = project_root / "CONTRIBUTING_AI.md"
+            if contrib_path.exists():
+                contrib_text = _safe_read_text(contrib_path)
+                insight_section = _extract_md_sections(contrib_text, _SECTION_MAP["insight"])
+                if insight_section:
+                    parts.append(insight_section)
+                    parts.append("")
+
+    # Footer
+    parts.append("---")
+    parts.append("*由 `vibecollab prompt` 自动生成*")
+
+    return "\n".join(parts)
+
+
+@click.command("prompt")
+@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+@click.option("--developer", "-d", default=None, help="指定开发者 ID")
+@click.option("--compact", is_flag=True, help="精简模式（仅协议核心 + 当前状态）")
+@click.option(
+    "--sections", "-s", default=None,
+    help="选择性注入章节，逗号分隔 (protocol,context,insight,roles,testing,git)"
+)
+@click.option("--copy", "to_clipboard", is_flag=True, help="复制到剪贴板")
+def prompt_cmd(
+    config: str,
+    developer: Optional[str],
+    compact: bool,
+    sections: Optional[str],
+    to_clipboard: bool,
+):
+    """生成 LLM 可直接使用的上下文 prompt
+
+    输出纯 Markdown 文本，包含协作协议摘要、项目当前状态、
+    Insight 经验等，可直接复制粘贴到任何 LLM 对话窗口。
+
+    Examples:
+
+        vibecollab prompt                     # 完整 prompt
+
+        vibecollab prompt --compact           # 精简版
+
+        vibecollab prompt --copy              # 直接复制到剪贴板
+
+        vibecollab prompt -d ocarina          # 含开发者上下文
+
+        vibecollab prompt -s protocol,context # 只要协议+状态
+    """
+    config_path = Path(config)
+    ctx = _collect_project_context(config_path, developer)
+    if not ctx:
+        console.print("[red]错误:[/red] 无法加载 project.yaml")
+        raise SystemExit(1)
+
+    # 解析 sections
+    if sections:
+        selected = [s.strip() for s in sections.split(",") if s.strip()]
+    else:
+        selected = list(_ALL_SECTIONS)
+
+    text = _build_prompt_text(ctx, selected, compact=compact)
+
+    if to_clipboard:
+        try:
+            import subprocess as _sp
+            process = _sp.Popen(["clip"], stdin=_sp.PIPE, shell=True)
+            process.communicate(text.encode("utf-16-le"))
+            token_estimate = len(text) // 4
+            console.print(
+                f"[green]OK[/green] prompt 已复制到剪贴板 "
+                f"(~{token_estimate} tokens, {len(text)} chars)"
+            )
+        except Exception:
+            click.echo(text)
+            console.print("[yellow]警告: 剪贴板复制失败，已输出到 stdout[/yellow]")
+    else:
+        click.echo(text)
 
 
 # ============================================================
