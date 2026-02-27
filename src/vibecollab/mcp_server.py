@@ -410,6 +410,32 @@ def create_mcp_server(project_root: Optional[Path] = None):
                 ensure_ascii=False,
             )
 
+    @mcp.tool()
+    def insight_graph(output_format: str = "json") -> str:
+        """获取 Insight 关联图谱
+
+        Args:
+            output_format: 输出格式 (json/mermaid)
+        """
+        fmt_flag = "json" if output_format == "json" else output_format
+        cmd = ["vibecollab", "insight", "graph", "--format", fmt_flag]
+        return _run_cli(cmd, root)
+
+    @mcp.tool()
+    def insight_export(ids: str = "", include_registry: bool = False) -> str:
+        """导出 Insight 为 YAML 格式
+
+        Args:
+            ids: 要导出的 ID 列表，逗号分隔 (默认全部)
+            include_registry: 是否包含注册表状态
+        """
+        cmd = ["vibecollab", "insight", "export"]
+        if ids:
+            cmd.extend(["--ids", ids])
+        if include_registry:
+            cmd.append("--include-registry")
+        return _run_cli(cmd, root)
+
     # ================================================================
     # Prompts — 对话模板
     # ================================================================
@@ -438,6 +464,8 @@ def create_mcp_server(project_root: Optional[Path] = None):
             "- `task_list`: 列出当前任务",
             "- `task_create`: 创建新任务",
             "- `task_transition`: 推进任务状态",
+            "- `insight_graph`: 查看 Insight 关联图谱",
+            "- `insight_export`: 导出 Insight",
             "- `session_save`: 保存对话 session (对话结束时调用)",
             "",
         ]
