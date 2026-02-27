@@ -802,6 +802,12 @@ from .cli_config import config_group  # noqa: E402
 
 main.add_command(config_group)
 
+# 导入语义检索命令 (v0.9.0+)
+from .cli_index import index_cmd, search_cmd  # noqa: E402
+
+main.add_command(index_cmd, name="index")
+main.add_command(search_cmd, name="search")
+
 
 # ============================================
 # 多开发者管理命令组 (v0.5.0+)
