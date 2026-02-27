@@ -231,7 +231,7 @@
 ## v0.8.x+ 后续开发规划
 
 > **核心方向**: VibeCollab 定位为**协议管理工具 + 结构化知识引擎**，不自建 LLM 运行时。
-> 后续版本围绕**自举能力、语义检索、IDE 集成、无监督运行**四条主线推进。
+> 后续版本围绕**MCP/IDE 集成、文档完善与发布**两条主线推进。
 
 ### v0.9.0 - 语义检索引擎（Insight/文档向量化）
 
@@ -268,41 +268,25 @@
   - Rich 面板 + JSON 输出双格式支持
   - 11 个单元测试
 
-### v0.9.1 - 自举能力（VibeCollab 管理自身演进）
+### v0.9.1 - MCP Server + AI IDE 集成
 
-> 目标：VibeCollab 能用自己的协议和工具来管理自身的开发过程
+> 目标：让 VibeCollab 成为 Cline/Cursor/CodeBuddy 等 AI IDE 的"协议后端"，
+> 从"手动复制粘贴"变成"IDE 自动读取协议"
 
-#### 协议自举
-- [ ] `vibecollab bootstrap` — 用 VibeCollab 协议初始化 VibeCollab 自身
-  - 自动生成 VibeCollab 项目的 CONTRIBUTING_AI.md（吃自己的狗粮）
-  - 验证: `vibecollab check` 在 VibeCollab 仓库上的输出为全绿
-- [ ] 协议模板自测框架 — 模板变更后自动验证生成结果
-  - CI 中增加 `vibecollab generate && vibecollab check` 自测步骤
-  - 模板语法错误自动阻断发布
-
-#### 模型推理解析增强
-- [ ] `ContextBuilder` 重构 — 结构化上下文组装器
-  - 替代 `build_project_context()` 的纯字符串拼接
-  - 支持 Token 预算管理（按优先级截断）
-  - 自动选择注入哪些 Insight / 文档段落（基于向量相关度 + Token 预算）
-- [ ] Insight 自动生成 — 从 `git diff` + commit message 自动提炼候选 Insight
-  - `vibecollab insight suggest` — 分析最近 N 次 commit，推荐可沉淀的经验
-  - 人工 confirm 后入库（保持人在回路）
-
-### v0.10.0 - AI IDE 集成层
-
-> 目标：让 VibeCollab 成为 Cline/Cursor/Aider/OpenClaw 等 AI IDE 的"协议后端"
-
-#### MCP Server（Model Context Protocol）
-- [ ] `vibecollab mcp serve` — 标准 MCP Server 实现
-  - Tool 暴露: `insight_search`, `insight_add`, `task_list`, `check`, `next`, `onboard`
-  - Resource 暴露: `CONTRIBUTING_AI.md`, `CONTEXT.md`, `DECISIONS.md`, Insight YAML
-  - Prompt 暴露: 对话开始时的上下文注入模板
-- [ ] MCP 配置自动注入
-  - `vibecollab init` 自动生成 `.cursor/mcp.json` / `.cline/mcp_settings.json`
+#### MCP Server（Model Context Protocol）✅
+- [x] `vibecollab mcp serve` — 标准 MCP Server 实现 ✅
+  - Tool 暴露: `insight_search`, `insight_add`, `task_list`, `check`, `next`, `onboard`, `search_docs`, `project_prompt`, `developer_context`
+  - Resource 暴露: `CONTRIBUTING_AI.md`, `CONTEXT.md`, `DECISIONS.md`, `ROADMAP.md`, `CHANGELOG.md`, Insight 列表
+  - Prompt 暴露: `start_conversation` 对话开始时上下文注入模板
+- [x] MCP CLI 命令组 ✅
+  - `vibecollab mcp config --ide cursor/cline/codebuddy` 输出配置
+  - `vibecollab mcp inject --ide all` 自动注入 IDE 配置文件
   - 支持 `stdio` 和 `sse` 两种传输模式
+- [x] PyPI v0.9.1 发布 ✅ — `pip install vibe-collab[mcp]`
+- [x] CodeBuddy Rule 集成 ✅ — `.codebuddy/rules/vibecollab-protocol.mdc`
+- [x] 35 个单元测试，1074 全量 passed ✅
 
-#### Cursor / Cline / CodeBuddy 适配
+#### IDE 适配（待完善）
 - [ ] Cursor Skill 自动生成 — `vibecollab export cursor-skill`
   - 从 `project.yaml` + `CONTRIBUTING_AI.md` 自动生成 `.cursor/skills/vibecollab/SKILL.md`
   - 项目配置变更时自动重新生成
@@ -311,84 +295,88 @@
 - [ ] CodeBuddy Rule 适配 — `vibecollab export codebuddy`
   - 生成 `.codebuddy/rules/vibecollab.md`
 
-#### OpenClaw 插件
-- [ ] `vibecollab-openclaw` 独立包
-  - 注册为 OpenClaw Agent 插件
-  - 暴露 VibeCollab CLI 能力为 OpenClaw Tool
-  - 协议检查结果作为 Agent 评估反馈
+### v0.9.2 - Insight 沉淀信号增强
 
-### v0.10.1 - 无监督运行能力
+> 目标：让 Insight 沉淀从"纯 LLM 推理"变成"结构化信号驱动"，提供可靠的沉淀上下文
 
-> 目标：VibeCollab 在 CI/CD 和 Git Hook 中无需人工干预地运行
+#### 沉淀信号收集
+- [x] `vibecollab insight suggest` — 基于结构化信号推荐候选 Insight ✅
+  - 距上次 `insight add` 以来的 git commit 历史分析
+  - CONTEXT.md / DECISIONS.md 变更 diff 检测
+  - 新增/关闭的 Task 提取
+  - 输出候选 Insight 列表，人工 confirm 后入库
+- [x] 信号快照 — `.vibecollab/insight_signal.json` ✅
+  - 记录上次 insight 沉淀的时间点和 commit hash
+  - `insight add` 自动更新快照
+  - `insight suggest` 从快照到 HEAD 提取增量信号
 
-#### Git Hook 集成
-- [ ] `vibecollab hook install` — 自动注入 Git hooks
-  - `pre-commit`: `vibecollab check --strict` 阻断不合规提交
-  - `post-commit`: `vibecollab insight suggest --auto` 自动推荐 Insight
-  - `commit-msg`: 验证 commit message 格式是否符合协议 commit_prefixes
+#### 对话持久化（一级缓存）
+- [x] 对话 summary 存储 — `.vibecollab/sessions/` ✅
+  - AI IDE 对话结束时的 summary 持久化（手动或 MCP 自动触发）
+  - 作为 `insight suggest` 的输入信号之一
+  - MCP `session_save` tool 暴露写入接口
+- [x] MCP Server 增强 ✅
+  - `insight_suggest` tool: 基于信号推荐候选 Insight
+  - `session_save` tool: 保存对话 session summary
+- [x] 60 个单元测试（insight_signal + session_store）✅
+  - 全量 1134 passed, 1 skipped, 零回归
 
-#### CI/CD 无监督模式
-- [ ] `vibecollab ci` 命令组 — CI 环境优化
-  - `vibecollab ci check` — 非交互模式，JSON 输出，退出码表示成败
-  - `vibecollab ci report` — 生成 Markdown 格式的协议遵循报告（可作为 PR comment）
-  - `vibecollab ci gate` — 作为 PR merge 门控（协议检查 + Insight 覆盖率）
-- [ ] GitHub Action — `vibecollab-action`
-  - 封装为可复用的 GitHub Action
-  - 支持 PR 评论注入检查报告
-  - 支持 auto-label（基于变更范围自动打标签）
+### v0.9.3 - Task/EventLog 核心工作流接通
 
-#### 定时任务
-- [ ] `vibecollab cron` — 周期性无监督任务
-  - Insight 衰减周期执行 (`insight decay --all`)
-  - 文档一致性自动报告
-  - 向量索引增量更新
+> 目标：让 TaskManager 和 EventLog 从"底层 API"变成用户日常可感知的功能 (DECISION-016)
 
-### v0.11.0 - Agent 稳定性增强（experimental 模块升级）
+#### Task CLI 补齐
+- [x] `vibecollab task transition` — 手动推进任务状态 (TODO→IN_PROGRESS→REVIEW→DONE) ✅
+- [x] `vibecollab task solidify` — 固化任务 (REVIEW→DONE，通过验证门控) ✅
+- [x] `vibecollab task rollback` — 回滚任务状态 ✅
 
-> 前提：v0.10.0 MCP 路径验证后，评估是否值得继续投入 agent 自建能力
-> 如果 MCP + 外部 IDE 已满足 95% 场景，此版本可降级或取消
+#### 核心命令注入
+- [x] `onboard` 注入活跃 Task 概览 — 显示当前 TODO/IN_PROGRESS/REVIEW 任务 ✅
+- [x] `onboard` 注入最近 EventLog 事件摘要 ✅
+- [x] `next` 基于 Task 状态推荐行动 — 超时/阻塞/待 solidify 任务优先提示 ✅
 
-#### Agent 能力增强（条件性）
-- [ ] Tool Use 框架 — 结构化工具调用协议
-  - 定义 VibeCollab Tool Schema（JSON Schema）
-  - LLM 返回 tool_call → agent_executor 解析执行
-  - 支持 OpenAI function calling / Anthropic tool use 格式
-- [ ] Agent 记忆系统 — 跨会话上下文保持
-  - 短期: 对话内 token 管理（滑动窗口 + 摘要压缩）
-  - 中期: 会话间状态持久化 (`.vibecollab/agent_memory/`)
-  - 长期: Insight 系统作为永久记忆层
-- [ ] Agent 自我评估 — 执行后健康检查
-  - 每次 `agent run` 后自动执行 `vibecollab check`
-  - 检查结果反馈给下一轮 LLM prompt
-  - 连续 3 次 check 失败 → 自动暂停并通知
+#### MCP Server 增强
+- [x] `task_create` tool — AI IDE 可直接创建任务 ✅
+- [x] `task_transition` tool — AI IDE 可推进任务状态 ✅
 
-#### Agent 安全加固
-- [ ] 沙箱执行环境 — 限制 agent 可操作范围
-  - 文件系统白名单（只允许操作项目目录内文件）
-  - 命令白名单（禁止 `rm -rf` 等危险操作）
-  - 网络访问限制（仅允许 LLM API 调用）
-- [ ] 人工审批门控 — 高风险操作确认
-  - S/A 级决策变更需人工确认
-  - 删除操作需人工确认
-  - 基于 git diff 的变更量阈值（超过 N 行自动暂停）
+#### 测试 & 决策
+- [x] 30 个单元测试，全量 1164 passed, 零回归 ✅
+- [x] DECISION-016: v0.9.3 方向决策 (S 级) ✅
 
-### v1.0.0 - 正式发布
+### v0.9.4 - Insight 质量与生命周期
 
-> 前置条件：v0.9.x 语义检索 + v0.10.x IDE 集成 至少各完成核心功能
+> 目标：提升沉淀质量，建立 Insight 从产生到淘汰的完整生命周期
+
+- [ ] Insight 自动去重 — 新增 Insight 时语义相似度检查，防止重复沉淀
+- [ ] Insight 关联图谱 — `vibecollab insight graph` 可视化 Insight 之间的派生/关联关系
+- [ ] 跨项目 Insight 可移植性 — `insight export` / `insight import`（YAML 格式，保持完整性）
+
+### v0.10.0 - 发布准备 + 文档完善
+
+> 目标：补齐文档、Wiki、README，发布 PyPI 正式包
+
+#### 文档完善
+- [ ] README.md 全面更新（安装 / 快速开始 / 功能列表 / 架构图 / Badge）
+- [ ] GitHub Wiki 建设（用户指南 / API 参考 / 配置说明 / FAQ）
+- [ ] CHANGELOG.md 全版本整理
+- [ ] 英文文档（README EN / Quick Start）
+
+#### 发布
+- [ ] PyPI 稳定版发布 (`vibe-collab` v0.10.0)
+- [ ] GitHub Release + Tag
+- [ ] 版本号统一清理（pyproject.toml / __init__.py / docs）
 
 #### 质量门槛
 - [ ] 测试覆盖率 ≥ 85%
-- [ ] 3+ 外部真实项目验证
-- [ ] 英文文档完善（README / Quick Start / API Reference）
-- [ ] PyPI 稳定版发布 + GitHub Release + Changelog
+- [ ] `vibecollab check` 全绿
+- [ ] 3+ 外部真实项目验证 `vibecollab init` + `check`
 - [ ] MCP Server 至少在 Cursor/Cline 中可用
 
-#### 正式功能集
-- [ ] 协议管理: init / generate / validate / check
-- [ ] 知识引擎: insight CRUD / 语义搜索 / 自动推荐
-- [ ] IDE 集成: MCP Server / Cursor Skill / Cline 适配
-- [ ] CI/CD: 无监督检查 / PR 门控 / Git Hook
-- [ ] 文档: 中英文 README / 教程 / API 文档
+### ~~v0.9.2(旧) - 自举能力~~ ❌ 已砍掉 (DECISION-015)
+> 决策：`bootstrap` 价值不足（已有手写 CONTRIBUTING_AI.md），`ContextBuilder` 重构可在 MCP 开发中按需进行，不单列版本。
+
+### ~~v0.10.1 - Agent 稳定性增强~~ ❌ 已砍掉 (DECISION-015)
+> 决策：MCP + 外部 IDE (Cline/Cursor/CodeBuddy) 已覆盖 Agent 场景，不再投入自建 Agent 能力。`vibecollab ai` 保持 experimental 冻结。
 
 ---
 
@@ -400,13 +388,22 @@
 
 ## 未来规划
 
+### 无监督运行能力（待定）
+> 从 v0.10.0 降入未来规划 (DECISION-015)
+
+- Git Hook 集成 (`vibecollab hook install`)
+- CI/CD 无监督模式 (`vibecollab ci check/report/gate`)
+- GitHub Action (`vibecollab-action`)
+- 定时任务 (`vibecollab cron`)
+
 ### Production 阶段（量产）
 **预计时间**: 待定
 **前置条件**: 
 - 核心功能稳定
 - 文档完善
-- 测试覆盖率达到 80%+
+- 测试覆盖率达到 85%+
 - CI/CD 流程建立
+- PyPI 正式包发布
 
 **重点任务**:
 - 代码质量优化
@@ -432,4 +429,4 @@
 
 ---
 
-*最后更新: 2026-02-27 (v0.8.0)*
+*最后更新: 2026-02-27 (v0.9.3)*

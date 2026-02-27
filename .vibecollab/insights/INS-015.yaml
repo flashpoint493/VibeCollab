@@ -1,0 +1,24 @@
+kind: insight
+version: '1'
+id: INS-015
+title: Insight沉淀需要结构化信号而非纯LLM推理
+summary: Insight沉淀应由结构化信号(git历史/文档变更/对话摘要)驱动,而非完全依赖LLM推理判断
+tags:
+- insight
+- 信号驱动
+- git历史
+- 对话持久化
+- 上下文
+category: workflow
+body:
+  scenario: AI对话中判断哪些经验值得沉淀为Insight时
+  approach: '1. 收集结构化信号: git log(距上次insight的增量commit)、CONTEXT.md diff、DECISIONS.md新增条目;
+    2. 对话summary持久化为一级缓存(.vibecollab/sessions/); 3. 信号快照记录上次沉淀时间点和commit hash; 4.
+    insight suggest命令基于信号自动推荐候选,人工confirm入库'
+  validation: insight suggest输出的候选列表有明确的信号来源标注
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-27'
+  context: 当前insight add完全依赖AI对话中的推理判断,缺乏可追溯的结构化依据,容易遗漏或产生低质量沉淀
+fingerprint: 7e7bac2e33fe652b3172834ce6589310f9f24d7d4573418621eda3f64a37d9f3

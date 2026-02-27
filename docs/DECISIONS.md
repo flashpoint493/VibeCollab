@@ -342,4 +342,62 @@
   - 完全向后兼容
 
 ---
+
+### DECISION-015: 砍掉自举能力(v0.9.2)和 Agent 增强(v0.10.1)，聚焦 MCP + 发布
+- **发起人**: user
+- **参与者**: user, AI
+- **等级**: S
+- **角色**: [PM]
+- **问题**: v0.9.2 自举能力和 v0.10.1 Agent 增强是否值得继续投入？v0.10 应该做什么？
+- **选项**:
+  - A: 按原计划推进 v0.9.2 自举 → v0.10.0 无监督 → v0.10.1 Agent
+  - B: 砍掉自举和 Agent，MCP 完成后直接进入发布准备（选择）
+  - C: 只砍 Agent，保留自举
+- **决策**: B — 砍掉 v0.9.2 和 v0.10.1，v0.10.0 改为发布准备（文档/Wiki/README/PyPI）
+- **理由**:
+  - `bootstrap` 价值不足：已有手写 CONTRIBUTING_AI.md (1488行)，自动生成会覆盖且质量更差
+  - `ContextBuilder` 重构可在 MCP 开发中按需进行，不需要单列版本
+  - Agent 自建能力与 MCP + 外部 IDE (Cline/Cursor/CodeBuddy) 路线冲突，`vibecollab ai` 已在 DECISION-012 中标记 experimental 冻结
+  - 无监督运行（Git Hook/CI/CD）降为未来规划，优先级低于产品发布
+  - v0.10.0 聚焦文档完善 + PyPI 正式发布，是走向 v1.0 的关键步骤
+- **日期**: 2026-02-27
+- **状态**: CONFIRMED
+- **影响**:
+  - ROADMAP 版本链简化为: v0.9.0(语义检索) → v0.9.1(MCP) → v0.10.0(发布准备)
+  - v0.9.2 自举、v0.10.1 Agent 标记 ❌ 已砍掉
+  - 原 v0.10.0 无监督运行能力降入"未来规划"
+  - v1.0.0 前置条件简化
+
+---
+
+### DECISION-016: v0.9.3 优先接通 Task/EventLog 到核心工作流
+- **发起人**: user
+- **参与者**: user, AI
+- **等级**: S
+- **角色**: [PM, ARCH]
+- **问题**: TaskManager（53 tests）和 EventLog（23 tests）已精心实现，但与用户日常工作流完全脱节。tasks.json 为空，events.jsonl 仅有 Insight 操作事件。onboard/next/check 三个核心命令均不读取 Task/EventLog 数据。HealthExtractor 已实现但未接入 CLI。v0.9.3/v0.9.4 应该做什么？
+- **选项**:
+  - A: 接受现状 — Task/EventLog 作为底层 API 存在，等用户手动使用
+  - B: 接通核心工作流 — onboard 注入 Task 概览、next 基于 Task 推荐、MCP 暴露 task_create/transition、CLI 补齐 transition/solidify/rollback（选择）
+  - C: 砍掉 TaskManager — 代码已验证，但用户不用就是废代码，不如删掉降低维护成本
+- **决策**: B — v0.9.3 优先将 Task/EventLog 接通到核心工作流，Insight 质量推到 v0.9.4
+- **理由**:
+  - TaskManager/EventLog 设计良好、测试充分，问题不是代码质量而是接入缺失
+  - onboard/next 是用户高频使用的命令，注入 Task/EventLog 数据能让用户感知到这些模块的价值
+  - MCP 暴露 task_create/transition 让 AI IDE 能自动管理任务，形成完整闭环
+  - CLI 缺少 transition/solidify/rollback 导致用户无法手动操作任务状态
+  - health 命令已接入 HealthExtractor，但 onboard/check 缺少 EventLog 可见性
+  - Insight 质量（去重/关联图谱/跨项目）优先级低于核心工作流打通
+- **日期**: 2026-02-27
+- **状态**: CONFIRMED
+- **影响**:
+  - v0.9.3 从 "Insight 质量与生命周期" 改为 "Task/EventLog 核心工作流接通"
+  - v0.9.4 新增 "Insight 质量与生命周期"
+  - Task CLI 补齐 transition/solidify/rollback 三个命令
+  - onboard 注入活跃 Task 概览
+  - next 基于 Task 状态推荐行动
+  - MCP 新增 task_create / task_transition Tool
+  - EventLog 数据在 onboard 中可见
+
+---
 *决策记录格式见 CONTRIBUTING_AI.md*

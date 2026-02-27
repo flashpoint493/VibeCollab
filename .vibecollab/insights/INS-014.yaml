@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-014
+title: 功能重复时优先判断是否已有外部替代方案
+summary: 自建Agent不如集成MCP+Cursor/Cline,避免与外部IDE能力重复
+tags:
+- 架构决策
+- MCP
+- Agent
+- 外部工具
+- 避免重复造轮子
+category: decision
+body:
+  scenario: 计划自建某功能时,发现外部工具链(IDE插件/MCP协议等)已能覆盖该场景
+  approach: 1. 列出自建方案的独特价值点; 2. 逐一检查外部方案是否已覆盖; 3. 如果覆盖率>=90%则砍掉自建,将精力投入集成; 4. 冻结而非删除已有代码(标记experimental),保留未来重启可能
+  validation: 确认砍掉的功能确实被外部方案覆盖,无用户场景遗漏
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-27'
+  context: vibecollab ai(ask/chat/agent)已在DECISION-012标记experimental冻结,MCP Server作为v0.9.1优先推进,Agent增强v0.10.1被砍
+  source:
+    type: decision
+    description: ai命令冻结+Agent增强砍掉的组合决策
+    ref: DECISION-012,DECISION-015
+fingerprint: 8f6d6e77795542f66c1a2add8965d2be8a8047d3ab1cb5f12dfe8fad4891000d

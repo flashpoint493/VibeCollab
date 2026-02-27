@@ -808,6 +808,11 @@ from .cli_index import index_cmd, search_cmd  # noqa: E402
 main.add_command(index_cmd, name="index")
 main.add_command(search_cmd, name="search")
 
+# 导入 MCP Server 命令 (v0.9.1+)
+from .cli_mcp import mcp_group  # noqa: E402
+
+main.add_command(mcp_group)
+
 
 # ============================================
 # 多开发者管理命令组 (v0.5.0+)

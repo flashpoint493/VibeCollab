@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-013
+title: 版本规划应果断砍掉低价值里程碑
+summary: 低价值的条件性里程碑应直接砍掉，不要让它们占据版本号拖慢节奏
+tags:
+- 版本规划
+- 决策
+- 聚焦
+- YAGNI
+category: decision
+body:
+  scenario: 路线图中存在多个条件性/低优先级里程碑占据版本号时
+  approach: 1. 评估每个里程碑的独立价值（是否有替代方案已覆盖）; 2. 对已有替代方案覆盖的功能直接砍掉而非降级; 3. 版本号留给有实际交付物的里程碑（文档/发布/功能）;
+    4. 被砍内容降入未来规划而非删除，保留历史记录
+  validation: ROADMAP 版本链清晰连贯，每个版本有明确交付物
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-27'
+  context: v0.9.2自举(bootstrap价值不足,已有手写CONTRIBUTING_AI.md)和v0.10.1 Agent增强(MCP+外部IDE已覆盖)被砍掉,版本链从5个简化为3个
+  source:
+    type: decision
+    description: 砍掉自举能力和Agent增强的版本规划决策
+    ref: DECISION-015
+fingerprint: f9fffaae2c5d85dc95d5a19822d6d9b8aa91707f5c7879c22df0bdd17685560d

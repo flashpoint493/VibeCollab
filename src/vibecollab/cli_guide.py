@@ -299,6 +299,43 @@ def _collect_project_context(
                     "tags": ins_data.get("tags", []),
                 })
 
+    # Task 概览
+    active_tasks: List[Dict] = []
+    task_summary: Dict = {"total": 0, "todo": 0, "in_progress": 0, "review": 0, "done": 0}
+    try:
+        from .task_manager import TaskManager
+        tm = TaskManager(project_root=project_root)
+        all_tasks = tm.list_tasks()
+        task_summary["total"] = len(all_tasks)
+        for t in all_tasks:
+            status_key = t.status.lower()
+            if status_key in task_summary:
+                task_summary[status_key] += 1
+            if t.status != "DONE":
+                active_tasks.append({
+                    "id": t.id,
+                    "feature": t.feature,
+                    "status": t.status,
+                    "assignee": t.assignee or "-",
+                })
+    except Exception:
+        pass
+
+    # EventLog 最近事件
+    recent_events: List[Dict] = []
+    try:
+        from .event_log import EventLog
+        el = EventLog(project_root=project_root)
+        for evt in el.read_recent(5):
+            recent_events.append({
+                "event_type": evt.event_type,
+                "summary": evt.summary,
+                "actor": evt.actor,
+                "timestamp": evt.timestamp[:19] if evt.timestamp else "",
+            })
+    except Exception:
+        pass
+
     # 语义搜索: 从当前任务描述匹配相关 Insight
     context_text = _safe_read_text(project_root / "docs" / "CONTEXT.md", max_lines=30)
     related_insights: List[Dict] = []
@@ -329,6 +366,9 @@ def _collect_project_context(
         "insight_count": insight_count,
         "top_insights": top_insights,
         "related_insights": related_insights,
+        "active_tasks": active_tasks,
+        "task_summary": task_summary,
+        "recent_events": recent_events,
     }
 
 
@@ -374,6 +414,9 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
     insight_count = ctx["insight_count"]
     top_insights = ctx["top_insights"]
     related_insights = ctx.get("related_insights", [])
+    active_tasks = ctx.get("active_tasks", [])
+    task_summary = ctx.get("task_summary", {})
+    recent_events = ctx.get("recent_events", [])
 
     # === 输出 ===
     if as_json:
@@ -387,6 +430,9 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
             "top_insights": top_insights,
             "related_insights": related_insights,
             "key_files": [kf.get("path", "") for kf in key_files],
+            "task_summary": task_summary,
+            "active_tasks": active_tasks,
+            "recent_events": recent_events,
         }
         if developer_info:
             output["developer"] = {
@@ -490,6 +536,46 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
             "\n".join(ri_lines),
             title="与当前任务相关的 Insight (语义匹配)",
             border_style="magenta",
+        ))
+
+    # Task 概览
+    total_tasks = task_summary.get("total", 0)
+    if total_tasks > 0:
+        console.print()
+        ts = task_summary
+        console.print(
+            f"[bold]任务概览:[/bold] "
+            f"TODO={ts.get('todo', 0)} "
+            f"IN_PROGRESS={ts.get('in_progress', 0)} "
+            f"REVIEW={ts.get('review', 0)} "
+            f"DONE={ts.get('done', 0)} "
+            f"(共 {total_tasks})"
+        )
+        if active_tasks:
+            for at in active_tasks[:8]:
+                status_style = {
+                    "TODO": "dim", "IN_PROGRESS": "yellow", "REVIEW": "cyan",
+                }.get(at["status"], "")
+                console.print(
+                    f"  {BULLET} {at['id']}  [{status_style}]{at['status']:12s}[/{status_style}]  "
+                    f"{at['feature']}  (@{at['assignee']})"
+                )
+            if len(active_tasks) > 8:
+                console.print(f"  [dim]... 还有 {len(active_tasks) - 8} 个活跃任务[/dim]")
+
+    # 最近 EventLog 事件
+    if recent_events:
+        console.print()
+        evt_lines = []
+        for evt in recent_events:
+            evt_lines.append(
+                f"  {BULLET} [dim]{evt['timestamp']}[/dim]  "
+                f"{evt['summary']}  [dim](@{evt['actor']})[/dim]"
+            )
+        console.print(Panel(
+            "\n".join(evt_lines),
+            title="最近事件 (EventLog)",
+            border_style="dim",
         ))
 
     # 关键文件清单
@@ -900,6 +986,59 @@ def next_step(config: str, as_json: bool):
             "action": f"创建 {f}",
             "reason": "在 documentation.key_files 中声明但不存在",
         })
+
+    # P1~P2: Task 状态推荐行动
+    try:
+        from .task_manager import TaskManager
+        tm = TaskManager(project_root=project_root)
+        all_tasks = tm.list_tasks()
+
+        review_tasks = [t for t in all_tasks if t.status == "REVIEW"]
+        if review_tasks:
+            for t in review_tasks[:3]:
+                priority += 1
+                actions.append({
+                    "priority": f"P1-{priority}",
+                    "type": "task_solidify",
+                    "action": f"固化任务 {t.id}: {t.feature}",
+                    "reason": f"任务处于 REVIEW 状态，可尝试固化",
+                    "suggestion": f"vibecollab task solidify {t.id}",
+                })
+
+        # 检查被依赖阻塞的任务
+        blocked_tasks = []
+        for t in all_tasks:
+            if t.status == "DONE":
+                continue
+            for dep_id in (t.dependencies or []):
+                dep = tm.get_task(dep_id)
+                if dep and dep.status != "DONE":
+                    blocked_tasks.append((t, dep_id))
+                    break
+        if blocked_tasks:
+            for t, dep_id in blocked_tasks[:2]:
+                priority += 1
+                actions.append({
+                    "priority": f"P2-{priority}",
+                    "type": "task_blocked",
+                    "action": f"任务 {t.id} 被 {dep_id} 阻塞",
+                    "reason": f"依赖 {dep_id} 尚未完成",
+                    "suggestion": f"vibecollab task show {dep_id}",
+                })
+
+        # TODO 积压提示
+        todo_count = sum(1 for t in all_tasks if t.status == "TODO")
+        if todo_count > 3:
+            priority += 1
+            actions.append({
+                "priority": f"P2-{priority}",
+                "type": "task_backlog",
+                "action": f"{todo_count} 个待办任务积压",
+                "reason": "建议开始处理或拆分任务",
+                "suggestion": "vibecollab task list --status TODO",
+            })
+    except Exception:
+        pass
 
     # P2: Insight 沉淀提示
     insight_prompt = _check_insight_opportunity(project_root, diff_files)

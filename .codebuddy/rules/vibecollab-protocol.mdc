@@ -1,0 +1,45 @@
+---
+description: 
+alwaysApply: true
+enabled: true
+updatedAt: 2026-02-27T07:22:44.062Z
+provider: 
+---
+
+# VibeCollab 协议集成
+
+本项目使用 VibeCollab 协议管理 AI 协作流程。你可以通过 MCP 工具自动获取项目上下文和经验沉淀。
+
+## 对话开始时（必须执行）
+1. 调用 MCP 工具 `onboard` 获取项目上下文（当前状态、路线图、Insight 经验）
+2. 阅读返回内容，了解协作规则和当前进度
+3. 确认用户本次对话目标
+
+## 对话进行中
+- 遇到技术选型或架构问题 → 调用 `insight_search` 查看历史经验
+- 需要搜索文档或 Insight → 调用 `search_docs`
+- 获取开发者上下文 → 调用 `developer_context`
+- 查看下一步建议 → 调用 `next_step`
+- 重要决策需记录到 docs/DECISIONS.md，遵循决策分级制度（S/A/B/C 四级）
+
+## 对话结束前（必须执行）
+1. 调用 `check` 检查协议遵循情况
+2. 更新 docs/CONTEXT.md（当前状态）和 docs/CHANGELOG.md（变更记录）
+3. 判断本次对话是否有值得沉淀的经验 → 调用 `insight_suggest` 查看推荐，或直接 `insight_add` 沉淀
+4. 调用 `session_save` 保存对话摘要（供后续 insight suggest 使用）
+5. 执行 git commit 记录对话成果
+
+## 可用 MCP 工具
+| 工具 | 用途 |
+|------|------|
+| `onboard` | 获取完整项目上下文引导 |
+| `check` | 检查协议遵循情况 |
+| `next_step` | 获取下一步行动建议 |
+| `insight_search` | 搜索已有经验沉淀 |
+| `insight_add` | 沉淀新经验 |
+| `insight_suggest` | 基于结构化信号推荐候选 Insight |
+| `session_save` | 保存对话 session 摘要 |
+| `search_docs` | 语义搜索项目文档 |
+| `task_list` | 列出当前任务 |
+| `developer_context` | 获取指定开发者上下文 |
+| `project_prompt` | 生成完整上下文 prompt |
