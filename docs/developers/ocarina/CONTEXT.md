@@ -1,25 +1,27 @@
 # VibeCollab - ocarina 的工作上下文
 
 ## 当前状态
-- **版本**: v0.9.0-dev
+- **版本**: v0.9.3
 - **开发者**: ocarina
 - **上次更新**: 2026-02-27
 
 ## 当前任务
-- **v0.9.1 自举能力**: 协议自举 (`vibecollab bootstrap`) + 协议模板自测框架
+- **v0.9.3 完成**: Task/EventLog 核心工作流接通 (DECISION-016)
 
 ## 最近完成
-- ✅ **v0.9.0 语义检索引擎完成**: Embedder + VectorStore + Indexer + CLI (index/search/insight search --semantic) + onboard 语义增强，84 新测试，1040/1040 passed
-- ✅ **onboard 语义增强**: 从 CONTEXT.md/开发者上下文提取任务 → 向量检索 Top-N 相关 Insight，Rich 面板 + JSON 输出
-- ✅ **`vibecollab prompt` 命令**: LLM 上下文 prompt 生成器，23 新测试
-- ✅ **Protocol Checker watch_files 机制**: DECISIONS.md/PRD.md 跟随检查 + max_inactive_hours 可配置
-- ✅ **Config 三层配置系统**: config_manager + cli_config + LLMConfig 集成
-- ✅ **Task-Insight 自动关联**: create_task 自动搜索 + CLI task 命令组
+- ✅ **v0.9.3 Task CLI 补齐**: `task transition` / `task solidify` / `task rollback` 三个命令
+- ✅ **onboard 注入 Task/EventLog**: 活跃 Task 概览 + 最近 EventLog 事件摘要
+- ✅ **next 基于 Task 推荐**: REVIEW→solidify / 依赖阻塞 / TODO 积压 智能提示
+- ✅ **MCP 新增 2 Tool**: `task_create` + `task_transition`
+- ✅ **DECISION-016**: v0.9.3 方向决策 (S 级)
+- ✅ **30 新测试**: 1164/1164 passed, 零回归
+- ✅ **v0.9.2 Insight 信号增强**: `insight_signal.py` + `session_store.py` + `insight suggest`
+- ✅ **v0.9.1 MCP Server**: `vibecollab mcp serve` (stdio/sse) + 12 Tools + 6 Resources + 1 Prompt
 
 ## 接下来计划
-- v0.9.1 协议自举 (`vibecollab bootstrap`) + 协议模板自测框架
-- v0.9.1 `ContextBuilder` 重构 + `insight suggest`
-- v0.10.0 MCP Server + IDE 集成
+- v0.9.4 Insight 质量与生命周期（去重 / 关联图谱 / 跨项目导入导出）
+- v0.10.0 发布准备（文档完善 / Wiki / README / PyPI 正式发布）
+- PyPI v0.9.3 发布
 
 ## 技术债务
 - 跨项目 Insight 可移植性验证 — 需先实现 export/import API（延后）

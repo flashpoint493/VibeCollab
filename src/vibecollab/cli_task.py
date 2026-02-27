@@ -2,10 +2,13 @@
 CLI commands for task management with Insight auto-linking.
 
 Commands:
-    vibecollab task create   — Create a task (auto-links related Insights)
-    vibecollab task list     — List tasks with optional filters
-    vibecollab task show     — Show task details including related Insights
-    vibecollab task suggest  — Suggest related Insights for an existing task
+    vibecollab task create     — Create a task (auto-links related Insights)
+    vibecollab task list       — List tasks with optional filters
+    vibecollab task show       — Show task details including related Insights
+    vibecollab task suggest    — Suggest related Insights for an existing task
+    vibecollab task transition — Transition task status
+    vibecollab task solidify   — Solidify (complete) a task through validation gate
+    vibecollab task rollback   — Rollback task to previous status
 """
 
 import json
@@ -15,7 +18,7 @@ import click
 import yaml
 
 from .insight_manager import InsightManager
-from .task_manager import TaskManager
+from .task_manager import TaskManager, TaskStatus
 
 
 def _load_config(config_path: str) -> dict:
@@ -183,3 +186,118 @@ def suggest_insights(task_id, limit, config, json_output):
         tags_str = ", ".join(r["tags"][:5])
         click.echo(f"  {r['id']}: {r['title']}  (score: {r['score']})")
         click.echo(f"          tags: {tags_str}")
+
+
+VALID_STATUS_VALUES = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"]
+
+
+@task_group.command("transition")
+@click.argument("task_id")
+@click.argument("new_status", type=click.Choice(VALID_STATUS_VALUES, case_sensitive=False))
+@click.option("--reason", "-r", default="", help="状态变更原因")
+@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
+@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+def transition_task(task_id, new_status, reason, config, json_output):
+    """推进任务状态
+
+    合法状态转换:
+      TODO → IN_PROGRESS
+      IN_PROGRESS → REVIEW / TODO
+      REVIEW → DONE / IN_PROGRESS
+
+    Examples:
+
+        vibecollab task transition TASK-DEV-001 IN_PROGRESS
+
+        vibecollab task transition TASK-DEV-001 REVIEW -r "代码已完成"
+    """
+    tm, _ = _get_managers(config)
+    target = TaskStatus(new_status.upper())
+    result = tm.transition(task_id, target, actor="cli", reason=reason)
+
+    if json_output:
+        click.echo(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+        return
+
+    if result.ok:
+        task = tm.get_task(task_id)
+        click.echo(f"已转换: {task_id} → {new_status.upper()}")
+        if task:
+            click.echo(f"  功能: {task.feature}")
+    else:
+        for v in result.violations:
+            click.echo(f"错误: {v}", err=True)
+        raise SystemExit(1)
+
+
+@task_group.command("solidify")
+@click.argument("task_id")
+@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
+@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+def solidify_task(task_id, config, json_output):
+    """固化任务 — 通过验证门控后标记为 DONE
+
+    要求任务处于 REVIEW 状态。自动执行验证检查:
+    - 必填字段完整性
+    - 依赖任务是否全部完成
+    - 产出描述是否填写
+
+    Examples:
+
+        vibecollab task solidify TASK-DEV-001
+    """
+    tm, _ = _get_managers(config)
+    result = tm.solidify(task_id, actor="cli")
+
+    if json_output:
+        click.echo(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+        return
+
+    if result.ok:
+        click.echo(f"已固化: {task_id} → DONE")
+        if result.warnings:
+            for w in result.warnings:
+                click.echo(f"  警告: {w}")
+    else:
+        click.echo(f"固化失败: {task_id}", err=True)
+        for v in result.violations:
+            click.echo(f"  违规: {v}", err=True)
+        raise SystemExit(1)
+
+
+@task_group.command("rollback")
+@click.argument("task_id")
+@click.option("--reason", "-r", default="", help="回滚原因")
+@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
+@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+def rollback_task(task_id, reason, config, json_output):
+    """回滚任务到上一个状态
+
+    回滚规则:
+      IN_PROGRESS → TODO
+      REVIEW → IN_PROGRESS
+      DONE 状态不可回滚
+
+    Examples:
+
+        vibecollab task rollback TASK-DEV-001
+
+        vibecollab task rollback TASK-DEV-001 -r "需要重新设计"
+    """
+    tm, _ = _get_managers(config)
+    result = tm.rollback(task_id, actor="cli", reason=reason)
+
+    if json_output:
+        click.echo(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+        return
+
+    if result.ok:
+        task = tm.get_task(task_id)
+        status = task.status if task else "?"
+        click.echo(f"已回滚: {task_id} → {status}")
+        if reason:
+            click.echo(f"  原因: {reason}")
+    else:
+        for v in result.violations:
+            click.echo(f"错误: {v}", err=True)
+        raise SystemExit(1)
