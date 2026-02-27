@@ -1,5 +1,99 @@
 # VibeCollab 变更日志
 
+## v0.9.3 (2026-02-27) - Task/EventLog 核心工作流接通
+
+### New Feature
+- **Task CLI 三个新命令** (`cli_task.py`): 补齐 TaskManager 状态管理 CLI 入口
+  - `vibecollab task transition <ID> <STATUS>`: 推进任务状态 (TODO→IN_PROGRESS→REVIEW→DONE)
+  - `vibecollab task solidify <ID>`: 固化任务，通过验证门控后标记为 DONE
+  - `vibecollab task rollback <ID>`: 回滚任务到上一个状态
+  - 所有命令支持 `--json` 输出和 `--reason` 参数
+- **onboard 注入 Task/EventLog** (`cli_guide.py`):
+  - 活跃 Task 概览: 显示 TODO/IN_PROGRESS/REVIEW 任务列表和统计
+  - 最近 EventLog 事件摘要: 显示最近 5 条审计事件
+  - JSON 输出包含 `task_summary` / `active_tasks` / `recent_events`
+- **next 基于 Task 推荐** (`cli_guide.py`):
+  - REVIEW 状态任务自动推荐 solidify 操作 (P1 优先级)
+  - 依赖阻塞任务提示 (P2 优先级)
+  - TODO 积压提示 (>3 个待办时触发, P2 优先级)
+- **MCP Server 新增 2 个 Tool** (`mcp_server.py`):
+  - `task_create`: AI IDE 可直接创建任务 (自动关联 Insight)
+  - `task_transition`: AI IDE 可推进任务状态
+  - `start_conversation` prompt 工具列表从 10 个更新为 12 个
+- **DECISION-016**: v0.9.3 优先接通 Task/EventLog 到核心工作流 (S 级方向决策)
+
+### Test
+- 30 个新单元测试 (`test_task_workflow_integration.py`):
+  - TestTransitionCommand (5): success / with_reason / illegal / not_found / json_output
+  - TestSolidifyCommand (4): success / not_in_review / not_found / json_output
+  - TestRollbackCommand (5): success / with_reason / from_todo / not_found / json_output
+  - TestFullLifecycle (2): complete_lifecycle / rollback_and_retry
+  - TestOnboardInjection (5): tasks_json / tasks_rich / no_tasks / events_json / events_rich
+  - TestNextTaskRecommendations (2): with_review_tasks / no_tasks
+  - TestMcpNewTools (3): task_create_tool / task_transition_tool / start_conversation_lists
+  - TestCollectProjectContext (4): includes_tasks / includes_events / no_tasks / no_events
+- 全量 1164 passed, 1 skipped, 零回归
+
+## v0.9.2 (2026-02-27) - Insight 沉淀信号增强
+
+### New Feature
+- **Insight Signal Collector** (`src/vibecollab/insight_signal.py`): 结构化信号驱动的 Insight 候选推荐
+  - `InsightSignalCollector`: 从 git 增量 commit、文档变更 diff、Task 变化中提取候选 Insight
+  - `SignalSnapshot`: 信号快照管理，记录上次沉淀时间点和 commit hash
+  - `InsightCandidate`: 候选 Insight 数据结构（含 confidence、source_signal）
+  - 4 种信号分析策略: git_feature / git_bugfix / git_refactor / git_large_change
+  - 3 种文档信号: doc_decisions (0.8) / doc_roadmap (0.6) / doc_context (0.4)
+  - Task 完成信号: 批量 Task 关闭检测
+  - 候选去重: 标题 Jaccard 相似度 > 0.6 自动去重
+- **Session Store** (`src/vibecollab/session_store.py`): 对话 summary 持久化存储
+  - `SessionStore`: `.vibecollab/sessions/` 目录管理
+  - `Session`: 对话记录数据结构（summary / key_decisions / files_changed / tags）
+  - CRUD: save / get / list_all / list_recent / list_since / delete / count
+  - `get_summaries_text()`: 获取最近 session 摘要文本用于 insight suggest
+- **CLI `insight suggest`** (`cli_insight.py`): 交互式/自动候选推荐命令
+  - `--json`: JSON 输出模式
+  - `--auto-confirm`: 非交互模式自动创建所有候选
+  - 交互模式支持编号选择 / all / q 退出
+- **MCP Server 新增 2 个 Tool**:
+  - `insight_suggest`: 基于信号推荐候选 Insight
+  - `session_save`: 保存对话 session summary（支持 decisions / files / tags）
+- **`insight add` 快照联动**: 手动创建 Insight 时自动更新信号快照
+
+### Test
+- 60 个新单元测试:
+  - `test_insight_signal.py` (42 tests): SignalSnapshot / InsightCandidate / SnapshotCRUD / GitSignals / DocChanges / TaskChanges / Analysis / Suggest / Helpers
+  - `test_session_store.py` (18 tests): Session / SessionStore CRUD / list / count / summaries
+- 全量 1134 passed, 1 skipped, 零回归
+
+## v0.9.1 (2026-02-27) - MCP Server + AI IDE 集成
+
+### New Feature
+- **MCP Server** (`vibecollab mcp serve`): 标准 Model Context Protocol Server 实现
+  - 6 个 Resources: `contributing_ai`, `context`, `decisions`, `roadmap`, `changelog`, `insights/list`
+  - 8 个 Tools: `insight_search`, `insight_add`, `check`, `onboard`, `next_step`, `task_list`, `project_prompt`, `developer_context`, `search_docs`
+  - 1 个 Prompt: `start_conversation` (项目信息 + CONTEXT 摘要 + 开发者上下文)
+  - 支持 `stdio` / `sse` 两种传输模式
+  - 可选依赖 `pip install vibe-collab[mcp]`
+- **MCP CLI 命令组** (`vibecollab mcp`):
+  - `mcp serve` — 启动 MCP Server
+  - `mcp config --ide cursor/cline/codebuddy` — 输出 IDE 配置内容
+  - `mcp inject --ide all` — 自动注入配置到 IDE 配置文件（合并已有配置）
+- **CodeBuddy Rule**: `.codebuddy/rules/vibecollab-protocol.mdc` always 规则，项目 clone 即生效
+
+### Decision
+- **DECISION-015**: 砍掉 v0.9.2 自举能力 + v0.10.1 Agent 增强 (S 级)
+  - `bootstrap` 价值不足，`vibecollab ai` 保持 experimental 冻结
+  - 版本链简化为: v0.9.0(语义检索) → v0.9.1(MCP) → v0.9.2(信号驱动沉淀) → v0.9.3(Insight 生命周期) → v0.10.0(发布)
+
+### Insight
+- INS-013: 版本规划应果断砍掉低价值里程碑
+- INS-014: 功能重复时优先判断是否已有外部替代方案
+- INS-015: Insight 沉淀需要结构化信号而非纯 LLM 推理
+
+### Test
+- 35 个 MCP Server 单元测试（34 passed, 1 skipped）
+- 全量 1074 passed, 零回归
+
 ## v0.8.0-dev (开发中) - Config 配置管理系统
 
 ### Architecture

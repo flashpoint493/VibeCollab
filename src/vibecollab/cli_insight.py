@@ -219,6 +219,14 @@ def add_insight(title, tags, category, scenario, approach, summary,
     # 记录到 developer contributed
     dm.add_contributed(ins.id, created_by)
 
+    # 更新信号快照
+    try:
+        from .insight_signal import InsightSignalCollector
+        collector = InsightSignalCollector(Path.cwd())
+        collector.update_snapshot(insight_id=ins.id)
+    except Exception:
+        pass
+
     click.echo(f"已创建沉淀: {ins.id} — {ins.title}")
     click.echo(f"  tags: {', '.join(ins.tags)}")
     click.echo(f"  category: {ins.category}")
@@ -585,3 +593,143 @@ def stats_insights(as_json):
             )
 
     click.echo()
+
+
+@insight.command("suggest")
+@click.option("--json", "as_json", is_flag=True, help="JSON 输出")
+@click.option("--auto-confirm", is_flag=True,
+              help="自动确认所有候选 (非交互模式)")
+def suggest_insights(as_json, auto_confirm):
+    """基于结构化信号推荐候选 Insight
+
+    从 git 增量历史、文档变更 diff、Task 变化等信号中提取候选 Insight。
+    用户确认后自动创建 Insight 并更新信号快照。
+    """
+    from .insight_signal import InsightSignalCollector
+
+    project_root = Path.cwd()
+    collector = InsightSignalCollector(project_root)
+
+    # 收集候选
+    candidates = collector.suggest()
+
+    if as_json:
+        import json as json_mod
+        output = {
+            "candidates": [c.to_dict() for c in candidates],
+            "count": len(candidates),
+            "snapshot": collector.load_snapshot().to_dict(),
+        }
+        click.echo(json_mod.dumps(output, indent=2, ensure_ascii=False))
+        return
+
+    if not candidates:
+        click.echo(f"{EMOJI['ok']} 未发现需要沉淀的候选 Insight")
+        click.echo("  提示: 进行更多开发活动后再试")
+        return
+
+    click.echo(f"\n=== Insight 候选推荐 ({len(candidates)} 条) ===\n")
+
+    snapshot = collector.load_snapshot()
+    if snapshot.last_commit:
+        click.echo(f"  上次快照: {snapshot.last_commit[:8]}... "
+                    f"({snapshot.last_timestamp[:10]})")
+    else:
+        click.echo("  首次推荐（无历史快照）")
+    click.echo()
+
+    # 展示候选
+    for i, c in enumerate(candidates, 1):
+        conf_bar = "#" * int(c.confidence * 10)
+        click.echo(f"  [{i}] {c.title}")
+        click.echo(f"      tags: {', '.join(c.tags)}")
+        click.echo(f"      category: {c.category}")
+        click.echo(f"      reason: {c.reason}")
+        click.echo(f"      signal: {c.source_signal}")
+        click.echo(f"      confidence: {conf_bar} {c.confidence:.1f}")
+        click.echo()
+
+    if auto_confirm:
+        # 非交互模式：全部创建
+        _create_from_candidates(project_root, candidates, collector)
+        return
+
+    # 交互模式：让用户选择
+    click.echo("输入要创建的候选编号 (逗号分隔，如 1,3)，"
+               "或 'all' 全部创建，'q' 退出:")
+    try:
+        choice = input("> ").strip()
+    except (EOFError, KeyboardInterrupt):
+        click.echo("\n已取消")
+        return
+
+    if choice.lower() == "q":
+        click.echo("已取消")
+        return
+
+    if choice.lower() == "all":
+        selected = candidates
+    else:
+        indices = []
+        for part in choice.split(","):
+            part = part.strip()
+            if part.isdigit():
+                idx = int(part) - 1
+                if 0 <= idx < len(candidates):
+                    indices.append(idx)
+        selected = [candidates[i] for i in indices]
+
+    if not selected:
+        click.echo("未选择任何候选")
+        return
+
+    _create_from_candidates(project_root, selected, collector)
+
+
+def _create_from_candidates(project_root, candidates, collector):
+    """从候选列表创建 Insight"""
+    mgr = _load_insight_manager()
+    dm = None
+    try:
+        dm = _load_developer_manager()
+    except Exception:
+        pass
+
+    created_by = "unknown"
+    if dm:
+        try:
+            created_by = dm.get_current_developer()
+        except Exception:
+            pass
+
+    created_ids = []
+    for c in candidates:
+        body = {
+            "scenario": c.reason,
+            "approach": c.title,
+            "validation": f"signal: {c.source_signal}",
+        }
+        ins = mgr.create(
+            title=c.title,
+            tags=c.tags,
+            category=c.category,
+            body=body,
+            created_by=created_by,
+            summary=c.reason,
+            context=f"auto-suggest via {c.source_signal}",
+            source_type="signal",
+            source_desc=c.source_signal,
+        )
+        click.echo(f"  {EMOJI['ok']} created {ins.id}: {c.title}")
+        created_ids.append(ins.id)
+
+        if dm:
+            try:
+                dm.add_contributed(ins.id, created_by)
+            except Exception:
+                pass
+
+    # 更新快照
+    last_id = created_ids[-1] if created_ids else ""
+    collector.update_snapshot(insight_id=last_id)
+    click.echo(f"\nCreated {len(created_ids)} Insight(s), signal snapshot updated")
