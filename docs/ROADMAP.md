@@ -353,38 +353,71 @@
 - [x] MCP Server 新增 `insight_graph` / `insight_export` 两个 Tool ✅
 - [x] 36 个单元测试，全量 1201 passed, 零回归 ✅
 
-### v0.10.0 - 发布准备 + 文档完善
+### v0.10.0 - 功能冻结 + 稳定性门槛 (DECISION-017)
 
-> 目标：补齐文档、Wiki、README，发布 PyPI 正式包
+> 目标：确保功能冻结前所有业务逻辑闭环，建立发布质量门槛。此版本后不再新增业务功能。
 
-#### 文档完善
-- [ ] README.md 全面更新（安装 / 快速开始 / 功能列表 / 架构图 / Badge）
-- [ ] GitHub Wiki 建设（用户指南 / API 参考 / 配置说明 / FAQ）
-- [ ] CHANGELOG.md 全版本整理
-- [ ] 英文文档（README EN / Quick Start）
-
-#### 发布
-- [ ] PyPI 稳定版发布 (`vibe-collab` v0.10.0)
-- [ ] GitHub Release + Tag
-- [ ] 版本号统一清理（pyproject.toml / __init__.py / docs）
+#### 外部项目 QA 验证
+- [ ] 在 3+ 个真实外部项目上运行 Phase 11 TC-E2E-001~010
+- [ ] 修复 QA 过程中发现的所有 bug
 
 #### 质量门槛
 - [ ] 测试覆盖率 ≥ 85%
 - [ ] `vibecollab check` 全绿
-- [ ] 3+ 外部真实项目验证 `vibecollab init` + `check`
-- [ ] MCP Server 至少在 Cursor/Cline 中可用
+- [ ] MCP Server 在 Cursor/CodeBuddy 中实际验证
+- [ ] 功能冻结声明
+
+### v0.10.1 - 代码国际化 (Code i18n)
+
+> 目标：代码层面全英文化，确保非中文母语开发者可读
+
+- [ ] 36 个 .py 文件的中文 docstring/comment 翻译为英文 (~2055 行)
+- [ ] 62+ 处 CLI `help=` 参数翻译为英文
+- [ ] 运行时输出文本 (`click.echo` / `console.print`) 英文化
+- [ ] 错误消息英文化
+- [ ] 全量 1201+ tests passed, 覆盖率不降
+
+### v0.10.2 - 文档双语化 (Doc Bilingual)
+
+> 目标：README 和核心文档提供英文版本
+
+- [ ] README.md 重写为英文（作为主 README）
+- [ ] README_CN.md 保留中文版
+- [ ] CHANGELOG.md 整理为英文
+- [ ] pyproject.toml description 英文化
+
+### v0.10.3 - Git 历史重写 + 仓库门面
+
+> 目标：一次性重写全部 commit message 为标准英文 + GitHub 门面专业化
+
+- [ ] `git-filter-repo` 重写 97+ commit message 为 Conventional Commits 英文格式
+- [ ] force push（不可逆，确保是最后的 history-breaking 操作）
+- [ ] GitHub About 描述 + Topics 标签
+- [ ] Issue / PR template
+- [ ] CONTRIBUTING.md (英文，面向外部贡献者)
+- [ ] CODE_OF_CONDUCT.md
+- [ ] GitHub Release (v0.10.3+)
+- [ ] Badge: PyPI / CI / Coverage / License / Python Version
+
+### v1.0.0 - 正式发布
+
+> 目标：标记稳定版本，PyPI + GitHub Release
+
+- [ ] 清理所有 .dev0 标记
+- [ ] PyPI v1.0.0 发布
+- [ ] GitHub Release v1.0.0
 
 ### ~~v0.9.2(旧) - 自举能力~~ ❌ 已砍掉 (DECISION-015)
 > 决策：`bootstrap` 价值不足（已有手写 CONTRIBUTING_AI.md），`ContextBuilder` 重构可在 MCP 开发中按需进行，不单列版本。
 
-### ~~v0.10.1 - Agent 稳定性增强~~ ❌ 已砍掉 (DECISION-015)
+### ~~v0.10.1(旧) - Agent 稳定性增强~~ ❌ 已砍掉 (DECISION-015)
 > 决策：MCP + 外部 IDE (Cline/Cursor/CodeBuddy) 已覆盖 Agent 场景，不再投入自建 Agent 能力。`vibecollab ai` 保持 experimental 冻结。
 
 ---
 
 ## 阶段历史
 
-- **demo**: 2026-01-20 (进行中)
+- **demo**: 2026-01-20 (进行中 → v1.0.0 后升级为 production)
 
 ---
 
@@ -399,21 +432,18 @@
 - 定时任务 (`vibecollab cron`)
 
 ### Production 阶段（量产）
-**预计时间**: 待定
+**预计时间**: v1.0.0 发布后
 **前置条件**: 
-- 核心功能稳定
-- 文档完善
-- 测试覆盖率达到 85%+
-- CI/CD 流程建立
-- PyPI 正式包发布
+- v0.10.x 全部完成
+- 测试覆盖率 85%+
+- 代码/文档全英文化
+- GitHub 门面专业化
 
 **重点任务**:
-- 代码质量优化
-- 建立发布和宣发预备
-- 全量代码 review
-- 完善 QA 产品测试覆盖
-- 定义性能标准
-- 单元测试和检查规范
+- 社区运营 + 外部贡献者引入
+- 插件生态（自定义 Pattern / 领域扩展）
+- 性能优化（大规模项目）
+- i18n 框架（多语言 CLI 输出）
 
 ### Commercial 阶段（商业化）
 **预计时间**: 待定
@@ -431,4 +461,4 @@
 
 ---
 
-*最后更新: 2026-02-27 (v0.9.4)*
+*最后更新: 2026-02-27 (v0.10.0.dev0, DECISION-017)*
