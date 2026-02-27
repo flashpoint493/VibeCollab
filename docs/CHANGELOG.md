@@ -1,5 +1,41 @@
 # VibeCollab 变更日志
 
+## v0.9.4 (2026-02-27) - Insight 质量与生命周期
+
+### New Feature
+- **Insight 自动去重** (`insight_manager.py`): 新增 Insight 时自动检测重复
+  - `find_duplicates()`: 基于 SHA-256 指纹精确匹配 + 标题 Jaccard 相似度 + 标签重叠率
+  - `_content_key()`: 提取标题+标签+body 生成内容指纹
+  - `insight add` 命令集成去重检测，发现重复时提示并阻止创建
+  - `--force` 标志跳过去重检测强制创建
+  - 相似度阈值可控
+- **Insight 关联图谱** (`insight_manager.py`): 可视化 Insight 之间的派生/关联关系
+  - `build_graph()`: 构建全局 Insight 关联图谱（节点+边+统计）
+  - `_count_components()`: Union-Find 算法计算连通分量
+  - `to_mermaid()`: 生成 Mermaid 图表语法，支持直接嵌入 Markdown
+  - `vibecollab insight graph`: CLI 命令，支持 `--format text/json/mermaid`
+- **跨项目 Insight 导入导出** (`insight_manager.py`):
+  - `export_insights()`: 导出 Insight Bundle (YAML 格式)，支持全量/选择性导出，可选包含注册表
+  - `import_insights()`: 导入 Insight Bundle，三种冲突策略 (skip/rename/overwrite)
+  - 导入时自动设置 `source.project` 标记来源项目
+  - `vibecollab insight export [--ids] [--output] [--include-registry]`
+  - `vibecollab insight import <file> [--strategy skip/rename/overwrite] [--json]`
+- **MCP Server 新增 2 个 Tool** (`mcp_server.py`):
+  - `insight_graph`: 获取 Insight 关联图谱 (json/text/mermaid)
+  - `insight_export`: 导出 Insight Bundle
+
+### Test
+- 36 个新单元测试 (`test_insight_quality.py`):
+  - TestFindDuplicates (7): empty/fingerprint/title_similarity/tag_similarity/no_dup/threshold/without_body
+  - TestBuildGraph (5): empty/edges/isolated/components/node_data
+  - TestToMermaid (2): output/empty
+  - TestExportInsights (4): all/selected/with_registry/empty
+  - TestImportInsights (7): to_empty/skip/rename/overwrite/invalid/source_project/with_registry
+  - TestCLIGraph (3): text/json/mermaid
+  - TestCLIExportImport (5): stdout/to_file/import/invalid/rename_strategy
+  - TestCLIAddDedup (3): detect_duplicate/force_bypass/no_duplicate
+- 全量 1201 passed, 零回归
+
 ## v0.9.3 (2026-02-27) - Task/EventLog 核心工作流接通
 
 ### New Feature
