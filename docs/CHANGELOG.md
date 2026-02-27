@@ -21,6 +21,18 @@
 - **Ruff lint 全量修复**: 68 errors → 0（61 auto-fix + 7 手动修复：E402 导入位置、F841 未使用变量、F401 未使用导入、I001 导入排序、F541 空 f-string）
 
 ### New Feature
+- **`vibecollab prompt` 命令**: 生成 LLM 可直接使用的上下文 prompt 文本
+  - 从 CONTRIBUTING_AI.md 自动提取协议核心章节（决策分级/对话流程/角色定义/Git 规范）
+  - 注入项目当前状态（CONTEXT.md / 最近决策 / 路线图待办 / 未提交变更）
+  - 注入 Insight 经验摘要 + Insight 工作流说明
+  - `--compact` 精简模式（仅协议核心 + 状态，省略路线图和角色定义）
+  - `--sections protocol,context,insight` 选择性注入
+  - `--copy` 直接复制到剪贴板（Windows clip 支持）
+  - `-d <developer>` 含开发者个人上下文
+  - 替代手动复制 CONTRIBUTING_AI.md 到 LLM 对话窗口
+- **`_collect_project_context()` 共享函数**: 从 `onboard` 提取数据收集逻辑，`onboard` 和 `prompt` 复用
+- **`_extract_md_sections()` 工具函数**: 从 Markdown 按标题提取指定章节内容
+- **`_build_prompt_text()` 格式化器**: 构建纯 Markdown 格式的 LLM prompt
 - **Insight 经验沉淀工作流** (IDE 对话模式融入):
   - 新增 `27_insight_workflow.md.j2` 模板章节 — 定义何时/如何沉淀经验
   - 对话结束流程增加"经验沉淀检查"步骤（`06_dialogue_protocol.md.j2` 更新）

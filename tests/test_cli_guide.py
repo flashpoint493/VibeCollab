@@ -11,14 +11,18 @@ import yaml
 from click.testing import CliRunner
 
 from vibecollab.cli_guide import (
+    _build_prompt_text,
     _check_insight_opportunity,
     _check_linked_groups_freshness,
+    _collect_project_context,
+    _extract_md_sections,
     _extract_pending_from_roadmap,
     _get_read_files_list,
     _get_recent_decisions,
     _suggest_commit_message,
     next_step,
     onboard,
+    prompt_cmd,
 )
 
 # ---------------------------------------------------------------------------
@@ -411,3 +415,147 @@ class TestCheckInsightOpportunity:
         assert result is not None
         # 应该包含多个原因（用 ；分隔）
         assert "；" in result or len(result) > 20
+
+
+# ---------------------------------------------------------------------------
+# Tests: _extract_md_sections
+# ---------------------------------------------------------------------------
+
+class TestExtractMdSections:
+    def test_extract_single_h1(self):
+        text = "# A\nline1\nline2\n# B\nline3"
+        result = _extract_md_sections(text, ["# A"])
+        assert "line1" in result
+        assert "line2" in result
+        assert "line3" not in result
+
+    def test_extract_h2_stops_at_sibling(self):
+        text = "## Sec1\ndata1\n## Sec2\ndata2"
+        result = _extract_md_sections(text, ["## Sec1"])
+        assert "data1" in result
+        assert "data2" not in result
+
+    def test_extract_nested_headings_included(self):
+        text = "# A\n## Sub\nsub-content\n# B\nother"
+        result = _extract_md_sections(text, ["# A"])
+        assert "## Sub" in result
+        assert "sub-content" in result
+        assert "other" not in result
+
+    def test_extract_missing_heading_returns_empty(self):
+        text = "# A\ncontent"
+        result = _extract_md_sections(text, ["# NoSuchHeading"])
+        assert result == ""
+
+    def test_extract_multiple_headings(self):
+        text = "# A\nfoo\n# B\nbar\n# C\nbaz"
+        result = _extract_md_sections(text, ["# A", "# C"])
+        assert "foo" in result
+        assert "baz" in result
+        assert "bar" not in result
+
+
+# ---------------------------------------------------------------------------
+# Tests: _collect_project_context
+# ---------------------------------------------------------------------------
+
+class TestCollectProjectContext:
+    def test_collect_returns_keys(self, chdir_project, project_dir):
+        ctx = _collect_project_context(project_dir / "project.yaml")
+        assert ctx["project_name"] == "TestProject"
+        assert ctx["project_version"] == "v1.0.0"
+        assert ctx["project_desc"] == "Test desc"
+        assert isinstance(ctx["recent_decisions"], list)
+        assert isinstance(ctx["pending_roadmap"], list)
+        assert isinstance(ctx["key_files"], list)
+        assert ctx["insight_count"] == 2
+
+    def test_collect_with_developer(self, chdir_project, project_dir):
+        ctx = _collect_project_context(project_dir / "project.yaml", developer="testdev")
+        assert ctx["developer_info"] is not None
+        assert ctx["developer_info"]["id"] == "testdev"
+        assert "testdev context" in ctx["developer_info"]["context"]
+
+    def test_collect_missing_config(self, tmp_path):
+        ctx = _collect_project_context(tmp_path / "nope.yaml")
+        assert ctx == {}
+
+
+# ---------------------------------------------------------------------------
+# Tests: _build_prompt_text
+# ---------------------------------------------------------------------------
+
+class TestBuildPromptText:
+    @pytest.fixture
+    def sample_ctx(self, project_dir):
+        return _collect_project_context(project_dir / "project.yaml")
+
+    def test_header_present(self, sample_ctx, chdir_project):
+        text = _build_prompt_text(sample_ctx, ["protocol", "context", "insight"])
+        assert "# 项目上下文: TestProject" in text
+        assert "v1.0.0" in text
+
+    def test_context_section(self, sample_ctx, chdir_project):
+        text = _build_prompt_text(sample_ctx, ["context"])
+        assert "## 当前状态" in text
+        assert "最近决策" in text
+
+    def test_compact_no_roadmap(self, sample_ctx, chdir_project):
+        text = _build_prompt_text(sample_ctx, ["context"], compact=True)
+        assert "路线图待办" not in text
+
+    def test_full_has_roadmap(self, sample_ctx, chdir_project):
+        text = _build_prompt_text(sample_ctx, ["context"], compact=False)
+        assert "路线图待办" in text
+
+    def test_insight_section(self, sample_ctx, chdir_project):
+        text = _build_prompt_text(sample_ctx, ["insight"])
+        assert "Insight 沉淀" in text
+
+    def test_footer(self, sample_ctx, chdir_project):
+        text = _build_prompt_text(sample_ctx, [])
+        assert "vibecollab prompt" in text
+
+
+# ---------------------------------------------------------------------------
+# Tests: vibecollab prompt (CLI)
+# ---------------------------------------------------------------------------
+
+class TestPromptCmd:
+    def test_prompt_basic(self, runner, chdir_project):
+        result = runner.invoke(prompt_cmd, [])
+        assert result.exit_code == 0
+        assert "# 项目上下文: TestProject" in result.output
+        assert "v1.0.0" in result.output
+
+    def test_prompt_compact(self, runner, chdir_project):
+        result = runner.invoke(prompt_cmd, ["--compact"])
+        assert result.exit_code == 0
+        assert "# 项目上下文" in result.output
+        # compact 模式不含路线图
+        assert "路线图待办" not in result.output
+
+    def test_prompt_sections_filter(self, runner, chdir_project):
+        result = runner.invoke(prompt_cmd, ["-s", "context"])
+        assert result.exit_code == 0
+        assert "当前状态" in result.output
+        # protocol 和 insight 不应出现
+        assert "协作协议" not in result.output
+
+    def test_prompt_with_developer(self, runner, chdir_project):
+        result = runner.invoke(prompt_cmd, ["-d", "testdev"])
+        assert result.exit_code == 0
+        assert "testdev" in result.output
+
+    def test_prompt_no_config(self, runner, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = runner.invoke(prompt_cmd, [])
+        assert result.exit_code == 1
+
+    def test_prompt_copy_fallback(self, runner, chdir_project):
+        """--copy 在没有 clip 的环境下应 fallback 到 stdout"""
+        result = runner.invoke(prompt_cmd, ["--copy"])
+        # 不管 clip 是否可用，都不应崩溃
+        assert result.exit_code == 0
+        # 应有输出（成功复制提示或 fallback 到 stdout）
+        assert len(result.output) > 0

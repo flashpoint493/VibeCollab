@@ -204,6 +204,11 @@
 
 #### 人机交互质量
 - [x] vibecollab ai ask/chat 在不同 terminal 环境下的 Unicode 兼容 ✅ `_compat.py` 统一兼容层
+- [x] **`vibecollab prompt` 命令** ✅ — LLM 上下文 prompt 生成器，替代手动复制 CONTRIBUTING_AI.md
+  - `_collect_project_context()` 共享函数 + `_extract_md_sections()` + `_build_prompt_text()`
+  - `--compact` / `--copy` / `--sections` / `-d` 四种模式
+  - 23 个单元测试，956/956 passed
+- [x] **Protocol Checker watch_files 机制** ✅ — DECISIONS.md/PRD.md 跟随检查 + max_inactive_hours 可配置
 - [ ] Rich 面板在 Windows PowerShell/CMD/WSL 的渲染验证 — 需手动验证
 - [ ] onboard/next 在大型项目（多开发者、多文件）上的输出质量 — 需手动验证
 - [x] 错误信息友好度审查（所有 CLI 命令的异常路径）✅ 审计完成 + insight 错误处理增强

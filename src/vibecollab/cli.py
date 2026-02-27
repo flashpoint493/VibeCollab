@@ -785,11 +785,12 @@ from .cli_insight import insight as insight_group  # noqa: E402
 
 main.add_command(insight_group)
 
-# 导入 AI 引导命令 (onboard + next)
-from .cli_guide import next_step, onboard  # noqa: E402
+# 导入 AI 引导命令 (onboard + next + prompt)
+from .cli_guide import next_step, onboard, prompt_cmd  # noqa: E402
 
 main.add_command(onboard)
 main.add_command(next_step, name="next")
+main.add_command(prompt_cmd, name="prompt")
 
 # 导入 Task 管理命令 (含 Insight 自动关联, v0.7.1+)
 from .cli_task import task_group  # noqa: E402
