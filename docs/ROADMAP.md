@@ -263,8 +263,10 @@
   - 跨 Insight / 文档统一搜索
   - 输出附带来源和相关度评分
   - `--type` 过滤来源类型，`--min-score` 阈值过滤
-- [ ] `onboard` 增强 — 语义匹配当前任务相关 Insight
-  - 从 CONTEXT.md 提取当前任务描述 → 向量检索 Top-N 相关 Insight
+- [x] `onboard` 增强 — 语义匹配当前任务相关 Insight ✅
+  - 从 CONTEXT.md / 开发者上下文提取当前任务描述 → 向量检索 Top-N 相关 Insight
+  - Rich 面板 + JSON 输出双格式支持
+  - 11 个单元测试
 
 ### v0.9.1 - 自举能力（VibeCollab 管理自身演进）
 
