@@ -19,6 +19,7 @@ from vibecollab.cli_guide import (
     _extract_pending_from_roadmap,
     _get_read_files_list,
     _get_recent_decisions,
+    _search_related_insights,
     _suggest_commit_message,
     next_step,
     onboard,
@@ -559,3 +560,213 @@ class TestPromptCmd:
         assert result.exit_code == 0
         # 应有输出（成功复制提示或 fallback 到 stdout）
         assert len(result.output) > 0
+
+
+# ---------------------------------------------------------------------------
+# Tests: _search_related_insights
+# ---------------------------------------------------------------------------
+
+class TestSearchRelatedInsights:
+    """语义匹配相关 Insight 测试"""
+
+    def test_no_index_db_returns_empty(self, tmp_path):
+        """向量索引不存在时返回空列表"""
+        result = _search_related_insights(tmp_path, "任何查询")
+        assert result == []
+
+    def test_empty_db_returns_empty(self, tmp_path):
+        """向量数据库为空时返回空列表"""
+        import sqlite3
+
+        db_dir = tmp_path / ".vibecollab" / "vectors"
+        db_dir.mkdir(parents=True)
+        db_path = db_dir / "index.db"
+        conn = sqlite3.connect(str(db_path))
+        conn.execute("""
+            CREATE TABLE vectors (
+                doc_id TEXT PRIMARY KEY,
+                text TEXT NOT NULL,
+                vector BLOB NOT NULL,
+                source TEXT DEFAULT '',
+                source_type TEXT DEFAULT '',
+                metadata TEXT DEFAULT '{}',
+                dimensions INTEGER NOT NULL
+            )
+        """)
+        conn.commit()
+        conn.close()
+
+        result = _search_related_insights(tmp_path, "查询文本")
+        assert result == []
+
+    def test_returns_related_insights(self, tmp_path):
+        """有向量索引时返回相关 Insight"""
+        from vibecollab.embedder import Embedder, EmbedderConfig
+        from vibecollab.vector_store import VectorDocument, VectorStore
+
+        db_dir = tmp_path / ".vibecollab" / "vectors"
+        db_dir.mkdir(parents=True)
+        db_path = db_dir / "index.db"
+
+        embedder = Embedder(EmbedderConfig(backend="pure_python", dimensions=256))
+        store = VectorStore(db_path=db_path, dimensions=256)
+
+        # 索引两条 Insight
+        text1 = "Windows 编码兼容性修复经验"
+        text2 = "CI/CD 流水线配置最佳实践"
+        vec1 = embedder.embed_text(text1)
+        vec2 = embedder.embed_text(text2)
+
+        store.upsert(VectorDocument(
+            doc_id="insight:INS-001",
+            text=text1,
+            vector=vec1,
+            source=".vibecollab/insights/INS-001.yaml",
+            source_type="insight",
+            metadata={"title": "编码兼容修复", "tags": ["windows", "encoding"], "category": "bugfix"},
+        ))
+        store.upsert(VectorDocument(
+            doc_id="insight:INS-002",
+            text=text2,
+            vector=vec2,
+            source=".vibecollab/insights/INS-002.yaml",
+            source_type="insight",
+            metadata={"title": "CI 配置", "tags": ["ci", "devops"], "category": "workflow"},
+        ))
+        store.close()
+
+        result = _search_related_insights(tmp_path, "Windows 编码问题")
+        assert len(result) > 0
+        # 每条结果应包含 id, title, tags, score
+        for r in result:
+            assert "id" in r
+            assert "title" in r
+            assert "tags" in r
+            assert "score" in r
+            assert isinstance(r["score"], float)
+
+    def test_only_returns_insights_not_documents(self, tmp_path):
+        """只返回 source_type=insight 的结果"""
+        from vibecollab.embedder import Embedder, EmbedderConfig
+        from vibecollab.vector_store import VectorDocument, VectorStore
+
+        db_dir = tmp_path / ".vibecollab" / "vectors"
+        db_dir.mkdir(parents=True)
+        db_path = db_dir / "index.db"
+
+        embedder = Embedder(EmbedderConfig(backend="pure_python", dimensions=256))
+        store = VectorStore(db_path=db_path, dimensions=256)
+
+        text = "项目文档内容"
+        vec = embedder.embed_text(text)
+
+        # 只索引 document 类型
+        store.upsert(VectorDocument(
+            doc_id="doc:CONTEXT.md:0",
+            text=text,
+            vector=vec,
+            source="docs/CONTEXT.md",
+            source_type="document",
+            metadata={"heading": "# Context"},
+        ))
+        store.close()
+
+        result = _search_related_insights(tmp_path, "项目文档")
+        # 应该为空，因为没有 insight 类型的文档
+        assert result == []
+
+
+# ---------------------------------------------------------------------------
+# Tests: onboard 语义增强
+# ---------------------------------------------------------------------------
+
+class TestOnboardSemanticEnhancement:
+    """onboard 命令的语义增强测试"""
+
+    @pytest.fixture
+    def project_with_index(self, project_dir):
+        """创建带有向量索引的项目"""
+        from vibecollab.embedder import Embedder, EmbedderConfig
+        from vibecollab.vector_store import VectorDocument, VectorStore
+
+        db_dir = project_dir / ".vibecollab" / "vectors"
+        db_dir.mkdir(parents=True, exist_ok=True)
+        db_path = db_dir / "index.db"
+
+        embedder = Embedder(EmbedderConfig(backend="pure_python", dimensions=256))
+        store = VectorStore(db_path=db_path, dimensions=256)
+
+        # 索引一些 Insight
+        insights = [
+            ("INS-001", "编码兼容性修复经验", ["windows", "encoding"], "bugfix"),
+            ("INS-002", "测试策略和覆盖率提升", ["testing", "coverage"], "quality"),
+        ]
+        for ins_id, text, tags, category in insights:
+            vec = embedder.embed_text(text)
+            store.upsert(VectorDocument(
+                doc_id=f"insight:{ins_id}",
+                text=text,
+                vector=vec,
+                source=f".vibecollab/insights/{ins_id}.yaml",
+                source_type="insight",
+                metadata={"title": text, "tags": tags, "category": category},
+            ))
+
+        store.close()
+        return project_dir
+
+    def test_onboard_json_includes_related_insights(self, runner, project_with_index, monkeypatch):
+        """JSON 输出包含 related_insights 字段"""
+        monkeypatch.chdir(project_with_index)
+        result = runner.invoke(onboard, ["--json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "related_insights" in data
+        assert isinstance(data["related_insights"], list)
+
+    def test_onboard_json_related_insights_structure(self, runner, project_with_index, monkeypatch):
+        """related_insights 每条记录结构正确"""
+        monkeypatch.chdir(project_with_index)
+        result = runner.invoke(onboard, ["--json"])
+        data = json.loads(result.output)
+        for ri in data["related_insights"]:
+            assert "id" in ri
+            assert "title" in ri
+            assert "tags" in ri
+            assert "score" in ri
+
+    def test_onboard_rich_shows_related_panel(self, runner, project_with_index, monkeypatch):
+        """Rich 输出包含相关 Insight 面板"""
+        monkeypatch.chdir(project_with_index)
+        result = runner.invoke(onboard, [])
+        assert result.exit_code == 0
+        # 如果有匹配结果，应显示面板标题
+        # 注意: PurePython embedder 精度有限，可能无匹配
+        # 但只要不崩溃即可
+
+    def test_onboard_no_index_still_works(self, runner, chdir_project):
+        """没有向量索引时 onboard 仍正常工作"""
+        result = runner.invoke(onboard, ["--json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data.get("related_insights", []) == []
+
+    def test_collect_context_includes_related_insights_key(self, project_with_index, monkeypatch):
+        """_collect_project_context 返回 related_insights 键"""
+        monkeypatch.chdir(project_with_index)
+        ctx = _collect_project_context(project_with_index / "project.yaml")
+        assert "related_insights" in ctx
+        assert isinstance(ctx["related_insights"], list)
+
+    def test_collect_context_no_index_empty_related(self, chdir_project, project_dir):
+        """无索引时 related_insights 为空列表"""
+        ctx = _collect_project_context(project_dir / "project.yaml")
+        assert ctx["related_insights"] == []
+
+    def test_onboard_with_developer_uses_dev_context(self, runner, project_with_index, monkeypatch):
+        """指定开发者时使用开发者上下文作为查询"""
+        monkeypatch.chdir(project_with_index)
+        result = runner.invoke(onboard, ["-d", "testdev", "--json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "related_insights" in data

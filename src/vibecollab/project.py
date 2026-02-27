@@ -107,6 +107,22 @@ class Project:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.docs_dir.mkdir(exist_ok=True)
 
+        # 创建 .vibecollab/ 目录（Insight / EventLog / vectors 等运行时数据）
+        vibecollab_dir = self.output_dir / ".vibecollab"
+        vibecollab_dir.mkdir(exist_ok=True)
+        (vibecollab_dir / "insights").mkdir(exist_ok=True)
+
+        # .vibecollab/.gitignore — 排除运行时数据但保留目录结构
+        vc_gitignore = vibecollab_dir / ".gitignore"
+        if not vc_gitignore.exists():
+            vc_gitignore.write_text(
+                "# VibeCollab 运行时数据 (由 vibecollab init 自动生成)\n"
+                "events.jsonl\n"
+                "vectors/\n"
+                "*.local.yaml\n",
+                encoding="utf-8",
+            )
+
         # 检查并初始化 Git 仓库
         self._ensure_git_repo(auto_init_git)
 

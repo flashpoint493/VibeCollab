@@ -10,6 +10,7 @@ Guide CLI 命令 — AI Agent 接入引导与行动建议
 """
 
 import json
+import logging
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -23,7 +24,62 @@ from rich.table import Table
 
 from ._compat import BULLET
 
+logger = logging.getLogger(__name__)
+
 console = Console()
+
+
+def _search_related_insights(
+    project_root: Path, query_text: str, top_k: int = 5
+) -> List[Dict]:
+    """从向量索引中搜索与查询文本相关的 Insight
+
+    返回 [{id, title, tags, score}] 列表，如果索引不存在则返回空列表。
+    """
+    db_path = project_root / ".vibecollab" / "vectors" / "index.db"
+    if not db_path.exists():
+        return []
+
+    try:
+        from .embedder import Embedder, EmbedderConfig
+        from .vector_store import VectorStore
+
+        # 从已有 DB 推断维度
+        import sqlite3
+
+        conn = sqlite3.connect(str(db_path))
+        row = conn.execute(
+            "SELECT dimensions FROM vectors LIMIT 1"
+        ).fetchone()
+        conn.close()
+
+        if not row:
+            return []
+        dimensions = row[0]
+
+        embedder = Embedder(EmbedderConfig(backend="pure_python", dimensions=dimensions))
+        store = VectorStore(db_path=db_path, dimensions=dimensions)
+
+        query_vector = embedder.embed_text(query_text)
+        results = store.search(
+            query_vector, top_k=top_k, source_type="insight"
+        )
+        store.close()
+
+        related = []
+        for r in results:
+            meta = r.metadata or {}
+            related.append({
+                "id": r.doc_id.replace("insight:", ""),
+                "title": meta.get("title", ""),
+                "tags": meta.get("tags", []),
+                "score": round(r.score, 3),
+            })
+        return related
+
+    except Exception as e:
+        logger.debug("语义搜索 Insight 失败: %s", e)
+        return []
 
 
 def _safe_load_yaml(path: Path) -> Optional[dict]:
@@ -243,13 +299,27 @@ def _collect_project_context(
                     "tags": ins_data.get("tags", []),
                 })
 
+    # 语义搜索: 从当前任务描述匹配相关 Insight
+    context_text = _safe_read_text(project_root / "docs" / "CONTEXT.md", max_lines=30)
+    related_insights: List[Dict] = []
+
+    # 构建查询文本: 优先用开发者上下文，否则用项目 CONTEXT.md
+    query_text = ""
+    if developer_info and developer_info.get("context"):
+        query_text = developer_info["context"]
+    elif context_text:
+        query_text = context_text
+
+    if query_text and insight_count > 0:
+        related_insights = _search_related_insights(project_root, query_text)
+
     return {
         "project_root": project_root,
         "project_config": project_config,
         "project_name": proj.get("name", "Unknown"),
         "project_version": proj.get("version", "Unknown"),
         "project_desc": proj.get("description", ""),
-        "context_text": _safe_read_text(project_root / "docs" / "CONTEXT.md", max_lines=30),
+        "context_text": context_text,
         "recent_decisions": _get_recent_decisions(project_root / "docs" / "DECISIONS.md", 3),
         "pending_roadmap": _extract_pending_from_roadmap(project_root / "docs" / "ROADMAP.md"),
         "uncommitted": _get_git_uncommitted(project_root),
@@ -258,6 +328,7 @@ def _collect_project_context(
         "key_files": project_config.get("documentation", {}).get("key_files", []),
         "insight_count": insight_count,
         "top_insights": top_insights,
+        "related_insights": related_insights,
     }
 
 
@@ -302,6 +373,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
     key_files = ctx["key_files"]
     insight_count = ctx["insight_count"]
     top_insights = ctx["top_insights"]
+    related_insights = ctx.get("related_insights", [])
 
     # === 输出 ===
     if as_json:
@@ -313,6 +385,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
             "uncommitted_changes": len(uncommitted),
             "insight_count": insight_count,
             "top_insights": top_insights,
+            "related_insights": related_insights,
             "key_files": [kf.get("path", "") for kf in key_files],
         }
         if developer_info:
@@ -401,6 +474,23 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
                 console.print(f"  [dim]... 还有 {insight_count - 5} 条 (vibecollab insight list 查看)[/dim]")
         else:
             console.print(f"  [dim]vibecollab insight list 查看全部[/dim]")
+
+    # 与当前任务相关的 Insight（语义匹配）
+    if related_insights:
+        console.print()
+        ri_lines = []
+        for ri in related_insights:
+            tags_str = ", ".join(ri["tags"][:4]) if ri.get("tags") else ""
+            tag_part = f" [dim]({tags_str})[/dim]" if tags_str else ""
+            score_label = f"[dim]{ri['score']:.2f}[/dim]" if ri.get("score") else ""
+            ri_lines.append(
+                f"  {BULLET} [bold]{ri['id']}[/bold]: {ri.get('title', '')}{tag_part}  {score_label}"
+            )
+        console.print(Panel(
+            "\n".join(ri_lines),
+            title="与当前任务相关的 Insight (语义匹配)",
+            border_style="magenta",
+        ))
 
     # 关键文件清单
     console.print()
