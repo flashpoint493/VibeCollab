@@ -125,7 +125,7 @@ class Origin:
         }
         if self.context:
             d["context"] = self.context
-        if self.source_type or self.source_desc:
+        if self.source_type or self.source_desc or self.source_project or self.source_url or self.source_ref:
             source: Dict[str, str] = {}
             if self.source_type:
                 source["type"] = self.source_type
@@ -949,6 +949,337 @@ class InsightManager:
                 return yaml.safe_load(f) or {}
         except Exception:
             return {}
+
+    # ------------------------------------------------------------------
+    # 去重检测 (v0.9.4)
+    # ------------------------------------------------------------------
+
+    def find_duplicates(
+        self,
+        title: str,
+        tags: List[str],
+        body: Optional[Dict[str, Any]] = None,
+        threshold: float = 0.6,
+    ) -> List[Dict[str, Any]]:
+        """检测与已有 Insight 的相似度，返回可能的重复项。
+
+        三级检测策略:
+        1. 指纹精确匹配 (score=1.0) — 标题+标签+body 完全相同
+        2. 标题相似度 (Jaccard on words)
+        3. 标签重叠度 (Jaccard on tags)
+        综合分数 = 0.5 * title_sim + 0.5 * tag_sim
+
+        Args:
+            title: 新 Insight 的标题
+            tags: 新 Insight 的标签列表
+            body: 新 Insight 的 body (可选，用于指纹精确匹配)
+            threshold: 相似度阈值 (0~1)，超过此值视为潜在重复
+
+        Returns:
+            按相似度降序排列的重复候选列表:
+            [{"id": "INS-001", "title": "...", "score": 0.85, "reason": "..."}, ...]
+        """
+        all_insights = self.list_all()
+        if not all_insights:
+            return []
+
+        # 1. 内容精确匹配 (title + sorted tags + body)
+        if body is not None:
+            new_content_key = self._content_key(title, tags, body)
+            for ins in all_insights:
+                existing_key = self._content_key(ins.title, ins.tags, ins.body)
+                if new_content_key == existing_key:
+                    return [{"id": ins.id, "title": ins.title,
+                             "score": 1.0, "reason": "exact_content"}]
+
+        # 2+3. 标题 + 标签综合相似度
+        new_title_tokens = set(title.lower().split())
+        new_tags_set = set(t.lower() for t in tags)
+        candidates: List[Dict[str, Any]] = []
+
+        for ins in all_insights:
+            # 标题 Jaccard
+            ins_title_tokens = set(ins.title.lower().split())
+            title_union = new_title_tokens | ins_title_tokens
+            title_sim = (len(new_title_tokens & ins_title_tokens) / len(title_union)
+                         if title_union else 0.0)
+
+            # 标签 Jaccard
+            ins_tags_set = set(t.lower() for t in ins.tags)
+            tag_union = new_tags_set | ins_tags_set
+            tag_sim = (len(new_tags_set & ins_tags_set) / len(tag_union)
+                       if tag_union else 0.0)
+
+            score = 0.5 * title_sim + 0.5 * tag_sim
+            if score >= threshold:
+                reason_parts = []
+                if title_sim >= threshold:
+                    reason_parts.append(f"title_sim={title_sim:.2f}")
+                if tag_sim >= threshold:
+                    reason_parts.append(f"tag_sim={tag_sim:.2f}")
+                candidates.append({
+                    "id": ins.id,
+                    "title": ins.title,
+                    "score": round(score, 3),
+                    "reason": ", ".join(reason_parts) or f"combined={score:.2f}",
+                })
+
+        candidates.sort(key=lambda x: x["score"], reverse=True)
+        return candidates
+
+    def _content_key(self, title: str, tags: List[str],
+                     body: Dict[str, Any]) -> str:
+        """计算内容摘要 key，用于精确去重（忽略 id/origin）"""
+        canonical = {
+            "title": title,
+            "tags": sorted(t.lower() for t in tags),
+            "body": body,
+        }
+        raw = json.dumps(canonical, sort_keys=True, ensure_ascii=False)
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    # ------------------------------------------------------------------
+    # 全局关联图谱 (v0.9.4)
+    # ------------------------------------------------------------------
+
+    def build_graph(self) -> Dict[str, Any]:
+        """构建所有 Insight 的全局关联图谱。
+
+        Returns:
+            {
+                "nodes": [{"id": "INS-001", "title": "...", "category": "...",
+                            "tags": [...], "weight": 1.0, "active": True}],
+                "edges": [{"from": "INS-001", "to": "INS-002",
+                            "type": "derived_from"}],
+                "stats": {"node_count": N, "edge_count": M,
+                           "isolated_count": K, "components": C}
+            }
+        """
+        all_insights = self.list_all()
+        entries, _ = self.get_registry()
+
+        nodes = []
+        edges = []
+        connected_ids: set = set()
+
+        for ins in all_insights:
+            entry = entries.get(ins.id)
+            nodes.append({
+                "id": ins.id,
+                "title": ins.title,
+                "category": ins.category,
+                "tags": ins.tags,
+                "weight": entry.weight if entry else 1.0,
+                "active": entry.active if entry else True,
+            })
+            for parent_id in ins.origin.derived_from:
+                edges.append({
+                    "from": parent_id,
+                    "to": ins.id,
+                    "type": "derived_from",
+                })
+                connected_ids.add(parent_id)
+                connected_ids.add(ins.id)
+
+        all_ids = {ins.id for ins in all_insights}
+        isolated_count = len(all_ids - connected_ids)
+
+        # 计算连通分量数
+        components = self._count_components(all_ids, edges)
+
+        return {
+            "nodes": nodes,
+            "edges": edges,
+            "stats": {
+                "node_count": len(nodes),
+                "edge_count": len(edges),
+                "isolated_count": isolated_count,
+                "components": components,
+            },
+        }
+
+    def _count_components(self, all_ids: set, edges: List[Dict[str, str]]) -> int:
+        """Union-Find 算法计算连通分量"""
+        parent: Dict[str, str] = {i: i for i in all_ids}
+
+        def find(x: str) -> str:
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def union(a: str, b: str) -> None:
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[ra] = rb
+
+        for e in edges:
+            f, t = e["from"], e["to"]
+            if f in all_ids and t in all_ids:
+                union(f, t)
+
+        return len({find(i) for i in all_ids}) if all_ids else 0
+
+    def to_mermaid(self, graph: Optional[Dict[str, Any]] = None) -> str:
+        """将图谱转为 Mermaid flowchart 格式。"""
+        if graph is None:
+            graph = self.build_graph()
+
+        lines = ["graph LR"]
+        for node in graph["nodes"]:
+            label = node["title"].replace('"', "'")
+            lines.append(f'    {node["id"]}["{node["id"]}: {label}"]')
+
+        for edge in graph["edges"]:
+            lines.append(f'    {edge["from"]} --> {edge["to"]}')
+
+        return "\n".join(lines)
+
+    # ------------------------------------------------------------------
+    # 导入 / 导出 (v0.9.4)
+    # ------------------------------------------------------------------
+
+    def export_insights(self, insight_ids: Optional[List[str]] = None,
+                        include_registry: bool = False) -> Dict[str, Any]:
+        """导出 Insight 为可移植的字典格式。
+
+        Args:
+            insight_ids: 要导出的 ID 列表，None 表示全部
+            include_registry: 是否包含注册表状态（权重/计数）
+
+        Returns:
+            {
+                "format": "vibecollab-insight-export",
+                "version": "1",
+                "exported_at": "...",
+                "source_project": "...",
+                "insights": [{...}, ...],
+                "registry": {...}  # 仅当 include_registry=True
+            }
+        """
+        all_insights = self.list_all()
+
+        if insight_ids is not None:
+            ids_set = set(insight_ids)
+            selected = [ins for ins in all_insights if ins.id in ids_set]
+        else:
+            selected = all_insights
+
+        # 读取项目名
+        project_name = ""
+        project_yaml_path = self.project_root / "project.yaml"
+        if project_yaml_path.exists():
+            pdata = self._load_yaml(project_yaml_path)
+            project_name = pdata.get("project_name", "")
+
+        bundle: Dict[str, Any] = {
+            "format": "vibecollab-insight-export",
+            "version": "1",
+            "exported_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "source_project": project_name,
+            "count": len(selected),
+            "insights": [ins.to_dict() for ins in selected],
+        }
+
+        if include_registry:
+            entries, settings = self.get_registry()
+            reg_data = {}
+            for ins in selected:
+                if ins.id in entries:
+                    reg_data[ins.id] = entries[ins.id].to_dict()
+            bundle["registry"] = reg_data
+
+        return bundle
+
+    def import_insights(self, bundle: Dict[str, Any],
+                        imported_by: str,
+                        strategy: str = "skip") -> Dict[str, Any]:
+        """从导出包导入 Insight。
+
+        Args:
+            bundle: export_insights() 产出的字典
+            imported_by: 导入操作者
+            strategy: ID 冲突策略
+                - "skip": 跳过已存在的 ID
+                - "rename": 自动分配新 ID
+                - "overwrite": 覆盖已有 Insight
+
+        Returns:
+            {"imported": [...ids], "skipped": [...ids],
+             "renamed": {old_id: new_id, ...}, "errors": [...]}
+        """
+        if bundle.get("format") != "vibecollab-insight-export":
+            return {"imported": [], "skipped": [], "renamed": {},
+                    "errors": ["Invalid bundle format"]}
+
+        results: Dict[str, Any] = {
+            "imported": [],
+            "skipped": [],
+            "renamed": {},
+            "errors": [],
+        }
+
+        source_project = bundle.get("source_project", "unknown")
+        insights_data = bundle.get("insights", [])
+
+        for ins_data in insights_data:
+            try:
+                old_id = ins_data.get("id", "")
+                existing = self.get(old_id)
+
+                if existing and strategy == "skip":
+                    results["skipped"].append(old_id)
+                    continue
+                elif existing and strategy == "rename":
+                    new_id = self._next_id()
+                    ins_data["id"] = new_id
+                    results["renamed"][old_id] = new_id
+                elif existing and strategy == "overwrite":
+                    pass  # 直接覆盖
+                elif not existing:
+                    pass  # 新 ID，直接写入
+
+                # 标记来源项目（如果原始没有）
+                if "origin" not in ins_data:
+                    ins_data["origin"] = {}
+                origin = ins_data["origin"]
+                if "source" not in origin:
+                    origin["source"] = {}
+                if not origin["source"].get("project"):
+                    origin["source"]["project"] = source_project
+
+                insight = Insight.from_dict(ins_data)
+                self._save_insight(insight)
+                self._ensure_registry_entry(insight.id)
+
+                actual_id = ins_data["id"]
+                if actual_id not in results.get("renamed", {}).values():
+                    results["imported"].append(actual_id)
+                else:
+                    results["imported"].append(actual_id)
+
+                self._log_event(
+                    EventType.CUSTOM, imported_by,
+                    f"Imported insight {actual_id} from {source_project}",
+                    {"insight_id": actual_id, "action": "insight_imported",
+                     "source_project": source_project,
+                     "original_id": old_id},
+                )
+            except Exception as e:
+                results["errors"].append(f"{old_id}: {e}")
+
+        # 导入注册表状态（可选）
+        if "registry" in bundle:
+            entries, settings = self.get_registry()
+            for ins_id, reg_data in bundle["registry"].items():
+                # 如果 ID 被 rename，映射到新 ID
+                mapped_id = results["renamed"].get(ins_id, ins_id)
+                if mapped_id in entries:
+                    # 保留本地权重，但合并使用次数
+                    entries[mapped_id].used_count += reg_data.get("used_count", 0)
+            self._save_registry(entries, settings)
+
+        return results
 
     def _log_event(self, event_type: str, actor: str, summary: str,
                    payload: Dict[str, Any]) -> None:

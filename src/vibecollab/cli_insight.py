@@ -185,9 +185,10 @@ def show_insight(insight_id):
 @click.option("--source-url", default=None, help="来源外部链接（如 GitHub issue URL）")
 @click.option("--source-project", default=None, help="来源项目名")
 @click.option("--derived-from", default=None, help="派生自的 insight ID，逗号分隔")
+@click.option("--force", "-f", is_flag=True, default=False, help="跳过去重检测，强制创建")
 def add_insight(title, tags, category, scenario, approach, summary,
                 validation, origin_context, source_type, source_desc,
-                source_ref, source_url, source_project, derived_from):
+                source_ref, source_url, source_project, derived_from, force):
     """创建新的沉淀条目"""
     mgr = _load_insight_manager()
     dm = _load_developer_manager()
@@ -199,6 +200,16 @@ def add_insight(title, tags, category, scenario, approach, summary,
     body = {"scenario": scenario, "approach": approach}
     if validation:
         body["validation"] = validation
+
+    # 去重检测 (v0.9.4)
+    if not force:
+        duplicates = mgr.find_duplicates(title, tag_list, body)
+        if duplicates:
+            click.echo(f"\n{EMOJI['warn']} Potential duplicates detected:")
+            for dup in duplicates:
+                click.echo(f"  - {dup['id']}: {dup['title']} (score={dup['score']}, {dup['reason']})")
+            click.echo(f"\nUse --force to create anyway, or adjust title/tags.")
+            raise SystemExit(1)
 
     ins = mgr.create(
         title=title,
@@ -733,3 +744,161 @@ def _create_from_candidates(project_root, candidates, collector):
     last_id = created_ids[-1] if created_ids else ""
     collector.update_snapshot(insight_id=last_id)
     click.echo(f"\nCreated {len(created_ids)} Insight(s), signal snapshot updated")
+
+
+# ------------------------------------------------------------------
+# Graph 命令 (v0.9.4)
+# ------------------------------------------------------------------
+
+@insight.command("graph")
+@click.option("--format", "fmt", type=click.Choice(["mermaid", "json", "text"]),
+              default="text", help="Output format")
+@click.option("--json", "json_output", is_flag=True, default=False, help="JSON output (alias for --format json)")
+def insight_graph(fmt, json_output):
+    """Insight 关联图谱可视化
+
+    展示所有 Insight 之间的派生/关联关系。
+
+    Examples:
+
+        vibecollab insight graph
+
+        vibecollab insight graph --format mermaid
+
+        vibecollab insight graph --json
+    """
+    import json as json_mod
+
+    mgr = _load_insight_manager()
+    graph = mgr.build_graph()
+
+    if json_output or fmt == "json":
+        click.echo(json_mod.dumps(graph, ensure_ascii=False, indent=2))
+        return
+
+    if fmt == "mermaid":
+        click.echo(mgr.to_mermaid(graph))
+        return
+
+    # text format: 人类可读的图谱摘要
+    stats = graph["stats"]
+    click.echo(f"Insight Graph: {stats['node_count']} nodes, {stats['edge_count']} edges")
+    click.echo(f"  Components: {stats['components']}, Isolated: {stats['isolated_count']}")
+    click.echo()
+
+    if graph["edges"]:
+        click.echo("Relations:")
+        for edge in graph["edges"]:
+            from_node = next((n for n in graph["nodes"] if n["id"] == edge["from"]), None)
+            to_node = next((n for n in graph["nodes"] if n["id"] == edge["to"]), None)
+            from_title = from_node["title"] if from_node else "(missing)"
+            to_title = to_node["title"] if to_node else "(missing)"
+            click.echo(f"  {edge['from']} ({from_title})")
+            click.echo(f"    --> {edge['to']} ({to_title})")
+    else:
+        click.echo("No relations found (all Insights are isolated).")
+
+    click.echo()
+    click.echo("Nodes:")
+    for node in graph["nodes"]:
+        status = "" if node["active"] else " [inactive]"
+        click.echo(f"  {node['id']}: {node['title']} [{node['category']}]{status}")
+
+
+# ------------------------------------------------------------------
+# Export / Import 命令 (v0.9.4)
+# ------------------------------------------------------------------
+
+@insight.command("export")
+@click.option("--ids", default=None, help="要导出的 Insight ID，逗号分隔 (默认全部)")
+@click.option("--output", "-o", default=None, help="输出文件路径 (默认 stdout)")
+@click.option("--include-registry", is_flag=True, default=False, help="包含注册表状态")
+def export_insights(ids, output, include_registry):
+    """导出 Insight 为可移植的 YAML 格式
+
+    Examples:
+
+        vibecollab insight export -o insights_bundle.yaml
+
+        vibecollab insight export --ids INS-001,INS-002
+
+        vibecollab insight export --include-registry -o full_export.yaml
+    """
+    mgr = _load_insight_manager()
+
+    id_list = [i.strip() for i in ids.split(",") if i.strip()] if ids else None
+    bundle = mgr.export_insights(insight_ids=id_list, include_registry=include_registry)
+
+    yaml_content = yaml.dump(bundle, allow_unicode=True, sort_keys=False,
+                             default_flow_style=False)
+
+    if output:
+        Path(output).write_text(yaml_content, encoding="utf-8")
+        click.echo(f"{EMOJI['ok']} Exported {bundle['count']} Insight(s) to {output}")
+    else:
+        click.echo(yaml_content)
+
+
+@insight.command("import")
+@click.argument("filepath")
+@click.option("--strategy", type=click.Choice(["skip", "rename", "overwrite"]),
+              default="skip", help="ID conflict strategy: skip/rename/overwrite")
+@click.option("--json", "json_output", is_flag=True, default=False, help="JSON output")
+def import_insights(filepath, strategy, json_output):
+    """从 YAML 文件导入 Insight
+
+    Examples:
+
+        vibecollab insight import insights_bundle.yaml
+
+        vibecollab insight import bundle.yaml --strategy rename
+
+        vibecollab insight import bundle.yaml --strategy overwrite
+    """
+    import json as json_mod
+
+    path = Path(filepath)
+    if not path.exists():
+        click.echo(f"{EMOJI['fail']} File not found: {filepath}")
+        raise SystemExit(1)
+
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            bundle = yaml.safe_load(f)
+    except Exception as e:
+        click.echo(f"{EMOJI['fail']} Failed to parse YAML: {e}")
+        raise SystemExit(1)
+
+    if not isinstance(bundle, dict) or bundle.get("format") != "vibecollab-insight-export":
+        click.echo(f"{EMOJI['fail']} Invalid bundle format. Expected 'vibecollab-insight-export'.")
+        raise SystemExit(1)
+
+    mgr = _load_insight_manager()
+    dm = _load_developer_manager()
+    imported_by = dm.get_current_developer()
+
+    results = mgr.import_insights(bundle, imported_by=imported_by, strategy=strategy)
+
+    if json_output:
+        click.echo(json_mod.dumps(results, ensure_ascii=False, indent=2))
+        return
+
+    # 更新 developer contributed
+    for ins_id in results["imported"]:
+        try:
+            dm.add_contributed(ins_id, imported_by)
+        except Exception:
+            pass
+
+    click.echo(f"\nImport results (strategy={strategy}):")
+    click.echo(f"  {EMOJI['ok']} Imported:  {len(results['imported'])}")
+    if results["skipped"]:
+        click.echo(f"  {EMOJI['warn']} Skipped:   {len(results['skipped'])} ({', '.join(results['skipped'])})")
+    if results["renamed"]:
+        click.echo(f"  {EMOJI['info']} Renamed:   {len(results['renamed'])}")
+        for old_id, new_id in results["renamed"].items():
+            click.echo(f"    {old_id} -> {new_id}")
+    if results["errors"]:
+        click.echo(f"  {EMOJI['fail']} Errors:    {len(results['errors'])}")
+        for err in results["errors"]:
+            click.echo(f"    {err}")

@@ -343,13 +343,15 @@
 - [x] 30 个单元测试，全量 1164 passed, 零回归 ✅
 - [x] DECISION-016: v0.9.3 方向决策 (S 级) ✅
 
-### v0.9.4 - Insight 质量与生命周期
+### v0.9.4 - Insight 质量与生命周期（已完成 ✅）
 
 > 目标：提升沉淀质量，建立 Insight 从产生到淘汰的完整生命周期
 
-- [ ] Insight 自动去重 — 新增 Insight 时语义相似度检查，防止重复沉淀
-- [ ] Insight 关联图谱 — `vibecollab insight graph` 可视化 Insight 之间的派生/关联关系
-- [ ] 跨项目 Insight 可移植性 — `insight export` / `insight import`（YAML 格式，保持完整性）
+- [x] Insight 自动去重 — 新增 Insight 时指纹+标题+标签相似度检查，防止重复沉淀 ✅
+- [x] Insight 关联图谱 — `vibecollab insight graph` 可视化派生/关联关系 (text/json/mermaid) ✅
+- [x] 跨项目 Insight 可移植性 — `insight export` / `insight import`（YAML 格式，三种冲突策略）✅
+- [x] MCP Server 新增 `insight_graph` / `insight_export` 两个 Tool ✅
+- [x] 36 个单元测试，全量 1201 passed, 零回归 ✅
 
 ### v0.10.0 - 发布准备 + 文档完善
 
@@ -429,4 +431,4 @@
 
 ---
 
-*最后更新: 2026-02-27 (v0.9.3)*
+*最后更新: 2026-02-27 (v0.9.4)*
