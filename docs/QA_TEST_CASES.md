@@ -665,6 +665,529 @@
 
 ---
 
+## Phase 7 测试用例 (v0.9.0 — 语义检索引擎)
+
+### TC-INDEX-001: 文档索引（增量）
+- **关联**: v0.9.0
+- **前置**: 项目已初始化，存在 CONTRIBUTING_AI.md / CONTEXT.md / DECISIONS.md 等文档
+- **步骤**:
+  1. 运行 `vibecollab index`
+  2. 检查 `.vibecollab/vectors/` 是否生成数据库文件
+  3. 再次运行 `vibecollab index`
+- **预期**:
+  - 首次运行索引所有文档和 Insight YAML
+  - 输出索引文档数和 chunk 数
+  - 二次运行为增量更新（未变文件跳过）
+- **状态**: ⚪ (待验证)
+
+### TC-INDEX-002: 文档索引（重建）
+- **关联**: v0.9.0
+- **前置**: 已有索引数据
+- **步骤**:
+  1. 运行 `vibecollab index --rebuild`
+- **预期**:
+  - 清除旧索引后重建
+  - 输出"清除旧索引"提示
+  - 重建后搜索功能正常
+- **状态**: ⚪ (待验证)
+
+### TC-INDEX-003: 后端选择
+- **关联**: v0.9.0
+- **前置**: 已安装 vibe-collab
+- **步骤**:
+  1. 运行 `vibecollab index --backend pure_python`
+  2. 运行 `vibecollab index --backend auto`（无 sentence-transformers 时自动降级）
+- **预期**:
+  - `pure_python` 使用 trigram 哈希 embedding（零外部依赖）
+  - `auto` 未安装 sentence-transformers 时降级为 pure_python
+  - 两种后端都能完成索引和后续搜索
+- **状态**: ⚪ (待验证)
+
+### TC-SEARCH-001: 全局语义搜索
+- **关联**: v0.9.0
+- **前置**: 已运行 `vibecollab index`
+- **步骤**:
+  1. 运行 `vibecollab search "协议检查"`
+  2. 运行 `vibecollab search "决策记录" --type insight`
+  3. 运行 `vibecollab search "task" --min-score 0.5`
+- **预期**:
+  - 返回按相关度排序的结果列表
+  - 每条结果含来源（文档/Insight）和相关度评分
+  - `--type` 过滤来源类型
+  - `--min-score` 过滤低分结果
+- **状态**: ⚪ (待验证)
+
+### TC-SEARCH-002: Insight 语义搜索
+- **关联**: v0.9.0
+- **前置**: 已运行 `vibecollab index`，存在 Insight 数据
+- **步骤**:
+  1. 运行 `vibecollab insight search --semantic --tags "架构"`
+- **预期**:
+  - 基于向量余弦相似度搜索 Insight
+  - 结果包含 ID / 标题 / 分数
+- **状态**: ⚪ (待验证)
+
+---
+
+## Phase 8 测试用例 (v0.9.1 — MCP Server + AI IDE 集成)
+
+### TC-MCP-001: MCP Server 启动 (stdio)
+- **关联**: v0.9.1
+- **前置**: `pip install vibe-collab[mcp]` 已安装 mcp 依赖
+- **步骤**:
+  1. 运行 `vibecollab mcp serve`
+  2. 通过 stdin 发送 MCP initialize 请求
+- **预期**:
+  - Server 以 stdio 模式启动
+  - 响应 MCP initialize 握手
+  - 列出 14 个 Tools / 6 个 Resources / 1 个 Prompt
+- **状态**: ⚪ (待验证)
+
+### TC-MCP-002: MCP Config 输出
+- **关联**: v0.9.1
+- **前置**: 已安装 vibe-collab
+- **步骤**:
+  1. 运行 `vibecollab mcp config --ide cursor`
+  2. 运行 `vibecollab mcp config --ide cline`
+  3. 运行 `vibecollab mcp config --ide codebuddy`
+- **预期**:
+  - cursor: 输出 `.cursor/mcp.json` 格式的 JSON 配置
+  - cline: 输出 Cline MCP 配置格式
+  - codebuddy: 输出 `.codebuddy/mcp.json` 格式
+  - 配置含正确的 command / args / env
+- **状态**: ⚪ (待验证)
+
+### TC-MCP-003: MCP Inject 自动注入
+- **关联**: v0.9.1
+- **前置**: 已安装 vibe-collab
+- **步骤**:
+  1. 运行 `vibecollab mcp inject --ide codebuddy`
+  2. 检查 `.codebuddy/mcp.json` 文件
+- **预期**:
+  - 自动创建/合并 IDE 配置文件
+  - 已有配置不被覆盖（merge 策略）
+  - 注入 vibecollab MCP Server 配置
+- **状态**: ⚪ (待验证)
+
+### TC-MCP-004: MCP Tool — onboard
+- **关联**: v0.9.1
+- **前置**: MCP Server 运行中
+- **步骤**:
+  1. 调用 MCP tool `onboard`
+- **预期**:
+  - 返回项目概况、当前进度、活跃任务、最近事件、Insight 经验
+  - 包含结构化的 JSON 数据
+- **状态**: ⚪ (待验证)
+
+### TC-MCP-005: MCP Tool — check
+- **关联**: v0.9.1
+- **前置**: MCP Server 运行中
+- **步骤**:
+  1. 调用 MCP tool `check`
+- **预期**:
+  - 返回协议检查报告
+  - 包含 error / warning / info 统计
+- **状态**: ⚪ (待验证)
+
+### TC-MCP-006: MCP Tool — insight_search
+- **关联**: v0.9.1
+- **前置**: MCP Server 运行中，存在 Insight 数据
+- **步骤**:
+  1. 调用 MCP tool `insight_search` with tags="架构"
+- **预期**:
+  - 返回匹配的 Insight 列表
+  - 按权重排序
+- **状态**: ⚪ (待验证)
+
+### TC-MCP-007: MCP Tool — search_docs
+- **关联**: v0.9.1
+- **前置**: MCP Server 运行中，已建立索引
+- **步骤**:
+  1. 调用 MCP tool `search_docs` with query="项目部署"
+- **预期**:
+  - 返回语义搜索结果
+  - 含来源文件和评分
+- **状态**: ⚪ (待验证)
+
+### TC-MCP-008: MCP Resource 读取
+- **关联**: v0.9.1
+- **前置**: MCP Server 运行中
+- **步骤**:
+  1. 读取 Resource `contributing_ai`
+  2. 读取 Resource `context`
+  3. 读取 Resource `insights/list`
+- **预期**:
+  - 返回对应文档的完整内容
+  - insights/list 返回所有 Insight 的 YAML 列表
+- **状态**: ⚪ (待验证)
+
+### TC-MCP-009: MCP Prompt — start_conversation
+- **关联**: v0.9.1
+- **前置**: MCP Server 运行中
+- **步骤**:
+  1. 调用 Prompt `start_conversation`
+- **预期**:
+  - 返回包含项目信息、CONTEXT 摘要、开发者上下文的系统 prompt
+  - 列出可用的 14 个 MCP Tools
+- **状态**: ⚪ (待验证)
+
+---
+
+## Phase 9 测试用例 (v0.9.2 ~ v0.9.3 — Insight 信号 + Task 工作流)
+
+### TC-SIGNAL-001: Insight Suggest 候选推荐
+- **关联**: v0.9.2
+- **前置**: 项目有 git 提交历史
+- **步骤**:
+  1. 确保有若干 git commit（含 feat/fix/refactor 关键词）
+  2. 运行 `vibecollab insight suggest --json`
+- **预期**:
+  - 从 git commit、文档变更、Task 变化中提取候选
+  - 每个候选含 title / tags / confidence / source_signal
+  - JSON 输出包含 candidates 数组
+- **状态**: ⚪ (待验证)
+
+### TC-SIGNAL-002: Insight Suggest 交互模式
+- **关联**: v0.9.2
+- **前置**: 存在候选 Insight
+- **步骤**:
+  1. 运行 `vibecollab insight suggest`
+  2. 输入编号选择候选
+- **预期**:
+  - 列出候选 Insight
+  - 选择后自动调用 `insight add` 创建
+  - 信号快照更新
+- **状态**: ⚪ (待验证)
+
+### TC-SIGNAL-003: Insight Add 快照联动
+- **关联**: v0.9.2
+- **前置**: 项目已初始化
+- **步骤**:
+  1. 运行 `vibecollab insight add --title "测试" --tags test --category workflow --scenario "测试场景" --approach "测试方法"`
+  2. 检查 `.vibecollab/insight_signal.json`
+- **预期**:
+  - Insight 创建成功
+  - 信号快照自动更新（记录当前时间和 commit hash）
+- **状态**: ⚪ (待验证)
+
+### TC-SESSION-001: MCP Session Save
+- **关联**: v0.9.2
+- **前置**: MCP Server 运行中
+- **步骤**:
+  1. 调用 MCP tool `session_save` with summary="完成了功能X开发"
+- **预期**:
+  - Session 保存到 `.vibecollab/sessions/`
+  - 返回 session ID
+- **状态**: ⚪ (待验证)
+
+### TC-TASK-CLI-001: Task Transition 状态推进
+- **关联**: v0.9.3
+- **前置**: 已有 Task 处于 TODO 状态
+- **步骤**:
+  1. `vibecollab task create --id TASK-QA-001 --role QA --feature "测试功能"`
+  2. `vibecollab task transition TASK-QA-001 IN_PROGRESS`
+  3. `vibecollab task transition TASK-QA-001 REVIEW`
+  4. `vibecollab task list --json`
+- **预期**:
+  - 状态按 TODO → IN_PROGRESS → REVIEW 正确流转
+  - 非法状态跳转被拒绝（如 TODO → DONE）
+  - list 输出正确显示当前状态
+- **状态**: ⚪ (待验证)
+
+### TC-TASK-CLI-002: Task Solidify 固化
+- **关联**: v0.9.3
+- **前置**: Task 处于 REVIEW 状态
+- **步骤**:
+  1. `vibecollab task solidify TASK-QA-001`
+- **预期**:
+  - REVIEW → DONE 固化成功
+  - 非 REVIEW 状态执行 solidify 被拒绝
+  - EventLog 记录 solidify 事件
+- **状态**: ⚪ (待验证)
+
+### TC-TASK-CLI-003: Task Rollback 回滚
+- **关联**: v0.9.3
+- **前置**: Task 处于 IN_PROGRESS 或 REVIEW 状态
+- **步骤**:
+  1. `vibecollab task transition TASK-QA-001 IN_PROGRESS`
+  2. `vibecollab task rollback TASK-QA-001 --reason "需要重新设计"`
+- **预期**:
+  - IN_PROGRESS → TODO 回滚成功
+  - REVIEW → IN_PROGRESS 回滚成功
+  - TODO 状态无法回滚
+  - reason 记录到 EventLog
+- **状态**: ⚪ (待验证)
+
+### TC-ONBOARD-001: Onboard 命令全量输出
+- **关联**: v0.9.3
+- **前置**: 项目已初始化，有 Task 和 EventLog 数据
+- **步骤**:
+  1. 运行 `vibecollab onboard --json`
+- **预期**:
+  - JSON 包含: project_info / current_status / active_tasks / task_summary / recent_events / insights / related_insights
+  - 活跃 Task 概览含 TODO/IN_PROGRESS/REVIEW 统计
+  - 最近 EventLog 事件摘要
+- **状态**: ⚪ (待验证)
+
+### TC-NEXT-001: Next 命令行动建议
+- **关联**: v0.9.3
+- **前置**: 项目有多种待处理状态
+- **步骤**:
+  1. 创建若干 TODO 和 REVIEW 状态的 Task
+  2. 运行 `vibecollab next --json`
+- **预期**:
+  - REVIEW 任务推荐 solidify（P1）
+  - TODO 积压 >3 时触发提示（P2）
+  - 建议按优先级排序
+- **状态**: ⚪ (待验证)
+
+---
+
+## Phase 10 测试用例 (v0.9.4 — Insight 质量与生命周期)
+
+### TC-DEDUP-001: Insight 自动去重检测
+- **关联**: v0.9.4
+- **前置**: 已有 Insight 数据
+- **步骤**:
+  1. 运行 `vibecollab insight add --title "已有的标题" --tags existing,tag --category workflow --scenario "..." --approach "..."`（与已有 Insight 标题/标签高度重叠）
+- **预期**:
+  - 检测到重复，输出相似 Insight 信息
+  - 阻止创建，提示使用 `--force` 跳过
+- **状态**: ⚪ (待验证)
+
+### TC-DEDUP-002: Insight 强制创建（跳过去重）
+- **关联**: v0.9.4
+- **前置**: 去重检测会触发
+- **步骤**:
+  1. 运行 `vibecollab insight add --title "重复标题" --tags dup --category workflow --scenario "..." --approach "..." --force`
+- **预期**:
+  - 跳过去重检测
+  - 成功创建 Insight
+- **状态**: ⚪ (待验证)
+
+### TC-GRAPH-001: Insight 关联图谱（文本）
+- **关联**: v0.9.4
+- **前置**: 存在多条 Insight（含 derived_from 关系）
+- **步骤**:
+  1. 运行 `vibecollab insight graph`
+  2. 运行 `vibecollab insight graph --format json`
+  3. 运行 `vibecollab insight graph --format mermaid`
+- **预期**:
+  - 默认文本: 显示节点/边/统计信息
+  - JSON: 含 nodes / edges / stats（total_nodes / total_edges / isolated / components）
+  - Mermaid: 输出 `graph LR` 语法，可粘贴到 Markdown 渲染
+- **状态**: ⚪ (待验证)
+
+### TC-EXPORT-001: Insight 导出
+- **关联**: v0.9.4
+- **前置**: 存在 Insight 数据
+- **步骤**:
+  1. 运行 `vibecollab insight export`（stdout）
+  2. 运行 `vibecollab insight export -o insights_bundle.yaml`
+  3. 运行 `vibecollab insight export --ids INS-001,INS-002`
+  4. 运行 `vibecollab insight export --include-registry`
+- **预期**:
+  - 输出 YAML 格式的 Insight Bundle
+  - `-o` 写入文件
+  - `--ids` 选择性导出
+  - `--include-registry` 包含注册表状态（weight/used_count/active）
+- **状态**: ⚪ (待验证)
+
+### TC-IMPORT-001: Insight 导入（skip 策略）
+- **关联**: v0.9.4
+- **前置**: 有导出的 YAML bundle 文件
+- **步骤**:
+  1. 导出 A 项目的 Insight: `vibecollab insight export -o bundle.yaml`
+  2. 在 B 项目中导入: `vibecollab insight import bundle.yaml`
+  3. 再次导入相同文件
+- **预期**:
+  - 首次导入成功，显示导入数量
+  - 二次导入: 已存在的 ID 被 skip（默认策略）
+  - 导入的 Insight 自动设置 `source.project` 标记来源
+- **状态**: ⚪ (待验证)
+
+### TC-IMPORT-002: Insight 导入（rename/overwrite 策略）
+- **关联**: v0.9.4
+- **前置**: 有导出的 YAML bundle 文件，目标项目已有同 ID Insight
+- **步骤**:
+  1. `vibecollab insight import bundle.yaml --strategy rename`
+  2. `vibecollab insight import bundle.yaml --strategy overwrite`
+- **预期**:
+  - rename: 冲突 ID 自动分配新 ID (INS-xxx)
+  - overwrite: 覆盖已有 Insight
+- **状态**: ⚪ (待验证)
+
+---
+
+## Phase 11 — 端到端集成测试（外部项目全量验证）
+
+> 以下用例用于在**非 VibeCollab 本身**的外部真实项目中验证完整工作流。
+
+### TC-E2E-001: 全新项目初始化 + 生成 + 检查
+- **关联**: 全版本
+- **前置**: 一个已有代码的外部项目（含 Git）
+- **步骤**:
+  1. `cd /path/to/external-project`
+  2. `pip install vibe-collab[mcp]`
+  3. `vibecollab init -n "项目名" -d generic`
+  4. `vibecollab generate -c project.yaml`
+  5. `vibecollab check`
+  6. `vibecollab health`
+  7. `vibecollab health --json`
+- **预期**:
+  - init 生成 project.yaml + docs/ + .vibecollab/
+  - generate 生成 CONTRIBUTING_AI.md + llms.txt
+  - check 无 error（warning 可接受）
+  - health 输出评分和信号
+  - 无 Python traceback / 无 UnicodeEncodeError
+- **状态**: ⚪ (待验证)
+
+### TC-E2E-002: Insight 全链路（创建→搜索→衰减→导出→导入）
+- **关联**: 全版本
+- **前置**: 项目已 init
+- **步骤**:
+  1. `vibecollab insight add --title "缓存策略选型" --tags cache,architecture --category architecture --scenario "高并发场景" --approach "Redis + 本地二级缓存"`
+  2. `vibecollab insight add --title "API 错误处理规范" --tags api,error-handling --category workflow --scenario "REST API" --approach "统一 ErrorResponse 结构"`
+  3. `vibecollab insight list`
+  4. `vibecollab insight search --tags cache`
+  5. `vibecollab insight use INS-001`
+  6. `vibecollab insight decay --dry-run`
+  7. `vibecollab insight graph`
+  8. `vibecollab insight export -o /tmp/insights_backup.yaml`
+  9. `vibecollab insight check`
+- **预期**:
+  - 全链路无报错
+  - search 返回匹配结果
+  - use 后 weight 增加
+  - decay --dry-run 不实际修改
+  - graph 显示节点信息
+  - export 输出有效 YAML
+  - check 一致性校验通过
+- **状态**: ⚪ (待验证)
+
+### TC-E2E-003: Task 全链路（创建→推进→固化）
+- **关联**: 全版本
+- **前置**: 项目已 init
+- **步骤**:
+  1. `vibecollab task create --id TASK-DEV-001 --role DEV --feature "用户认证模块"`
+  2. `vibecollab task list`
+  3. `vibecollab task transition TASK-DEV-001 IN_PROGRESS`
+  4. `vibecollab task transition TASK-DEV-001 REVIEW`
+  5. `vibecollab task solidify TASK-DEV-001`
+  6. `vibecollab task list --status DONE --json`
+- **预期**:
+  - 创建成功，list 显示 TODO 状态
+  - 状态流转 TODO → IN_PROGRESS → REVIEW → DONE
+  - solidify 后 list --status DONE 返回该 Task
+  - --json 输出有效 JSON
+- **状态**: ⚪ (待验证)
+
+### TC-E2E-004: Onboard + Next 引导流程
+- **关联**: 全版本
+- **前置**: 项目有 Task 和 Insight 数据
+- **步骤**:
+  1. `vibecollab onboard`
+  2. `vibecollab onboard --json`
+  3. `vibecollab next`
+  4. `vibecollab next --json`
+- **预期**:
+  - onboard: 显示项目概况、当前进度、活跃任务、Insight 概要
+  - next: 显示行动建议（按优先级排序）
+  - --json 输出有效 JSON
+  - 无空项目报错（graceful handling）
+- **状态**: ⚪ (待验证)
+
+### TC-E2E-005: 索引 + 搜索 全链路
+- **关联**: v0.9.0+
+- **前置**: 项目已 init + generate
+- **步骤**:
+  1. `vibecollab index`
+  2. `vibecollab search "项目概述"`
+  3. `vibecollab search "决策" --type insight`
+  4. `vibecollab insight search --semantic --tags "架构"`
+- **预期**:
+  - index 成功完成（纯 Python 降级方案可用）
+  - search 返回结果含来源和评分
+  - semantic 搜索返回 Insight
+- **状态**: ⚪ (待验证)
+
+### TC-E2E-006: MCP Server 端到端（CodeBuddy/Cursor 集成）
+- **关联**: v0.9.1+
+- **前置**: 已 `pip install vibe-collab[mcp]`
+- **步骤**:
+  1. `vibecollab mcp config --ide codebuddy`（确认输出格式）
+  2. `vibecollab mcp inject --ide codebuddy`
+  3. 在 CodeBuddy/Cursor 中重启，确认 MCP Server 连接
+  4. 在 AI 对话中触发 `onboard` / `check` / `insight_search` tool
+- **预期**:
+  - config 输出有效 JSON
+  - inject 生成正确配置文件
+  - IDE 连接 MCP Server 成功
+  - Tool 调用返回项目上下文
+- **状态**: ⚪ (待验证)
+
+### TC-E2E-007: Prompt 命令生成 LLM 上下文
+- **关联**: v0.8.0+
+- **前置**: 项目已 init + generate
+- **步骤**:
+  1. `vibecollab prompt`
+  2. `vibecollab prompt --compact`
+  3. `vibecollab prompt --sections protocol,context`
+  4. `vibecollab prompt --copy`（Windows 验证）
+- **预期**:
+  - 输出 Markdown 格式的 LLM prompt
+  - --compact 精简版省略路线图和角色定义
+  - --sections 选择性输出
+  - --copy 复制到剪贴板
+- **状态**: ⚪ (待验证)
+
+### TC-E2E-008: 跨项目 Insight 迁移
+- **关联**: v0.9.4
+- **前置**: 两个独立的 VibeCollab 项目
+- **步骤**:
+  1. 在项目 A: `vibecollab insight export -o /tmp/insights_a.yaml`
+  2. 在项目 B: `vibecollab insight import /tmp/insights_a.yaml --json`
+  3. 在项目 B: `vibecollab insight list`
+  4. 在项目 B: `vibecollab insight check`
+- **预期**:
+  - 导出含 vibecollab_version / exported_at / insights 数组
+  - 导入后 Insight 在 B 中可用
+  - source.project 标记来源项目
+  - 一致性校验通过
+- **状态**: ⚪ (待验证)
+
+### TC-E2E-009: Windows 兼容性验证
+- **关联**: 全版本
+- **前置**: Windows PowerShell/CMD 环境
+- **步骤**:
+  1. 运行以上所有 TC-E2E-001 ~ 008 的命令
+  2. 特别关注含 emoji/中文/特殊字符的输出
+- **预期**:
+  - 所有命令无 UnicodeEncodeError
+  - GBK 终端正确降级显示（emoji → ASCII 替代）
+  - 路径分隔符正确处理
+- **状态**: ⚪ (待验证)
+
+### TC-E2E-010: 空项目/极简配置边界测试
+- **关联**: 全版本
+- **前置**: 空目录 + `vibecollab init`（最少参数）
+- **步骤**:
+  1. `mkdir empty-test && cd empty-test`
+  2. `vibecollab init -n "EmptyProject" -d generic`
+  3. `vibecollab check`
+  4. `vibecollab onboard`
+  5. `vibecollab next`
+  6. `vibecollab task list`
+  7. `vibecollab insight list`
+  8. `vibecollab insight suggest --json`
+- **预期**:
+  - 所有命令 graceful 处理空数据
+  - 无 traceback / 无 KeyError / 无 FileNotFoundError
+  - 空列表返回友好提示而非报错
+- **状态**: ⚪ (待验证)
+
+---
+
 ## 已知问题
 
 ### 🔴 高优先级问题
@@ -676,8 +1199,7 @@
 ### ⚪ 低优先级问题（延后到 v1.0）
 - 大项目（100+ 文件）生成速度可优化
 - `cli_insight.py` / `cli_task.py` 尚未迁移到 Rich 输出风格（功能正常，仅视觉不一致）
-- 跨项目 Insight 可移植性验证需先实现 export/import API
 
 ---
 
-*最后更新: 2026-02-26 (v0.8.0-dev)*
+*最后更新: 2026-02-27 (v0.9.4)*
