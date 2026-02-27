@@ -6,6 +6,83 @@
 
 ## 已确认决策
 
+### DECISION-017: v0.10.x 发布工程 — 从"能用"到"专业开源项目"
+- **等级**: S
+- **角色**: [PM] [ARCH]
+- **问题**: 项目功能已基本完成 (v0.9.4, 1201 tests, 36 .py files, ~15K LOC)，但存在三大硬伤阻碍开源采纳：(1) 代码/CLI/文档全中文，国际受众无法使用 (2) 97 条 git commit 中英混杂，不专业 (3) README/GitHub 门面缺乏开源项目标准要素
+- **决策**: 分 5 个版本递进完成，**严格按序执行，不可跳步**
+
+#### 版本规划
+
+**v0.10.0 — 最后业务逻辑 + 稳定性门槛**
+> 确保功能冻结前所有业务逻辑闭环，建立发布质量门槛
+- 外部项目 QA 全量验证（Phase 11 TC-E2E-001~010）
+- 测试覆盖率 ≥ 85%
+- `vibecollab check` 全绿
+- MCP Server 在 Cursor/CodeBuddy 中实际验证
+- 修复 QA 过程中发现的所有 bug
+- **功能冻结**: 此版本后不再新增业务功能
+
+**v0.10.1 — 代码国际化 (Code i18n)**
+> 代码层面全英文化，确保非中文母语开发者可读
+- **Scope 1: docstring/comment** — 36 个 .py 文件的中文注释/docstring 全部翻译为英文（~2055 行）
+- **Scope 2: CLI help** — 62+ 处 `help=` 参数翻译为英文
+- **Scope 3: 运行时输出** — `click.echo` / `console.print` 中的中文提示翻译为英文
+- **Scope 4: 错误消息** — "错误:", "未找到" 等翻译为英文
+- **不改**: 生成的 CONTRIBUTING_AI.md 模板内容保持中文（用户面向中文项目时需要）
+- **参考模板**: `event_log.py`, `llm_client.py`, `config_manager.py`, `task_manager.py`（已是英文）
+- 全量测试必须通过，覆盖率不降
+
+**v0.10.2 — 文档双语化 (Doc Bilingual)**
+> README 和核心文档提供英文版本
+- README.md 重写为英文（作为主 README）
+- README_CN.md 保留中文版
+- CHANGELOG.md 整理为英文
+- pyproject.toml description 英文化
+- docs/ 下内部开发文档保持中文（开发者自用）
+
+**v0.10.3 — Git 历史重写 + 仓库门面**
+> 这是破坏性操作，必须在最后执行
+- `git filter-branch` 或 `git-filter-repo` 重写全部 97+ commit message 为标准英文
+  - 保持 Conventional Commits 格式: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `release:`
+  - 保留关键信息（版本号、测试数、决策编号）
+  - 一次性 force push（不可逆）
+- GitHub 仓库门面:
+  - About 描述 + Topics 标签
+  - Issue / PR template
+  - CONTRIBUTING.md (英文，面向外部贡献者)
+  - CODE_OF_CONDUCT.md
+  - GitHub Release 创建（v0.10.3 起）
+  - Badge: PyPI / CI / Coverage / License / Python Version
+
+**v1.0.0 — 正式发布**
+> 标记稳定版本
+- 清理所有 .dev0 标记
+- PyPI v1.0.0 发布
+- GitHub Release v1.0.0
+- 宣发准备
+
+#### 核心原则
+1. **先功能冻结，再美化** — v0.10.0 之后不再新增功能
+2. **先代码英文化，再文档英文化** — 代码是根本，文档跟随
+3. **Git 历史重写放最后** — 避免 force push 后还要继续提交中文 commit
+4. **每个版本自成一体，可独立发布 PyPI** — 任何版本都是可发布状态
+5. **全量测试是铁门** — 每个版本必须 1201+ tests passed, 0 regression
+
+#### 工作量估算
+
+| 版本 | 核心工作 | 预估工时 |
+|------|---------|---------|
+| v0.10.0 | QA 验证 + bug fix + 覆盖率 | 2-3 session |
+| v0.10.1 | 36 文件代码英文化 (~2055 行中文) | 3-4 session |
+| v0.10.2 | README 英文重写 + CHANGELOG 整理 | 1-2 session |
+| v0.10.3 | 97 commit 重写 + GitHub 门面 | 1-2 session |
+| v1.0.0 | 版本号 + Release + 宣发 | 1 session |
+
+- **日期**: 2026-02-27
+- **状态**: CONFIRMED
+- **影响**: 整个项目从 demo 阶段向 production 阶段过渡的关键路径
+
 ### DECISION-001: 将 llm.txt 重命名为 CONTRIBUTING_AI.md
 - **等级**: A
 - **角色**: [ARCH]
