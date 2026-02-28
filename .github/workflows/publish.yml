@@ -48,8 +48,6 @@ jobs:
     name: Build and publish to PyPI
     runs-on: ubuntu-latest
     needs: test
-    permissions:
-      contents: read
 
     steps:
       - uses: actions/checkout@v4
