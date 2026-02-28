@@ -17,12 +17,15 @@ from vibecollab.agent_executor import (
 
 def _python_cmd():
     """Get the correct python command for the current platform."""
-    # Windows Actions environment always has 'python'
-    # Unix/Linux environment should have 'python' after the CI symlink step
-    # Fallback to 'python3' for local testing without symlink
+    # Check CI environment variable first
+    ci_python = os.environ.get('PYTHON_CMD')
+    if ci_python:
+        return ci_python
+
+    # Fallback: detect platform-specific python command
     if sys.platform == 'win32' or sys.platform == 'cygwin':
         return 'python'
-    # On Unix, try python first (should exist after CI symlink), then python3
+    # On Unix, try python first, then python3
     try:
         proc = subprocess.run(['python', '--version'],
                             capture_output=True,

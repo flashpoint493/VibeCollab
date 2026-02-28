@@ -27,11 +27,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Create python alias (Unix only)
-        if: runner.os == 'Linux'
+      - name: Set PYTHON_CMD environment variable
         run: |
-          if command -v python3 &> /dev/null && ! command -v python &> /dev/null; then
-            sudo ln -sf $(which python3) /usr/local/bin/python || true
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "PYTHON_CMD=python" >> $GITHUB_ENV
+          else
+            # On Unix, use python3 since that's what setup-python provides
+            echo "PYTHON_CMD=python3" >> $GITHUB_ENV
           fi
         shell: bash
 
