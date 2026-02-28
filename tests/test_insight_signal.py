@@ -9,10 +9,7 @@ Tests for insight_signal.py — 信号收集器 + 候选 Insight 推荐
 
 import json
 import subprocess
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from vibecollab.insight_signal import (
     CommitSignal,
@@ -20,7 +17,6 @@ from vibecollab.insight_signal import (
     InsightSignalCollector,
     SignalSnapshot,
 )
-
 
 # ===================================================================
 # SignalSnapshot

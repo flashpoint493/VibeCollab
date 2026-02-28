@@ -9,7 +9,6 @@ Covers:
 import sqlite3
 import struct
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml

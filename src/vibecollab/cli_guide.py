@@ -41,12 +41,12 @@ def _search_related_insights(
         return []
 
     try:
+        import sqlite3
+
         from .embedder import Embedder, EmbedderConfig
         from .vector_store import VectorStore
 
         # 从已有 DB 推断维度
-        import sqlite3
-
         conn = sqlite3.connect(str(db_path))
         row = conn.execute(
             "SELECT dimensions FROM vectors LIMIT 1"
@@ -523,7 +523,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
             if insight_count > 5:
                 console.print(f"  [dim]... 还有 {insight_count - 5} 条 (vibecollab insight list 查看)[/dim]")
         else:
-            console.print(f"  [dim]vibecollab insight list 查看全部[/dim]")
+            console.print("  [dim]vibecollab insight list 查看全部[/dim]")
 
     # 与当前任务相关的 Insight（语义匹配）
     if related_insights:
@@ -1005,7 +1005,7 @@ def next_step(config: str, as_json: bool):
                     "priority": f"P1-{priority}",
                     "type": "task_solidify",
                     "action": f"固化任务 {t.id}: {t.feature}",
-                    "reason": f"任务处于 REVIEW 状态，可尝试固化",
+                    "reason": "任务处于 REVIEW 状态，可尝试固化",
                     "suggestion": f"vibecollab task solidify {t.id}",
                 })
 

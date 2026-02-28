@@ -9,8 +9,6 @@ v0.9.4 Insight 质量与生命周期 — 单元测试
 """
 
 import json
-import os
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -19,7 +17,6 @@ from click.testing import CliRunner
 
 from vibecollab.event_log import EventLog
 from vibecollab.insight_manager import InsightManager
-
 
 # ======================================================================
 # Fixtures

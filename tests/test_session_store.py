@@ -6,14 +6,9 @@ Tests for session_store.py — 对话 session 持久化
 - SessionStore: save, get, list_all, list_recent, list_since, delete, count, get_summaries_text
 """
 
-import json
-import time
-from pathlib import Path
 
-import pytest
 
 from vibecollab.session_store import Session, SessionStore
-
 
 # ===================================================================
 # Session dataclass

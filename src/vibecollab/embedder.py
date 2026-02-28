@@ -11,12 +11,10 @@ Embedder — 轻量 embedding 抽象层
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

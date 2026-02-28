@@ -16,7 +16,6 @@ import click
 
 from .ide_platforms import get_platform, list_platforms, rules_path_for, skills_path_for
 
-
 # Rule content aligned with skill.md: context recovery, key files, Daily Workflow,
 # MCP tools table, ROADMAP format. Full protocol remains in CONTRIBUTING_AI.md.
 RULES_BODY = """# VibeCollab protocol (summary)

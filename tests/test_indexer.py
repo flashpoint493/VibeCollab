@@ -13,7 +13,6 @@ from vibecollab.indexer import (
 )
 from vibecollab.vector_store import VectorStore
 
-
 # ---------------------------------------------------------------------------
 # _split_markdown_by_heading Tests
 # ---------------------------------------------------------------------------

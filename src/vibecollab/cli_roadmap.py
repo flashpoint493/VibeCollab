@@ -159,7 +159,7 @@ def roadmap_sync(direction, dry_run, config, json_output):
         click.echo(f"  {icon} {a.detail}")
 
     if dry_run:
-        click.echo(f"\n(预览模式，未实际修改。移除 --dry-run 执行同步)")
+        click.echo("\n(预览模式，未实际修改。移除 --dry-run 执行同步)")
 
 
 @roadmap_group.command("parse")

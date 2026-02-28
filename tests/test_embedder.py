@@ -2,7 +2,6 @@
 Tests for Embedder — 轻量 embedding 抽象层
 """
 
-import hashlib
 
 import pytest
 
@@ -11,7 +10,6 @@ from vibecollab.embedder import (
     EmbedderConfig,
     PurePythonEmbedder,
 )
-
 
 # ---------------------------------------------------------------------------
 # PurePythonEmbedder Tests

@@ -4,9 +4,7 @@ VibeCollab rules inject CLI tests.
 Covers: rules inject --ide cursor/codebuddy/all, --dry-run.
 """
 
-from pathlib import Path
 
-import pytest
 from click.testing import CliRunner
 
 

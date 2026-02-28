@@ -4,16 +4,13 @@ Supplementary tests for cli_task.py — non-JSON (rich text) output paths.
 Covers uncovered lines: 26-30, 38-39, 114-117, 140-158, 176-188
 """
 
-import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import yaml
 from click.testing import CliRunner
 
 from vibecollab.cli_task import task_group
-
 
 # ============================================================
 # Fixtures

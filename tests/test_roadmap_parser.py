@@ -16,7 +16,6 @@ from vibecollab.roadmap_parser import (
 )
 from vibecollab.task_manager import Task, TaskManager, TaskStatus
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

@@ -27,6 +27,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Create python symlink
+        run: |
+          if command -v python3 &> /dev/null && ! command -v python &> /dev/null; then
+            ln -s $(which python3) /usr/local/bin/python
+          fi
+        shell: bash
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip

@@ -9,13 +9,11 @@ v0.9.3 Task/EventLog 核心工作流接通 — 单元测试
 """
 
 import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
 from click.testing import CliRunner
-
 
 # ============================================================
 # Fixtures
@@ -569,12 +567,12 @@ class TestMcpNewTools:
 
     def test_start_conversation_lists_new_tools(self, project_dir):
         """start_conversation prompt 应包含新工具"""
-        from vibecollab.mcp_server import _safe_load_yaml, _safe_read_text
 
         # 模拟 prompt 中的工具列表检查
         # 直接检查 mcp_server.py 源码中的字符串
-        import vibecollab.mcp_server as mod
         import inspect
+
+        import vibecollab.mcp_server as mod
         source = inspect.getsource(mod)
         assert "task_create" in source
         assert "task_transition" in source

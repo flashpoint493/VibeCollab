@@ -208,7 +208,7 @@ def add_insight(title, tags, category, scenario, approach, summary,
             click.echo(f"\n{EMOJI['warn']} Potential duplicates detected:")
             for dup in duplicates:
                 click.echo(f"  - {dup['id']}: {dup['title']} (score={dup['score']}, {dup['reason']})")
-            click.echo(f"\nUse --force to create anyway, or adjust title/tags.")
+            click.echo("\nUse --force to create anyway, or adjust title/tags.")
             raise SystemExit(1)
 
     ins = mgr.create(

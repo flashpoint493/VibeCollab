@@ -11,15 +11,12 @@ VibeCollab MCP Server 单元测试
 """
 
 import json
-import os
 import subprocess
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
 from click.testing import CliRunner
-
 
 # ============================================================
 # 辅助
@@ -258,7 +255,7 @@ class TestResources:
         assert "mcp" in insights[1]["tags"]
 
     def test_empty_project_resources(self, empty_project):
-        from vibecollab.mcp_server import _safe_read_text, _get_insight_files
+        from vibecollab.mcp_server import _get_insight_files, _safe_read_text
 
         assert _safe_read_text(empty_project / "CONTRIBUTING_AI.md") == ""
         assert _safe_read_text(empty_project / "docs" / "CONTEXT.md") == ""
@@ -318,7 +315,7 @@ class TestTools:
 
     def test_developer_context_exists(self, project_dir):
         """开发者上下文读取"""
-        from vibecollab.mcp_server import _safe_read_text, _safe_load_yaml
+        from vibecollab.mcp_server import _safe_load_yaml, _safe_read_text
 
         dev_dir = project_dir / "docs" / "developers" / "alice"
         context = _safe_read_text(dev_dir / "CONTEXT.md")

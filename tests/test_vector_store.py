@@ -2,20 +2,16 @@
 Tests for VectorStore — 本地持久化向量存储
 """
 
-import json
-import math
 
 import pytest
 
 from vibecollab.vector_store import (
-    SearchResult,
     VectorDocument,
     VectorStore,
     _pack_vector,
     _unpack_vector,
     cosine_similarity,
 )
-
 
 # ---------------------------------------------------------------------------
 # cosine_similarity Tests
