@@ -1,5 +1,32 @@
 # VibeCollab 变更日志
 
+## v0.10.0-dev (2026-02-27) - 覆盖率改进 & 稳定性
+
+### Test
+- **cli_index.py 覆盖率 17% → 91%**: 新建 `test_cli_index.py` (12 tests)
+  - TestIndexCmd (5): basic/rebuild/auto_backend/with_insights/nonexistent_config
+  - TestSearchCmd (7): no_index/basic/type_filter/min_score/top_k/empty_index/no_results
+  - 修复测试 DB schema 缺少 `source` 列的问题
+- **mcp_server.py 覆盖率 47% → 100%**: 新建 `test_mcp_server_closures.py` (42 tests)
+  - Fake Module 注入法捕获 create_mcp_server() 内部闭包
+  - TestResources (8): 6 个文档 resource + 空项目 + 缺失文件
+  - TestCliTools (24): 14 个 CLI tools 的命令构建验证（含可选参数分支）
+  - TestDirectTools (5): developer_context + session_save（成功/全字段/异常）
+  - TestPrompts (4): start_conversation（基本/开发者/空项目/未知开发者）
+  - TestRunCliEdge (1) + TestRunServer (1)
+- **protocol_checker.py 覆盖率 71% → 96%**: 新建 `test_protocol_checker_git.py` (26 tests)
+  - Git 一致性检查: commit 级别同步/跨标签发布检查
+  - 真实 Git 仓库测试: `_is_file_tracked_in_git` / `_get_last_commit_time`
+  - 文档更新阈值分支 / PRD 缺失 / 协作文档过期 / 开发者发现
+- **cli_task.py 覆盖率 78% → 98%**: 新建 `test_cli_task_richtext.py` (10 tests)
+  - 非 JSON 输出路径: list/show/suggest 的 rich text 格式化
+  - `_load_config` 单元测试 + `_get_managers` InsightManager 异常分支
+- 全量 **1291 passed**, 总覆盖率 **85% → 89%**
+
+### Insight
+- INS-016: Fake Module 注入法测试工厂函数内部闭包
+- INS-017: 覆盖率提升的 ROI 优先级排序策略
+
 ## v0.9.4 (2026-02-27) - Insight 质量与生命周期
 
 ### New Feature
