@@ -70,6 +70,13 @@ PLATFORMS: Dict[str, Dict[str, Any]] = {
         "skills_path": ".agents/skills/vibecollab/SKILL.md",
         "skills_format": "skill_md",
     },
+    "openclaw": {
+        "mcp_path": None,
+        "rules_path": ".openclaw/SKILL.md",
+        "rules_format": "plain_md",
+        "skills_path": ".openclaw/skills/vibecollab/SKILL.md",
+        "skills_format": "skill_md",
+    },
     # vx (https://github.com/loonghao/vx) also includes kiro, trae
     "kiro": {
         "mcp_path": None,
