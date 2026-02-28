@@ -1,3 +1,25 @@
+---
+name: VibeCollab
+description: VibeCollab AI collaboration protocol support for OpenClaw
+author: flashpoint493
+version: 0.10.0
+tags:
+  - protocol
+  - collaboration
+  - development
+tools:
+  - onboard
+  - check
+  - next_step
+  - roadmap_status
+  - roadmap_sync
+  - insight_search
+  - insight_add
+  - task_list
+  - task_create
+  - task_transition
+  - session_save
+
 # VibeCollab protocol (OpenClaw edition)
 
 This project uses **VibeCollab** AI collaboration protocol. Full rules: `CONTRIBUTING_AI.md`.
