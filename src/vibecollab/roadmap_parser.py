@@ -8,7 +8,7 @@ Provides:
 
 Design:
 - Task IDs in ROADMAP.md follow the pattern TASK-{ROLE}-{SEQ} (regex)
-- Milestones are identified by ### headers with version patterns
+- Milestones are identified by ### (H3) headers with version patterns (strictly)
 - Checkbox state [x]/[ ] maps to DONE / not-DONE
 - No vector/embedding dependency — pure deterministic ID matching
 """
@@ -24,10 +24,22 @@ from .task_manager import TaskManager, TaskStatus
 # Constants
 # ---------------------------------------------------------------------------
 
-# Regex to match milestone headers like "### v0.9.3 - Title" or "### v0.9.3"
+# Regex to match milestone headers: strictly ### (H3) with semantic version.
+# e.g. "### v0.9.3 - Title" or "### v0.9.3 ✅"
+# H2/H4/H5 are NOT accepted — users must use ### to define milestones.
 MILESTONE_HEADER_RE = re.compile(
     r"^###\s+(v\d+\.\d+(?:\.\d+)?)\s*(?:-\s*(.+?))?(?:\s*[✅❌])?\s*$"
 )
+
+# Human-readable format hint for error messages
+MILESTONE_FORMAT_HINT = """\
+期望的里程碑标题格式:
+  ### v0.1.0 - 标题描述
+  ### v0.1.0 - 标题描述 ✅
+
+Checkbox 行可通过 Task ID 关联任务:
+  - [ ] 功能描述 (TASK-DEV-001)
+  - [x] 已完成功能 TASK-DEV-002"""
 
 # Regex to match Task ID references anywhere in text
 TASK_ID_RE = re.compile(r"TASK-[A-Z]+-\d{3,}")
@@ -154,8 +166,8 @@ class RoadmapParser:
                 milestones.append(current_milestone)
                 continue
 
-            # Check for a higher-level header (## or #) — ends current milestone
-            if line.startswith("## ") or line.startswith("# "):
+            # Any header of level 1-3 that is NOT a milestone ends the current block
+            if re.match(r"^#{1,3}\s+", line) and not MILESTONE_HEADER_RE.match(line):
                 current_milestone = None
                 continue
 
