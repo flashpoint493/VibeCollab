@@ -48,3 +48,26 @@ EMOJI = {
 
 # Bullet point 替代
 BULLET = "-" if _GBK else "•"
+
+
+def sanitize_for_console(text: str) -> str:
+    """Replace Unicode chars that may fail to encode on Windows GBK console.
+
+    Use before passing user/content text to Rich (e.g. Panel) to avoid
+    UnicodeEncodeError when stdout encoding is GBK.
+    """
+    if not _GBK or not text:
+        return text
+    replacements = (
+        ("\u26a0\ufe0f", "!"),   # ⚠️
+        ("\u26a0", "!"),
+        ("\u2705", "[OK]"),     # ✅
+        ("\u274c", "[X]"),      # ❌
+        ("\u2139\ufe0f", "[i]"),  # ℹ️
+        ("\u2139", "[i]"),
+        ("\u1f4ca", "[*]"),    # 📊
+        ("\u1f4dd", "[doc]"),  # 📝
+    )
+    for char, sub in replacements:
+        text = text.replace(char, sub)
+    return text

@@ -809,9 +809,53 @@ main.add_command(index_cmd, name="index")
 main.add_command(search_cmd, name="search")
 
 # 导入 MCP Server 命令 (v0.9.1+)
-from .cli_mcp import mcp_group  # noqa: E402
+from .cli_mcp import do_mcp_inject, mcp_group  # noqa: E402
+from .ide_platforms import get_platform, list_platforms  # noqa: E402
 
 main.add_command(mcp_group)
+
+# 导入 Rules 注入命令 (v0.10.0+)
+from .cli_rules import do_rules_inject, rules_group  # noqa: E402
+
+main.add_command(rules_group)
+
+
+def _setup_platform_choices():
+    return list_platforms() + ["all"]
+
+
+# 一键适配 IDE：MCP + 规则/技能，覆盖多平台 (ide_platforms)
+@main.command("setup")
+@click.option(
+    "--ide",
+    "-i",
+    type=click.Choice(_setup_platform_choices()),
+    default="all",
+    help="Target platform (default: all)",
+)
+@click.option(
+    "--project-root",
+    "-p",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    default=None,
+    help="Project root directory",
+)
+def setup_cmd(ide: str, project_root: Path):
+    """One-shot IDE setup: inject MCP config + protocol rules/skills (no external deps).
+
+    Platforms (vx-aligned): cursor, cline, codebuddy (MCP+rules+skills);
+    windsurf, claude, opencode, roo, agents, kiro, trae (rules+skills).
+    """
+    root = project_root or Path.cwd()
+    all_platforms = list_platforms()
+    ides = [ide] if ide != "all" else all_platforms
+    mcp_ides = [i for i in ides if get_platform(i) and get_platform(i).get("mcp_path")]
+    click.echo("Injecting MCP config...")
+    do_mcp_inject(root, mcp_ides)
+    click.echo("\nInjecting protocol rules (and skills)...")
+    do_rules_inject(root, ides, dry_run=False)
+    click.echo("\nSetup done. Restart or reload IDE for MCP and rules to take effect.")
+
 
 # 导入 Roadmap ↔ Task 集成命令 (v0.10.0+)
 from .cli_roadmap import roadmap_group  # noqa: E402

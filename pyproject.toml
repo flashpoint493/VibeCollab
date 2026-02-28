@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vibe-collab"
-version = "0.9.7"
+version = "0.9.8"
 description = "AI-powered project collaboration framework with three-mode CLI (IDE/interactive/agent)"
 readme = {file = "README.pypi.md", content-type = "text/markdown"}
 license = "MIT"
@@ -75,6 +75,7 @@ packages = ["src/vibecollab"]
 artifacts = ["src/vibecollab/patterns/**"]
 
 [tool.hatch.build.targets.sdist]
+# Explicit include only — .env and secrets never bundled
 include = [
     "/src",
     "/schema",
@@ -82,6 +83,7 @@ include = [
     "/README.pypi.md",
     "/LICENSE",
 ]
+exclude = [".env", ".env.*"]
 
 [tool.black]
 line-length = 100

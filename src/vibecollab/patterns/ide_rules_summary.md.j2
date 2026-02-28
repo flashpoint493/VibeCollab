@@ -1,0 +1,56 @@
+{# IDE rules summary — schema-driven, same data as CONTRIBUTING_AI (documentation section). #}
+{%- set docs = documentation if documentation else {} -%}
+{%- set key_files = docs.get('key_files', []) -%}
+{%- set context_file = docs.get('context_file', 'docs/CONTEXT.md') -%}
+{%- set decisions_file = docs.get('decisions_file', 'docs/DECISIONS.md') -%}
+{%- set changelog_file = docs.get('changelog_file', 'docs/CHANGELOG.md') -%}
+{%- set proj = project if project else {} -%}
+# {{ proj.get('name', 'Project') }} protocol (summary)
+
+This project uses **VibeCollab** AI collaboration protocol. Full rules: `CONTRIBUTING_AI.md`.
+
+## Context recovery (start of conversation)
+
+1. Read `CONTRIBUTING_AI.md` for collaboration rules.
+2. Read `{{ context_file }}` to restore current state.
+3. Read `{{ decisions_file }}` for confirmed and pending decisions.
+4. Run `git log --oneline -10` to see recent progress.
+5. Ask the user for this conversation's goal.
+
+## Key files
+
+| File | Purpose |
+|------|--------|
+| `CONTRIBUTING_AI.md` | AI collaboration rules (authoritative) |
+{% for f in key_files %}
+| `{{ f.get('path', '') }}` | {{ f.get('purpose', '') }} |
+{% endfor %}
+
+## MCP tools (when available)
+
+| Tool | When to use |
+|------|-------------|
+| `onboard` | **Start of every conversation** — get project context |
+| `check` | **End of every conversation** — verify protocol compliance |
+| `next_step` | When unsure what to do next |
+| `roadmap_status` | View milestone progress |
+| `roadmap_sync` | Sync ROADMAP.md ↔ tasks.json |
+| `insight_search` | Search past development experience |
+| `insight_add` | Save a reusable insight |
+| `task_list` / `task_create` / `task_transition` | Task management |
+| `session_save` | **End of conversation** — save session summary |
+
+## ROADMAP format
+
+If the project has `docs/ROADMAP.md`, use this format so `roadmap_status` / `roadmap_sync` work:
+
+- Milestones: `### vX.Y.Z - Title` (only H3; `####` or `##` are not parsed).
+- Version must start with `v` (semantic versioning).
+- Task IDs: `TASK-{ROLE}-{SEQ}` (e.g. `TASK-DEV-001`) in checklist lines.
+
+## Daily workflow
+
+Conversation start → call `onboard` (or read CONTEXT.md + DECISIONS.md + git log)
+→ work on tasks
+→ important decisions → record in `{{ decisions_file }}`
+→ conversation end → update `{{ context_file }}` and `{{ changelog_file }}` → call `check` and `session_save` → suggest git commit.

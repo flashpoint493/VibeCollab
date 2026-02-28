@@ -285,15 +285,17 @@
 - [x] PyPI v0.9.1 发布 ✅ — `pip install vibe-collab[mcp]`
 - [x] CodeBuddy Rule 集成 ✅ — `.codebuddy/rules/vibecollab-protocol.mdc`
 - [x] 35 个单元测试，1074 全量 passed ✅
+- [x] **Rules inject** ✅ — `vibecollab rules inject --ide <platform>|all` (v0.9.7)
+  - 10 平台（vx 对齐）：cursor, cline, codebuddy, windsurf, claude, opencode, roo, agents, kiro, trae
+  - 各平台 rules_path + skills_path（`.<platform>/skills/vibecollab/SKILL.md`）
+  - Schema 驱动：有 project.yaml 时规则正文由 `ide_rules_summary.md.j2` 生成，与 README 一致
+- [x] **协议检查 IDE 一致性** ✅ — `vibecollab check` 增加 canonical 与磁盘规则对比
+- [x] **CI 一致性** ✅ — 有 project.yaml 时 CI 跑 `vibecollab check`
 
 #### IDE 适配（待完善）
-- [ ] Cursor Skill 自动生成 — `vibecollab export cursor-skill`
-  - 从 `project.yaml` + `CONTRIBUTING_AI.md` 自动生成 `.cursor/skills/vibecollab/SKILL.md`
-  - 项目配置变更时自动重新生成
-- [ ] Cline Custom Instructions 适配 — `vibecollab export cline`
-  - 生成 `.cline/custom_instructions.md`
-- [ ] CodeBuddy Rule 适配 — `vibecollab export codebuddy`
-  - 生成 `.codebuddy/rules/vibecollab.md`
+- [x] Cursor/多平台 Skill 注入 ✅ — 已由 `rules inject` 同时写入各平台 SKILL.md（与 rules 同源）
+- [ ] Cline Custom Instructions 适配 — `vibecollab export cline`（可选，rules inject 已支持 Cline）
+- [x] CodeBuddy Rule 适配 ✅ — 已由 `vibecollab rules inject --ide codebuddy` 实现
 
 ### v0.9.2 - Insight 沉淀信号增强
 
@@ -366,16 +368,19 @@
 - [x] README 双语重构（英文主 README + 中文 README.zh-CN.md）✅
 - [x] 40 个单元测试，全量 1331 passed, 89% 覆盖率, 零回归 ✅
 
-### v0.9.7 - Roadmap 解析器格式引导（开发中）
+### v0.9.7 - Roadmap 格式引导 + 多平台 Rules/Skills + 一致性（已完成 ✅）
 
-> 目标：解决用户 ROADMAP 格式不匹配时无提示的问题，严格 ### 格式约束 + 清晰错误引导
+> 目标：格式约束与错误引导；规则/技能多平台注入与程序化一致性
 
 - [x] 严格 ### 里程碑格式 — 只接受 `### vX.Y.Z`，拒绝 `####` 等其他层级 TASK-DEV-008
 - [x] 零里程碑格式提示 — CLI 输出期望格式 + Task ID 关联语法 TASK-DEV-008
 - [x] sync 零里程碑区分 — 不再误报"已同步" TASK-DEV-008
 - [x] MCP Tool 描述增强 — AI IDE 可据此指导用户修改 ROADMAP TASK-DEV-008
 - [x] init 模板兼容 — 生成的 ROADMAP 开箱可解析 TASK-DEV-008
-- [x] v0.9.7 PyPI 发布
+- [x] Schema 驱动规则 — ide_rules_summary.md.j2 + get_rules_body，与 project.yaml 一致
+- [x] 多平台 rules+skills — ide_platforms 10 平台（含 kiro/trae，vx 对齐）
+- [x] 协议检查 IDE 注入一致性 — _check_ide_inject_consistency + CI 跑 vibecollab check
+- [x] v0.9.8 PyPI 发布
 
 ### v0.9.6 - PyPI 适配 + 文档质量（已完成 ✅）
 
@@ -494,4 +499,4 @@
 
 ---
 
-*最后更新: 2026-02-28 (v0.9.7 开发中)*
+*最后更新: 2026-02-28 (v0.9.8 已发布)*

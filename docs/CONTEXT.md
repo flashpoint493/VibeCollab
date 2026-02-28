@@ -5,8 +5,8 @@
 > 聚合自: alice, ocarina
 
 ## 项目整体状态
-- **版本**: v0.9.7 (开发中)
-- **上一版本**: v0.9.6 (PyPI 已发布)
+- **版本**: v0.9.8 (PyPI 已发布)
+- **上一版本**: v0.9.7 (功能迭代)
 - **活跃开发者**: 2 (alice, ocarina)
 - **测试**: 1345 passed, 89% 覆盖率
 - **当前阶段**: v0.9.7 迭代，推进 v0.10.0 功能冻结
@@ -21,17 +21,17 @@
 
 ### ocarina
 - **上次更新**: 2026-02-28
-- **当前任务**: v0.9.7 Roadmap 解析器格式引导
+- **当前任务**: 无（v0.9.8 已发布 PyPI，后续小版本迭代至 v0.10.0）
 - **最近完成**:
-  - v0.9.5 ROADMAP ↔ Task 集成（RoadmapParser + CLI + MCP + 40 tests）
-  - README 双语重构（英文主 README + README.zh-CN.md）
-  - PyPI v0.9.5 发布
-  - TASK-DEV-006: PyPI README 适配（README.pypi.md，去 Mermaid + 绝对 URL）
-  - TASK-DEV-008: Roadmap 解析器格式引导（严格 ### + 格式 hint + MCP 描述增强）
+  - **Schema 驱动规则**：`ide_rules_summary.md.j2` + `get_rules_body()`，有 project.yaml 时用生成结果与 README/context 一致
+  - **多平台 rules+skills**：ide_platforms 接入，`rules inject`/`setup` 支持 10 平台（cursor, cline, codebuddy, windsurf, claude, opencode, roo, agents, kiro, trae），vx 结构对齐
+  - **协议检查**：`_check_ide_inject_consistency()`，canonical 与磁盘规则文件对比；CI 增加 `vibecollab check`（有 project.yaml 时）
+  - `vibecollab rules inject`：Cursor/CodeBuddy/Cline + Cline 规则注入，skill.md 修正与 rules inject 步骤
+  - onboard Windows GBK 编码修复、v0.9.7 Roadmap 格式引导（TASK-DEV-008）、TASK-DEV-006、v0.9.5 ROADMAP ↔ Task
 
 ## 活跃任务
 
-无活跃任务（v0.9.7 全部完成）
+无活跃任务。待提交：schema 驱动规则、ide_platforms、多平台 inject、protocol check IDE 一致性、CI、kiro/trae、CONTEXT/CHANGELOG/ROADMAP。
 
 ## 跨开发者协作
 (详见 docs/developers/COLLABORATION.md)

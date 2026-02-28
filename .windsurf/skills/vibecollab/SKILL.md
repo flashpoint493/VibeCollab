@@ -1,0 +1,63 @@
+# VibeCollab protocol (summary)
+
+This project uses **VibeCollab** AI collaboration protocol. Full rules: `CONTRIBUTING_AI.md`.
+
+## Context recovery (start of conversation)
+
+1. Read `CONTRIBUTING_AI.md` for collaboration rules.
+2. Read `docs/CONTEXT.md` to restore current state.
+3. Read `docs/DECISIONS.md` for confirmed and pending decisions.
+4. Run `git log --oneline -10` to see recent progress.
+5. Ask the user for this conversation's goal.
+
+## Key files
+
+| File | Purpose |
+|------|--------|
+| `CONTRIBUTING_AI.md` | AI collaboration rules (authoritative) |
+
+| `CONTRIBUTING_AI.md` | AI 协作规则，顶层指导 |
+
+| `llms.txt` | 项目上下文摘要 (llmstxt.org 标准) |
+
+| `docs/CONTEXT.md` | 当前开发上下文 |
+
+| `docs/DECISIONS.md` | 重要决策记录 |
+
+| `docs/CHANGELOG.md` | 版本变更日志 |
+
+| `docs/QA_TEST_CASES.md` | 产品QA测试用例 |
+
+| `docs/PRD.md` | 产品需求文档 |
+
+| `docs/ROADMAP.md` | 路线图+迭代建议 |
+
+
+## MCP tools (when available)
+
+| Tool | When to use |
+|------|-------------|
+| `onboard` | **Start of every conversation** — get project context |
+| `check` | **End of every conversation** — verify protocol compliance |
+| `next_step` | When unsure what to do next |
+| `roadmap_status` | View milestone progress |
+| `roadmap_sync` | Sync ROADMAP.md ↔ tasks.json |
+| `insight_search` | Search past development experience |
+| `insight_add` | Save a reusable insight |
+| `task_list` / `task_create` / `task_transition` | Task management |
+| `session_save` | **End of conversation** — save session summary |
+
+## ROADMAP format
+
+If the project has `docs/ROADMAP.md`, use this format so `roadmap_status` / `roadmap_sync` work:
+
+- Milestones: `### vX.Y.Z - Title` (only H3; `####` or `##` are not parsed).
+- Version must start with `v` (semantic versioning).
+- Task IDs: `TASK-{ROLE}-{SEQ}` (e.g. `TASK-DEV-001`) in checklist lines.
+
+## Daily workflow
+
+Conversation start → call `onboard` (or read CONTEXT.md + DECISIONS.md + git log)
+→ work on tasks
+→ important decisions → record in `docs/DECISIONS.md`
+→ conversation end → update `docs/CONTEXT.md` and `docs/CHANGELOG.md` → call `check` and `session_save` → suggest git commit.
