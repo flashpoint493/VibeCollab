@@ -7,13 +7,14 @@
 
 ## 当前任务
 - **DECISION-017**: v0.10.x 发布工程规划已确认 (S 级)
-- **v0.10.0**: 功能冻结 + 稳定性门槛（外部 QA 验证 + 覆盖率 85%）
+- **v0.10.0**: 功能冻结 + 稳定性门槛（外部 QA 验证 + 覆盖率 85%+）
+- **覆盖率**: 88% (1255 tests passed) — 已超过 85% 门槛
 
 ## 最近完成
+- ✅ **覆盖率提升**: cli_index 17%→91%, mcp_server 47%→100%, 总 85%→88%
+- ✅ **test_cli_index.py**: 12 个新测试 (5 index + 7 search)
+- ✅ **test_mcp_server_closures.py**: 42 个新测试 (resources/tools/prompts/edge cases)
 - ✅ **v0.9.4 Insight 质量与生命周期**: 去重/图谱/导入导出, 1201 tests
-- ✅ **v0.9.3 Task CLI**: transition/solidify/rollback
-- ✅ **v0.9.2 Insight 信号增强**: insight_signal + session_store + suggest
-- ✅ **v0.9.1 MCP Server**: stdio/sse, 14 Tools, 6 Resources, 1 Prompt
 - ✅ **QA Phase 7~11 补齐**: 39 个新测试用例 (含 10 个 E2E 集成)
 
 ## 接下来计划 (DECISION-017)

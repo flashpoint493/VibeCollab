@@ -17,10 +17,11 @@
 **v0.10.0 — 最后业务逻辑 + 稳定性门槛**
 > 确保功能冻结前所有业务逻辑闭环，建立发布质量门槛
 - 外部项目 QA 全量验证（Phase 11 TC-E2E-001~010）
-- 测试覆盖率 ≥ 85%
+- 测试覆盖率 ≥ 85% ✅ (已达 85%)
 - `vibecollab check` 全绿
 - MCP Server 在 Cursor/CodeBuddy 中实际验证
 - 修复 QA 过程中发现的所有 bug
+- 项目文件结构审查 — 确保 src/ 目录组织清晰可读（必要时拆分大文件、引入子包）
 - **功能冻结**: 此版本后不再新增业务功能
 
 **v0.10.1 — 代码国际化 (Code i18n)**
@@ -47,6 +48,9 @@
   - 保持 Conventional Commits 格式: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `release:`
   - 保留关键信息（版本号、测试数、决策编号）
   - 一次性 force push（不可逆）
+- Git commit 向量化索引 — `vibecollab index` 支持索引 git commit message，作为语义检索上下文
+  - commit message 已是 insight suggest / onboard 等模块的核心输入信号
+  - 英文化后的 commit 质量更高，向量化价值更大
 - GitHub 仓库门面:
   - About 描述 + Topics 标签
   - Issue / PR template
