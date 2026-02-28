@@ -294,7 +294,6 @@ class InsightSignalCollector:
                    ("feat", "feature", "新增", "实现", "add", "implement"))
         ]
         if feature_commits:
-            subjects = [c.subject for c in feature_commits[:5]]
             candidates.append(InsightCandidate(
                 title=self._summarize_commits(feature_commits, "feature"),
                 tags=self._extract_tags_from_commits(feature_commits),
@@ -403,7 +402,7 @@ class InsightSignalCollector:
         # CONTEXT.md 大幅变更 → 上下文切换信号
         if "docs/CONTEXT.md" in changes:
             context_lines = changes["docs/CONTEXT.md"]
-            added = [l for l in context_lines if l.startswith("+")]
+            added = [line for line in context_lines if line.startswith("+")]
             if len(added) > 10:
                 candidates.append(InsightCandidate(
                     title="开发方向切换经验",
