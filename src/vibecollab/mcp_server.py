@@ -436,6 +436,31 @@ def create_mcp_server(project_root: Optional[Path] = None):
             cmd.append("--include-registry")
         return _run_cli(cmd, root)
 
+    @mcp.tool()
+    def roadmap_status(output_json: bool = True) -> str:
+        """获取 ROADMAP 各里程碑进度概览
+
+        Args:
+            output_json: 是否输出 JSON 格式 (默认 True)
+        """
+        cmd = ["vibecollab", "roadmap", "status"]
+        if output_json:
+            cmd.append("--json")
+        return _run_cli(cmd, root)
+
+    @mcp.tool()
+    def roadmap_sync(direction: str = "both", dry_run: bool = False) -> str:
+        """同步 ROADMAP.md ↔ tasks.json
+
+        Args:
+            direction: 同步方向 (both/roadmap_to_tasks/tasks_to_roadmap)
+            dry_run: 是否仅预览 (默认 False)
+        """
+        cmd = ["vibecollab", "roadmap", "sync", "-d", direction, "--json"]
+        if dry_run:
+            cmd.append("--dry-run")
+        return _run_cli(cmd, root)
+
     # ================================================================
     # Prompts — 对话模板
     # ================================================================
@@ -466,6 +491,8 @@ def create_mcp_server(project_root: Optional[Path] = None):
             "- `task_transition`: 推进任务状态",
             "- `insight_graph`: 查看 Insight 关联图谱",
             "- `insight_export`: 导出 Insight",
+            "- `roadmap_status`: 查看 ROADMAP 各里程碑进度",
+            "- `roadmap_sync`: 同步 ROADMAP ↔ tasks.json",
             "- `session_save`: 保存对话 session (对话结束时调用)",
             "",
         ]

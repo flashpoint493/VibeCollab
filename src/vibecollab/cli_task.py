@@ -53,9 +53,10 @@ def task_group():
 @click.option("--feature", required=True, help="功能描述")
 @click.option("--assignee", default=None, help="负责人")
 @click.option("--description", default="", help="详细描述")
+@click.option("--milestone", default="", help="关联的 ROADMAP 里程碑 (如 v0.9.3)")
 @click.option("--config", "-c", default="project.yaml", help="配置文件路径")
 @click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
-def create_task(task_id, role, feature, assignee, description, config, json_output):
+def create_task(task_id, role, feature, assignee, description, milestone, config, json_output):
     """创建任务，自动搜索关联 Insight"""
     tm, im = _get_managers(config)
 
@@ -63,6 +64,7 @@ def create_task(task_id, role, feature, assignee, description, config, json_outp
         task = tm.create_task(
             id=task_id, role=role, feature=feature,
             assignee=assignee, description=description,
+            milestone=milestone,
             actor=assignee or "cli",
         )
     except ValueError as e:
@@ -93,12 +95,13 @@ def create_task(task_id, role, feature, assignee, description, config, json_outp
 @task_group.command("list")
 @click.option("--status", default=None, help="按状态筛选 (TODO/IN_PROGRESS/REVIEW/DONE)")
 @click.option("--assignee", default=None, help="按负责人筛选")
+@click.option("--milestone", default=None, help="按里程碑筛选 (如 v0.9.3)")
 @click.option("--config", "-c", default="project.yaml", help="配置文件路径")
 @click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
-def list_tasks(status, assignee, config, json_output):
+def list_tasks(status, assignee, milestone, config, json_output):
     """列出任务"""
     tm, _ = _get_managers(config)
-    tasks = tm.list_tasks(status=status, assignee=assignee)
+    tasks = tm.list_tasks(status=status, assignee=assignee, milestone=milestone)
 
     if json_output:
         click.echo(json.dumps(
@@ -142,6 +145,8 @@ def show_task(task_id, config, json_output):
     click.echo(f"功能:     {task.feature}")
     click.echo(f"状态:     {task.status}")
     click.echo(f"负责人:   {task.assignee or '-'}")
+    if task.milestone:
+        click.echo(f"里程碑:   {task.milestone}")
     if task.description:
         click.echo(f"描述:     {task.description}")
     if task.output:

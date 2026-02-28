@@ -353,6 +353,19 @@
 - [x] MCP Server 新增 `insight_graph` / `insight_export` 两个 Tool ✅
 - [x] 36 个单元测试，全量 1201 passed, 零回归 ✅
 
+### v0.9.5 - ROADMAP ↔ Task 集成（已完成 ✅）
+
+> 目标：让 ROADMAP.md 与 TaskManager 双向联动，结构化追踪里程碑进度
+
+- [x] RoadmapParser 模块 — 解析 ROADMAP.md 里程碑 + checklist + inline Task ID 引用 ✅
+- [x] 双向同步 — ROADMAP `[x]` ↔ Task DONE 状态，三种方向（both/roadmap_to_tasks/tasks_to_roadmap）✅
+- [x] Task `milestone` 字段 — Task dataclass 新增里程碑关联，`list_tasks(milestone=)` 过滤 ✅
+- [x] CLI `vibecollab roadmap status/sync/parse` 命令组 ✅
+- [x] CLI `vibecollab task create --milestone` / `task list --milestone` 增强 ✅
+- [x] MCP Server 新增 `roadmap_status` / `roadmap_sync` 两个 Tool ✅
+- [x] README 双语重构（英文主 README + 中文 README.zh-CN.md）✅
+- [x] 40 个单元测试，全量 1331 passed, 89% 覆盖率, 零回归 ✅
+
 ### v0.10.0 - 功能冻结 + 稳定性门槛 (DECISION-017)
 
 > 目标：确保功能冻结前所有业务逻辑闭环，建立发布质量门槛。此版本后不再新增业务功能。
@@ -461,4 +474,4 @@
 
 ---
 
-*最后更新: 2026-02-27 (v0.10.0.dev0, DECISION-017)*
+*最后更新: 2026-02-28 (v0.9.5, ROADMAP ↔ Task 集成)*
