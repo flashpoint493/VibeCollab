@@ -37,7 +37,14 @@ VibeCollab is a Python-based project collaboration framework that generates AI c
 
 ## Quick Start
 
-See [AI Collaboration Guidelines](CONTRIBUTING_AI.md) for how to work with AI assistants on this project.
+Tell your AI assistant:
+
+> Read https://github.com/flashpoint493/VibeCollab/blob/master/skill.md and set up VibeCollab for this project
+
+Or install manually: `pip install vibe-collab[mcp]`
+
+- [Setup Instructions for AI](skill.md):
+  Step-by-step guide for AI assistants to install, initialize, and connect VibeCollab.
 
 ## AI Collaboration
 
