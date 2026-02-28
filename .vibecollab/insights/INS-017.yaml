@@ -1,0 +1,21 @@
+kind: insight
+version: '1'
+id: INS-017
+title: 覆盖率提升的ROI优先级排序策略
+summary: 按miss行数×集中度÷测试难度排序，优先补大块连续未覆盖代码的测试，最大化单次测试编写的覆盖率收益
+tags:
+- testing
+- coverage
+- strategy
+- prioritization
+- ROI
+category: workflow
+body:
+  scenario: 项目覆盖率已达到一定水平（如85%），需要高效选择下一批要补测试的模块，而不是盲目追求100%
+  approach: 按三个维度评估每个低覆盖模块的ROI：(1)当前miss行数（绝对收益）(2)代码路径复杂度（测试难度）(3)是否有大块连续未覆盖代码（容易写少量测试覆盖大量行）。优先选miss多且有大块未覆盖的模块（如mcp_server
+    47%有410行闭包全未测→一次性42测试达100%），而非分散在各处的单行分支
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-28'
+fingerprint: 9ca62eab41b96d3a48647d63a703a91826ceceeb35f443f1b3541716869a042d

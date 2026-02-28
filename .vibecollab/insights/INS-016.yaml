@@ -1,0 +1,20 @@
+kind: insight
+version: '1'
+id: INS-016
+title: Fake Module注入法测试工厂函数内部闭包
+summary: 通过fake module注入sys.modules捕获工厂函数内部闭包，实现无依赖的100%覆盖率测试
+tags:
+- testing
+- mock
+- closure
+- coverage
+- factory-pattern
+category: technique
+body:
+  scenario: 需要测试通过装饰器（如@mcp.tool()/@mcp.resource()）注册的闭包函数，但这些闭包定义在工厂函数内部，外部无法直接import调用
+  approach: 创建一个CaptureMCP类模拟目标装饰器接口，通过sys.modules注入fake module替换真实依赖（如mcp.server.fastmcp），然后调用工厂函数使闭包注册到Capture对象上。测试完毕后恢复sys.modules并reload模块。这样无需安装可选依赖即可100%覆盖所有闭包路径
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-02-28'
+fingerprint: 5faa0250eb737f614e717e3a13cde293dbe141ceb7760b2cdc5800824015b396
