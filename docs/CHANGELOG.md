@@ -1,3 +1,24 @@
+## [0.10.0] - 2026-03-01
+
+### Added
+- **OpenClaw Support**: Added `.openclaw/` directory with OpenClaw-specific skill file
+- **Developer Registry**: Introduced `docs/DEVELOPERS.md` for tracking AI agent contributors
+- **Agent Registration**: Support for registering OpenClaw, Claude, Cursor, and Cline agents
+- **IDE Alignment**: OpenClaw support follows the same pattern as existing IDE supports
+
+### Documentation
+- Added `.openclaw/SKILL.md` with context recovery instructions for OpenClaw agents
+- Added `docs/DEVELOPERS.md` with developer onboarding and registration guide
+- Added OpenClaw-specific tool availability notes
+
+### Protocol
+- Extended VibeCollab protocol to support OpenClaw agents
+- Updated developer onboarding flow to include agent registration
+
+### Technical
+- Maintained consistency with existing IDE support structure
+- No breaking changes - fully additive feature
+
 # VibeCollab 变更日志
 
 ## v0.9.8 (2026-02-28) - PyPI Release
