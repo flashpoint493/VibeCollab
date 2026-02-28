@@ -97,6 +97,13 @@ class PatternEngine:
 
         return "\n".join(sections)
 
+    def render_ide_rules_summary(self) -> str:
+        """Render IDE rules summary from same config as CONTRIBUTING_AI (documentation section)."""
+        entry = {"template": "ide_rules_summary.md.j2"}
+        ctx = self._build_context(entry)
+        template = self.env.get_template("ide_rules_summary.md.j2")
+        return template.render(**ctx)
+
     def list_patterns(self) -> List[Dict[str, Any]]:
         """列出所有注册的 Pattern（含 overlay 来源标注）"""
         result = []

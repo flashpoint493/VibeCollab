@@ -39,6 +39,10 @@ jobs:
         run: |
           pytest tests/ -q --tb=short --cov=vibecollab --cov-report=term-missing --cov-report=xml
 
+      - name: Protocol consistency check
+        run: vibecollab check
+        if: hashFiles('project.yaml') != ''
+
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         uses: codecov/codecov-action@v4

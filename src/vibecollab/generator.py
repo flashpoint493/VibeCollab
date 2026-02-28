@@ -82,3 +82,9 @@ class LLMContextGenerator:
         from .pattern_engine import PatternEngine
         engine = PatternEngine(self.config, self.project_root)
         return engine.render()
+
+    def generate_ide_rules_summary(self) -> str:
+        """Generate IDE rules/skills body from project config (schema-driven, same as README/context)."""
+        from .pattern_engine import PatternEngine
+        engine = PatternEngine(self.config, self.project_root)
+        return engine.render_ide_rules_summary()

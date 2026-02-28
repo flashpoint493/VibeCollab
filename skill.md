@@ -22,19 +22,25 @@ vibecollab init -n "<PROJECT_NAME>" -d <DOMAIN>
 
 This creates `project.yaml`, `CONTRIBUTING_AI.md`, and `docs/` directory with protocol documents.
 
-## Step 3: Connect MCP to IDE
+## Step 3: One-shot IDE setup (MCP + rules)
+
+Ask the user which IDE they use (Cursor / Cline / CodeBuddy), then run:
 
 ```bash
-vibecollab mcp inject --ide auto
+vibecollab setup --ide cursor   # or: cline / codebuddy / all
 ```
 
-This auto-detects the user's IDE (Cursor / Cline / CodeBuddy) and injects MCP Server config.
+This injects **MCP config** and **protocol rules** in one command (no external deps):
 
-If auto-detection fails, ask the user which IDE they use and run:
+| IDE       | MCP config                    | Rules |
+|----------|-------------------------------|-------|
+| Cursor   | `.cursor/mcp.json`            | `.cursor/rules/vibecollab.mdc` |
+| Cline    | `.cline/mcp_settings.json`   | `.clinerules/vibecollab.md` |
+| CodeBuddy| `.codebuddy/mcp.json`         | `.codebuddy/rules/vibecollab-protocol.mdc` |
 
-```bash
-vibecollab mcp inject --ide cursor   # or: cline / codebuddy
-```
+Use `vibecollab setup --ide all` to target all supported editors. Restart or reload the IDE afterward.
+
+This repo is self-bootstrapped: run `vibecollab setup --ide all` in the project root to inject MCP + rules for Cursor, Cline, and CodeBuddy (write once, native format per platform).
 
 ## Step 4: Verify
 

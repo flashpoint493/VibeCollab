@@ -22,7 +22,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from ._compat import BULLET
+from ._compat import BULLET, is_windows_gbk, sanitize_for_console
 
 logger = logging.getLogger(__name__)
 
@@ -460,17 +460,21 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         status = "[green]存在[/green]" if exists else "[red]缺失[/red]"
         console.print(f"  {status}  {f}")
 
-    # 当前进度
+    # 当前进度 (Windows GBK 下需替换不可编码字符，避免 Rich 输出时报错)
     if context_text:
         console.print()
-        console.print(Panel(context_text, title="当前进度 (docs/CONTEXT.md)", border_style="blue"))
+        safe_context = sanitize_for_console(context_text) if is_windows_gbk() else context_text
+        console.print(Panel(safe_context, title="当前进度 (docs/CONTEXT.md)", border_style="blue"))
 
     # 开发者信息
     if developer_info:
         console.print()
         if developer_info["context"]:
+            dev_ctx = developer_info["context"]
+            if is_windows_gbk():
+                dev_ctx = sanitize_for_console(dev_ctx)
             console.print(Panel(
-                developer_info["context"],
+                dev_ctx,
                 title=f"开发者 {developer} 的上下文",
                 border_style="cyan"
             ))

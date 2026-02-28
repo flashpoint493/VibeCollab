@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "vibecollab": {
+      "command": "vibecollab",
+      "args": [
+        "mcp",
+        "serve"
+      ]
+    }
+  }
+}

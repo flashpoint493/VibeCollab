@@ -1,6 +1,26 @@
 # VibeCollab 变更日志
 
-## v0.9.7 (2026-02-28) - Roadmap 解析器格式引导
+## v0.9.8 (2026-02-28) - PyPI Release
+
+- **PyPI**: 本版本将 v0.9.7 功能发布至 PyPI，`pip install vibe-collab==0.9.8`
+- 功能说明见下方 v0.9.7；后续小版本迭代将向 v0.10.0 功能冻结推进
+
+## v0.9.7 (2026-02-28) - Roadmap 解析器格式引导 + Rules Inject + 多平台 + 一致性
+
+### New Feature
+- **Schema 驱动规则内容** (`ide_rules_summary.md.j2`, `generator.generate_ide_rules_summary()`): 有 project.yaml 时规则正文由模板渲染，与 README/documentation 一致；无则回退硬编码 RULES_BODY
+- **多平台 rules + skills** (`ide_platforms.py` 接入): `vibecollab rules inject` / `setup` 支持 10 平台（vx 结构对齐）
+  - 有 MCP：cursor, cline, codebuddy
+  - 仅 rules+skills：windsurf, claude, opencode, roo, agents, **kiro**, **trae**
+  - 各平台写入 rules_path + skills_path（`.<platform>/skills/vibecollab/SKILL.md`）
+- **协议检查 IDE 注入一致性** (`protocol_checker._check_ide_inject_consistency()`): canonical 生成内容与磁盘规则文件对比，不一致时 warning 并建议 `vibecollab setup --ide all`
+- **CI 一致性验证** (`.github/workflows/ci.yml`): 有 project.yaml 时增加步骤 `vibecollab check`
+- **`vibecollab rules inject`** (`cli_rules.py`): 为多 IDE 注入 VibeCollab 协议规则
+  - Cursor: `.cursor/rules/vibecollab.mdc`（YAML frontmatter + alwaysApply）
+  - CodeBuddy: `.codebuddy/rules/vibecollab-protocol.mdc`，Cline: `.clinerules/vibecollab.md`
+  - 规则内容：上下文恢复、关键文件表、Daily Workflow、MCP 工具表、ROADMAP 格式说明
+  - 支持 `--ide <platform>|all`、`--dry-run`；同时写入各平台 skills（SKILL.md）
+- **skill.md**: 修正 `mcp inject` 说明（移除不存在的 `--ide auto`），新增可选步骤 rules inject
 
 ### Improvement
 - **严格 `###` 里程碑格式**: `MILESTONE_HEADER_RE` 正则明确只接受 `### vX.Y.Z` 三级标题，`####`/`##` 等其他层级不匹配——格式约束是设计意图，不做宽松兼容
@@ -9,11 +29,13 @@
 - **CLI help 增强**: `roadmap sync` help 文本新增里程碑格式示例和 Task ID 关联示例；`roadmap parse` help 显示期望格式
 - **MCP Tool 描述增强**: `roadmap_status` 和 `roadmap_sync` 的 docstring 包含完整格式规范，AI IDE 可据此指导用户修改 ROADMAP
 - **init 模板兼容**: `vibecollab init` 生成的 ROADMAP.md 使用 `### v0.1.0 - 项目初始化` 格式，开箱即可被 `roadmap parse` 解析
+- **onboard Windows 编码**: 在 Windows GBK 终端下，对传入 Rich Panel 的文本（如 CONTEXT.md 内容）做不可编码字符替换，避免 `UnicodeEncodeError`（如 ⚠️ 等 emoji）
 
 ### Test
+- **rules inject**: `tests/test_rules.py` 扩展（schema 驱动、windsurf/kiro/trae、skills 存在性），`test_protocol_checker.py` 新增 `TestIdeInjectConsistency`（缺失/不一致/一致）
 - **H4 测试改为拒绝验证**: `TestH4HeadersRejected` 5 个测试确认 `#### vX.Y.Z` 不被解析
 - `TestFormatHint` 6 个测试验证 CLI 输出格式提示
-- 全量 **1344 passed**, 零回归
+- 全量 **1344+ passed**, 零回归
 
 ## v0.9.6 (2026-02-28) - PyPI 适配 + 文档质量
 

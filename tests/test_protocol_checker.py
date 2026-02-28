@@ -889,3 +889,48 @@ class TestDocumentConsistency:
             lag_results = [r for r in results if "关键文档滞后" in r.name]
             assert len(lag_results) == 0
 
+
+class TestIdeInjectConsistency:
+    """Test IDE rule inject consistency check (canonical vs on-disk)."""
+
+    def test_ide_inject_missing_files_info(self):
+        """When no rule files exist, check reports info-level optional inject."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            config = {"dialogue_protocol": {"on_end": {"update_files": []}, "on_start": {"read_files": []}}}
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_ide_inject_consistency()
+            missing = [r for r in results if "未注入" in r.name or "未找到" in r.message]
+            assert len(missing) >= 3
+            assert all(r.severity == "info" and r.passed for r in missing)
+
+    def test_ide_inject_mismatch_warning(self):
+        """When rule file content differs from canonical, check reports warning."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / ".clinerules").mkdir(parents=True)
+            (project_root / ".clinerules" / "vibecollab.md").write_text(
+                "# Wrong content\nNot matching canonical.\n", encoding="utf-8"
+            )
+            config = {"dialogue_protocol": {"on_end": {"update_files": []}, "on_start": {"read_files": []}}}
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_ide_inject_consistency()
+            mismatch = [r for r in results if "不一致" in r.name]
+            assert len(mismatch) >= 1
+            assert any(not r.passed and r.severity == "warning" for r in mismatch)
+
+    def test_ide_inject_match_no_warning(self):
+        """When Cline rule file matches canonical body, no warning for that file."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from vibecollab.cli_rules import RULES_BODY
+
+            project_root = Path(tmpdir)
+            (project_root / ".clinerules").mkdir(parents=True)
+            (project_root / ".clinerules" / "vibecollab.md").write_text(
+                RULES_BODY.strip(), encoding="utf-8"
+            )
+            config = {"dialogue_protocol": {"on_end": {"update_files": []}, "on_start": {"read_files": []}}}
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_ide_inject_consistency()
+            mismatch = [r for r in results if "vibecollab.md" in str(r.name) and "不一致" in r.name]
+            assert len(mismatch) == 0

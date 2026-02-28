@@ -14,6 +14,8 @@ from pathlib import Path
 
 import click
 
+from .ide_platforms import get_platform
+
 
 @click.group("mcp")
 def mcp_group():
@@ -129,6 +131,35 @@ def config(ide: str):
     click.echo(json_mod.dumps(cfg["content"], indent=2, ensure_ascii=False))
 
 
+def do_mcp_inject(root: Path, ides: list) -> None:
+    """Inject MCP config into IDE config files. Used by mcp inject and setup."""
+    import json as json_mod
+
+    vibecollab_entry = {"command": "vibecollab", "args": ["mcp", "serve"]}
+
+    for target_ide in ides:
+        p = get_platform(target_ide)
+        if not p or not p.get("mcp_path"):
+            continue
+        config_path = root / p["mcp_path"]
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        existing = {}
+        if config_path.exists():
+            try:
+                existing = json_mod.loads(config_path.read_text(encoding="utf-8"))
+            except (json_mod.JSONDecodeError, OSError):
+                existing = {}
+        if "mcpServers" not in existing:
+            existing["mcpServers"] = {}
+        entry = {**vibecollab_entry, "disabled": False} if target_ide == "cline" else vibecollab_entry
+        existing["mcpServers"]["vibecollab"] = entry
+        config_path.write_text(
+            json_mod.dumps(existing, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        click.echo(f"已注入: {config_path}")
+
+
 @mcp_group.command("inject")
 @click.option(
     "--ide",
@@ -148,50 +179,8 @@ def inject(ide: str, project_root: Path):
 
     自动创建/更新 IDE 的 MCP 配置文件，无需手动复制粘贴。
     """
-    import json as json_mod
-
     root = project_root or Path.cwd()
-
-    targets = {
-        "cursor": root / ".cursor" / "mcp.json",
-        "cline": root / ".cline" / "mcp_settings.json",
-        "codebuddy": root / ".codebuddy" / "mcp.json",
-    }
-
-    vibecollab_entry = {
-        "command": "vibecollab",
-        "args": ["mcp", "serve"],
-    }
-
-    ides = [ide] if ide != "all" else list(targets.keys())
-
-    for target_ide in ides:
-        config_path = targets[target_ide]
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # 读取已有配置或创建新的
-        existing = {}
-        if config_path.exists():
-            try:
-                existing = json_mod.loads(config_path.read_text(encoding="utf-8"))
-            except (json_mod.JSONDecodeError, OSError):
-                existing = {}
-
-        # 合并 vibecollab 配置
-        if "mcpServers" not in existing:
-            existing["mcpServers"] = {}
-
-        if target_ide == "cline":
-            vibecollab_entry_copy = {**vibecollab_entry, "disabled": False}
-        else:
-            vibecollab_entry_copy = vibecollab_entry
-
-        existing["mcpServers"]["vibecollab"] = vibecollab_entry_copy
-
-        config_path.write_text(
-            json_mod.dumps(existing, indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
-        click.echo(f"已注入: {config_path}")
-
-    click.echo(f"\n完成! 重启 IDE 后 VibeCollab MCP Server 将自动生效。")
+    targets = {"cursor", "cline", "codebuddy"}
+    ides = [ide] if ide != "all" else sorted(targets)
+    do_mcp_inject(root, ides)
+    click.echo("\n完成! 重启 IDE 后 VibeCollab MCP Server 将自动生效。")

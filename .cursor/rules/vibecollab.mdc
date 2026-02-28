@@ -1,3 +1,9 @@
+---
+description: VibeCollab AI collaboration protocol summary; full protocol in CONTRIBUTING_AI.md
+globs: "**"
+alwaysApply: true
+---
+
 # VibeCollab protocol (summary)
 
 This project uses **VibeCollab** AI collaboration protocol. Full rules: `CONTRIBUTING_AI.md`.
@@ -61,3 +67,4 @@ Conversation start → call `onboard` (or read CONTEXT.md + DECISIONS.md + git l
 → work on tasks
 → important decisions → record in `docs/DECISIONS.md`
 → conversation end → update `docs/CONTEXT.md` and `docs/CHANGELOG.md` → call `check` and `session_save` → suggest git commit.
+

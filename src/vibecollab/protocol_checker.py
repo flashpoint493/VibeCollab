@@ -53,6 +53,9 @@ class ProtocolChecker:
         # 检查关联文档一致性
         results.extend(self._check_document_consistency())
 
+        # 检查 IDE 规则注入与 canonical 生成内容是否一致
+        results.extend(self._check_ide_inject_consistency())
+
         return results
 
     def _check_git_protocol(self) -> List[CheckResult]:
@@ -470,6 +473,54 @@ class ProtocolChecker:
                                 )
                             ))
 
+        return results
+
+    def _check_ide_inject_consistency(self) -> List[CheckResult]:
+        """Check IDE rule files match canonical generated body (schema-driven or RULES_BODY)."""
+        results = []
+        try:
+            from .cli_rules import get_rules_body
+            from .ide_platforms import get_platform, list_platforms, rules_path_for
+        except ImportError:
+            return results
+        canonical = get_rules_body(self.project_root).strip().replace("\r\n", "\n")
+        for platform_id in list_platforms(with_rules=True):
+            path = rules_path_for(self.project_root, platform_id)
+            if not path:
+                continue
+            p = get_platform(platform_id)
+            has_frontmatter = (p or {}).get("rules_format") == "cursor_mdc"
+            try:
+                rel = path.relative_to(self.project_root)
+            except ValueError:
+                rel = path
+            if not path.exists():
+                results.append(CheckResult(
+                    name=f"IDE 规则未注入: {rel}",
+                    passed=True,
+                    message=f"未找到 {rel}，可选运行注入以启用 IDE 内协议摘要",
+                    severity="info",
+                    suggestion="运行 vibecollab setup --ide all 或 vibecollab rules inject --ide all",
+                ))
+                continue
+            raw = path.read_text(encoding="utf-8")
+            if has_frontmatter:
+                if raw.startswith("---"):
+                    idx = raw.find("\n---", 3)
+                    disk_body = raw[idx + 5:].lstrip() if idx != -1 else raw
+                else:
+                    disk_body = raw
+            else:
+                disk_body = raw
+            disk_body = disk_body.strip().replace("\r\n", "\n")
+            if disk_body != canonical:
+                results.append(CheckResult(
+                    name=f"IDE 规则与 canonical 不一致: {rel}",
+                    passed=False,
+                    message=f"{rel} 内容与 project.yaml 生成结果不一致，构建时需保持同步",
+                    severity="warning",
+                    suggestion="运行 vibecollab setup --ide all 或 vibecollab rules inject --ide all 后重新提交",
+                ))
         return results
 
     def _check_mtime_consistency(
