@@ -6,6 +6,7 @@ import pytest
 from click.testing import CliRunner
 
 from vibecollab.roadmap_parser import (
+    MILESTONE_FORMAT_HINT,
     MILESTONE_HEADER_RE,
     TASK_ID_RE,
     Milestone,
@@ -113,6 +114,14 @@ class TestRegex:
     def test_milestone_header_not_matching(self):
         assert MILESTONE_HEADER_RE.match("## v0.9.3 - H2 header") is None
         assert MILESTONE_HEADER_RE.match("### Not a version") is None
+        assert MILESTONE_HEADER_RE.match("##### v0.9.3 - H5 too deep") is None
+
+    def test_milestone_header_h4(self):
+        """H4 headers should NOT match — only ### is accepted."""
+        assert MILESTONE_HEADER_RE.match("#### v0.5.9 - Pattern Engine ✅") is None
+
+    def test_milestone_header_h4_no_title(self):
+        assert MILESTONE_HEADER_RE.match("#### v0.5.0") is None
 
     def test_task_id_re(self):
         ids = TASK_ID_RE.findall("- [x] Fix bug TASK-DEV-001 and TASK-PM-012")
@@ -444,7 +453,7 @@ class TestCLI:
         assert result.exit_code == 0
 
     def test_roadmap_status_empty(self, tmp_path, monkeypatch):
-        """Status on project with no ROADMAP.md."""
+        """Status on project with no ROADMAP.md shows format hint."""
         monkeypatch.chdir(tmp_path)
         (tmp_path / "project.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
         vc = tmp_path / ".vibecollab"
@@ -456,3 +465,191 @@ class TestCLI:
         result = runner.invoke(roadmap_group, ["status"])
         assert result.exit_code == 0
         assert "未在 ROADMAP.md 中发现里程碑" in result.output
+        assert "### v0.1.0" in result.output  # format hint present
+
+
+# ---------------------------------------------------------------------------
+# v0.9.7: H4 headers are NOT recognized — strict ### only
+# ---------------------------------------------------------------------------
+
+SAMPLE_ROADMAP_H4_ONLY = """\
+# Project Roadmap
+
+## Phase 2 - Multi-developer
+
+#### v0.5.9 - Pattern Engine ✅
+
+- [x] PatternEngine implementation TASK-DEV-010
+- [x] Template overlay
+
+#### v0.5.8 - AI CLI
+
+- [ ] AI ask/chat TASK-DEV-011
+- [x] Agent mode TASK-DEV-012
+
+## Future
+
+### v0.10.0 - Release
+
+- [ ] Final QA
+"""
+
+
+class TestH4HeadersRejected:
+    """Verify that #### milestone headers are NOT parsed (strict ### only)."""
+
+    @pytest.fixture
+    def h4_project(self, tmp_path):
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "ROADMAP.md").write_text(SAMPLE_ROADMAP_H4_ONLY, encoding="utf-8")
+        vc = tmp_path / ".vibecollab"
+        vc.mkdir()
+        (vc / "tasks.json").write_text("{}", encoding="utf-8")
+        return tmp_path
+
+    def test_h4_milestones_ignored(self, h4_project):
+        """Only ### v0.10.0 should be parsed; #### v0.5.x should be skipped."""
+        parser = RoadmapParser(project_root=h4_project)
+        milestones = parser.parse()
+        versions = [ms.version for ms in milestones]
+        assert "v0.5.9" not in versions
+        assert "v0.5.8" not in versions
+        assert "v0.10.0" in versions
+
+    def test_h4_items_not_collected(self, h4_project):
+        """Items under #### headers should not be collected."""
+        parser = RoadmapParser(project_root=h4_project)
+        milestones = parser.parse()
+        assert len(milestones) == 1
+        # Only "Final QA" under ### v0.10.0
+        assert milestones[0].version == "v0.10.0"
+        assert milestones[0].total == 1
+
+    def test_h4_task_ids_not_collected(self, h4_project):
+        """Task IDs under #### headers should not be linked."""
+        parser = RoadmapParser(project_root=h4_project)
+        milestones = parser.parse()
+        all_ids = []
+        for ms in milestones:
+            for item in ms.items:
+                all_ids.extend(item.task_ids)
+        assert "TASK-DEV-010" not in all_ids
+        assert "TASK-DEV-011" not in all_ids
+
+    def test_only_h3_parsed_in_mixed(self, h4_project):
+        """In mixed H3/H4 ROADMAP, only H3 milestones are returned."""
+        parser = RoadmapParser(project_root=h4_project)
+        milestones = parser.parse()
+        assert len(milestones) == 1
+        assert milestones[0].version == "v0.10.0"
+
+    def test_h4_with_non_milestone_h3(self, tmp_path):
+        """#### v0.5.0 is ignored; ### Non-milestone is also ignored."""
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        content = """\
+#### v0.5.0 - Feature
+
+- [x] Item A
+
+### Non-milestone section
+
+- [ ] Should not be in any milestone
+"""
+        (docs / "ROADMAP.md").write_text(content, encoding="utf-8")
+        parser = RoadmapParser(project_root=tmp_path)
+        milestones = parser.parse()
+        assert len(milestones) == 0
+
+
+# ---------------------------------------------------------------------------
+# v0.9.7: Format hint tests
+# ---------------------------------------------------------------------------
+
+class TestFormatHint:
+    """Test that format hints are shown in CLI when no milestones found."""
+
+    def _setup_empty(self, tmp_path):
+        """Setup project with ROADMAP that has no parseable milestones."""
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        (docs / "ROADMAP.md").write_text(
+            "# Roadmap\n\n## Phase 0\n\n#### M0: Init\n\n- [ ] Something\n",
+            encoding="utf-8",
+        )
+        vc = tmp_path / ".vibecollab"
+        vc.mkdir()
+        (vc / "tasks.json").write_text("{}", encoding="utf-8")
+        (tmp_path / "project.yaml").write_text(
+            "project:\n  name: test\n", encoding="utf-8"
+        )
+
+    def test_parse_empty_shows_hint(self, tmp_path, monkeypatch):
+        self._setup_empty(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        from vibecollab.cli_roadmap import roadmap_group
+        runner = CliRunner()
+        result = runner.invoke(roadmap_group, ["parse"])
+        assert result.exit_code == 0
+        assert "未在 ROADMAP.md 中发现里程碑" in result.output
+        assert "### v0.1.0" in result.output
+        assert "TASK-DEV-001" in result.output
+
+    def test_status_empty_shows_hint(self, tmp_path, monkeypatch):
+        self._setup_empty(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        from vibecollab.cli_roadmap import roadmap_group
+        runner = CliRunner()
+        result = runner.invoke(roadmap_group, ["status"])
+        assert result.exit_code == 0
+        assert "### v0.1.0" in result.output
+
+    def test_sync_empty_shows_hint(self, tmp_path, monkeypatch):
+        self._setup_empty(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        from vibecollab.cli_roadmap import roadmap_group
+        runner = CliRunner()
+        result = runner.invoke(roadmap_group, ["sync"])
+        assert result.exit_code == 0
+        assert "无法同步" in result.output
+        assert "### v0.1.0" in result.output
+
+    def test_sync_empty_json_returns_empty(self, tmp_path, monkeypatch):
+        self._setup_empty(tmp_path)
+        monkeypatch.chdir(tmp_path)
+        from vibecollab.cli_roadmap import roadmap_group
+        runner = CliRunner()
+        result = runner.invoke(roadmap_group, ["sync", "--json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data == []
+
+    def test_format_hint_constant(self):
+        """MILESTONE_FORMAT_HINT contains key format examples."""
+        assert "### v0.1.0" in MILESTONE_FORMAT_HINT
+        assert "TASK-DEV-001" in MILESTONE_FORMAT_HINT
+        assert "- [ ]" in MILESTONE_FORMAT_HINT
+
+    def test_init_template_parseable(self, tmp_path):
+        """ROADMAP generated by vibecollab init should be parseable."""
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        # Simulate the new init template content
+        init_roadmap = """\
+# Test 路线图
+
+## 里程碑
+
+### v0.1.0 - 项目初始化
+
+- [ ] 确定项目方向
+- [ ] 建立开发环境
+- [ ] 完成核心决策
+"""
+        (docs / "ROADMAP.md").write_text(init_roadmap, encoding="utf-8")
+        parser = RoadmapParser(project_root=tmp_path)
+        milestones = parser.parse()
+        assert len(milestones) == 1
+        assert milestones[0].version == "v0.1.0"
+        assert milestones[0].total == 3

@@ -440,6 +440,17 @@ def create_mcp_server(project_root: Optional[Path] = None):
     def roadmap_status(output_json: bool = True) -> str:
         """获取 ROADMAP 各里程碑进度概览
 
+        ROADMAP.md 里程碑格式要求（严格）:
+          ### vX.Y.Z - 标题描述
+          - [ ] 功能描述 (TASK-DEV-001)
+          - [x] 已完成功能 TASK-DEV-002
+
+        注意:
+          - 只识别 ### (三级标题)，#### 或 ## 不会被解析
+          - 版本号必须以 v 开头的语义版本（如 v0.1.0, v1.0）
+          - Task ID 格式: TASK-{ROLE}-{SEQ}（如 TASK-DEV-001）
+          - 如果返回零里程碑，说明 ROADMAP.md 格式不匹配，需要按上述格式改写
+
         Args:
             output_json: 是否输出 JSON 格式 (默认 True)
         """
@@ -451,6 +462,13 @@ def create_mcp_server(project_root: Optional[Path] = None):
     @mcp.tool()
     def roadmap_sync(direction: str = "both", dry_run: bool = False) -> str:
         """同步 ROADMAP.md ↔ tasks.json
+
+        前提: ROADMAP.md 必须使用以下格式:
+          ### vX.Y.Z - 标题描述
+          - [ ] 功能描述 (TASK-DEV-001)
+
+        同步通过 checkbox 行中的 Task ID 引用关联，不是从文本推断。
+        如果返回空结果，先用 roadmap_status 检查格式是否正确。
 
         Args:
             direction: 同步方向 (both/roadmap_to_tasks/tasks_to_roadmap)

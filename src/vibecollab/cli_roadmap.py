@@ -13,7 +13,7 @@ from pathlib import Path
 import click
 
 from .insight_manager import InsightManager
-from .roadmap_parser import RoadmapParser
+from .roadmap_parser import MILESTONE_FORMAT_HINT, RoadmapParser
 from .task_manager import TaskManager
 
 
@@ -48,6 +48,8 @@ def roadmap_status(config, json_output):
 
     if not report.milestones:
         click.echo("(未在 ROADMAP.md 中发现里程碑)")
+        click.echo()
+        click.echo(MILESTONE_FORMAT_HINT)
         return
 
     click.echo("ROADMAP 进度概览")
@@ -101,6 +103,12 @@ def roadmap_status(config, json_output):
 def roadmap_sync(direction, dry_run, config, json_output):
     """同步 ROADMAP.md ↔ tasks.json
 
+    ROADMAP.md 里程碑格式:
+      ### v0.1.0 - 标题描述
+
+    Checkbox 关联 Task ID:
+      - [ ] 功能描述 (TASK-DEV-001)
+
     同步方向:
       both              — 双向同步 (冲突时 tasks.json 优先)
       roadmap_to_tasks  — ROADMAP [x] → 任务 DONE
@@ -115,6 +123,15 @@ def roadmap_sync(direction, dry_run, config, json_output):
         vibecollab roadmap sync -d tasks_to_roadmap  # 仅从 tasks 同步到 ROADMAP
     """
     parser = _get_parser(config)
+    milestones = parser.parse()
+    if not milestones:
+        if json_output:
+            click.echo(json.dumps([], ensure_ascii=False))
+        else:
+            click.echo("(未在 ROADMAP.md 中发现里程碑，无法同步)")
+            click.echo()
+            click.echo(MILESTONE_FORMAT_HINT)
+        return
     actions = parser.sync(direction=direction, dry_run=dry_run)
 
     if json_output:
@@ -149,7 +166,10 @@ def roadmap_sync(direction, dry_run, config, json_output):
 @click.option("--config", "-c", default="project.yaml", help="配置文件路径")
 @click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
 def roadmap_parse(config, json_output):
-    """解析 ROADMAP.md 结构"""
+    """解析 ROADMAP.md 结构
+
+    期望的里程碑格式: ### vX.Y.Z - 标题
+    """
     parser = _get_parser(config)
     milestones = parser.parse()
 
@@ -177,6 +197,8 @@ def roadmap_parse(config, json_output):
 
     if not milestones:
         click.echo("(未在 ROADMAP.md 中发现里程碑)")
+        click.echo()
+        click.echo(MILESTONE_FORMAT_HINT)
         return
 
     for ms in milestones:
