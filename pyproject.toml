@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vibe-collab"
-version = "0.9.5"
+version = "0.9.6"
 description = "AI-powered project collaboration framework with three-mode CLI (IDE/interactive/agent)"
-readme = "README.md"
+readme = {file = "README.pypi.md", content-type = "text/markdown"}
 license = "MIT"
 requires-python = ">=3.9"
 authors = [
@@ -79,6 +79,7 @@ include = [
     "/src",
     "/schema",
     "/README.md",
+    "/README.pypi.md",
     "/LICENSE",
 ]
 

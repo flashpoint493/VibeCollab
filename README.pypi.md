@@ -4,7 +4,7 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**[English](README.md)** | [中文文档](README.zh-CN.md)
+**English** | [中文文档](https://github.com/flashpoint493/VibeCollab/blob/master/README.zh-CN.md) | [GitHub](https://github.com/flashpoint493/VibeCollab)
 
 ---
 
@@ -88,51 +88,21 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 
 ## Workflow
 
-```mermaid
-flowchart TD
-    A[1. Install vibe-collab<br/>pip install] --> B[2. Init project<br/>vibecollab init]
-    B --> C[Generated structure]
-    C --> D1[project.yaml<br/>Single source of truth]
-    C --> D2[docs/<br/>CONTEXT · CHANGELOG · DECISIONS]
-    
-    D1 --> E[Pattern Engine<br/>Jinja2 rendering]
-    E --> F[CONTRIBUTING_AI.md<br/>Collaboration rules]
-    
-    F --> G[3. Connect AI IDE]
-    D2 --> G
-    
-    G --> M0[MCP Server<br/>vibecollab mcp inject<br/>IDE auto-reads protocol]
-    G --> M1[Manual mode<br/>Copy CONTRIBUTING_AI.md<br/>to AI conversation]
-    G --> M4[Agent guidance<br/>vibecollab onboard<br/>vibecollab prompt]
-    
-    M0 --> H[Dev loop]
-    M1 --> H
-    M4 --> H
-    
-    H --> H1[TaskManager<br/>Create tasks · State transitions<br/>validate → solidify]
-    H1 --> H1a[Insight matching<br/>Vector search + tag matching<br/>Recommend related knowledge]
-    H1a --> H2[EventLog<br/>Append-only audit log<br/>SHA-256 integrity]
-    H2 --> H3[Session end<br/>Update CONTEXT · CHANGELOG<br/>git commit]
-    
-    H3 --> I{Checkpoint}
-    I --> I1[vibecollab check<br/>Protocol check + Insight consistency]
-    I --> I2[vibecollab health<br/>Project health signals]
-    I --> I3[Insight capture<br/>vibecollab insight add/search<br/>Knowledge reuse]
-    
-    I1 --> J[Milestone release]
-    I2 --> J
-    I3 --> J
-    
-    style A fill:#e1f5ff
-    style B fill:#e1f5ff
-    style D1 fill:#fff4e1
-    style E fill:#fff4e1
-    style G fill:#ffe1f5
-    style M0 fill:#e1ffe1
-    style H fill:#ffe1f5
-    style H1a fill:#f5e1ff
-    style I3 fill:#f5e1ff
-    style J fill:#e1ffe1
+```
+1. Install         pip install vibe-collab
+2. Init project    vibecollab init -n MyProject -d generic -o ./my-project
+3. Generated       project.yaml + docs/ (CONTEXT, CHANGELOG, DECISIONS, ROADMAP)
+                        ↓
+4. Pattern Engine  project.yaml → Jinja2 → CONTRIBUTING_AI.md
+                        ↓
+5. Connect IDE     vibecollab mcp inject --ide cursor
+                   (or: vibecollab prompt --compact --copy)
+                        ↓
+6. Dev loop        TaskManager → Insight matching → EventLog → Session end
+                        ↓
+7. Checkpoint      vibecollab check + health + insight capture
+                        ↓
+8. Release         Milestone release
 ```
 
 ---
@@ -151,14 +121,6 @@ pip install vibe-collab[embedding]
 
 # All optional dependencies
 pip install vibe-collab[mcp,embedding,llm]
-```
-
-Or from source:
-
-```bash
-git clone https://github.com/flashpoint493/VibeCollab.git
-cd VibeCollab
-pip install -e ".[mcp]"
 ```
 
 ---
@@ -196,16 +158,6 @@ my-project/
     └── QA_TEST_CASES.md       # Product QA test cases
 ```
 
-### Customize and Regenerate
-
-```bash
-# Edit project.yaml then regenerate
-vibecollab generate -c project.yaml
-
-# Validate config
-vibecollab validate -c project.yaml
-```
-
 ---
 
 ## AI IDE Integration
@@ -217,14 +169,6 @@ vibecollab validate -c project.yaml
 ```bash
 pip install vibe-collab[mcp]
 vibecollab mcp inject --ide cursor
-```
-
-Generates `.cursor/mcp.json`. Restart Cursor and add to Settings > Rules:
-
-```
-At conversation start, call the vibecollab MCP onboard tool for project context.
-Before ending, call check to verify protocol compliance, update CONTEXT.md and CHANGELOG.md,
-capture valuable Insights (insight_add), then git commit.
 ```
 
 ### VSCode + Cline
@@ -241,17 +185,11 @@ pip install vibe-collab[mcp]
 vibecollab mcp inject --ide codebuddy
 ```
 
-CodeBuddy supports Project Rules (`.codebuddy/rules/*.mdc`) that travel with git -- clone and it works, no per-person setup.
-
 ### Without MCP
 
 ```bash
 vibecollab prompt --compact --copy   # Copy context to clipboard
 ```
-
-Paste the output at the start of your AI conversation.
-
-### Comparison
 
 | Approach | Token Efficiency | Protocol Compliance | Setup | Team Sharing |
 |----------|:---:|:---:|:---:|:---:|
@@ -317,32 +255,13 @@ vibecollab upgrade --dry-run  # Preview changes
 
 **How it works**: Your `project.yaml` config is preserved (project name, custom roles, confirmed decisions, domain extensions). The built-in Jinja2 templates are updated to the latest version and re-rendered.
 
-```mermaid
-flowchart LR
-    A[User config<br/>project.yaml] --> C[Pattern Engine<br/>Jinja2 rendering]
-    B[Built-in templates<br/>27 .md.j2 files] --> C
-    
-    A1[project name] -.preserved.-> C
-    A2[custom roles] -.preserved.-> C
-    A3[confirmed decisions] -.preserved.-> C
-    
-    B1[new protocol sections] --> C
-    B2[manifest control] --> C
-    B3[local template overlay] --> C
-    
-    C --> D[CONTRIBUTING_AI.md]
-    
-    A --> A1
-    A --> A2
-    A --> A3
-    B --> B1
-    B --> B2
-    B --> B3
-    
-    style A fill:#e1f5ff
-    style B fill:#fff4e1
-    style C fill:#ffe1f5
-    style D fill:#e1ffe1
+```
+Upgrade flow:
+  [User config: project.yaml] ──→ [Pattern Engine: Jinja2] ──→ [CONTRIBUTING_AI.md]
+       ↑ preserved                     ↑ updated
+  project name                    new protocol sections
+  custom roles                    manifest control
+  confirmed decisions             local template overlay
 ```
 
 ---
@@ -401,53 +320,10 @@ Use `vibecollab prompt --compact --copy` to generate a context text and paste it
 
 ---
 
-## Anti-Examples (What This Is NOT For)
-
-- Using it as a generic task runner or build system
-- One-off scripts or throwaway prototypes where process overhead isn't justified
-- Projects that don't involve AI-assisted development
-- Expecting it to auto-fix code -- it guides collaboration, not execution
-- Skipping `project.yaml` config and manually editing `CONTRIBUTING_AI.md` (it will be overwritten on next generate)
-
----
-
-## Version History
-
-| Version | Date | Highlights |
-|---------|------|-----------|
-| v0.9.5 | 2026-02-28 | ROADMAP ↔ Task integration + bilingual README + MCP roadmap tools |
-| v0.9.4 | 2026-02-27 | Insight quality lifecycle (dedup, graph, export/import) |
-| v0.9.3 | 2026-02-27 | Task/EventLog core workflow + task transition/solidify/rollback + MCP 12 Tools |
-| v0.9.2 | 2026-02-27 | Signal-driven Insight suggestions + Session persistence + MCP enhancements |
-| v0.9.1 | 2026-02-27 | MCP Server + AI IDE integration (Cursor/Cline/CodeBuddy) + PyPI publish |
-| v0.9.0 | 2026-02-27 | Semantic search engine (Embedder + VectorStore + incremental indexing) |
-| v0.8.0 | 2026-02-27 | Config management + 1074 tests + Windows GBK compat + Insight workflow |
-| v0.7.1 | 2026-02-25 | Task-Insight auto-linking + Task CLI |
-| v0.7.0 | 2026-02-25 | Insight knowledge system + Agent guidance (onboard/next) |
-| v0.6.0 | 2026-02-24 | Test coverage 58%->68%, conflict detection + PRD management |
-| v0.5.0 | 2026-02-10 | Multi-developer / multi-Agent support |
-
-Full changelog: [docs/CHANGELOG.md](docs/CHANGELOG.md)
-
----
-
-## Development
-
-```bash
-pip install -e ".[dev,llm,mcp]"
-pytest
-ruff check src/vibecollab/ tests/
-vibecollab generate -c project.yaml
-vibecollab check
-vibecollab health
-```
-
----
-
 ## License
 
 MIT
 
 ---
 
-*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.9.5.*
+*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator.*
