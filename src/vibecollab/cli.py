@@ -813,6 +813,11 @@ from .cli_mcp import mcp_group  # noqa: E402
 
 main.add_command(mcp_group)
 
+# 导入 Roadmap ↔ Task 集成命令 (v0.10.0+)
+from .cli_roadmap import roadmap_group  # noqa: E402
+
+main.add_command(roadmap_group)
+
 
 # ============================================
 # 多开发者管理命令组 (v0.5.0+)

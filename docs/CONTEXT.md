@@ -1,14 +1,14 @@
 # VibeCollab 全局上下文
 
 > ⚠️ **此文件自动生成，请勿手动编辑**
-> 上次更新: 2026-02-27
+> 上次更新: 2026-02-28
 > 聚合自: alice, ocarina
 
 ## 项目整体状态
-- **版本**: v0.10.0.dev0
+- **版本**: v0.9.5
 - **活跃开发者**: 2 (alice, ocarina)
-- **测试**: 1291 passed, 89% 覆盖率
-- **当前阶段**: DECISION-017 Phase 1 (v0.10.0 功能冻结 + 稳定性)
+- **测试**: 1331 passed, 89% 覆盖率
+- **当前阶段**: v0.9.5 发布，推进 v0.10.0 功能冻结
 
 ## 各开发者工作状态
 
@@ -19,14 +19,13 @@
 - **遗留**: TASK-DEV-005 (switch 命令测试和文档)
 
 ### ocarina
-- **上次更新**: 2026-02-27
-- **当前任务**: v0.10.0 覆盖率改进 + 稳定性验证
+- **上次更新**: 2026-02-28
+- **当前任务**: v0.9.5 ROADMAP ↔ Task 集成 + README 双语重构
 - **最近完成**:
-  - 覆盖率 85% → 89% (90 新测试, 4 模块大幅提升)
-  - cli_index 17%→91%, mcp_server 47%→100%, protocol_checker 71%→96%, cli_task 78%→98%
-  - INS-016: Fake Module 注入法 / INS-017: 覆盖率 ROI 排序策略
-  - v0.9.4 Insight 质量与生命周期发布
-  - QA Phase 7~11 补齐 (39 个新测试用例)
+  - v0.9.5 ROADMAP ↔ Task 集成（RoadmapParser + CLI + MCP + 40 tests）
+  - README 双语重构（英文主 README + README.zh-CN.md）
+  - PyPI v0.9.5 发布
+  - 覆盖率 85% → 89% (全量 1331 tests)
 
 ## 跨开发者协作
 (详见 docs/developers/COLLABORATION.md)
