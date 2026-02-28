@@ -1,5 +1,42 @@
 # VibeCollab 变更日志
 
+## v0.9.5 (2026-02-28) - ROADMAP ↔ Task 集成
+
+### New Feature
+- **RoadmapParser 模块** (`roadmap_parser.py`): ROADMAP.md ↔ TaskManager 双向集成
+  - 解析 ROADMAP.md 提取里程碑（`### vX.Y.Z - Title` 格式）和 checklist 项
+  - 从 checklist 行内提取 `TASK-{ROLE}-{SEQ}` ID 引用（正则确定性匹配，非向量化）
+  - **双向同步**: ROADMAP `[x]` → Task DONE / Task DONE → ROADMAP `[x]`
+  - 三种同步方向: `both`（默认）/ `roadmap_to_tasks` / `tasks_to_roadmap`
+  - dry-run 预览模式
+  - 每里程碑进度聚合（total/done/progress_pct/task_breakdown）
+  - 未关联 ROADMAP 的孤立 Task 检测
+- **Task `milestone` 字段** (`task_manager.py`): Task dataclass 新增 `milestone: str` 属性
+  - `from_dict` / `to_dict` 完整序列化支持，向后兼容旧数据
+  - `list_tasks()` 新增 `--milestone` 过滤参数
+- **CLI `vibecollab roadmap` 命令组** (`cli_roadmap.py`):
+  - `vibecollab roadmap status [--json]` — 各里程碑进度概览（进度条+Task 状态分布）
+  - `vibecollab roadmap sync [-d both] [--dry-run] [--json]` — 双向同步
+  - `vibecollab roadmap parse [--json]` — 解析 ROADMAP 结构
+- **CLI `vibecollab task` 增强** (`cli_task.py`):
+  - `task create --milestone v0.9.3` — 创建任务时关联里程碑
+  - `task list --milestone v0.9.3` — 按里程碑筛选
+  - `task show` 显示里程碑字段
+- **MCP Server 新增 Tool** (`mcp_server.py`):
+  - `roadmap_status` — AI IDE 可查看 ROADMAP 进度
+  - `roadmap_sync` — AI IDE 可触发 ROADMAP ↔ Task 同步
+
+### Test
+- 新增 **40 个单元测试** (`test_roadmap_parser.py`)
+  - TestRegex (7): 里程碑 header / Task ID 正则
+  - TestParse (7): 解析里程碑/items/checked/task_ids/progress/边界
+  - TestStatus (5): 聚合统计/未关联 Task/breakdown
+  - TestSync (6): 双向同步/dry-run/milestone 字段设置
+  - TestMilestoneDataclass (3): 数据结构
+  - TestTaskMilestoneField (6): Task milestone 字段 CRUD/序列化/过滤
+  - TestCLI (6): CLI 命令 CliRunner 全覆盖
+- 全量 **1331 passed**, 覆盖率 **89%**，零回归
+
 ## v0.10.0-dev (2026-02-27) - 覆盖率改进 & 稳定性
 
 ### Test

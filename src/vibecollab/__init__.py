@@ -7,7 +7,7 @@ Usage:
     vibecollab validate -c project.yaml
 """
 
-__version__ = "0.10.0.dev0"
+__version__ = "0.9.5"
 __author__ = "VibeCollab Contributors"
 
 from .event_log import Event, EventLog, EventType
@@ -17,6 +17,7 @@ from .health import HealthExtractor, HealthReport, Signal, SignalLevel
 from .llm_client import LLMClient, LLMConfig, LLMResponse, Message
 from .pattern_engine import PatternEngine
 from .project import Project
+from .roadmap_parser import Milestone, RoadmapParser, RoadmapStatus
 from .task_manager import Task, TaskManager, TaskStatus, ValidationResult
 
 __all__ = [
@@ -42,5 +43,8 @@ __all__ = [
     "HealthReport",
     "Signal",
     "SignalLevel",
+    "RoadmapParser",
+    "Milestone",
+    "RoadmapStatus",
     "__version__",
 ]

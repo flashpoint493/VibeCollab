@@ -98,6 +98,7 @@ class Task:
         created_at: ISO-8601 creation timestamp
         updated_at: ISO-8601 last update timestamp
         dialogue_rounds: Estimated dialogue rounds
+        milestone: Associated ROADMAP milestone (e.g. "v0.9.3")
         metadata: Arbitrary extra data
     """
     id: str
@@ -111,6 +112,7 @@ class Task:
     created_at: str = ""
     updated_at: str = ""
     dialogue_rounds: int = 0
+    milestone: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -137,6 +139,7 @@ class Task:
             created_at=data.get("created_at", ""),
             updated_at=data.get("updated_at", ""),
             dialogue_rounds=data.get("dialogue_rounds", 0),
+            milestone=data.get("milestone", ""),
             metadata=data.get("metadata", {}),
         )
 
@@ -264,13 +267,16 @@ class TaskManager:
         return self._tasks.get(task_id)
 
     def list_tasks(self, status: Optional[str] = None,
-                   assignee: Optional[str] = None) -> List[Task]:
+                   assignee: Optional[str] = None,
+                   milestone: Optional[str] = None) -> List[Task]:
         """List tasks with optional filters."""
         tasks = list(self._tasks.values())
         if status:
             tasks = [t for t in tasks if t.status == status]
         if assignee:
             tasks = [t for t in tasks if t.assignee == assignee]
+        if milestone:
+            tasks = [t for t in tasks if t.milestone == milestone]
         return tasks
 
     # -- State transitions ---------------------------------------------------
