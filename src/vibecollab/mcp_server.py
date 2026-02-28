@@ -81,7 +81,6 @@ def create_mcp_server(project_root: Optional[Path] = None):
         )
 
     root = project_root or _find_project_root()
-    config_path = root / "project.yaml"
 
     mcp = FastMCP(
         "vibecollab",
