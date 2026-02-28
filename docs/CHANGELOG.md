@@ -1,5 +1,19 @@
 # VibeCollab 变更日志
 
+## v0.9.6 (2026-02-28) - PyPI 适配 + 文档质量
+
+### Improvement
+- **PyPI README 分离** (`README.pypi.md`): 新增 PyPI 专用 README
+  - Mermaid 图表替换为 ASCII 文本流程图（PyPI 不支持 Mermaid 渲染）
+  - 所有相对链接转换为 GitHub 绝对 URL（PyPI 无法解析相对路径）
+  - `pyproject.toml` `readme` 字段指向 `README.pypi.md`（GitHub README 保持不变）
+- **CONTEXT.md 过期任务清理**: TASK-DEV-005 (alice) 标记完成，移除遗留状态
+- **README.md 更新**: CLI Reference 新增 `vibecollab roadmap` 命令组，Version History 补充 v0.9.4/v0.9.5
+
+### Task
+- TASK-DEV-006: PyPI README adaptation (README.pypi.md, 去 Mermaid + 绝对 URL) ✅
+- TASK-DEV-007: CONTEXT.md stale task cleanup + v0.9.6 update ✅
+
 ## v0.9.5 (2026-02-28) - ROADMAP ↔ Task 集成
 
 ### New Feature

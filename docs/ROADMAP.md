@@ -366,6 +366,15 @@
 - [x] README 双语重构（英文主 README + 中文 README.zh-CN.md）✅
 - [x] 40 个单元测试，全量 1331 passed, 89% 覆盖率, 零回归 ✅
 
+### v0.9.6 - PyPI 适配 + 文档质量（开发中）
+
+> 目标：PyPI 发布页面可用性优化，项目文档时效性维护
+
+- [x] README.pypi.md — PyPI 专用 README（去 Mermaid + 绝对 URL）TASK-DEV-006
+- [x] pyproject.toml readme 字段指向 README.pypi.md TASK-DEV-006
+- [x] CONTEXT.md 过期任务清理（TASK-DEV-005 已完成标记）TASK-DEV-007
+- [x] v0.9.6 PyPI 发布
+
 ### v0.10.0 - 功能冻结 + 稳定性门槛 (DECISION-017)
 
 > 目标：确保功能冻结前所有业务逻辑闭环，建立发布质量门槛。此版本后不再新增业务功能。
@@ -474,4 +483,4 @@
 
 ---
 
-*最后更新: 2026-02-28 (v0.9.5, ROADMAP ↔ Task 集成)*
+*最后更新: 2026-02-28 (v0.9.6 开发中)*
