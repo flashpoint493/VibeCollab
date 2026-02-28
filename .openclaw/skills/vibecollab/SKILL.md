@@ -19,6 +19,7 @@ tools:
   - task_create
   - task_transition
   - session_save
+---
 
 # VibeCollab protocol (OpenClaw edition)
 
@@ -125,3 +126,28 @@ This will display a Rich panel with:
 - Suggested next steps
 
 OpenClaw agents can use this command at the start of each conversation to quickly understand the project state.
+
+## Automatic commit after onboard
+
+After running `vibecollab onboard`, you should commit all uncommitted changes:
+
+```bash
+git add .
+git commit -m "Update project context and insights"
+```
+
+This ensures that the project state is synchronized with the VibeCollab protocol.
+
+## One-time setup with vibecollab
+
+To initialize OpenClaw support for this project:
+
+```bash
+vibecollab setup --ide openclaw
+```
+
+This command automatically generates all necessary OpenClaw configuration files, including:
+- SKILL.md with proper YAML frontmatter
+- OpenClaw-specific configuration
+- Protocol rules and skills
+- MCP tools configuration (if available)
