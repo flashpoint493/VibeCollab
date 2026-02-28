@@ -17,15 +17,22 @@ from vibecollab.agent_executor import (
 
 def _python_cmd():
     """Get the correct python command for the current platform."""
-    # Windows usually has 'python', Unix might only have 'python3'
-    if sys.platform == 'win32':
+    # Windows Actions environment always has 'python'
+    # Unix/Linux environment should have 'python' after the CI symlink step
+    # Fallback to 'python3' for local testing without symlink
+    if sys.platform == 'win32' or sys.platform == 'cygwin':
         return 'python'
-    # Try python first, fall back to python3
+    # On Unix, try python first (should exist after CI symlink), then python3
     try:
-        subprocess.run(['python', '--version'], capture_output=True, check=True)
-        return 'python'
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return 'python3'
+        proc = subprocess.run(['python', '--version'],
+                            capture_output=True,
+                            timeout=5,
+                            check=False)
+        if proc.returncode == 0:
+            return 'python'
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    return 'python3'
 
 
 class TestFileChange:
