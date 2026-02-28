@@ -33,9 +33,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,llm]"
 
-      # Temporarily disable lint - will fix after v0.9.9 release
-      # - name: Lint
-      #   run: ruff check src/vibecollab/ tests/ --fix
+      - name: Lint and fix
+        run: |
+          ruff check src/vibecollab/ tests/ --fix
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Actions"
+          git add -A
+          git diff --staged --quiet || git commit -m "[CI] Auto-fix ruff issues"
 
       - name: Test
         run: pytest tests/ -q --tb=short

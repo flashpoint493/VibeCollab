@@ -151,11 +151,11 @@ class TestGetCurrentDeveloper:
         mgr = DeveloperManager(project_dir, config)
         assert mgr.get_current_developer() == "unknown_developer"
 
-    def test_system_user_primary(self, project_dir):
+    @patch("vibecollab.developer.DeveloperManager._get_system_user", return_value="WinUser")
+    def test_system_user_primary(self, mock_sys, project_dir):
         cfg = _base_config(primary="system_user", fallback="git_username")
-        with patch.dict(os.environ, {"USERNAME": "WinUser"}, clear=False):
-            mgr = DeveloperManager(project_dir, cfg)
-            assert mgr.get_current_developer() == "winuser"
+        mgr = DeveloperManager(project_dir, cfg)
+        assert mgr.get_current_developer() == "winuser"
 
     def test_no_normalize(self, project_dir):
         cfg = _base_config(normalize=False)
