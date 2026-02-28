@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from unittest import mock
@@ -12,6 +13,19 @@ from vibecollab.agent_executor import (
     ExecutionResult,
     FileChange,
 )
+
+
+def _python_cmd():
+    """Get the correct python command for the current platform."""
+    # Windows usually has 'python', Unix might only have 'python3'
+    if sys.platform == 'win32':
+        return 'python'
+    # Try python first, fall back to python3
+    try:
+        subprocess.run(['python', '--version'], capture_output=True, check=True)
+        return 'python'
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return 'python3'
 
 
 class TestFileChange:
@@ -265,14 +279,14 @@ class TestRunTests:
     def test_passing_tests(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
-            passed, output = exe.run_tests("python -c \"print('ok')\"")
+            passed, output = exe.run_tests(_python_cmd() + " -c \"print('ok')\"")
             assert passed
             assert "ok" in output
 
     def test_failing_tests(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
-            passed, output = exe.run_tests("python -c \"raise SystemExit(1)\"")
+            passed, output = exe.run_tests(_python_cmd() + " -c \"raise SystemExit(1)\"")
             assert not passed
 
     def test_dry_run_skips(self):
@@ -321,7 +335,7 @@ class TestFullCycle:
             output = '```json\n{"file": "hello.txt", "action": "create", "content": "world"}\n```'
             result = exe.execute_full_cycle(
                 output,
-                test_command="python -c \"print('pass')\"",
+                test_command=_python_cmd() + " -c \"print('pass')\"",
             )
             assert result.test_passed
             assert (Path(tmpdir) / "hello.txt").exists()
@@ -332,7 +346,7 @@ class TestFullCycle:
             output = '```json\n{"file": "bad.txt", "action": "create", "content": "oops"}\n```'
             result = exe.execute_full_cycle(
                 output,
-                test_command="python -c \"raise SystemExit(1)\"",
+                test_command=_python_cmd() + " -c \"raise SystemExit(1)\"",
             )
             assert not result.success
             assert result.rollback_performed
@@ -422,7 +436,7 @@ class TestRunTestsEdgeCases:
         """自定义测试命令."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
-            passed, output = exe.run_tests("python -c \"print('custom test ok')\"")
+            passed, output = exe.run_tests(_python_cmd() + " -c \"print('custom test ok')\"")
             assert passed
             assert "custom test ok" in output
 
@@ -504,7 +518,7 @@ class TestFullCycleGitFailure:
             with mock.patch.object(exe, "git_commit", return_value=(False, "git error")):
                 result = exe.execute_full_cycle(
                     output,
-                    test_command="python -c \"print('pass')\"",
+                    test_command=_python_cmd() + " -c \"print('pass')\"",
                 )
                 assert not result.success
                 assert result.test_passed
@@ -528,7 +542,7 @@ class TestFullCycleGitFailure:
             output = '```json\n{"file": "hello.py", "action": "create", "content": "print(42)"}\n```'
             result = exe.execute_full_cycle(
                 output,
-                test_command="python -c \"print('ok')\"",
+                test_command=_python_cmd() + " -c \"print('ok')\"",
             )
             assert result.success
             assert result.test_passed
@@ -587,14 +601,14 @@ class TestServeStressSimulation:
                     # 模拟测试失败 → 回滚
                     result = exe.execute_full_cycle(
                         output,
-                        test_command="python -c \"raise SystemExit(1)\"",
+                        test_command=_python_cmd() + " -c \"raise SystemExit(1)\"",
                     )
                     assert result.rollback_performed
                     rollback_count += 1
                 else:
                     result = exe.execute_full_cycle(
                         output,
-                        test_command="python -c \"print('ok')\"",
+                        test_command=_python_cmd() + " -c \"print('ok')\"",
                     )
                     success_count += 1
 
@@ -706,7 +720,7 @@ class TestAgentRunFailureRecovery:
             output = '```json\n{"file": "existing.txt", "action": "modify", "content": "modified"}\n```'
             result = exe.execute_full_cycle(
                 output,
-                test_command="python -c \"raise SystemExit(1)\"",
+                test_command=_python_cmd() + " -c \"raise SystemExit(1)\"",
             )
             assert result.rollback_performed
             assert original.read_text() == "original content"
@@ -718,7 +732,7 @@ class TestAgentRunFailureRecovery:
             output = '```json\n{"file": "new.txt", "action": "create", "content": "data"}\n```'
             result = exe.execute_full_cycle(
                 output,
-                test_command="python -c \"raise SystemExit(1)\"",
+                test_command=_python_cmd() + " -c \"raise SystemExit(1)\"",
             )
             assert result.rollback_performed
             assert not (Path(tmpdir) / "new.txt").exists()
@@ -734,7 +748,7 @@ class TestAgentRunFailureRecovery:
             )
             result = exe.execute_full_cycle(
                 output,
-                test_command="python -c \"raise SystemExit(1)\"",
+                test_command=_python_cmd() + " -c \"raise SystemExit(1)\"",
             )
             assert result.rollback_performed
             assert (Path(tmpdir) / "a.txt").read_text() == "a_original"
