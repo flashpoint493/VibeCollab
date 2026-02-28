@@ -1,5 +1,20 @@
 # VibeCollab 变更日志
 
+## v0.9.7 (2026-02-28) - Roadmap 解析器格式引导
+
+### Improvement
+- **严格 `###` 里程碑格式**: `MILESTONE_HEADER_RE` 正则明确只接受 `### vX.Y.Z` 三级标题，`####`/`##` 等其他层级不匹配——格式约束是设计意图，不做宽松兼容
+- **零里程碑格式提示**: `roadmap status/parse/sync` 找不到里程碑时，输出 `MILESTONE_FORMAT_HINT` 告知用户期望的 `### vX.Y.Z - Title` 格式和 `(TASK-DEV-001)` 关联语法
+- **sync 零里程碑区分**: `roadmap sync` 不再在零里程碑时输出误导性的 `已同步，无需变更`，改为明确提示 `无法同步` + 格式 hint；`--json` 模式返回空数组
+- **CLI help 增强**: `roadmap sync` help 文本新增里程碑格式示例和 Task ID 关联示例；`roadmap parse` help 显示期望格式
+- **MCP Tool 描述增强**: `roadmap_status` 和 `roadmap_sync` 的 docstring 包含完整格式规范，AI IDE 可据此指导用户修改 ROADMAP
+- **init 模板兼容**: `vibecollab init` 生成的 ROADMAP.md 使用 `### v0.1.0 - 项目初始化` 格式，开箱即可被 `roadmap parse` 解析
+
+### Test
+- **H4 测试改为拒绝验证**: `TestH4HeadersRejected` 5 个测试确认 `#### vX.Y.Z` 不被解析
+- `TestFormatHint` 6 个测试验证 CLI 输出格式提示
+- 全量 **1344 passed**, 零回归
+
 ## v0.9.6 (2026-02-28) - PyPI 适配 + 文档质量
 
 ### Improvement

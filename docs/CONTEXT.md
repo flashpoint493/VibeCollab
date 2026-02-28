@@ -5,11 +5,11 @@
 > 聚合自: alice, ocarina
 
 ## 项目整体状态
-- **版本**: v0.9.6 (开发中)
-- **上一版本**: v0.9.5 (PyPI 已发布)
+- **版本**: v0.9.7 (开发中)
+- **上一版本**: v0.9.6 (PyPI 已发布)
 - **活跃开发者**: 2 (alice, ocarina)
-- **测试**: 1331 passed, 89% 覆盖率
-- **当前阶段**: v0.9.6 迭代，推进 v0.10.0 功能冻结
+- **测试**: 1345 passed, 89% 覆盖率
+- **当前阶段**: v0.9.7 迭代，推进 v0.10.0 功能冻结
 
 ## 各开发者工作状态
 
@@ -21,16 +21,17 @@
 
 ### ocarina
 - **上次更新**: 2026-02-28
-- **当前任务**: v0.9.6 PyPI README 适配 + 项目文档更新
+- **当前任务**: v0.9.7 Roadmap 解析器格式引导
 - **最近完成**:
   - v0.9.5 ROADMAP ↔ Task 集成（RoadmapParser + CLI + MCP + 40 tests）
   - README 双语重构（英文主 README + README.zh-CN.md）
   - PyPI v0.9.5 发布
   - TASK-DEV-006: PyPI README 适配（README.pypi.md，去 Mermaid + 绝对 URL）
+  - TASK-DEV-008: Roadmap 解析器格式引导（严格 ### + 格式 hint + MCP 描述增强）
 
 ## 活跃任务
 
-无活跃任务（v0.9.6 全部完成）
+无活跃任务（v0.9.7 全部完成）
 
 ## 跨开发者协作
 (详见 docs/developers/COLLABORATION.md)
