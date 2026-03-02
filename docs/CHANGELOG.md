@@ -1,19 +1,43 @@
 # VibeCollab 变更日志
 
-## v0.9.7 (2026-02-28) - Roadmap 解析器格式引导
+## v0.9.7 (2026-03-02) - 目录重构 + GBK 编码彻底修复
+
+### Refactor
+- **目录重构**: 36 个平铺 `.py` 模块重组为 7 个功能子包
+  - `cli/` (11 文件): main, ai, guide, config, lifecycle, insight, task, roadmap, mcp, index
+  - `core/` (8 文件): generator, project, templates, pattern_engine, extension, health, protocol_checker
+  - `domain/` (8 文件): task_manager, event_log, developer, lifecycle, roadmap_parser, conflict_detector, prd_manager, session_store
+  - `insight/` (3 文件): manager, signal
+  - `search/` (3 文件): embedder, indexer, vector_store
+  - `agent/` (3 文件): llm_client, agent_executor, mcp_server
+  - `utils/` (2 文件): git, llmstxt
+  - Phase 1: 文件迁移 + 内部导入更新 + 薄代理保证向后兼容
+  - Phase 2: 35 个测试文件导入路径迁移 + 12 个 mock/patch 路径修复 + 35 个薄代理删除
+  - `__init__.py` 公共 API 导出从旧路径更新为新子包路径
+  - `pyproject.toml` entry_point `vibecollab.cli:main` 无需修改 (cli 包 `__init__.py` 导出 main)
+
+### Bug Fix
+- **GBK 编码彻底修复**: 三层防御体系消除所有 Windows GBK 终端 `UnicodeEncodeError`
+  - **第一层** `ensure_safe_stdout()`: CLI 启动时将 `sys.stdout`/`sys.stderr` 的 errors 模式从 strict/surrogateescape 改为 replace，无法编码字符变为 `?` 而非崩溃
+  - **第二层** `safe_console()`: Rich Console 工厂函数，确保 Console 创建前 stdout 已安全；6 个 CLI 模块 `Console()` 统一改为 `safe_console()`
+  - **第三层** EMOJI 映射扩充: 新增 `check`/`cross`/`arrow`/`bar_fill`/`bar_empty`/`high`/`medium`/`low`/`idea` 等 9 个映射
+  - 修复 `cli/roadmap.py` 硬编码 `█░↔→←☑☐` 字符
+  - 修复 `cli/guide.py` 硬编码 `✓✗` 字符
+  - 修复 `core/project.py` 硬编码 `✅⏳` 字符
+  - 修复 `domain/developer.py` 硬编码 `✅⚠️` 字符
+  - 消除 `domain/conflict_detector.py` 重复的 `is_windows_gbk()` 实现，统一使用 `_compat`
+  - 关键修复: `surrogateescape` 错误模式在 GBK 编码下仍会崩溃，`ensure_safe_stdout()` 通过编码能力检测而非 errors 模式检测来判断是否需要 reconfigure
 
 ### Improvement
-- **严格 `###` 里程碑格式**: `MILESTONE_HEADER_RE` 正则明确只接受 `### vX.Y.Z` 三级标题，`####`/`##` 等其他层级不匹配——格式约束是设计意图，不做宽松兼容
-- **零里程碑格式提示**: `roadmap status/parse/sync` 找不到里程碑时，输出 `MILESTONE_FORMAT_HINT` 告知用户期望的 `### vX.Y.Z - Title` 格式和 `(TASK-DEV-001)` 关联语法
-- **sync 零里程碑区分**: `roadmap sync` 不再在零里程碑时输出误导性的 `已同步，无需变更`，改为明确提示 `无法同步` + 格式 hint；`--json` 模式返回空数组
-- **CLI help 增强**: `roadmap sync` help 文本新增里程碑格式示例和 Task ID 关联示例；`roadmap parse` help 显示期望格式
-- **MCP Tool 描述增强**: `roadmap_status` 和 `roadmap_sync` 的 docstring 包含完整格式规范，AI IDE 可据此指导用户修改 ROADMAP
-- **init 模板兼容**: `vibecollab init` 生成的 ROADMAP.md 使用 `### v0.1.0 - 项目初始化` 格式，开箱即可被 `roadmap parse` 解析
+- **严格 `###` 里程碑格式**: `MILESTONE_HEADER_RE` 正则明确只接受 `### vX.Y.Z` 三级标题
+- **零里程碑格式提示**: `roadmap status/parse/sync` 找不到里程碑时输出 `MILESTONE_FORMAT_HINT`
+- **init 模板兼容**: `vibecollab init` 生成的 ROADMAP.md 使用 `### v0.1.0` 格式
 
 ### Test
-- **H4 测试改为拒绝验证**: `TestH4HeadersRejected` 5 个测试确认 `#### vX.Y.Z` 不被解析
-- `TestFormatHint` 6 个测试验证 CLI 输出格式提示
 - 全量 **1344 passed**, 零回归
+- E2E 验证 **36 个 CLI 场景全部通过**
+- 修复 `test_cli_ai.py` mock 路径 (`Console` -> `console` 实例)
+- 修复 `test_conflict_detector.py` mock 路径 (`conflict_detector.platform` -> `_compat.platform`)
 
 ## v0.9.6 (2026-02-28) - PyPI 适配 + 文档质量
 

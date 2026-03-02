@@ -13,6 +13,8 @@ from typing import Dict, List, Optional
 
 import yaml
 
+from .._compat import EMOJI as _EMOJI
+
 # Local config file for storing current developer selection
 LOCAL_CONFIG_FILE = ".vibecollab.local.yaml"
 
@@ -571,7 +573,7 @@ class ContextAggregator:
         # 标题和警告
         sections.append(f"# {project_name} 全局上下文")
         sections.append("")
-        sections.append("> ⚠️ **此文件自动生成，请勿手动编辑**")
+        sections.append(f"> {_EMOJI['warning']} **此文件自动生成，请勿手动编辑**")
         sections.append(f"> 上次更新: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         sections.append(f"> 聚合自: {', '.join(developers) if developers else '(无开发者)'}")
         sections.append("")
@@ -800,6 +802,6 @@ def migrate_to_multi_developer(project_root: Path, config: dict, developer_name:
     aggregator = ContextAggregator(project_root, config)
     aggregator.generate_and_save()
 
-    print("✅ 成功迁移到多开发者模式")
+    print(f"{_EMOJI['success']} 成功迁移到多开发者模式")
     print(f"   开发者: {developer_name}")
     print(f"   上下文目录: {dev_dir}")

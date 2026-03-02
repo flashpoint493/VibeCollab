@@ -379,7 +379,7 @@ def create_mcp_server(project_root: Optional[Path] = None):
             tags: 标签，逗号分隔 (可选)
         """
         try:
-            from .session_store import Session, SessionStore
+            from ..domain.session_store import Session, SessionStore
 
             store = SessionStore(root)
             session = Session(

@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from .event_log import Event, EventLog, EventType
 
 if TYPE_CHECKING:
-    from .insight_manager import InsightManager
+    from ..insight.manager import InsightManager
 
 # ---------------------------------------------------------------------------
 # Task status enum & state machine

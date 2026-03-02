@@ -15,7 +15,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from vibecollab.cli_index import index_cmd, search_cmd
+from vibecollab.cli.index import index_cmd, search_cmd
 
 
 @pytest.fixture

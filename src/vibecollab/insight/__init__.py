@@ -1,0 +1,1 @@
+"""Insight knowledge system subpackage."""

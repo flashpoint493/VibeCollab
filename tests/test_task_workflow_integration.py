@@ -68,7 +68,7 @@ def project_dir(tmp_path):
 @pytest.fixture
 def project_with_tasks(project_dir):
     """带有任务的项目"""
-    from vibecollab.task_manager import TaskManager
+    from vibecollab.domain.task_manager import TaskManager
 
     tm = TaskManager(project_root=project_dir)
     tm.create_task(id="TASK-DEV-001", role="DEV", feature="实现功能A", assignee="alice")
@@ -86,7 +86,7 @@ def project_with_tasks(project_dir):
 
 class TestTransitionCommand:
     def test_transition_success(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -109,7 +109,7 @@ class TestTransitionCommand:
             assert "IN_PROGRESS" in result.output
 
     def test_transition_with_reason(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -127,7 +127,7 @@ class TestTransitionCommand:
             assert result.exit_code == 0
 
     def test_transition_illegal(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -145,7 +145,7 @@ class TestTransitionCommand:
             assert result.exit_code != 0
 
     def test_transition_not_found(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -159,7 +159,7 @@ class TestTransitionCommand:
             assert "not found" in result.output.lower() or "错误" in result.output
 
     def test_transition_json_output(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -185,7 +185,7 @@ class TestTransitionCommand:
 
 class TestSolidifyCommand:
     def test_solidify_success(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -205,7 +205,7 @@ class TestSolidifyCommand:
             assert "DONE" in result.output
 
     def test_solidify_not_in_review(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -222,7 +222,7 @@ class TestSolidifyCommand:
             assert "固化失败" in result.output
 
     def test_solidify_not_found(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -233,7 +233,7 @@ class TestSolidifyCommand:
             assert result.exit_code != 0
 
     def test_solidify_json_output(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -260,7 +260,7 @@ class TestSolidifyCommand:
 
 class TestRollbackCommand:
     def test_rollback_success(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -278,7 +278,7 @@ class TestRollbackCommand:
             assert "已回滚" in result.output
 
     def test_rollback_with_reason(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -298,7 +298,7 @@ class TestRollbackCommand:
             assert "需要重新设计" in result.output
 
     def test_rollback_from_todo(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -314,7 +314,7 @@ class TestRollbackCommand:
             assert result.exit_code != 0
 
     def test_rollback_not_found(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -325,7 +325,7 @@ class TestRollbackCommand:
             assert result.exit_code != 0
 
     def test_rollback_json_output(self, project_dir):
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -352,7 +352,7 @@ class TestRollbackCommand:
 class TestFullLifecycle:
     def test_complete_lifecycle(self, project_dir):
         """TODO → IN_PROGRESS → REVIEW → solidify → DONE"""
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -376,7 +376,7 @@ class TestFullLifecycle:
 
     def test_rollback_and_retry(self, project_dir):
         """IN_PROGRESS → REVIEW → rollback → IN_PROGRESS → REVIEW → solidify"""
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -409,7 +409,7 @@ class TestFullLifecycle:
 
 class TestOnboardInjection:
     def test_onboard_with_tasks_json(self, project_with_tasks):
-        from vibecollab.cli_guide import onboard
+        from vibecollab.cli.guide import onboard
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_with_tasks):
@@ -429,7 +429,7 @@ class TestOnboardInjection:
             assert len(data["active_tasks"]) == 2
 
     def test_onboard_with_tasks_rich(self, project_with_tasks):
-        from vibecollab.cli_guide import onboard
+        from vibecollab.cli.guide import onboard
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_with_tasks):
@@ -441,7 +441,7 @@ class TestOnboardInjection:
             assert "任务概览" in result.output
 
     def test_onboard_no_tasks(self, project_dir):
-        from vibecollab.cli_guide import onboard
+        from vibecollab.cli.guide import onboard
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -454,7 +454,7 @@ class TestOnboardInjection:
             assert data["task_summary"]["total"] == 0
 
     def test_onboard_events_json(self, project_with_tasks):
-        from vibecollab.cli_guide import onboard
+        from vibecollab.cli.guide import onboard
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_with_tasks):
@@ -468,7 +468,7 @@ class TestOnboardInjection:
             assert len(data["recent_events"]) > 0
 
     def test_onboard_events_rich(self, project_with_tasks):
-        from vibecollab.cli_guide import onboard
+        from vibecollab.cli.guide import onboard
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_with_tasks):
@@ -487,7 +487,7 @@ class TestOnboardInjection:
 
 class TestNextTaskRecommendations:
     def test_next_with_review_tasks(self, project_with_tasks):
-        from vibecollab.cli_guide import next_step
+        from vibecollab.cli.guide import next_step
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_with_tasks):
@@ -503,7 +503,7 @@ class TestNextTaskRecommendations:
             assert "task_solidify" in action_types
 
     def test_next_no_tasks(self, project_dir):
-        from vibecollab.cli_guide import next_step
+        from vibecollab.cli.guide import next_step
 
         runner = CliRunner()
         with runner.isolated_filesystem(temp_dir=project_dir):
@@ -525,7 +525,7 @@ class TestNextTaskRecommendations:
 class TestMcpNewTools:
     def test_task_create_tool(self, project_dir):
         """task_create tool 应调用正确的 CLI 命令"""
-        from vibecollab.mcp_server import _run_cli
+        from vibecollab.agent.mcp_server import _run_cli
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
@@ -548,7 +548,7 @@ class TestMcpNewTools:
 
     def test_task_transition_tool(self, project_dir):
         """task_transition tool 应调用正确的 CLI 命令"""
-        from vibecollab.mcp_server import _run_cli
+        from vibecollab.agent.mcp_server import _run_cli
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
@@ -569,11 +569,11 @@ class TestMcpNewTools:
 
     def test_start_conversation_lists_new_tools(self, project_dir):
         """start_conversation prompt 应包含新工具"""
-        from vibecollab.mcp_server import _safe_load_yaml, _safe_read_text
+        from vibecollab.agent.mcp_server import _safe_load_yaml, _safe_read_text
 
         # 模拟 prompt 中的工具列表检查
         # 直接检查 mcp_server.py 源码中的字符串
-        import vibecollab.mcp_server as mod
+        import vibecollab.agent.mcp_server as mod
         import inspect
         source = inspect.getsource(mod)
         assert "task_create" in source
@@ -588,7 +588,7 @@ class TestMcpNewTools:
 
 class TestCollectProjectContext:
     def test_context_includes_tasks(self, project_with_tasks):
-        from vibecollab.cli_guide import _collect_project_context
+        from vibecollab.cli.guide import _collect_project_context
 
         ctx = _collect_project_context(project_with_tasks / "project.yaml")
         assert "active_tasks" in ctx
@@ -597,21 +597,21 @@ class TestCollectProjectContext:
         assert len(ctx["active_tasks"]) == 2
 
     def test_context_includes_events(self, project_with_tasks):
-        from vibecollab.cli_guide import _collect_project_context
+        from vibecollab.cli.guide import _collect_project_context
 
         ctx = _collect_project_context(project_with_tasks / "project.yaml")
         assert "recent_events" in ctx
         assert len(ctx["recent_events"]) > 0
 
     def test_context_no_tasks(self, project_dir):
-        from vibecollab.cli_guide import _collect_project_context
+        from vibecollab.cli.guide import _collect_project_context
 
         ctx = _collect_project_context(project_dir / "project.yaml")
         assert ctx["task_summary"]["total"] == 0
         assert ctx["active_tasks"] == []
 
     def test_context_no_events(self, project_dir):
-        from vibecollab.cli_guide import _collect_project_context
+        from vibecollab.cli.guide import _collect_project_context
 
         ctx = _collect_project_context(project_dir / "project.yaml")
         assert ctx["recent_events"] == []

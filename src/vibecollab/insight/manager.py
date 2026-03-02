@@ -38,7 +38,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
-from .event_log import Event, EventLog, EventType
+from ..domain.event_log import Event, EventLog, EventType
 
 # ---------------------------------------------------------------------------
 # Constants

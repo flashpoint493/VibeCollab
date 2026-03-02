@@ -3,8 +3,8 @@
 
 import pytest
 
-from vibecollab.event_log import EventType
-from vibecollab.task_manager import (
+from vibecollab.domain.event_log import EventType
+from vibecollab.domain.task_manager import (
     TASK_ID_PATTERN,
     VALID_TRANSITIONS,
     Task,

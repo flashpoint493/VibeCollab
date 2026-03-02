@@ -18,9 +18,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .event_log import EventLog, EventType
+from ..domain.event_log import EventLog, EventType
 from .protocol_checker import ProtocolChecker
-from .task_manager import TaskManager
+from ..domain.task_manager import TaskManager
 
 
 class SignalLevel(str, Enum):

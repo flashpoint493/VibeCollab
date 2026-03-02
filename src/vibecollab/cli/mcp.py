@@ -57,7 +57,7 @@ def serve(transport: str, project_root: Path):
       }
     """
     try:
-        from .mcp_server import run_server
+        from ..agent.mcp_server import run_server
     except ImportError:
         click.echo(
             "错误: MCP Server 需要 mcp 依赖。\n"

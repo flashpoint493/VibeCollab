@@ -4,7 +4,7 @@
 import pytest
 import yaml
 
-from vibecollab.extension import (
+from vibecollab.core.extension import (
     Context,
     ExtensionProcessor,
     load_extension_from_file,

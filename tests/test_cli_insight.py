@@ -9,7 +9,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from vibecollab.cli_insight import insight
+from vibecollab.cli.insight import insight
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -60,9 +60,9 @@ class TestListInsights:
         assert result.exit_code == 0
         assert "暂无沉淀" in result.output
 
-    @patch("vibecollab.cli_insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_developer_manager")
     def test_list_with_items(self, mock_dm, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(
             title="Test Insight",
@@ -77,7 +77,7 @@ class TestListInsights:
         assert "Test Insight" in result.output
 
     def test_list_json(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(
             title="JSON Test",
@@ -94,7 +94,7 @@ class TestListInsights:
         assert data[0]["category"] == "workflow"
 
     def test_list_active_only(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(
             title="Active",
@@ -127,7 +127,7 @@ class TestListInsights:
 
 class TestShowInsight:
     def test_show_existing(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(
             title="Show Test",
@@ -155,9 +155,9 @@ class TestShowInsight:
 # ---------------------------------------------------------------------------
 
 class TestAddInsight:
-    @patch("vibecollab.cli_insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_developer_manager")
     def test_add_basic(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.developer import DeveloperManager
+        from vibecollab.domain.developer import DeveloperManager
         # 模拟 developer manager 使用固定身份
         dm = DeveloperManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
@@ -176,9 +176,9 @@ class TestAddInsight:
         assert "INS-001" in result.output
         assert "CLI Created" in result.output
 
-    @patch("vibecollab.cli_insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_developer_manager")
     def test_add_with_all_options(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.developer import DeveloperManager
+        from vibecollab.domain.developer import DeveloperManager
         dm = DeveloperManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
@@ -206,7 +206,7 @@ class TestAddInsight:
 
 class TestSearchInsights:
     def test_search_by_tags(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="A", tags=["python", "refactor"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
@@ -219,7 +219,7 @@ class TestSearchInsights:
         assert "INS-002" not in result.output
 
     def test_search_by_category(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="A", tags=["a"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
@@ -245,10 +245,10 @@ class TestSearchInsights:
 # ---------------------------------------------------------------------------
 
 class TestUseInsight:
-    @patch("vibecollab.cli_insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_developer_manager")
     def test_use_existing(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.cli_insight import _load_insight_manager
-        from vibecollab.developer import DeveloperManager
+        from vibecollab.cli.insight import _load_insight_manager
+        from vibecollab.domain.developer import DeveloperManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Use Me", tags=["test"], category="technique",
@@ -265,9 +265,9 @@ class TestUseInsight:
         assert "已记录使用" in result.output
         assert "INS-001" in result.output
 
-    @patch("vibecollab.cli_insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_developer_manager")
     def test_use_not_found(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.developer import DeveloperManager
+        from vibecollab.domain.developer import DeveloperManager
         dm = DeveloperManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
@@ -283,7 +283,7 @@ class TestUseInsight:
 
 class TestDecayInsights:
     def test_decay_dry_run(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="Decay Me", tags=["test"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
@@ -294,7 +294,7 @@ class TestDecayInsights:
         assert "INS-001" in result.output
 
     def test_decay_execute(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="Decay Me", tags=["test"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
@@ -310,7 +310,7 @@ class TestDecayInsights:
 
 class TestCheckInsights:
     def test_check_clean(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="OK", tags=["test"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
@@ -320,13 +320,13 @@ class TestCheckInsights:
         assert "通过" in result.output or "无错误" in result.output
 
     def test_check_with_orphan(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="OK", tags=["test"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
         # 手动在注册表中添加不存在的条目
         entries, settings = mgr.get_registry()
-        from vibecollab.insight_manager import RegistryEntry
+        from vibecollab.insight.manager import RegistryEntry
         entries["INS-999"] = RegistryEntry()
         mgr._save_registry(entries, settings)
 
@@ -346,10 +346,10 @@ class TestCheckInsights:
 # ---------------------------------------------------------------------------
 
 class TestDeleteInsight:
-    @patch("vibecollab.cli_insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_developer_manager")
     def test_delete_with_yes(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.cli_insight import _load_insight_manager
-        from vibecollab.developer import DeveloperManager
+        from vibecollab.cli.insight import _load_insight_manager
+        from vibecollab.domain.developer import DeveloperManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Delete Me", tags=["test"], category="technique",
@@ -377,10 +377,10 @@ class TestDeleteInsight:
 # ---------------------------------------------------------------------------
 
 class TestBookmarkInsight:
-    @patch("vibecollab.cli_insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_developer_manager")
     def test_bookmark_existing(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.cli_insight import _load_insight_manager
-        from vibecollab.developer import DeveloperManager
+        from vibecollab.cli.insight import _load_insight_manager
+        from vibecollab.domain.developer import DeveloperManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Bookmark Me", tags=["test"], category="technique",
@@ -396,10 +396,10 @@ class TestBookmarkInsight:
         assert result.exit_code == 0
         assert "已收藏" in result.output
 
-    @patch("vibecollab.cli_insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_developer_manager")
     def test_bookmark_duplicate(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.cli_insight import _load_insight_manager
-        from vibecollab.developer import DeveloperManager
+        from vibecollab.cli.insight import _load_insight_manager
+        from vibecollab.domain.developer import DeveloperManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Bookmark Me", tags=["test"], category="technique",
@@ -423,10 +423,10 @@ class TestBookmarkInsight:
 
 
 class TestUnbookmarkInsight:
-    @patch("vibecollab.cli_insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_developer_manager")
     def test_unbookmark_existing(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.cli_insight import _load_insight_manager
-        from vibecollab.developer import DeveloperManager
+        from vibecollab.cli.insight import _load_insight_manager
+        from vibecollab.domain.developer import DeveloperManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Unbookmark Me", tags=["test"], category="technique",
@@ -444,9 +444,9 @@ class TestUnbookmarkInsight:
         assert result.exit_code == 0
         assert "已取消收藏" in result.output
 
-    @patch("vibecollab.cli_insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_developer_manager")
     def test_unbookmark_nonexistent(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.developer import DeveloperManager
+        from vibecollab.domain.developer import DeveloperManager
 
         dm = DeveloperManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
@@ -465,7 +465,7 @@ class TestUnbookmarkInsight:
 
 class TestTraceInsight:
     def test_trace_simple(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="Base", tags=["a"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
@@ -480,7 +480,7 @@ class TestTraceInsight:
         assert "INS-002" in result.output
 
     def test_trace_no_relations(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="Standalone", tags=["a"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
@@ -490,7 +490,7 @@ class TestTraceInsight:
         assert "(无)" in result.output
 
     def test_trace_json(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="Base", tags=["a"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
@@ -512,7 +512,7 @@ class TestTraceInsight:
 
 class TestWhoInsight:
     def test_who_basic(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="Who Test", tags=["a"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
@@ -524,7 +524,7 @@ class TestWhoInsight:
         assert "otherdev" in result.output
 
     def test_who_json(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="Who Test", tags=["a"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
@@ -552,7 +552,7 @@ class TestStatsInsight:
         assert "0" in result.output
 
     def test_stats_with_data(self, runner, chdir_project):
-        from vibecollab.cli_insight import _load_insight_manager
+        from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="A", tags=["a"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")

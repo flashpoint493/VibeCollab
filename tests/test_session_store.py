@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from vibecollab.session_store import Session, SessionStore
+from vibecollab.domain.session_store import Session, SessionStore
 
 
 # ===================================================================

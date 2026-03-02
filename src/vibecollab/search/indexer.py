@@ -20,7 +20,7 @@ from typing import Dict, List, Optional, Sequence
 
 import yaml
 
-from .embedder import Embedder, EmbedderConfig
+from ..insight.embedder import Embedder, EmbedderConfig
 from .vector_store import VectorDocument, VectorStore
 
 logger = logging.getLogger(__name__)

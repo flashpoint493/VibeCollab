@@ -10,16 +10,15 @@ CLI Config 命令 — LLM 配置管理
 
 
 import click
-from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from ._compat import EMOJI
+from .._compat import EMOJI, safe_console
 
 # 短别名（兼容此模块原有 _E 变量名）
 _E = EMOJI
 
-console = Console()
+console = safe_console()
 
 # Provider 选项
 PROVIDERS = {
@@ -58,7 +57,7 @@ def config_setup():
 
         vibecollab config setup
     """
-    from .config_manager import load_config, save_config
+    from ..core.config_manager import load_config, save_config
 
     console.print()
     console.print(Panel.fit(
@@ -157,7 +156,7 @@ def config_setup():
     if model:
         console.print(f"  -> [cyan]{model}[/cyan]")
     else:
-        from .llm_client import DEFAULT_MODEL_ANTHROPIC, DEFAULT_MODEL_OPENAI
+        from ..agent.llm_client import DEFAULT_MODEL_ANTHROPIC, DEFAULT_MODEL_OPENAI
         default = (DEFAULT_MODEL_ANTHROPIC if provider == "anthropic"
                    else DEFAULT_MODEL_OPENAI)
         console.print(f"  -> [cyan]{default}[/cyan] (默认)")
@@ -196,7 +195,7 @@ def config_show():
 
         vibecollab config show
     """
-    from .config_manager import get_config_path, load_config, resolve_llm_config
+    from ..core.config_manager import get_config_path, load_config, resolve_llm_config
 
     console.print()
 
@@ -292,7 +291,7 @@ def config_set(key: str, value: str):
 
         vibecollab config set llm.base_url https://openrouter.ai/api/v1
     """
-    from .config_manager import set_config_value
+    from ..core.config_manager import set_config_value
 
     # Validate known keys
     known_keys = {
@@ -325,7 +324,7 @@ def config_path():
 
         vibecollab config path
     """
-    from .config_manager import get_config_path
+    from ..core.config_manager import get_config_path
 
     path = get_config_path()
     console.print(str(path))

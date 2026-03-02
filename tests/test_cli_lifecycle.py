@@ -5,7 +5,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from vibecollab.cli_lifecycle import lifecycle
+from vibecollab.cli.lifecycle import lifecycle
 
 
 @pytest.fixture

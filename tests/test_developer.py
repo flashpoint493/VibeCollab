@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from vibecollab.developer import (
+from vibecollab.domain.developer import (
     LOCAL_CONFIG_FILE,
     ContextAggregator,
     DeveloperManager,
@@ -134,19 +134,19 @@ class TestGetCurrentDeveloper:
             mgr = DeveloperManager(project_dir, config)
             assert mgr.get_current_developer() == "envdev"  # normalized
 
-    @patch("vibecollab.developer.DeveloperManager._get_git_username", return_value="GitUser")
+    @patch("vibecollab.domain.developer.DeveloperManager._get_git_username", return_value="GitUser")
     def test_git_username_primary(self, mock_git, project_dir, config):
         mgr = DeveloperManager(project_dir, config)
         assert mgr.get_current_developer() == "gituser"
 
-    @patch("vibecollab.developer.DeveloperManager._get_git_username", return_value=None)
-    @patch("vibecollab.developer.DeveloperManager._get_system_user", return_value="SysUser")
+    @patch("vibecollab.domain.developer.DeveloperManager._get_git_username", return_value=None)
+    @patch("vibecollab.domain.developer.DeveloperManager._get_system_user", return_value="SysUser")
     def test_fallback_to_system_user(self, mock_sys, mock_git, project_dir, config):
         mgr = DeveloperManager(project_dir, config)
         assert mgr.get_current_developer() == "sysuser"
 
-    @patch("vibecollab.developer.DeveloperManager._get_git_username", return_value=None)
-    @patch("vibecollab.developer.DeveloperManager._get_system_user", return_value=None)
+    @patch("vibecollab.domain.developer.DeveloperManager._get_git_username", return_value=None)
+    @patch("vibecollab.domain.developer.DeveloperManager._get_system_user", return_value=None)
     def test_final_fallback_unknown(self, mock_sys, mock_git, project_dir, config):
         mgr = DeveloperManager(project_dir, config)
         assert mgr.get_current_developer() == "unknown_developer"
@@ -244,11 +244,11 @@ class TestSwitchDeveloper:
 # ===========================================================================
 
 class TestPaths:
-    @patch("vibecollab.developer.DeveloperManager._get_git_username", return_value="testdev")
+    @patch("vibecollab.domain.developer.DeveloperManager._get_git_username", return_value="testdev")
     def test_developer_dir(self, mock_git, dm, project_dir):
         assert dm.get_developer_dir("alice") == project_dir / "docs" / "developers" / "alice"
 
-    @patch("vibecollab.developer.DeveloperManager._get_git_username", return_value="testdev")
+    @patch("vibecollab.domain.developer.DeveloperManager._get_git_username", return_value="testdev")
     def test_developer_dir_default(self, mock_git, dm, project_dir):
         assert dm.get_developer_dir() == project_dir / "docs" / "developers" / "testdev"
 
@@ -466,7 +466,7 @@ class TestContextAggregator:
 # ===========================================================================
 
 class TestMigrateToMultiDeveloper:
-    @patch("vibecollab.developer.DeveloperManager._get_git_username", return_value="testdev")
+    @patch("vibecollab.domain.developer.DeveloperManager._get_git_username", return_value="testdev")
     def test_migrate_auto_developer(self, mock_git, project_dir, config):
         # 准备单开发者 CONTEXT.md
         old_ctx = project_dir / "docs" / "CONTEXT.md"

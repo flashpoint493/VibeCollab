@@ -5,13 +5,13 @@ Tests for Indexer — 项目文档与 Insight 索引器
 import pytest
 import yaml
 
-from vibecollab.embedder import Embedder, EmbedderConfig
-from vibecollab.indexer import (
+from vibecollab.insight.embedder import Embedder, EmbedderConfig
+from vibecollab.search.indexer import (
     Indexer,
     _insight_to_text,
     _split_markdown_by_heading,
 )
-from vibecollab.vector_store import VectorStore
+from vibecollab.search.vector_store import VectorStore
 
 
 # ---------------------------------------------------------------------------

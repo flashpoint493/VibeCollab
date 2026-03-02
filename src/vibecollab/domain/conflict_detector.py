@@ -4,9 +4,7 @@
 提供多开发者协作中的冲突检测功能。
 """
 
-import platform
 import re
-import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -14,30 +12,11 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import yaml
 
-
-# Windows GBK 编码兼容
-def is_windows_gbk():
-    """检测是否为 Windows 且使用 GBK 编码"""
-    if platform.system() != "Windows":
-        return False
-    try:
-        "✅⚠️❌🔴🟡🟢".encode(sys.stdout.encoding or "utf-8")
-        return False
-    except (UnicodeEncodeError, LookupError):
-        return True
-
+from .._compat import EMOJI as _COMPAT_EMOJI, is_windows_gbk
 
 USE_EMOJI = not is_windows_gbk()
 
-EMOJI_MAP = {
-    "success": "OK" if not USE_EMOJI else "✅",
-    "warning": "!" if not USE_EMOJI else "⚠️",
-    "error": "X" if not USE_EMOJI else "❌",
-    "high": "[!]" if not USE_EMOJI else "🔴",
-    "medium": "[~]" if not USE_EMOJI else "🟡",
-    "low": "[*]" if not USE_EMOJI else "🟢",
-    "idea": "[?]" if not USE_EMOJI else "💡",
-}
+EMOJI_MAP = _COMPAT_EMOJI
 
 
 

@@ -1,9 +1,9 @@
 """
-CLI commands for ROADMAP ↔ Task integration.
+CLI commands for ROADMAP / Task integration.
 
 Commands:
     vibecollab roadmap status  — Show per-milestone progress
-    vibecollab roadmap sync    — Sync ROADMAP.md ↔ tasks.json
+    vibecollab roadmap sync    — Sync ROADMAP / tasks.json
     vibecollab roadmap parse   — Parse and display ROADMAP structure
 """
 
@@ -12,9 +12,10 @@ from pathlib import Path
 
 import click
 
-from .insight_manager import InsightManager
-from .roadmap_parser import MILESTONE_FORMAT_HINT, RoadmapParser
-from .task_manager import TaskManager
+from .._compat import EMOJI
+from ..insight.manager import InsightManager
+from ..domain.roadmap_parser import MILESTONE_FORMAT_HINT, RoadmapParser
+from ..domain.task_manager import TaskManager
 
 
 def _get_parser(config: str) -> RoadmapParser:
@@ -30,7 +31,7 @@ def _get_parser(config: str) -> RoadmapParser:
 
 @click.group("roadmap")
 def roadmap_group():
-    """ROADMAP ↔ Task 集成管理"""
+    """ROADMAP / Task 集成管理"""
     pass
 
 
@@ -67,7 +68,7 @@ def roadmap_status(config, json_output):
         # Progress bar
         bar_len = 20
         filled = int(bar_len * pct / 100) if total > 0 else 0
-        bar = "█" * filled + "░" * (bar_len - filled)
+        bar = EMOJI["bar_fill"] * filled + EMOJI["bar_empty"] * (bar_len - filled)
 
         header = f"{version}"
         if title:
@@ -101,7 +102,7 @@ def roadmap_status(config, json_output):
 @click.option("--config", "-c", default="project.yaml", help="配置文件路径")
 @click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
 def roadmap_sync(direction, dry_run, config, json_output):
-    """同步 ROADMAP.md ↔ tasks.json
+    """同步 ROADMAP.md / tasks.json
 
     ROADMAP.md 里程碑格式:
       ### v0.1.0 - 标题描述
@@ -111,8 +112,8 @@ def roadmap_sync(direction, dry_run, config, json_output):
 
     同步方向:
       both              — 双向同步 (冲突时 tasks.json 优先)
-      roadmap_to_tasks  — ROADMAP [x] → 任务 DONE
-      tasks_to_roadmap  — 任务 DONE → ROADMAP [x]
+      roadmap_to_tasks  — ROADMAP [x] -> 任务 DONE
+      tasks_to_roadmap  — 任务 DONE -> ROADMAP [x]
 
     Examples:
 
@@ -151,10 +152,10 @@ def roadmap_sync(direction, dry_run, config, json_output):
     click.echo(f"{prefix}同步动作 ({len(actions)} 项):")
     for a in actions:
         icon = {
-            "task_to_done": "→",
-            "task_from_done": "←",
-            "checkbox_check": "☑",
-            "checkbox_uncheck": "☐",
+            "task_to_done": "->",
+            "task_from_done": "<-",
+            "checkbox_check": "[x]",
+            "checkbox_uncheck": "[ ]",
         }.get(a.type, "?")
         click.echo(f"  {icon} {a.detail}")
 

@@ -8,10 +8,11 @@ from typing import Any, Dict
 
 import yaml
 
+from .._compat import EMOJI
 from .generator import LLMContextGenerator
-from .git_utils import ensure_git_repo
-from .lifecycle import LifecycleManager
-from .llmstxt import LLMsTxtManager
+from ..utils.git import ensure_git_repo
+from ..domain.lifecycle import LifecycleManager
+from ..utils.llmstxt import LLMsTxtManager
 from .templates import TemplateManager
 
 
@@ -179,7 +180,7 @@ class Project:
 
         # 多开发者模式：初始化开发者上下文
         if multi_dev_enabled:
-            from .developer import ContextAggregator, DeveloperManager
+            from ..domain.developer import ContextAggregator, DeveloperManager
 
             dm = DeveloperManager(self.output_dir, self.config)
             current_dev = dm.get_current_developer()
@@ -410,7 +411,7 @@ class Project:
         for i, milestone in enumerate(milestones, 1):
             name = milestone.get("name", f"里程碑 {i}")
             completed = milestone.get("completed", False)
-            status = "✅" if completed else "⏳"
+            status = EMOJI["success"] if completed else EMOJI["hourglass"]
             lines.append(f"- {status} {name}")
 
         return "\n".join(lines)

@@ -6,7 +6,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from vibecollab.protocol_checker import CheckResult, ProtocolChecker
+from vibecollab.core.protocol_checker import CheckResult, ProtocolChecker
 
 
 class TestProtocolChecker:

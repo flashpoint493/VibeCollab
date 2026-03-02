@@ -18,15 +18,14 @@ from typing import Dict, List, Optional
 
 import click
 import yaml
-from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from ._compat import BULLET
+from .._compat import BULLET, EMOJI, safe_console
 
 logger = logging.getLogger(__name__)
 
-console = Console()
+console = safe_console()
 
 
 def _search_related_insights(
@@ -41,8 +40,8 @@ def _search_related_insights(
         return []
 
     try:
-        from .embedder import Embedder, EmbedderConfig
-        from .vector_store import VectorStore
+        from ..insight.embedder import Embedder, EmbedderConfig
+        from ..search.vector_store import VectorStore
 
         # 从已有 DB 推断维度
         import sqlite3
@@ -303,7 +302,7 @@ def _collect_project_context(
     active_tasks: List[Dict] = []
     task_summary: Dict = {"total": 0, "todo": 0, "in_progress": 0, "review": 0, "done": 0}
     try:
-        from .task_manager import TaskManager
+        from ..domain.task_manager import TaskManager
         tm = TaskManager(project_root=project_root)
         all_tasks = tm.list_tasks()
         task_summary["total"] = len(all_tasks)
@@ -324,7 +323,7 @@ def _collect_project_context(
     # EventLog 最近事件
     recent_events: List[Dict] = []
     try:
-        from .event_log import EventLog
+        from ..domain.event_log import EventLog
         el = EventLog(project_root=project_root)
         for evt in el.read_recent(5):
             recent_events.append({
@@ -588,7 +587,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         path = kf.get("path", "")
         purpose = kf.get("purpose", "")
         exists = (project_root / path).exists()
-        status = "[green]✓[/green]" if exists else "[red]✗[/red]"
+        status = f"[green]{EMOJI['check']}[/green]" if exists else f"[red]{EMOJI['cross']}[/red]"
         table.add_row(path, purpose, status)
     console.print(table)
 
@@ -989,7 +988,7 @@ def next_step(config: str, as_json: bool):
 
     # P1~P2: Task 状态推荐行动
     try:
-        from .task_manager import TaskManager
+        from ..domain.task_manager import TaskManager
         tm = TaskManager(project_root=project_root)
         all_tasks = tm.list_tasks()
 

@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
-from vibecollab.agent_executor import (
+from vibecollab.agent.executor import (
     MAX_FILES_PER_CYCLE,
     AgentExecutor,
     ExecutionResult,
@@ -402,7 +402,7 @@ class TestRunTestsEdgeCases:
         """测试超时处理."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
-            with mock.patch("vibecollab.agent_executor.subprocess.run",
+            with mock.patch("vibecollab.agent.executor.subprocess.run",
                             side_effect=subprocess.TimeoutExpired(cmd="test", timeout=300)):
                 passed, output = exe.run_tests("dummy_cmd")
                 assert not passed
@@ -412,7 +412,7 @@ class TestRunTestsEdgeCases:
         """测试执行异常处理."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
-            with mock.patch("vibecollab.agent_executor.subprocess.run",
+            with mock.patch("vibecollab.agent.executor.subprocess.run",
                             side_effect=OSError("command not found")):
                 passed, output = exe.run_tests("nonexistent_cmd")
                 assert not passed
@@ -630,7 +630,7 @@ class TestPIDLockConcurrency:
 
     def test_acquire_release_cycle(self):
         """获取 → 释放 → 再获取 正常工作."""
-        from vibecollab.cli_ai import _acquire_lock, _release_lock
+        from vibecollab.cli.ai import _acquire_lock, _release_lock
         with tempfile.TemporaryDirectory() as tmpdir:
             lock_path = Path(tmpdir) / "agent.pid"
 
@@ -644,7 +644,7 @@ class TestPIDLockConcurrency:
 
     def test_stale_lock_takeover(self):
         """陈旧锁被接管."""
-        from vibecollab.cli_ai import _acquire_lock
+        from vibecollab.cli.ai import _acquire_lock
         with tempfile.TemporaryDirectory() as tmpdir:
             lock_path = Path(tmpdir) / "agent.pid"
             lock_path.write_text("999999999")  # 不存在的 PID
@@ -654,7 +654,7 @@ class TestPIDLockConcurrency:
 
     def test_active_lock_rejected(self):
         """活跃锁被拒绝."""
-        from vibecollab.cli_ai import _acquire_lock
+        from vibecollab.cli.ai import _acquire_lock
         with tempfile.TemporaryDirectory() as tmpdir:
             lock_path = Path(tmpdir) / "agent.pid"
             lock_path.write_text(str(os.getpid()))  # 当前进程
@@ -671,7 +671,7 @@ class TestAdaptiveBackoffEdge:
 
     def test_backoff_respects_max(self):
         """退避时间不超过 max_sleep."""
-        from vibecollab.cli_ai import DEFAULT_MAX_SLEEP_S, DEFAULT_MIN_SLEEP_S
+        from vibecollab.cli.ai import DEFAULT_MAX_SLEEP_S, DEFAULT_MIN_SLEEP_S
         current = DEFAULT_MIN_SLEEP_S
         for _ in range(20):
             current = min(DEFAULT_MAX_SLEEP_S, max(DEFAULT_MIN_SLEEP_S, current * 2))
@@ -679,7 +679,7 @@ class TestAdaptiveBackoffEdge:
 
     def test_backoff_resets_on_success(self):
         """成功后退避重置为 min_sleep."""
-        from vibecollab.cli_ai import DEFAULT_MIN_SLEEP_S
+        from vibecollab.cli.ai import DEFAULT_MIN_SLEEP_S
         # 模拟：5 次失败后 1 次成功
         current = DEFAULT_MIN_SLEEP_S
         for _ in range(5):

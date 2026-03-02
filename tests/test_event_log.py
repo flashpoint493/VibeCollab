@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from vibecollab.event_log import Event, EventLog, EventType, _atomic_append
+from vibecollab.domain.event_log import Event, EventLog, EventType, _atomic_append
 
 # ---------------------------------------------------------------------------
 # Event dataclass tests

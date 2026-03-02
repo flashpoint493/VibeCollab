@@ -3,7 +3,7 @@
 import subprocess
 from unittest.mock import MagicMock, patch
 
-from vibecollab.git_utils import (
+from vibecollab.utils.git import (
     check_git_installed,
     ensure_git_repo,
     get_git_status,
@@ -14,11 +14,11 @@ from vibecollab.git_utils import (
 
 class TestCheckGitInstalled:
     def test_git_available(self):
-        with patch("vibecollab.git_utils.shutil.which", return_value="/usr/bin/git"):
+        with patch("vibecollab.utils.git.shutil.which", return_value="/usr/bin/git"):
             assert check_git_installed() is True
 
     def test_git_not_available(self):
-        with patch("vibecollab.git_utils.shutil.which", return_value=None):
+        with patch("vibecollab.utils.git.shutil.which", return_value=None):
             assert check_git_installed() is False
 
 
@@ -37,7 +37,7 @@ class TestIsGitRepo:
 
 class TestInitGitRepo:
     def test_git_not_installed(self, tmp_path):
-        with patch("vibecollab.git_utils.check_git_installed", return_value=False):
+        with patch("vibecollab.utils.git.check_git_installed", return_value=False):
             success, error = init_git_repo(tmp_path)
             assert success is False
             assert "未安装" in error
@@ -58,8 +58,8 @@ class TestInitGitRepo:
             result.returncode = 0
             return result
 
-        with patch("vibecollab.git_utils.check_git_installed", return_value=True), \
-             patch("vibecollab.git_utils.subprocess.run", side_effect=mock_run):
+        with patch("vibecollab.utils.git.check_git_installed", return_value=True), \
+             patch("vibecollab.utils.git.subprocess.run", side_effect=mock_run):
             success, error = init_git_repo(tmp_path, initial_commit=True)
             assert success is True
             assert error is None
@@ -72,22 +72,22 @@ class TestInitGitRepo:
             result.returncode = 0
             return result
 
-        with patch("vibecollab.git_utils.check_git_installed", return_value=True), \
-             patch("vibecollab.git_utils.subprocess.run", side_effect=mock_run):
+        with patch("vibecollab.utils.git.check_git_installed", return_value=True), \
+             patch("vibecollab.utils.git.subprocess.run", side_effect=mock_run):
             success, error = init_git_repo(tmp_path, initial_commit=True)
             assert success is True
 
     def test_init_called_process_error(self, tmp_path):
-        with patch("vibecollab.git_utils.check_git_installed", return_value=True), \
-             patch("vibecollab.git_utils.subprocess.run",
+        with patch("vibecollab.utils.git.check_git_installed", return_value=True), \
+             patch("vibecollab.utils.git.subprocess.run",
                    side_effect=subprocess.CalledProcessError(1, "git", stderr="fail")):
             success, error = init_git_repo(tmp_path)
             assert success is False
             assert "失败" in error
 
     def test_init_generic_exception(self, tmp_path):
-        with patch("vibecollab.git_utils.check_git_installed", return_value=True), \
-             patch("vibecollab.git_utils.subprocess.run",
+        with patch("vibecollab.utils.git.check_git_installed", return_value=True), \
+             patch("vibecollab.utils.git.subprocess.run",
                    side_effect=OSError("boom")):
             success, error = init_git_repo(tmp_path)
             assert success is False
@@ -96,14 +96,14 @@ class TestInitGitRepo:
 
 class TestEnsureGitRepo:
     def test_git_not_installed_no_auto(self, tmp_path):
-        with patch("vibecollab.git_utils.check_git_installed", return_value=False):
+        with patch("vibecollab.utils.git.check_git_installed", return_value=False):
             ok, err, is_new = ensure_git_repo(tmp_path, auto_init=False)
             assert ok is False
             assert "未安装" in err
             assert is_new is False
 
     def test_git_not_installed_auto(self, tmp_path):
-        with patch("vibecollab.git_utils.check_git_installed", return_value=False):
+        with patch("vibecollab.utils.git.check_git_installed", return_value=False):
             ok, err, is_new = ensure_git_repo(tmp_path, auto_init=True)
             assert ok is False
             assert "安装" in err
@@ -117,22 +117,22 @@ class TestEnsureGitRepo:
         assert is_new is False
 
     def test_auto_init_success(self, tmp_path):
-        with patch("vibecollab.git_utils.check_git_installed", return_value=True), \
-             patch("vibecollab.git_utils.init_git_repo", return_value=(True, None)):
+        with patch("vibecollab.utils.git.check_git_installed", return_value=True), \
+             patch("vibecollab.utils.git.init_git_repo", return_value=(True, None)):
             ok, err, is_new = ensure_git_repo(tmp_path, auto_init=True)
             assert ok is True
             assert is_new is True
 
     def test_auto_init_failure(self, tmp_path):
-        with patch("vibecollab.git_utils.check_git_installed", return_value=True), \
-             patch("vibecollab.git_utils.init_git_repo", return_value=(False, "fail")):
+        with patch("vibecollab.utils.git.check_git_installed", return_value=True), \
+             patch("vibecollab.utils.git.init_git_repo", return_value=(False, "fail")):
             ok, err, is_new = ensure_git_repo(tmp_path, auto_init=True)
             assert ok is False
             assert err == "fail"
             assert is_new is False
 
     def test_no_auto_init_not_repo(self, tmp_path):
-        with patch("vibecollab.git_utils.check_git_installed", return_value=True):
+        with patch("vibecollab.utils.git.check_git_installed", return_value=True):
             ok, err, is_new = ensure_git_repo(tmp_path, auto_init=False)
             assert ok is False
             assert "不是 Git 仓库" in err
@@ -156,7 +156,7 @@ class TestGetGitStatus:
                 result.stdout = "M file.txt\n"
             return result
 
-        with patch("vibecollab.git_utils.subprocess.run", side_effect=mock_run):
+        with patch("vibecollab.utils.git.subprocess.run", side_effect=mock_run):
             status = get_git_status(tmp_path)
             assert status["branch"] == "main"
             assert status["commit_count"] == 42
@@ -176,7 +176,7 @@ class TestGetGitStatus:
                 result.stdout = ""
             return result
 
-        with patch("vibecollab.git_utils.subprocess.run", side_effect=mock_run):
+        with patch("vibecollab.utils.git.subprocess.run", side_effect=mock_run):
             status = get_git_status(tmp_path)
             assert status["branch"] == "dev"
             assert status["commit_count"] == 0
@@ -184,5 +184,5 @@ class TestGetGitStatus:
 
     def test_exception_returns_none(self, tmp_path):
         (tmp_path / ".git").mkdir()
-        with patch("vibecollab.git_utils.subprocess.run", side_effect=OSError("boom")):
+        with patch("vibecollab.utils.git.subprocess.run", side_effect=OSError("boom")):
             assert get_git_status(tmp_path) is None

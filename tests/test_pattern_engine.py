@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from vibecollab.generator import LLMContextGenerator
-from vibecollab.pattern_engine import (
+from vibecollab.core.generator import LLMContextGenerator
+from vibecollab.core.pattern_engine import (
     PATTERNS_DIR,
     PatternEngine,
     _filter_format_review,

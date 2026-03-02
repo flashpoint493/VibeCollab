@@ -1,490 +1,524 @@
+# LLM Collaboration Protocol - 项目配置模板
+# 使用此模板配置你的项目，然后通过生成器生成 CONTRIBUTING_AI.md
+
+# ============================================
+# 项目基本信息
+# ============================================
 project:
-  name: VibeCollab
-  version: v0.8.0-dev
-  domain: generic
-  description: AI 协作开发框架，支持 Insight 沉淀、文档一致性检查、三模式 CLI
+  name: "MyProject"
+  version: "v1.0"
+  domain: "generic"  # game/web/mobile/data/infra/generic
+  description: "项目描述"
+
+# ============================================
+# 核心理念
+# ============================================
 philosophy:
   vibe_development:
     enabled: true
     principles:
-    - AI 不是执行者，而是协作伙伴
-    - 不急于产出代码，先对齐理解
-    - 每个决策都是共同思考的结果
-    - 对话本身就是设计过程的一部分
+      - "AI 不是执行者，而是协作伙伴"
+      - "不急于产出代码，先对齐理解"
+      - "每个决策都是共同思考的结果"
+      - "对话本身就是设计过程的一部分"
   decision_quality:
     target_rate: 0.9
     critical_tolerance: 0
   long_term_dialogue: true
+
+# ============================================
+# 职能角色定义
+# ============================================
 roles:
-- code: DESIGN
-  name: 协议设计
-  focus:
-  - Schema设计
-  - 协议演进
-  - 用户体验
-  triggers:
-  - 设计
-  - 协议
-  - Schema
-  is_gatekeeper: false
-- code: ARCH
-  name: 架构
-  focus:
-  - 模块结构
-  - 扩展机制
-  - 性能
-  triggers:
-  - 架构
-  - 重构
-  - 模块
-  is_gatekeeper: false
-- code: DEV
-  name: 开发
-  focus:
-  - 功能实现
-  - Bug修复
-  triggers:
-  - 开发
-  - 实现
-  - 代码
-  is_gatekeeper: false
-- code: PM
-  name: 项目管理
-  focus:
-  - 里程碑
-  - 发布
-  - 优先级
-  triggers:
-  - 规划
-  - 发布
-  - 里程碑
-  is_gatekeeper: false
-- code: QA
-  name: 产品质量保证
-  focus:
-  - 验收测试
-  - 用户体验验证
-  triggers:
-  - 验收
-  - 体验测试
-  is_gatekeeper: true
-- code: TEST
-  name: 单元测试
-  focus:
-  - pytest
-  - 覆盖率
-  triggers:
-  - 单元测试
-  - pytest
-  is_gatekeeper: false
+  - code: "DESIGN"
+    name: "产品设计"
+    focus: ["需求", "体验", "交互"]
+    triggers: ["设计", "需求", "产品"]
+    is_gatekeeper: false
+
+  - code: "ARCH"
+    name: "架构"
+    focus: ["底层结构", "性能", "可扩展性"]
+    triggers: ["架构", "底层", "重构"]
+    is_gatekeeper: false
+
+  - code: "DEV"
+    name: "开发"
+    focus: ["具体实现", "Bug修复"]
+    triggers: ["开发", "实现", "代码"]
+    is_gatekeeper: false
+
+  - code: "PM"
+    name: "项目管理"
+    focus: ["里程碑", "优先级", "进度"]
+    triggers: ["规划", "排期", "优先级"]
+    is_gatekeeper: false
+
+  - code: "QA"
+    name: "产品质量保证"
+    focus: ["验收测试", "用户体验验证", "边界情况"]
+    triggers: ["验收", "体验测试", "功能验证"]
+    is_gatekeeper: true
+
+  - code: "TEST"
+    name: "单元测试"
+    focus: ["代码测试", "覆盖率", "自动化测试"]
+    triggers: ["单元测试", "测试用例", "coverage"]
+    is_gatekeeper: false
+
+# ============================================
+# 决策分级
+# ============================================
 decision_levels:
-- level: S
-  name: 战略决策
-  scope: 整体方向、核心功能
-  review:
-    required: true
-    mode: sync
-    human_confirm: true
-- level: A
-  name: 架构决策
-  scope: 系统设计、数据结构
-  review:
-    required: true
-    mode: async
-    human_confirm: true
-- level: B
-  name: 实现决策
-  scope: 具体方案选择
-  review:
-    required: false
-    mode: auto
-    human_confirm: false
-- level: C
-  name: 细节决策
-  scope: 参数、命名、格式
-  review:
-    required: false
-    mode: none
-    human_confirm: false
+  - level: "S"
+    name: "战略决策"
+    scope: "整体方向、核心功能"
+    review:
+      required: true
+      mode: "sync"
+      human_confirm: true
+
+  - level: "A"
+    name: "架构决策"
+    scope: "系统设计、数据结构"
+    review:
+      required: true
+      mode: "async"
+      human_confirm: true
+
+  - level: "B"
+    name: "实现决策"
+    scope: "具体方案选择"
+    review:
+      required: false
+      mode: "auto"
+      human_confirm: false
+
+  - level: "C"
+    name: "细节决策"
+    scope: "参数、命名、格式"
+    review:
+      required: false
+      mode: "none"
+      human_confirm: false
+
+# ============================================
+# 任务单元
+# ============================================
 task_unit:
-  id_pattern: TASK-{role}-{seq}
+  id_pattern: "TASK-{role}-{seq}"
   statuses:
-  - TODO
-  - IN_PROGRESS
-  - REVIEW
-  - DONE
+    - "TODO"
+    - "IN_PROGRESS"
+    - "REVIEW"
+    - "DONE"
   required_fields:
-  - id
-  - role
-  - feature
-  - dependencies
-  - output
-  - status
-  - dialogue_rounds
+    - "id"
+    - "role"
+    - "feature"
+    - "dependencies"
+    - "output"
+    - "status"
+    - "dialogue_rounds"
+
+# ============================================
+# 对话流程协议
+# ============================================
 dialogue_protocol:
   on_start:
     read_files:
-    - docs/CONTEXT.md
-    - CONTRIBUTING_AI.md
+      - "docs/CONTEXT.md"
+      - "CONTRIBUTING_AI.md"
     actions:
-    - 了解当前进度
-    - 确认用户本次对话目标
+      - "了解当前进度"
+      - "确认用户本次对话目标"
+
   on_end:
     update_files:
-    - docs/CONTEXT.md
-    - docs/CHANGELOG.md
+      - "docs/CONTEXT.md"
+      - "docs/CHANGELOG.md"
     git_commit: true
+
   standard_flow:
-  - step: 1
-    actor: human
-    action: 提出需求/问题
-  - step: 2
-    actor: ai
-    action: 识别角色，分析问题
-  - step: 3
-    actor: ai
-    action: S/A级决策请求确认，B/C级自主执行
-    condition: decision_level in [S, A]
-  - step: 4
-    actor: ai
-    action: 执行任务，输出结果
-  - step: 5
-    actor: ai
-    action: 更新测试用例（如为功能开发）
-    condition: task_type == feature
-  - step: 6
-    actor: ai
-    action: 总结进展，提示下一步
-  - step: 7
-    actor: human
-    action: 确认/修正/继续
-  - step: 8
-    actor: ai
-    action: Git 提交记录
+    - step: 1
+      actor: "human"
+      action: "提出需求/问题"
+    - step: 2
+      actor: "ai"
+      action: "识别角色，分析问题"
+    - step: 3
+      actor: "ai"
+      action: "S/A级决策请求确认，B/C级自主执行"
+      condition: "decision_level in [S, A]"
+    - step: 4
+      actor: "ai"
+      action: "执行任务，输出结果"
+    - step: 5
+      actor: "ai"
+      action: "更新测试用例（如为功能开发）"
+      condition: "task_type == feature"
+    - step: 6
+      actor: "ai"
+      action: "总结进展，提示下一步"
+    - step: 7
+      actor: "human"
+      action: "确认/修正/继续"
+    - step: 8
+      actor: "ai"
+      action: "Git 提交记录"
+
+# ============================================
+# 需求澄清协议
+# ============================================
 requirement_clarification:
   enabled: true
   trigger_conditions:
-  - 描述模糊或不完整
-  - 缺少具体验收标准
-  - 可能有多种理解方式
-  - 涉及 S/A 级决策
+    - "描述模糊或不完整"
+    - "缺少具体验收标准"
+    - "可能有多种理解方式"
+    - "涉及 S/A 级决策"
   clarification_questions:
-  - 你希望达到什么效果？
-  - 有没有参考案例？
-  - 这个功能谁会用？在什么场景下用？
-  - 如何验证这个功能是否完成？
-  - 有时间或资源约束吗？
+    - "你希望达到什么效果？"
+    - "有没有参考案例？"
+    - "这个功能谁会用？在什么场景下用？"
+    - "如何验证这个功能是否完成？"
+    - "有时间或资源约束吗？"
+
+# ============================================
+# Git 工作流
+# ============================================
 git_workflow:
   branches:
-    main: main
-    dev: dev
-    feature_prefix: feature/
-    fix_prefix: fix/
-    design_prefix: design/
-    refactor_prefix: refactor/
+    main: "main"
+    dev: "dev"
+    feature_prefix: "feature/"
+    fix_prefix: "fix/"
+    design_prefix: "design/"
+    refactor_prefix: "refactor/"
+
   commit_prefixes:
-  - prefix: '[DESIGN]'
-    description: 设计文档变更
-    roles:
-    - DESIGN
-  - prefix: '[ARCH]'
-    description: 架构调整
-    roles:
-    - ARCH
-  - prefix: '[FEAT]'
-    description: 新功能
-    roles:
-    - DEV
-  - prefix: '[FIX]'
-    description: Bug修复
-    roles:
-    - DEV
-    - QA
-  - prefix: '[CONFIG]'
-    description: 配置调整（不改逻辑）
-    roles:
-    - DEV
-  - prefix: '[REFACTOR]'
-    description: 重构
-    roles:
-    - ARCH
-    - DEV
-  - prefix: '[DOC]'
-    description: 文档更新
-    roles:
-    - PM
-    - DESIGN
-  - prefix: '[TEST]'
-    description: 测试相关
-    roles:
-    - TEST
-    - QA
-  - prefix: '[VIBE]'
-    description: 协作流程更新
-    roles:
-    - PM
+    - prefix: "[DESIGN]"
+      description: "设计文档变更"
+      roles: ["DESIGN"]
+    - prefix: "[ARCH]"
+      description: "架构调整"
+      roles: ["ARCH"]
+    - prefix: "[FEAT]"
+      description: "新功能"
+      roles: ["DEV"]
+    - prefix: "[FIX]"
+      description: "Bug修复"
+      roles: ["DEV", "QA"]
+    - prefix: "[CONFIG]"
+      description: "配置调整（不改逻辑）"
+      roles: ["DEV"]
+    - prefix: "[REFACTOR]"
+      description: "重构"
+      roles: ["ARCH", "DEV"]
+    - prefix: "[DOC]"
+      description: "文档更新"
+      roles: ["PM", "DESIGN"]
+    - prefix: "[TEST]"
+      description: "测试相关"
+      roles: ["TEST", "QA"]
+    - prefix: "[VIBE]"
+      description: "协作流程更新"
+      roles: ["PM"]
+
   commit_required: true
+
+# ============================================
+# 测试体系
+# ============================================
 testing:
+  # 单元测试（开发者视角 - 代码正确性）
   unit_test:
     enabled: true
-    framework: pytest
+    framework: "jest"  # jest/pytest/mocha/go-test/...
     coverage_target: 0.8
     patterns:
-    - 'tests/test_*.py'
+      - "**/*.test.ts"
+      - "**/*.spec.ts"
     run_on:
-    - pre-commit
-    - ci
+      - "pre-commit"
+      - "ci"
     required_for_merge: true
+
+  # 产品QA（用户视角 - 功能验收）
   product_qa:
     enabled: true
-    test_case_file: docs/QA_TEST_CASES.md
-    case_id_pattern: TC-{module}-{seq}
+    test_case_file: "docs/QA_TEST_CASES.md"
+    case_id_pattern: "TC-{module}-{seq}"
     required_fields:
-    - id
-    - feature
-    - precondition
-    - steps
-    - expected
-    - status
+      - "id"
+      - "feature"
+      - "precondition"
+      - "steps"
+      - "expected"
+      - "status"
     statuses:
-    - symbol: 🟢
-      meaning: PASS
-    - symbol: 🟡
-      meaning: PARTIAL
-    - symbol: 🔴
-      meaning: FAIL
-    - symbol: ⚪
-      meaning: SKIP
+      - symbol: "🟢"
+        meaning: "PASS"
+      - symbol: "🟡"
+        meaning: "PARTIAL"
+      - symbol: "🔴"
+        meaning: "FAIL"
+      - symbol: "⚪"
+        meaning: "SKIP"
+
+# ============================================
+# 里程碑
+# ============================================
 milestone:
   lifecycle:
-  - phase: feature_dev
-    description: 特性开发期
-    exit_criteria:
-    - 所有计划特性完成
-    - 快速验收通过
-  - phase: feature_freeze
-    description: 特性冻结
-    exit_criteria:
-    - 不再添加新功能
-    - 构建成功
-  - phase: bug_fix
-    description: Bug 修复期
-    exit_criteria:
-    - P0/P1 问题清零
-    - 测试通过率达标
-  - phase: acceptance
-    description: 里程碑验收
-    exit_criteria:
-    - QA 全量测试通过
-    - 单元测试覆盖率达标
-    - 已知问题清零或标记延后
-  - phase: retrospective
-    description: 版本回顾
-    exit_criteria:
-    - 回顾测试表现
-    - 收集用户反馈
-    - 补充新需求到下一阶段
-  tag_pattern: v{major}.{minor}.{patch}
-  roadmap_file: docs/ROADMAP.md
+    - phase: "feature_dev"
+      description: "特性开发期"
+      exit_criteria:
+        - "所有计划特性完成"
+        - "快速验收通过"
+
+    - phase: "feature_freeze"
+      description: "特性冻结"
+      exit_criteria:
+        - "不再添加新功能"
+        - "构建成功"
+
+    - phase: "bug_fix"
+      description: "Bug 修复期"
+      exit_criteria:
+        - "P0/P1 问题清零"
+        - "测试通过率达标"
+
+    - phase: "acceptance"
+      description: "里程碑验收"
+      exit_criteria:
+        - "QA 全量测试通过"
+        - "单元测试覆盖率达标"
+        - "已知问题清零或标记延后"
+
+    - phase: "retrospective"
+      description: "版本回顾"
+      exit_criteria:
+        - "回顾测试表现"
+        - "收集用户反馈"
+        - "补充新需求到下一阶段"
+
+  tag_pattern: "v{major}.{minor}.{patch}"
+  roadmap_file: "docs/ROADMAP.md"
   bug_priority:
-  - level: P0
-    description: 崩溃/阻断
-  - level: P1
-    description: 功能异常
-  - level: P2
-    description: 体验问题
-  - level: P3
-    description: 优化建议
+    - level: "P0"
+      description: "崩溃/阻断"
+    - level: "P1"
+      description: "功能异常"
+    - level: "P2"
+      description: "体验问题"
+    - level: "P3"
+      description: "优化建议"
+
+# ============================================
+# 迭代管理
+# ============================================
 iteration:
   suggestion_pool:
-    file: docs/ROADMAP.md
-    section: 迭代建议池
+    file: "docs/ROADMAP.md"
+    section: "迭代建议池"
     categories:
-    - symbol: ✅
-      meaning: 纳入当前里程碑
-    - symbol: ⏳
-      meaning: 延后到下个里程碑
-    - symbol: ❌
-      meaning: 拒绝（不符合方向）
-    - symbol: 🔄
-      meaning: 合并其他迭代
+      - symbol: "✅"
+        meaning: "纳入当前里程碑"
+      - symbol: "⏳"
+        meaning: "延后到下个里程碑"
+      - symbol: "❌"
+        meaning: "拒绝（不符合方向）"
+      - symbol: "🔄"
+        meaning: "合并其他迭代"
+
   config_level_iteration:
     enabled: true
-    commit_prefix: '[CONFIG]'
+    commit_prefix: "[CONFIG]"
     skip_pm_review: true
     examples:
-    - 数值参数调整
-    - 配置文件修改
-    - 样式/主题变更
-    - 文案/文本修改
+      - "数值参数调整"
+      - "配置文件修改"
+      - "样式/主题变更"
+      - "文案/文本修改"
+
   review_dimensions:
-  - 与当前任务的依赖/冲突关系
-  - 对用户体验的影响程度
-  - 开发成本和技术复杂度
-  - 里程碑剩余时间约束
+    - "与当前任务的依赖/冲突关系"
+    - "对用户体验的影响程度"
+    - "开发成本和技术复杂度"
+    - "里程碑剩余时间约束"
+
+# ============================================
+# 版本回顾
+# ============================================
 version_review:
   enabled: true
-  timing: 里程碑验收完成后
+  timing: "里程碑验收完成后"
   review_items:
-  - 测试表现（通过率、问题分布）
-  - 用户体验反馈
-  - 技术债务
-  - 迭代建议池
+    - "测试表现（通过率、问题分布）"
+    - "用户体验反馈"
+    - "技术债务"
+    - "迭代建议池"
+
+# ============================================
+# 构建配置
+# ============================================
 build:
   enabled: true
-  command: python -m build
-  dist_entry: dist/*.whl
+  command: "npm run build"
+  dist_entry: "dist/index.html"
   timing:
-  - 里程碑全量验收前
-  - Bug修复期集中测试
-  - 准备分发/演示版本
+    - "里程碑全量验收前"
+    - "Bug修复期集中测试"
+    - "准备分发/演示版本"
+
+# ============================================
+# 快速验收
+# ============================================
 quick_acceptance:
   enabled: true
-  start_command: pytest
+  start_command: "npm run dev"
   reply_formats:
-    pass: ✅
-    issue: '⚠️ 问题:'
-    skip: 跳过
+    pass: "✅"
+    issue: "⚠️ 问题:"
+    skip: "跳过"
+
+# ============================================
+# Prompt 工程
+# ============================================
 prompt_engineering:
   enabled: true
   role_templates:
-    DESIGN: '[DESIGN] 我想讨论{系统名称}的设计
-
+    DESIGN: |
+      [DESIGN] 我想讨论{系统名称}的设计
       当前想法是: {描述}
-
       主要顾虑: {顾虑}
-
       请从用户体验角度分析
-
-      '
-    ARCH: '[ARCH] 我需要设计{模块名}的架构
-
+    ARCH: |
+      [ARCH] 我需要设计{模块名}的架构
       需求: {功能需求}
-
       约束: {性能/兼容性约束}
-
       请给出2-3个方案对比
-
-      '
-    DEV: '[DEV] 请实现{功能}
-
+    DEV: |
+      [DEV] 请实现{功能}
       输入: {输入描述}
-
       输出: {期望输出}
-
       相关文件: {文件路径}
 
-      '
-confirmed_decisions:
-- id: '001'
-  title: YAML 配置驱动
-  choice: YAML + Jinja2 模板
-  reason: 可读性强，易于扩展
-- id: '002'
-  title: 扩展机制
-  choice: 钩子 + 上下文注入
-  reason: 解耦核心和领域特定逻辑
-- id: '003'
-  title: CLI 框架
-  choice: Click
-  reason: 轻量、Pythonic
+# ============================================
+# 已确认决策 (项目运行中填充)
+# ============================================
+confirmed_decisions: []
+# 示例:
+# - id: "001"
+#   title: "技术框架选择"
+#   choice: "React + TypeScript"
+#   reason: "团队熟悉，生态完善"
+
+# ============================================
+# 文档迭代日志 (CONTRIBUTING_AI.md 自身的版本历史)
+# ============================================
 contributing_ai_changelog: []
+# 示例:
+# - version: "v1.0"
+#   date: "2026-01-20"
+#   changes: "初始版本"
+
+# ============================================
+# 文档体系
+# ============================================
 documentation:
   key_files:
-  - path: CONTRIBUTING_AI.md
-    purpose: AI 协作规则，顶层指导
-    update_trigger: 协作方式演进时
-  - path: llms.txt
-    purpose: 项目上下文摘要 (llmstxt.org 标准)
-    update_trigger: 项目信息变更时
-  - path: docs/CONTEXT.md
-    purpose: 当前开发上下文
-    update_trigger: 每次对话结束时
-  - path: docs/DECISIONS.md
-    purpose: 重要决策记录
-    update_trigger: 每次 S/A 级决策后
-    max_stale_days: 7
-    watch_files:
-    - docs/CHANGELOG.md
-    - docs/CONTEXT.md
-  - path: docs/CHANGELOG.md
-    purpose: 版本变更日志
-    update_trigger: 每次有效对话后
-  - path: docs/QA_TEST_CASES.md
-    purpose: 产品QA测试用例
-    update_trigger: 每个功能完成时
-    max_stale_days: 7
-  - path: docs/PRD.md
-    purpose: 产品需求文档
-    update_trigger: 需求变更时
-    max_stale_days: 14
-    watch_files:
-    - docs/DECISIONS.md
-  - path: docs/ROADMAP.md
-    purpose: 路线图+迭代建议
-    update_trigger: 里程碑规划/反馈时
-    max_stale_days: 14
-  context_file: docs/CONTEXT.md
-  changelog_file: docs/CHANGELOG.md
-  decisions_file: docs/DECISIONS.md
-  consistency:
-    enabled: true
-    default_level: local_mtime
-    linked_groups:
-    - name: PRD-DECISIONS
-      description: 需求文档与决策文档强关联，决策变更时需检查需求是否同步
-      files:
-      - docs/PRD.md
-      - docs/DECISIONS.md
-      level: local_mtime
-      threshold_minutes: 15
-      max_inactive_hours: -1
-    - name: ROADMAP-CHANGELOG
-      description: 路线图与变更日志关联，版本发布时应保持一致
-      files:
-      - docs/ROADMAP.md
-      - docs/CHANGELOG.md
-      level: git_commit
-    - name: CONTEXT-CHANGELOG
-      description: 上下文与变更日志在对话结束时应同步更新
-      files:
-      - docs/CONTEXT.md
-      - docs/CHANGELOG.md
-      level: local_mtime
-      threshold_minutes: 15
+    - path: "CONTRIBUTING_AI.md"
+      purpose: "AI 协作规则，顶层指导"
+      update_trigger: "协作方式演进时"
+
+    - path: "llms.txt"
+      purpose: "项目上下文摘要 (llmstxt.org 标准)"
+      update_trigger: "项目信息变更时"
+
+    - path: "docs/CONTEXT.md"
+      purpose: "当前开发上下文"
+      update_trigger: "每次对话结束时"
+
+    - path: "docs/DECISIONS.md"
+      purpose: "重要决策记录"
+      update_trigger: "每次 S/A 级决策后"
+
+    - path: "docs/CHANGELOG.md"
+      purpose: "版本变更日志"
+      update_trigger: "每次有效对话后"
+
+    - path: "docs/QA_TEST_CASES.md"
+      purpose: "产品QA测试用例"
+      update_trigger: "每个功能完成时"
+
+    - path: "docs/PRD.md"
+      purpose: "产品需求文档"
+      update_trigger: "需求变更时"
+
+    - path: "docs/ROADMAP.md"
+      purpose: "路线图+迭代建议"
+      update_trigger: "里程碑规划/反馈时"
+
+  context_file: "docs/CONTEXT.md"
+  changelog_file: "docs/CHANGELOG.md"
+  decisions_file: "docs/DECISIONS.md"
+
+# ============================================
+# 多开发者支持 (v0.5.0+)
+# ============================================
 multi_developer:
-  enabled: true
+  enabled: false  # 默认关闭，通过 --multi-dev 开启
+  
+  # 开发者身份识别策略
   identity:
-    primary: git_username
-    fallback: system_user
-    normalize: true
+    primary: "git_username"        # git_username / system_user / manual
+    fallback: "system_user"        # 主策略失败时的降级方案
+    normalize: true                # 标准化名称（小写、替换空格为下划线）
+  
+  # 上下文管理
   context:
-    per_developer_dir: docs/developers
-    global_aggregation: true
-    aggregation_file: docs/CONTEXT.md
-    metadata_file: .metadata.yaml
-    auto_sync: true
-    directory: docs/developers
+    per_developer_dir: "docs/developers"     # 各开发者上下文目录
+    global_aggregation: true                 # 是否生成全局聚合视图
+    aggregation_file: "docs/CONTEXT.md"      # 全局聚合文件路径
+    metadata_file: ".metadata.yaml"          # 元数据文件名
+    auto_sync: true                          # 对话结束时自动触发聚合
+  
+  # 协作管理
   collaboration:
     enabled: true
-    file: docs/developers/COLLABORATION.md
-    track_dependencies: true
-    track_handoffs: true
+    file: "docs/developers/COLLABORATION.md"
+    track_dependencies: true       # 跟踪任务依赖
+    track_handoffs: true           # 跟踪任务交接
+  
+  # 对话流程变更（多开发者模式下）
   dialogue_protocol:
     on_start:
       read_files:
-      - docs/CONTEXT.md
-      - docs/developers/{developer}/CONTEXT.md
-      - docs/developers/COLLABORATION.md
+        - "docs/CONTEXT.md"                           # 读全局聚合视图
+        - "docs/developers/{developer}/CONTEXT.md"    # 读自己的上下文
+        - "docs/developers/COLLABORATION.md"          # 读协作文档
+        - "CONTRIBUTING_AI.md"
     on_end:
       update_files:
-      - docs/developers/{developer}/CONTEXT.md
-      - docs/CHANGELOG.md
-      aggregate_context: true
+        - "docs/developers/{developer}/CONTEXT.md"    # 更新自己的上下文
+        - "docs/CHANGELOG.md"                         # 更新全局 CHANGELOG
+      aggregate_context: true                         # 重新生成全局聚合
       git_commit: true
-      trigger_aggregation: true
+
+# ============================================
+# Insight 沉淀系统 (v0.7.0+)
+# ============================================
+insight:
+  enabled: true  # 默认开启，Insight 系统是项目的"组织记忆"
+
+# ============================================
+# 协议自检机制
+# ============================================
 protocol_check:
   enabled: true
+  # 检查项配置
   checks:
     git:
       enabled: true
@@ -494,69 +528,101 @@ protocol_check:
       enabled: true
       check_file_existence: true
       check_update_frequency: true
-      update_threshold_hours: 0.25
+      update_threshold_hours: 24
     dialogue:
       enabled: true
       check_required_files: true
+  # 触发词（用于对话中触发自检）
   trigger_words:
-  - 检查协议
-  - 协议自检
-  - 检查是否遵循协议
-  - protocol check
-  - 自检
+    - "检查协议"
+    - "协议自检"
+    - "检查是否遵循协议"
+    - "protocol check"
+    - "自检"
+
+# ============================================
+# PRD 管理
+# ============================================
 prd_management:
   enabled: true
-  prd_file: docs/PRD.md
+  prd_file: "docs/PRD.md"
+  # 需求状态定义
   requirement_statuses:
-  - draft
-  - confirmed
-  - in_progress
-  - completed
-  - cancelled
+    - "draft"      # 草稿
+    - "confirmed"  # 已确认
+    - "in_progress" # 进行中
+    - "completed"  # 已完成
+    - "cancelled"  # 已取消
+  # 优先级定义
   priorities:
-  - high
-  - medium
-  - low
+    - "high"
+    - "medium"
+    - "low"
+  # 触发词（用于对话中触发 PRD 管理）
   trigger_words:
-  - 记录需求
-  - 更新 PRD
-  - 查看需求
-  - 需求状态
-  - PRD
-  - 需求文档
+    - "记录需求"
+    - "更新 PRD"
+    - "查看需求"
+    - "需求状态"
+    - "PRD"
+    - "需求文档"
+
+# ============================================
+# 符号学标注系统
+# ============================================
 symbology:
   decision_status:
-  - symbol: PENDING
-    meaning: 待确认
-  - symbol: CONFIRMED
-    meaning: 已确认
-  - symbol: REVISED
-    meaning: 已修订
+    - symbol: "PENDING"
+      meaning: "待确认"
+    - symbol: "CONFIRMED"
+      meaning: "已确认"
+    - symbol: "REVISED"
+      meaning: "已修订"
+
   task_status:
-  - symbol: TODO
-    meaning: 待开始
-  - symbol: IN_PROGRESS
-    meaning: 进行中
-  - symbol: REVIEW
-    meaning: 待审核
-  - symbol: DONE
-    meaning: 已完成
+    - symbol: "TODO"
+      meaning: "待开始"
+    - symbol: "IN_PROGRESS"
+      meaning: "进行中"
+    - symbol: "REVIEW"
+      meaning: "待审核"
+    - symbol: "DONE"
+      meaning: "已完成"
+
   test_status:
-  - symbol: 🟢
-    meaning: 通过
-  - symbol: 🟡
-    meaning: 部分通过
-  - symbol: 🔴
-    meaning: 未通过
-  - symbol: ⚪
-    meaning: 跳过
+    - symbol: "🟢"
+      meaning: "通过"
+    - symbol: "🟡"
+      meaning: "部分通过"
+    - symbol: "🔴"
+      meaning: "未通过"
+    - symbol: "⚪"
+      meaning: "跳过"
+
   priority:
-  - symbol: P0
-    meaning: 最高优先级/阻断
-  - symbol: P1
-    meaning: 高优先级
-  - symbol: P2
-    meaning: 中优先级
-  - symbol: P3
-    meaning: 低优先级
-domain_extensions: {}
+    - symbol: "P0"
+      meaning: "最高优先级/阻断"
+    - symbol: "P1"
+      meaning: "高优先级"
+    - symbol: "P2"
+      meaning: "中优先级"
+    - symbol: "P3"
+      meaning: "低优先级"
+
+# ============================================
+# 领域扩展 (Domain Extensions)
+# 在此添加特定领域的扩展配置
+# ============================================
+domain_extensions:
+  # 示例：游戏领域扩展
+  # game:
+  #   gm_console:
+  #     enabled: true
+  #     trigger_key: "/"
+  #     commands: [...]
+  #   
+  # 示例：Web领域扩展
+  # web:
+  #   api_docs:
+  #     format: "openapi"
+  #     file: "docs/api.yaml"

@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibecollab.protocol_checker import CheckResult, ProtocolChecker
+from vibecollab.core.protocol_checker import CheckResult, ProtocolChecker
 
 
 # ============================================================

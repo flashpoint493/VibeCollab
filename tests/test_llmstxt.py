@@ -2,7 +2,7 @@
 
 
 
-from vibecollab.llmstxt import LLMsTxtManager
+from vibecollab.utils.llmstxt import LLMsTxtManager
 
 
 class TestFindLlmstxt:

@@ -22,7 +22,7 @@ import yaml
 from jinja2 import ChoiceLoader, Environment, FileSystemLoader, select_autoescape
 
 # Pattern 目录（包内）
-PATTERNS_DIR = Path(__file__).parent / "patterns"
+PATTERNS_DIR = Path(__file__).parent.parent / "patterns"
 
 # 用户本地自定义模板目录名（相对于 project_root）
 LOCAL_PATTERNS_SUBDIR = Path(".vibecollab") / "patterns"

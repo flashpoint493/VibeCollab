@@ -18,8 +18,8 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from vibecollab.insight_manager import InsightManager
-from vibecollab.task_manager import TaskManager, TaskStatus
+from vibecollab.insight.manager import InsightManager
+from vibecollab.domain.task_manager import TaskManager, TaskStatus
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -374,7 +374,7 @@ class TestCLI:
     def test_create_and_show(self):
         import os
 
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             root = self._setup_project(tmpdir)
@@ -406,7 +406,7 @@ class TestCLI:
     def test_list(self):
         import os
 
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             root = self._setup_project(tmpdir)
@@ -432,7 +432,7 @@ class TestCLI:
     def test_suggest(self):
         import os
 
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             root = self._setup_project(tmpdir)
@@ -456,7 +456,7 @@ class TestCLI:
     def test_create_invalid_id(self):
         import os
 
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             root = self._setup_project(tmpdir)
@@ -475,7 +475,7 @@ class TestCLI:
     def test_show_nonexistent(self):
         import os
 
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             root = self._setup_project(tmpdir)
@@ -493,7 +493,7 @@ class TestCLI:
     def test_list_empty(self):
         import os
 
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             root = self._setup_project(tmpdir)
@@ -510,7 +510,7 @@ class TestCLI:
     def test_create_rich_output(self):
         import os
 
-        from vibecollab.cli_task import task_group
+        from vibecollab.cli.task import task_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             root = self._setup_project(tmpdir)

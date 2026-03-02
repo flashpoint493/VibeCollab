@@ -7,24 +7,23 @@ from typing import Optional, Tuple
 
 import click
 import yaml
-from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from . import __version__
-from ._compat import BULLET, EMOJI, is_windows_gbk
-from .generator import LLMContextGenerator
-from .git_utils import is_git_repo
-from .llmstxt import LLMsTxtManager
-from .project import Project
-from .protocol_checker import ProtocolChecker
-from .templates import TemplateManager
+from .. import __version__
+from .._compat import BULLET, EMOJI, is_windows_gbk, safe_console
+from ..core.generator import LLMContextGenerator
+from ..utils.git import is_git_repo
+from ..utils.llmstxt import LLMsTxtManager
+from ..core.project import Project
+from ..core.protocol_checker import ProtocolChecker
+from ..core.templates import TemplateManager
 
 # 兼容旧变量名
 USE_EMOJI = not is_windows_gbk()
 EMOJI_MAP = EMOJI
 
-console = Console()
+console = safe_console()
 
 DOMAINS = ["generic", "game", "web", "data", "mobile", "infra"]
 
@@ -170,7 +169,7 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
 
     # 多开发者模式额外提示
     if multi_dev:
-        from .developer import DeveloperManager
+        from ..domain.developer import DeveloperManager
         dm = DeveloperManager(output_path, project.config)
         current_dev = dm.get_current_developer()
 
@@ -484,7 +483,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
     if multi_dev_config.get("enabled", False):
         from datetime import datetime
 
-        from .developer import ContextAggregator, DeveloperManager
+        from ..domain.developer import ContextAggregator, DeveloperManager
 
         dm = DeveloperManager(config_path.parent, merged)
         developers_dir = config_path.parent / "docs" / "developers"
@@ -669,8 +668,8 @@ def check(config: str, strict: bool, insights: bool):
         ))
         console.print()
         try:
-            from .event_log import EventLog
-            from .insight_manager import InsightManager
+            from ..domain.event_log import EventLog
+            from ..insight.manager import InsightManager
             event_log = EventLog(project_root / ".vibecollab" / "events.jsonl")
             mgr = InsightManager(project_root=project_root, event_log=event_log)
             report = mgr.check_consistency()
@@ -740,7 +739,7 @@ def health(config: str, as_json: bool):
 
     cfg = _safe_load_yaml(config_path)
 
-    from .health import HealthExtractor
+    from ..core.health import HealthExtractor
     ext = HealthExtractor(config_path.parent, cfg)
     report = ext.extract()
 
@@ -771,50 +770,50 @@ def health(config: str, as_json: bool):
 
 
 # 导入生涯管理命令
-from .cli_lifecycle import lifecycle as lifecycle_group  # noqa: E402
+from .lifecycle import lifecycle as lifecycle_group  # noqa: E402
 
 main.add_command(lifecycle_group)
 
 # 导入 AI 命令 (人机对话 + Agent 自主模式)
-from .cli_ai import ai as ai_group  # noqa: E402
+from .ai import ai as ai_group  # noqa: E402
 
 main.add_command(ai_group)
 
 # 导入 Insight 沉淀系统命令
-from .cli_insight import insight as insight_group  # noqa: E402
+from .insight import insight as insight_group  # noqa: E402
 
 main.add_command(insight_group)
 
 # 导入 AI 引导命令 (onboard + next + prompt)
-from .cli_guide import next_step, onboard, prompt_cmd  # noqa: E402
+from .guide import next_step, onboard, prompt_cmd  # noqa: E402
 
 main.add_command(onboard)
 main.add_command(next_step, name="next")
 main.add_command(prompt_cmd, name="prompt")
 
 # 导入 Task 管理命令 (含 Insight 自动关联, v0.7.1+)
-from .cli_task import task_group  # noqa: E402
+from .task import task_group  # noqa: E402
 
 main.add_command(task_group)
 
 # 导入配置管理命令 (v0.8.0+)
-from .cli_config import config_group  # noqa: E402
+from .config import config_group  # noqa: E402
 
 main.add_command(config_group)
 
 # 导入语义检索命令 (v0.9.0+)
-from .cli_index import index_cmd, search_cmd  # noqa: E402
+from .index import index_cmd, search_cmd  # noqa: E402
 
 main.add_command(index_cmd, name="index")
 main.add_command(search_cmd, name="search")
 
 # 导入 MCP Server 命令 (v0.9.1+)
-from .cli_mcp import mcp_group  # noqa: E402
+from .mcp import mcp_group  # noqa: E402
 
 main.add_command(mcp_group)
 
-# 导入 Roadmap ↔ Task 集成命令 (v0.10.0+)
-from .cli_roadmap import roadmap_group  # noqa: E402
+# 导入 Roadmap / Task 集成命令 (v0.10.0+)
+from .roadmap import roadmap_group  # noqa: E402
 
 main.add_command(roadmap_group)
 
@@ -841,7 +840,7 @@ def dev_whoami(config: str):
 
         vibecollab dev whoami
     """
-    from .developer import DeveloperManager
+    from ..domain.developer import DeveloperManager
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -886,7 +885,7 @@ def dev_list(config: str):
 
         vibecollab dev list
     """
-    from .developer import DeveloperManager
+    from ..domain.developer import DeveloperManager
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -949,7 +948,7 @@ def dev_status(developer: Optional[str], config: str):
 
         vibecollab dev status alice     # 查看特定开发者
     """
-    from .developer import DeveloperManager
+    from ..domain.developer import DeveloperManager
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -1016,7 +1015,7 @@ def dev_sync(config: str):
 
         vibecollab dev sync
     """
-    from .developer import ContextAggregator
+    from ..domain.developer import ContextAggregator
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -1059,7 +1058,7 @@ def dev_init(config: str, developer: Optional[str]):
 
         vibecollab dev init -d alice        # 为 alice 初始化
     """
-    from .developer import DeveloperManager
+    from ..domain.developer import DeveloperManager
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -1115,7 +1114,7 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
 
         vibecollab dev switch --clear    # 清除切换，恢复默认识别
     """
-    from .developer import DeveloperManager
+    from ..domain.developer import DeveloperManager
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -1246,7 +1245,7 @@ def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]
 
         vibecollab dev conflicts --between alice bob  # 检测特定两人之间的冲突
     """
-    from .conflict_detector import ConflictDetector
+    from ..domain.conflict_detector import ConflictDetector
 
     config_path = Path(config)
     project_root = config_path.parent

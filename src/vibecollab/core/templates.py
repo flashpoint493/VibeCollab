@@ -30,7 +30,7 @@ class TemplateManager:
             pass
 
         # 回退到相对路径
-        package_dir = Path(__file__).parent
+        package_dir = Path(__file__).parent.parent  # core/ -> vibecollab/
         templates_dir = package_dir / "templates"
 
         if templates_dir.exists():

@@ -17,8 +17,8 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from vibecollab.event_log import EventLog
-from vibecollab.insight_manager import InsightManager
+from vibecollab.domain.event_log import EventLog
+from vibecollab.insight.manager import InsightManager
 
 
 # ======================================================================
@@ -372,7 +372,7 @@ class TestCLIGraph:
 
     def test_graph_text(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
-        from vibecollab.cli_insight import insight
+        from vibecollab.cli.insight import insight
         runner = CliRunner()
         result = runner.invoke(insight, ["graph"])
         assert result.exit_code == 0
@@ -381,7 +381,7 @@ class TestCLIGraph:
 
     def test_graph_json(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
-        from vibecollab.cli_insight import insight
+        from vibecollab.cli.insight import insight
         runner = CliRunner()
         result = runner.invoke(insight, ["graph", "--json"])
         assert result.exit_code == 0
@@ -390,7 +390,7 @@ class TestCLIGraph:
 
     def test_graph_mermaid(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
-        from vibecollab.cli_insight import insight
+        from vibecollab.cli.insight import insight
         runner = CliRunner()
         result = runner.invoke(insight, ["graph", "--format", "mermaid"])
         assert result.exit_code == 0
@@ -402,7 +402,7 @@ class TestCLIExportImport:
 
     def test_export_stdout(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
-        from vibecollab.cli_insight import insight
+        from vibecollab.cli.insight import insight
         runner = CliRunner()
         result = runner.invoke(insight, ["export"])
         assert result.exit_code == 0
@@ -412,7 +412,7 @@ class TestCLIExportImport:
 
     def test_export_to_file(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
-        from vibecollab.cli_insight import insight
+        from vibecollab.cli.insight import insight
         runner = CliRunner()
         out_path = str(tmp_project / "export.yaml")
         result = runner.invoke(insight, ["export", "-o", out_path])
@@ -421,7 +421,7 @@ class TestCLIExportImport:
 
     def test_import_file(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
-        from vibecollab.cli_insight import insight
+        from vibecollab.cli.insight import insight
         runner = CliRunner()
 
         # 先导出
@@ -435,7 +435,7 @@ class TestCLIExportImport:
 
     def test_import_invalid_file(self, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
-        from vibecollab.cli_insight import insight
+        from vibecollab.cli.insight import insight
         runner = CliRunner()
         # 不存在的文件
         result = runner.invoke(insight, ["import", "nonexistent.yaml"])
@@ -443,7 +443,7 @@ class TestCLIExportImport:
 
     def test_import_rename_strategy(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
-        from vibecollab.cli_insight import insight
+        from vibecollab.cli.insight import insight
         runner = CliRunner()
 
         out_path = str(tmp_project / "bundle.yaml")
@@ -459,7 +459,7 @@ class TestCLIAddDedup:
 
     def test_add_detects_duplicate(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
-        from vibecollab.cli_insight import insight
+        from vibecollab.cli.insight import insight
         runner = CliRunner()
         result = runner.invoke(insight, [
             "add",
@@ -474,7 +474,7 @@ class TestCLIAddDedup:
 
     def test_add_force_bypasses_dedup(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
-        from vibecollab.cli_insight import insight
+        from vibecollab.cli.insight import insight
         runner = CliRunner()
         result = runner.invoke(insight, [
             "add",
@@ -490,7 +490,7 @@ class TestCLIAddDedup:
 
     def test_add_no_duplicate_passes(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
-        from vibecollab.cli_insight import insight
+        from vibecollab.cli.insight import insight
         runner = CliRunner()
         result = runner.invoke(insight, [
             "add",

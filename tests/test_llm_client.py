@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibecollab.llm_client import (
+from vibecollab.agent.llm_client import (
     DEFAULT_MAX_TOKENS,
     DEFAULT_MODEL_ANTHROPIC,
     DEFAULT_MODEL_OPENAI,
@@ -227,7 +227,7 @@ class TestLLMClient:
             with pytest.raises(ImportError, match="httpx"):
                 client._ensure_httpx()
 
-    @patch("vibecollab.llm_client.LLMClient._call_openai")
+    @patch("vibecollab.agent.llm_client.LLMClient._call_openai")
     def test_chat_openai_dispatch(self, mock_call):
         """OpenAI provider dispatches to _call_openai."""
         mock_call.return_value = LLMResponse(content="hello")
@@ -236,7 +236,7 @@ class TestLLMClient:
         mock_call.assert_called_once()
         assert resp.content == "hello"
 
-    @patch("vibecollab.llm_client.LLMClient._call_anthropic")
+    @patch("vibecollab.agent.llm_client.LLMClient._call_anthropic")
     def test_chat_anthropic_dispatch(self, mock_call):
         """Anthropic provider dispatches to _call_anthropic."""
         mock_call.return_value = LLMResponse(content="bonjour")
@@ -245,7 +245,7 @@ class TestLLMClient:
         mock_call.assert_called_once()
         assert resp.content == "bonjour"
 
-    @patch("vibecollab.llm_client.LLMClient._call_openai")
+    @patch("vibecollab.agent.llm_client.LLMClient._call_openai")
     def test_ask_without_context(self, mock_call):
         """ask() without project_root sends just the question."""
         mock_call.return_value = LLMResponse(content="42")
@@ -256,7 +256,7 @@ class TestLLMClient:
         assert len(call_messages) == 1
         assert call_messages[0].role == "user"
 
-    @patch("vibecollab.llm_client.LLMClient._call_openai")
+    @patch("vibecollab.agent.llm_client.LLMClient._call_openai")
     def test_ask_with_project_context(self, mock_call, tmp_path):
         """ask() with project_root includes system context."""
         (tmp_path / "project.yaml").write_text(
@@ -270,7 +270,7 @@ class TestLLMClient:
         assert call_messages[0].role == "system"
         assert "MyProject" in call_messages[0].content
 
-    @patch("vibecollab.llm_client.LLMClient._call_openai")
+    @patch("vibecollab.agent.llm_client.LLMClient._call_openai")
     def test_ask_with_system_prompt(self, mock_call):
         """ask() with custom system_prompt uses it."""
         mock_call.return_value = LLMResponse(content="yes")
@@ -393,7 +393,7 @@ class TestLLMConfigFileLayer:
     """测试三层配置解析中的配置文件层."""
 
     @patch.dict(os.environ, {}, clear=True)
-    @patch("vibecollab.config_manager.resolve_llm_config")
+    @patch("vibecollab.core.config_manager.resolve_llm_config")
     def test_config_file_fallback(self, mock_resolve):
         """环境变量为空时，从配置文件获取值."""
         mock_resolve.return_value = {
@@ -415,7 +415,7 @@ class TestLLMConfigFileLayer:
         assert cfg.max_tokens == 8192
 
     @patch.dict(os.environ, {ENV_PROVIDER: "openai", ENV_API_KEY: "env-key"}, clear=False)
-    @patch("vibecollab.config_manager.resolve_llm_config")
+    @patch("vibecollab.core.config_manager.resolve_llm_config")
     def test_env_overrides_file(self, mock_resolve):
         """环境变量优先于配置文件."""
         mock_resolve.return_value = {
@@ -433,7 +433,7 @@ class TestLLMConfigFileLayer:
             assert cfg.provider == "openai"
             assert cfg.api_key == "explicit-key"
 
-    @patch("vibecollab.config_manager.resolve_llm_config",
+    @patch("vibecollab.core.config_manager.resolve_llm_config",
            side_effect=Exception("config read error"))
     def test_config_file_exception_graceful(self, mock_resolve):
         """配置文件读取异常时静默降级."""

@@ -10,7 +10,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from vibecollab.cli_guide import (
+from vibecollab.cli.guide import (
     _build_prompt_text,
     _check_insight_opportunity,
     _check_linked_groups_freshness,
@@ -601,8 +601,8 @@ class TestSearchRelatedInsights:
 
     def test_returns_related_insights(self, tmp_path):
         """有向量索引时返回相关 Insight"""
-        from vibecollab.embedder import Embedder, EmbedderConfig
-        from vibecollab.vector_store import VectorDocument, VectorStore
+        from vibecollab.insight.embedder import Embedder, EmbedderConfig
+        from vibecollab.search.vector_store import VectorDocument, VectorStore
 
         db_dir = tmp_path / ".vibecollab" / "vectors"
         db_dir.mkdir(parents=True)
@@ -647,8 +647,8 @@ class TestSearchRelatedInsights:
 
     def test_only_returns_insights_not_documents(self, tmp_path):
         """只返回 source_type=insight 的结果"""
-        from vibecollab.embedder import Embedder, EmbedderConfig
-        from vibecollab.vector_store import VectorDocument, VectorStore
+        from vibecollab.insight.embedder import Embedder, EmbedderConfig
+        from vibecollab.search.vector_store import VectorDocument, VectorStore
 
         db_dir = tmp_path / ".vibecollab" / "vectors"
         db_dir.mkdir(parents=True)
@@ -686,8 +686,8 @@ class TestOnboardSemanticEnhancement:
     @pytest.fixture
     def project_with_index(self, project_dir):
         """创建带有向量索引的项目"""
-        from vibecollab.embedder import Embedder, EmbedderConfig
-        from vibecollab.vector_store import VectorDocument, VectorStore
+        from vibecollab.insight.embedder import Embedder, EmbedderConfig
+        from vibecollab.search.vector_store import VectorDocument, VectorStore
 
         db_dir = project_dir / ".vibecollab" / "vectors"
         db_dir.mkdir(parents=True, exist_ok=True)

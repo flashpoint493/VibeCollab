@@ -10,15 +10,15 @@ Usage:
 __version__ = "0.9.7"
 __author__ = "VibeCollab Contributors"
 
-from .event_log import Event, EventLog, EventType
-from .extension import Context, Extension, ExtensionProcessor, Hook
-from .generator import LLMContextGenerator
-from .health import HealthExtractor, HealthReport, Signal, SignalLevel
-from .llm_client import LLMClient, LLMConfig, LLMResponse, Message
-from .pattern_engine import PatternEngine
-from .project import Project
-from .roadmap_parser import Milestone, RoadmapParser, RoadmapStatus
-from .task_manager import Task, TaskManager, TaskStatus, ValidationResult
+from .domain.event_log import Event, EventLog, EventType
+from .core.extension import Context, Extension, ExtensionProcessor, Hook
+from .core.generator import LLMContextGenerator
+from .core.health import HealthExtractor, HealthReport, Signal, SignalLevel
+from .agent.llm_client import LLMClient, LLMConfig, LLMResponse, Message
+from .core.pattern_engine import PatternEngine
+from .core.project import Project
+from .domain.roadmap_parser import Milestone, RoadmapParser, RoadmapStatus
+from .domain.task_manager import Task, TaskManager, TaskStatus, ValidationResult
 
 __all__ = [
     "LLMContextGenerator",

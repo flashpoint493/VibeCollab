@@ -59,7 +59,7 @@ class LLMConfig:
         # Load config file values as fallback (lowest priority layer)
         file_cfg = {}
         try:
-            from .config_manager import resolve_llm_config
+            from ..core.config_manager import resolve_llm_config
             file_cfg = resolve_llm_config()
         except Exception:
             pass

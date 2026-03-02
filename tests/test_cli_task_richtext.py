@@ -12,7 +12,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from vibecollab.cli_task import task_group
+from vibecollab.cli.task import task_group
 
 
 # ============================================================
@@ -61,18 +61,18 @@ def project_dir(tmp_path, monkeypatch):
 
 class TestLoadConfig:
     def test_load_existing(self, project_dir):
-        from vibecollab.cli_task import _load_config
+        from vibecollab.cli.task import _load_config
         config = _load_config(str(project_dir / "project.yaml"))
         assert config["project"]["name"] == "Test"
 
     def test_load_missing(self, tmp_path):
-        from vibecollab.cli_task import _load_config
+        from vibecollab.cli.task import _load_config
         config = _load_config(str(tmp_path / "nonexistent.yaml"))
         assert config == {}
 
     def test_load_empty(self, tmp_path):
         (tmp_path / "empty.yaml").write_text("", encoding="utf-8")
-        from vibecollab.cli_task import _load_config
+        from vibecollab.cli.task import _load_config
         config = _load_config(str(tmp_path / "empty.yaml"))
         assert config == {}
 
@@ -84,8 +84,8 @@ class TestLoadConfig:
 
 class TestGetManagers:
     def test_insight_manager_fails(self, project_dir):
-        from vibecollab.cli_task import _get_managers
-        with patch("vibecollab.cli_task.InsightManager", side_effect=Exception("boom")):
+        from vibecollab.cli.task import _get_managers
+        with patch("vibecollab.cli.task.InsightManager", side_effect=Exception("boom")):
             tm, im = _get_managers(str(project_dir / "project.yaml"))
             assert tm is not None
             assert im is None

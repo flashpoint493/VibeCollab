@@ -1,6 +1,6 @@
 """Tests for LifecycleManager."""
 
-from vibecollab.lifecycle import (
+from vibecollab.domain.lifecycle import (
     LifecycleManager,
 )
 

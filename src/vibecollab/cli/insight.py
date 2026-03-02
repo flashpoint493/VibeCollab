@@ -24,13 +24,13 @@ from pathlib import Path
 import click
 import yaml
 
-from ._compat import EMOJI
+from .._compat import EMOJI
 
 
 def _load_insight_manager(config_path: str = "project.yaml"):
     """加载 InsightManager 实例"""
-    from .event_log import EventLog
-    from .insight_manager import InsightManager
+    from ..domain.event_log import EventLog
+    from ..insight.manager import InsightManager
 
     project_root = Path.cwd()
     vibecollab_dir = project_root / ".vibecollab"
@@ -43,7 +43,7 @@ def _load_insight_manager(config_path: str = "project.yaml"):
 
 def _load_developer_manager(config_path: str = "project.yaml"):
     """加载 DeveloperManager 实例"""
-    from .developer import DeveloperManager
+    from ..domain.developer import DeveloperManager
 
     project_root = Path.cwd()
     config_file = project_root / config_path
@@ -232,7 +232,7 @@ def add_insight(title, tags, category, scenario, approach, summary,
 
     # 更新信号快照
     try:
-        from .insight_signal import InsightSignalCollector
+        from ..insight.signal import InsightSignalCollector
         collector = InsightSignalCollector(Path.cwd())
         collector.update_snapshot(insight_id=ins.id)
     except Exception:
@@ -312,8 +312,8 @@ def _semantic_search_insights(query: str, top_k: int):
         click.echo("索引为空 — 请先运行 `vibecollab index`", err=True)
         raise SystemExit(1)
 
-    from .embedder import Embedder, EmbedderConfig
-    from .vector_store import VectorStore
+    from ..insight.embedder import Embedder, EmbedderConfig
+    from ..search.vector_store import VectorStore
 
     dims = row[0]
     embedder = Embedder(EmbedderConfig(backend="pure_python", dimensions=dims))
@@ -616,7 +616,7 @@ def suggest_insights(as_json, auto_confirm):
     从 git 增量历史、文档变更 diff、Task 变化等信号中提取候选 Insight。
     用户确认后自动创建 Insight 并更新信号快照。
     """
-    from .insight_signal import InsightSignalCollector
+    from ..insight.signal import InsightSignalCollector
 
     project_root = Path.cwd()
     collector = InsightSignalCollector(project_root)

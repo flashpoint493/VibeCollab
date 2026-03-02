@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from vibecollab.config_manager import (
+from vibecollab.core.config_manager import (
     get_config_dir,
     get_config_path,
     get_config_value,
@@ -25,11 +25,11 @@ def fake_home(tmp_path, monkeypatch):
     """Redirect ~/.vibecollab/ to a temp dir."""
     config_dir = tmp_path / ".vibecollab"
     monkeypatch.setattr(
-        "vibecollab.config_manager.get_config_dir",
+        "vibecollab.core.config_manager.get_config_dir",
         lambda: config_dir,
     )
     monkeypatch.setattr(
-        "vibecollab.config_manager.get_config_path",
+        "vibecollab.core.config_manager.get_config_path",
         lambda: config_dir / "config.yaml",
     )
     return config_dir
@@ -265,7 +265,7 @@ class TestResolveLLMConfig:
 class TestLLMConfigWithFile:
     def test_reads_from_config_file(self, fake_home):
         save_config({"llm": {"provider": "anthropic", "api_key": "sk-cfg"}})
-        from vibecollab.llm_client import LLMConfig
+        from vibecollab.agent.llm_client import LLMConfig
         cfg = LLMConfig()
         assert cfg.is_configured
         assert cfg.api_key == "sk-cfg"
@@ -274,19 +274,19 @@ class TestLLMConfigWithFile:
     def test_env_overrides_config_file(self, fake_home, monkeypatch):
         save_config({"llm": {"api_key": "sk-cfg", "provider": "openai"}})
         monkeypatch.setenv("VIBECOLLAB_LLM_API_KEY", "sk-env")
-        from vibecollab.llm_client import LLMConfig
+        from vibecollab.agent.llm_client import LLMConfig
         cfg = LLMConfig()
         assert cfg.api_key == "sk-env"
 
     def test_explicit_arg_overrides_all(self, fake_home, monkeypatch):
         save_config({"llm": {"api_key": "sk-cfg"}})
         monkeypatch.setenv("VIBECOLLAB_LLM_API_KEY", "sk-env")
-        from vibecollab.llm_client import LLMConfig
+        from vibecollab.agent.llm_client import LLMConfig
         cfg = LLMConfig(api_key="sk-explicit")
         assert cfg.api_key == "sk-explicit"
 
     def test_no_config_file_still_works(self, fake_home):
-        from vibecollab.llm_client import LLMConfig
+        from vibecollab.agent.llm_client import LLMConfig
         cfg = LLMConfig()
         assert not cfg.is_configured
         assert cfg.provider == "openai"  # default
@@ -300,7 +300,7 @@ class TestCLIConfig:
     def test_config_show_no_config(self, fake_home):
         from click.testing import CliRunner
 
-        from vibecollab.cli_config import config_group
+        from vibecollab.cli.config import config_group
 
         runner = CliRunner()
         result = runner.invoke(config_group, ["show"])
@@ -311,7 +311,7 @@ class TestCLIConfig:
         save_config({"llm": {"provider": "openai", "api_key": "sk-testkey123456"}})
         from click.testing import CliRunner
 
-        from vibecollab.cli_config import config_group
+        from vibecollab.cli.config import config_group
 
         runner = CliRunner()
         result = runner.invoke(config_group, ["show"])
@@ -324,7 +324,7 @@ class TestCLIConfig:
     def test_config_set_known_key(self, fake_home):
         from click.testing import CliRunner
 
-        from vibecollab.cli_config import config_group
+        from vibecollab.cli.config import config_group
 
         runner = CliRunner()
         result = runner.invoke(config_group, ["set", "llm.provider", "anthropic"])
@@ -334,7 +334,7 @@ class TestCLIConfig:
     def test_config_set_api_key_masked(self, fake_home):
         from click.testing import CliRunner
 
-        from vibecollab.cli_config import config_group
+        from vibecollab.cli.config import config_group
 
         runner = CliRunner()
         result = runner.invoke(config_group, ["set", "llm.api_key", "sk-verylongapikey123"])
@@ -348,7 +348,7 @@ class TestCLIConfig:
     def test_config_path(self, fake_home):
         from click.testing import CliRunner
 
-        from vibecollab.cli_config import config_group
+        from vibecollab.cli.config import config_group
 
         runner = CliRunner()
         result = runner.invoke(config_group, ["path"])
@@ -358,7 +358,7 @@ class TestCLIConfig:
     def test_config_setup_interactive(self, fake_home):
         from click.testing import CliRunner
 
-        from vibecollab.cli_config import config_group
+        from vibecollab.cli.config import config_group
 
         runner = CliRunner()
         # Simulate: provider=1(openai), api_key=sk-test, base_url=1(default), model=(empty)
@@ -374,7 +374,7 @@ class TestCLIConfig:
     def test_config_setup_anthropic(self, fake_home):
         from click.testing import CliRunner
 
-        from vibecollab.cli_config import config_group
+        from vibecollab.cli.config import config_group
 
         runner = CliRunner()
         # Simulate: provider=2(anthropic), api_key=sk-ant, model=(empty)

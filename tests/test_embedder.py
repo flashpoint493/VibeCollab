@@ -6,7 +6,7 @@ import hashlib
 
 import pytest
 
-from vibecollab.embedder import (
+from vibecollab.insight.embedder import (
     Embedder,
     EmbedderConfig,
     PurePythonEmbedder,

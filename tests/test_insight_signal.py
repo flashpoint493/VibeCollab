@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from vibecollab.insight_signal import (
+from vibecollab.insight.signal import (
     CommitSignal,
     InsightCandidate,
     InsightSignalCollector,
@@ -131,7 +131,7 @@ class TestGitSignals:
         r.returncode = returncode
         return r
 
-    @patch("vibecollab.insight_signal.subprocess.run")
+    @patch("vibecollab.insight.signal.subprocess.run")
     def test_collect_git_signals_basic(self, mock_run, tmp_path):
         log_output = (
             "abc123|feat: add MCP server|ocarina|2026-02-27T10:00:00+08:00\n"
@@ -148,20 +148,20 @@ class TestGitSignals:
         assert signals[0].subject == "feat: add MCP server"
         assert signals[0].author == "ocarina"
 
-    @patch("vibecollab.insight_signal.subprocess.run")
+    @patch("vibecollab.insight.signal.subprocess.run")
     def test_collect_git_signals_empty(self, mock_run, tmp_path):
         mock_run.return_value = self._make_run_result("")
         c = InsightSignalCollector(tmp_path)
         signals = c.collect_git_signals()
         assert signals == []
 
-    @patch("vibecollab.insight_signal.subprocess.run")
+    @patch("vibecollab.insight.signal.subprocess.run")
     def test_collect_git_signals_error(self, mock_run, tmp_path):
         mock_run.return_value = self._make_run_result("", returncode=1)
         c = InsightSignalCollector(tmp_path)
         assert c.collect_git_signals() == []
 
-    @patch("vibecollab.insight_signal.subprocess.run")
+    @patch("vibecollab.insight.signal.subprocess.run")
     def test_collect_git_signals_timeout(self, mock_run, tmp_path):
         mock_run.side_effect = subprocess.TimeoutExpired("git", 15)
         c = InsightSignalCollector(tmp_path)
@@ -174,7 +174,7 @@ class TestGitSignals:
 
 
 class TestDocChanges:
-    @patch("vibecollab.insight_signal.subprocess.run")
+    @patch("vibecollab.insight.signal.subprocess.run")
     def test_collect_doc_changes_decisions(self, mock_run, tmp_path):
         # 创建文档文件
         docs = tmp_path / "docs"

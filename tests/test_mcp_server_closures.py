@@ -77,7 +77,7 @@ def _build_server(project_root: Path) -> _CaptureMCP:
 
         # Re-import to pick up our fake module
         import importlib
-        import vibecollab.mcp_server as mod
+        import vibecollab.agent.mcp_server as mod
         importlib.reload(mod)
 
         mod.create_mcp_server(project_root)
@@ -90,7 +90,7 @@ def _build_server(project_root: Path) -> _CaptureMCP:
                 sys.modules[key] = val
         # Reload to restore original state
         import importlib
-        import vibecollab.mcp_server as mod2
+        import vibecollab.agent.mcp_server as mod2
         importlib.reload(mod2)
 
     return capture
@@ -220,7 +220,7 @@ class TestCliTools:
     """Tools that delegate to _run_cli — verify command construction."""
 
     def _mock_run(self, mcp, tool_name, kwargs, expected_fragments):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             result = mcp.tools[tool_name](**kwargs)
             assert result == "OK"
             cmd = m.call_args[0][0]
@@ -233,7 +233,7 @@ class TestCliTools:
                        ["vibecollab", "insight", "search", "test"])
 
     def test_insight_search_with_tags_and_semantic(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["insight_search"](query="q", tags="a,b", semantic=True)
             cmd = m.call_args[0][0]
             assert "--tags" in cmd
@@ -247,7 +247,7 @@ class TestCliTools:
                        ["vibecollab", "insight", "add", "-t", "T"])
 
     def test_insight_add_with_optional(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["insight_add"](
                 title="T", tags="t", category="technique",
                 scenario="s", approach="a",
@@ -261,18 +261,18 @@ class TestCliTools:
         self._mock_run(mcp, "check", {}, ["vibecollab", "check"])
 
     def test_check_strict(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["check"](strict=True)
             assert "--strict" in m.call_args[0][0]
 
     def test_onboard_defaults(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["onboard"]()
             cmd = m.call_args[0][0]
             assert "--json" in cmd
 
     def test_onboard_with_developer(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["onboard"](developer="alice")
             cmd = m.call_args[0][0]
             assert "-d" in cmd
@@ -285,7 +285,7 @@ class TestCliTools:
         self._mock_run(mcp, "task_list", {}, ["vibecollab", "task", "list"])
 
     def test_task_create_minimal(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["task_create"](task_id="TASK-DEV-001", role="DEV", feature="F")
             cmd = m.call_args[0][0]
             assert "--id" in cmd
@@ -293,7 +293,7 @@ class TestCliTools:
             assert "--json" in cmd
 
     def test_task_create_with_optional(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["task_create"](
                 task_id="T", role="R", feature="F",
                 assignee="alice", description="desc",
@@ -303,26 +303,26 @@ class TestCliTools:
             assert "--description" in cmd
 
     def test_task_transition(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["task_transition"](task_id="TASK-DEV-001", new_status="in_progress")
             cmd = m.call_args[0][0]
             assert "IN_PROGRESS" in cmd
             assert "--json" in cmd
 
     def test_task_transition_with_reason(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["task_transition"](
                 task_id="T", new_status="done", reason="completed"
             )
             assert "--reason" in m.call_args[0][0]
 
     def test_project_prompt_defaults(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["project_prompt"]()
             assert "--compact" in m.call_args[0][0]
 
     def test_project_prompt_with_developer(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["project_prompt"](developer="bob")
             cmd = m.call_args[0][0]
             assert "-d" in cmd
@@ -332,37 +332,37 @@ class TestCliTools:
         self._mock_run(mcp, "search_docs", {"query": "q"}, ["vibecollab", "search", "q"])
 
     def test_search_docs_with_filters(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["search_docs"](query="q", doc_type="insight", min_score=0.5)
             cmd = m.call_args[0][0]
             assert "--type" in cmd
             assert "--min-score" in cmd
 
     def test_insight_suggest(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["insight_suggest"]()
             assert "--json" in m.call_args[0][0]
 
     def test_insight_graph_json(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["insight_graph"](output_format="json")
             cmd = m.call_args[0][0]
             assert "--format" in cmd
             assert "json" in cmd
 
     def test_insight_graph_mermaid(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["insight_graph"](output_format="mermaid")
             assert "mermaid" in m.call_args[0][0]
 
     def test_insight_export_all(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["insight_export"]()
             cmd = m.call_args[0][0]
             assert "export" in cmd
 
     def test_insight_export_with_ids_and_registry(self, mcp):
-        with patch("vibecollab.mcp_server._run_cli", return_value="OK") as m:
+        with patch("vibecollab.agent.mcp_server._run_cli", return_value="OK") as m:
             mcp.tools["insight_export"](ids="INS-001,INS-002", include_registry=True)
             cmd = m.call_args[0][0]
             assert "--ids" in cmd
@@ -404,7 +404,7 @@ class TestDirectTools:
         assert result["status"] == "ok"
 
     def test_session_save_error(self, mcp):
-        with patch("vibecollab.session_store.SessionStore.save", side_effect=Exception("disk full")):
+        with patch("vibecollab.domain.session_store.SessionStore.save", side_effect=Exception("disk full")):
             result = json.loads(mcp.tools["session_save"](summary="fail"))
             assert result["status"] == "error"
             assert "disk full" in result["message"]
@@ -444,7 +444,7 @@ class TestPrompts:
 
 class TestRunCliEdge:
     def test_run_cli_generic_exception(self, project_dir):
-        from vibecollab.mcp_server import _run_cli
+        from vibecollab.agent.mcp_server import _run_cli
         with patch("subprocess.run", side_effect=PermissionError("denied")):
             result = _run_cli(["vibecollab", "check"], project_dir)
             assert "错误" in result
@@ -458,9 +458,9 @@ class TestRunCliEdge:
 
 class TestRunServer:
     def test_run_server(self, project_dir):
-        from vibecollab.mcp_server import run_server
+        from vibecollab.agent.mcp_server import run_server
 
         mock_server = MagicMock()
-        with patch("vibecollab.mcp_server.create_mcp_server", return_value=mock_server):
+        with patch("vibecollab.agent.mcp_server.create_mcp_server", return_value=mock_server):
             run_server(project_root=project_dir, transport="stdio")
             mock_server.run.assert_called_once_with(transport="stdio")

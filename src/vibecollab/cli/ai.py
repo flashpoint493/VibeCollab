@@ -24,15 +24,14 @@ from pathlib import Path
 from typing import Optional
 
 import click
-from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 
-from ._compat import EMOJI as _COMPAT_EMOJI
-from ._compat import is_windows_gbk
-from .event_log import Event, EventLog, EventType
-from .llm_client import LLMClient, LLMConfig, LLMResponse, Message, build_project_context
-from .task_manager import TaskManager, TaskStatus
+from .._compat import EMOJI as _COMPAT_EMOJI
+from .._compat import is_windows_gbk, safe_console
+from ..domain.event_log import Event, EventLog, EventType
+from ..agent.llm_client import LLMClient, LLMConfig, LLMResponse, Message, build_project_context
+from ..domain.task_manager import TaskManager, TaskStatus
 
 
 def _log_event(event_log: EventLog, event_type: str, summary: str,
@@ -52,7 +51,7 @@ def _log_event(event_log: EventLog, event_type: str, summary: str,
 USE_EMOJI = not is_windows_gbk()
 EMOJI = _COMPAT_EMOJI
 
-console = Console()
+console = safe_console()
 
 # ---------------------------------------------------------------------------
 # Agent 安全门控
@@ -564,7 +563,7 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
         # Phase 3: APPLY + TEST + COMMIT
         console.print("\n[cyan]Phase 3: APPLY + TEST + COMMIT[/cyan]")
 
-        from .agent_executor import AgentExecutor
+        from ..agent.executor import AgentExecutor
         executor = AgentExecutor(project_root)
         changes = executor.parse_changes(exec_resp.content if exec_resp.ok else "")
 
@@ -833,7 +832,7 @@ def _execute_agent_cycle(
             ))
 
         # Phase 3: APPLY + TEST + COMMIT
-        from .agent_executor import AgentExecutor
+        from ..agent.executor import AgentExecutor
         executor = AgentExecutor(project_root)
         changes = executor.parse_changes(exec_resp.content)
 

@@ -4,7 +4,7 @@
 import pytest
 import yaml
 
-from vibecollab.templates import TemplateManager
+from vibecollab.core.templates import TemplateManager
 
 
 @pytest.fixture

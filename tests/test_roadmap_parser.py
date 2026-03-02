@@ -5,7 +5,7 @@ import json
 import pytest
 from click.testing import CliRunner
 
-from vibecollab.roadmap_parser import (
+from vibecollab.domain.roadmap_parser import (
     MILESTONE_FORMAT_HINT,
     MILESTONE_HEADER_RE,
     TASK_ID_RE,
@@ -14,7 +14,7 @@ from vibecollab.roadmap_parser import (
     RoadmapParser,
     RoadmapStatus,
 )
-from vibecollab.task_manager import Task, TaskManager, TaskStatus
+from vibecollab.domain.task_manager import Task, TaskManager, TaskStatus
 
 
 # ---------------------------------------------------------------------------
@@ -404,7 +404,7 @@ class TestCLI:
         # Create a minimal project.yaml
         (tmp_project / "project.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
 
-        from vibecollab.cli_roadmap import roadmap_group
+        from vibecollab.cli.roadmap import roadmap_group
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["status"])
         assert result.exit_code == 0
@@ -414,7 +414,7 @@ class TestCLI:
         monkeypatch.chdir(tmp_project)
         (tmp_project / "project.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
 
-        from vibecollab.cli_roadmap import roadmap_group
+        from vibecollab.cli.roadmap import roadmap_group
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["status", "--json"])
         assert result.exit_code == 0
@@ -425,7 +425,7 @@ class TestCLI:
         monkeypatch.chdir(tmp_project)
         (tmp_project / "project.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
 
-        from vibecollab.cli_roadmap import roadmap_group
+        from vibecollab.cli.roadmap import roadmap_group
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["parse"])
         assert result.exit_code == 0
@@ -435,7 +435,7 @@ class TestCLI:
         monkeypatch.chdir(tmp_project)
         (tmp_project / "project.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
 
-        from vibecollab.cli_roadmap import roadmap_group
+        from vibecollab.cli.roadmap import roadmap_group
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["parse", "--json"])
         assert result.exit_code == 0
@@ -447,7 +447,7 @@ class TestCLI:
         monkeypatch.chdir(tmp_project)
         (tmp_project / "project.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
 
-        from vibecollab.cli_roadmap import roadmap_group
+        from vibecollab.cli.roadmap import roadmap_group
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["sync", "--dry-run"])
         assert result.exit_code == 0
@@ -460,7 +460,7 @@ class TestCLI:
         vc.mkdir()
         (vc / "tasks.json").write_text("{}", encoding="utf-8")
 
-        from vibecollab.cli_roadmap import roadmap_group
+        from vibecollab.cli.roadmap import roadmap_group
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["status"])
         assert result.exit_code == 0
@@ -588,7 +588,7 @@ class TestFormatHint:
     def test_parse_empty_shows_hint(self, tmp_path, monkeypatch):
         self._setup_empty(tmp_path)
         monkeypatch.chdir(tmp_path)
-        from vibecollab.cli_roadmap import roadmap_group
+        from vibecollab.cli.roadmap import roadmap_group
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["parse"])
         assert result.exit_code == 0
@@ -599,7 +599,7 @@ class TestFormatHint:
     def test_status_empty_shows_hint(self, tmp_path, monkeypatch):
         self._setup_empty(tmp_path)
         monkeypatch.chdir(tmp_path)
-        from vibecollab.cli_roadmap import roadmap_group
+        from vibecollab.cli.roadmap import roadmap_group
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["status"])
         assert result.exit_code == 0
@@ -608,7 +608,7 @@ class TestFormatHint:
     def test_sync_empty_shows_hint(self, tmp_path, monkeypatch):
         self._setup_empty(tmp_path)
         monkeypatch.chdir(tmp_path)
-        from vibecollab.cli_roadmap import roadmap_group
+        from vibecollab.cli.roadmap import roadmap_group
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["sync"])
         assert result.exit_code == 0
@@ -618,7 +618,7 @@ class TestFormatHint:
     def test_sync_empty_json_returns_empty(self, tmp_path, monkeypatch):
         self._setup_empty(tmp_path)
         monkeypatch.chdir(tmp_path)
-        from vibecollab.cli_roadmap import roadmap_group
+        from vibecollab.cli.roadmap import roadmap_group
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["sync", "--json"])
         assert result.exit_code == 0

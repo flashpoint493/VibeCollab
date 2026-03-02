@@ -6,8 +6,8 @@ InsightManager 全覆盖单元测试
 import pytest
 import yaml
 
-from vibecollab.event_log import EventLog
-from vibecollab.insight_manager import (
+from vibecollab.domain.event_log import EventLog
+from vibecollab.insight.manager import (
     INSIGHT_ID_PATTERN,
     Artifact,
     Insight,

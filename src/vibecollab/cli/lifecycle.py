@@ -7,13 +7,12 @@ from typing import Optional
 
 import click
 import yaml
-from rich.console import Console
 from rich.panel import Panel
 
-from ._compat import BULLET, EMOJI
-from .lifecycle import STAGE_ORDER, LifecycleManager
+from .._compat import BULLET, EMOJI, safe_console
+from ..domain.lifecycle import STAGE_ORDER, LifecycleManager
 
-console = Console()
+console = safe_console()
 
 
 @click.group()

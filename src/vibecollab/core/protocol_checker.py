@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from .git_utils import get_git_status, is_git_repo
+from ..utils.git import get_git_status, is_git_repo
 
 
 @dataclass

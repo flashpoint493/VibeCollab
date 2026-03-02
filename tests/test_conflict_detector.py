@@ -14,7 +14,7 @@ from unittest.mock import patch
 import pytest
 
 # Import local modules
-from vibecollab.conflict_detector import (
+from vibecollab.domain.conflict_detector import (
     Conflict,
     ConflictDetector,
     ConflictType,
@@ -30,22 +30,22 @@ class TestIsWindowsGBK:
 
     def test_non_windows_returns_false(self):
         """非 Windows 系统返回 False"""
-        with patch("vibecollab.conflict_detector.platform.system", return_value="Linux"):
+        with patch("vibecollab._compat.platform.system", return_value="Linux"):
             result = is_windows_gbk()
             assert result is False
 
     def test_windows_with_utf8_returns_false(self):
         """Windows + UTF-8 编码返回 False"""
-        with patch("vibecollab.conflict_detector.platform.system", return_value="Windows"):
-            with patch("vibecollab.conflict_detector.sys.stdout") as mock_stdout:
+        with patch("vibecollab._compat.platform.system", return_value="Windows"):
+            with patch("vibecollab._compat.sys.stdout") as mock_stdout:
                 mock_stdout.encoding = "utf-8"
                 result = is_windows_gbk()
                 assert result is False
 
     def test_windows_with_gbk_returns_true(self):
         """Windows + GBK 编码返回 True"""
-        with patch("vibecollab.conflict_detector.platform.system", return_value="Windows"):
-            with patch("vibecollab.conflict_detector.sys.stdout") as mock_stdout:
+        with patch("vibecollab._compat.platform.system", return_value="Windows"):
+            with patch("vibecollab._compat.sys.stdout") as mock_stdout:
                 mock_stdout.encoding = "gbk"
                 result = is_windows_gbk()
                 assert result is True

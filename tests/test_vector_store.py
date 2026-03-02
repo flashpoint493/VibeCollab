@@ -7,7 +7,7 @@ import math
 
 import pytest
 
-from vibecollab.vector_store import (
+from vibecollab.search.vector_store import (
     SearchResult,
     VectorDocument,
     VectorStore,

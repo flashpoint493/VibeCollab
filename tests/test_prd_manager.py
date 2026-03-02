@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 # Import local modules
-from vibecollab.prd_manager import PRDManager, Requirement
+from vibecollab.domain.prd_manager import PRDManager, Requirement
 
 # ============================================================================
 # Test: Requirement dataclass

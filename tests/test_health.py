@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from vibecollab.health import (
+from vibecollab.core.health import (
     HealthExtractor,
     HealthReport,
     Signal,
@@ -143,7 +143,7 @@ class TestProtocolSignals:
             ext = self._make_extractor(tmpdir)
             mock_summary = {"total": 3, "passed": 3, "errors": 0, "warnings": 0, "infos": 3, "all_passed": True}
             mock_results = []
-            with patch("vibecollab.health.ProtocolChecker") as MockChecker:
+            with patch("vibecollab.core.health.ProtocolChecker") as MockChecker:
                 instance = MockChecker.return_value
                 instance.check_all.return_value = mock_results
                 instance.get_summary.return_value = mock_summary
@@ -158,7 +158,7 @@ class TestProtocolSignals:
         with tempfile.TemporaryDirectory() as tmpdir:
             ext = self._make_extractor(tmpdir)
             mock_summary = {"errors": 2, "warnings": 1, "all_passed": False}
-            with patch("vibecollab.health.ProtocolChecker") as MockChecker:
+            with patch("vibecollab.core.health.ProtocolChecker") as MockChecker:
                 instance = MockChecker.return_value
                 instance.check_all.return_value = []
                 instance.get_summary.return_value = mock_summary
@@ -176,7 +176,7 @@ class TestProtocolSignals:
     def test_protocol_checker_failure(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ext = self._make_extractor(tmpdir)
-            with patch("vibecollab.health.ProtocolChecker", side_effect=Exception("boom")):
+            with patch("vibecollab.core.health.ProtocolChecker", side_effect=Exception("boom")):
                 report = HealthReport()
                 ext._extract_protocol_signals(report)
 
@@ -194,7 +194,7 @@ class TestEventLogSignals:
     def test_log_integrity_clean(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ext = self._make_extractor(tmpdir)
-            with patch("vibecollab.health.EventLog") as MockLog:
+            with patch("vibecollab.core.health.EventLog") as MockLog:
                 instance = MockLog.return_value
                 instance.verify_integrity.return_value = []
                 instance.count.return_value = 10
@@ -210,7 +210,7 @@ class TestEventLogSignals:
     def test_log_integrity_violated(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ext = self._make_extractor(tmpdir)
-            with patch("vibecollab.health.EventLog") as MockLog:
+            with patch("vibecollab.core.health.EventLog") as MockLog:
                 instance = MockLog.return_value
                 instance.verify_integrity.return_value = [{"line": 1, "error": "bad"}]
                 instance.count.return_value = 5
@@ -225,7 +225,7 @@ class TestEventLogSignals:
     def test_project_inactive(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ext = self._make_extractor(tmpdir)
-            with patch("vibecollab.health.EventLog") as MockLog:
+            with patch("vibecollab.core.health.EventLog") as MockLog:
                 instance = MockLog.return_value
                 instance.verify_integrity.return_value = []
                 instance.count.return_value = 50
@@ -241,13 +241,13 @@ class TestEventLogSignals:
     def test_unresolved_conflicts(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ext = self._make_extractor(tmpdir)
-            with patch("vibecollab.health.EventLog") as MockLog:
+            with patch("vibecollab.core.health.EventLog") as MockLog:
                 instance = MockLog.return_value
                 instance.verify_integrity.return_value = []
                 instance.count.return_value = 10
 
                 def mock_query(event_type=None, since=None, **kw):
-                    from vibecollab.event_log import EventType
+                    from vibecollab.domain.event_log import EventType
                     if event_type == EventType.CONFLICT_DETECTED.value:
                         return [MagicMock(), MagicMock(), MagicMock()]
                     elif event_type == EventType.CONFLICT_RESOLVED.value:
@@ -266,13 +266,13 @@ class TestEventLogSignals:
     def test_high_validation_fail_rate(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ext = self._make_extractor(tmpdir)
-            with patch("vibecollab.health.EventLog") as MockLog:
+            with patch("vibecollab.core.health.EventLog") as MockLog:
                 instance = MockLog.return_value
                 instance.verify_integrity.return_value = []
                 instance.count.return_value = 10
 
                 def mock_query(event_type=None, since=None, **kw):
-                    from vibecollab.event_log import EventType
+                    from vibecollab.domain.event_log import EventType
                     if event_type == EventType.VALIDATION_FAILED.value:
                         return [MagicMock()] * 4
                     elif event_type == EventType.VALIDATION_PASSED.value:
@@ -308,7 +308,7 @@ class TestTaskSignals:
     def test_no_tasks(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ext = self._make_extractor(tmpdir)
-            with patch("vibecollab.health.TaskManager") as MockTM:
+            with patch("vibecollab.core.health.TaskManager") as MockTM:
                 MockTM.return_value.count.return_value = 0
                 report = HealthReport()
                 ext._extract_task_signals(report)
@@ -319,7 +319,7 @@ class TestTaskSignals:
     def test_task_completion_rate(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ext = self._make_extractor(tmpdir)
-            with patch("vibecollab.health.TaskManager") as MockTM:
+            with patch("vibecollab.core.health.TaskManager") as MockTM:
                 instance = MockTM.return_value
                 instance.count.side_effect = lambda status=None: {
                     None: 10, "DONE": 7, "TODO": 1, "IN_PROGRESS": 1, "REVIEW": 1,
@@ -336,7 +336,7 @@ class TestTaskSignals:
     def test_task_backlog_warning(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ext = self._make_extractor(tmpdir)
-            with patch("vibecollab.health.TaskManager") as MockTM:
+            with patch("vibecollab.core.health.TaskManager") as MockTM:
                 instance = MockTM.return_value
                 instance.count.side_effect = lambda status=None: {
                     None: 12, "DONE": 2, "TODO": 8, "IN_PROGRESS": 1, "REVIEW": 1,
@@ -353,7 +353,7 @@ class TestTaskSignals:
     def test_review_bottleneck(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             ext = self._make_extractor(tmpdir)
-            with patch("vibecollab.health.TaskManager") as MockTM:
+            with patch("vibecollab.core.health.TaskManager") as MockTM:
                 instance = MockTM.return_value
                 instance.count.side_effect = lambda status=None: {
                     None: 6, "DONE": 1, "TODO": 0, "IN_PROGRESS": 1, "REVIEW": 4,
@@ -371,7 +371,7 @@ class TestTaskSignals:
             ext = self._make_extractor(tmpdir)
             dep_task = self._make_task("T-1", "IN_PROGRESS")
             blocked_task = self._make_task("T-2", "TODO", deps=["T-1"])
-            with patch("vibecollab.health.TaskManager") as MockTM:
+            with patch("vibecollab.core.health.TaskManager") as MockTM:
                 instance = MockTM.return_value
                 instance.count.side_effect = lambda status=None: {
                     None: 2, "DONE": 0, "TODO": 1, "IN_PROGRESS": 1, "REVIEW": 0,
@@ -396,7 +396,7 @@ class TestTaskSignals:
                 self._make_task("T-4", "IN_PROGRESS", "alice"),
                 self._make_task("T-5", "TODO", "bob"),
             ]
-            with patch("vibecollab.health.TaskManager") as MockTM:
+            with patch("vibecollab.core.health.TaskManager") as MockTM:
                 instance = MockTM.return_value
                 instance.count.side_effect = lambda status=None: {
                     None: 5, "DONE": 0, "TODO": 1, "IN_PROGRESS": 4, "REVIEW": 0,

@@ -10,12 +10,11 @@ from pathlib import Path
 from typing import Optional
 
 import click
-from rich.console import Console
 from rich.table import Table
 
-from ._compat import BULLET, EMOJI
+from .._compat import BULLET, EMOJI, safe_console
 
-console = Console()
+console = safe_console()
 
 
 @click.command()
@@ -40,9 +39,9 @@ def index_cmd(config: str, backend: str, rebuild: bool):
 
         vibecollab index -b pure_python      # 强制使用零依赖后端
     """
-    from .embedder import Embedder, EmbedderConfig
-    from .indexer import Indexer
-    from .vector_store import VectorStore
+    from ..insight.embedder import Embedder, EmbedderConfig
+    from ..search.indexer import Indexer
+    from ..search.vector_store import VectorStore
 
     config_path = Path(config)
     project_root = config_path.parent if config_path.parent != Path(".") else Path.cwd()
@@ -53,7 +52,7 @@ def index_cmd(config: str, backend: str, rebuild: bool):
     # 如果是 openai 后端，尝试从配置加载 API key
     if backend == "openai" or (backend == "auto" and not embedder_config.api_key):
         try:
-            from .config_manager import resolve_llm_config
+            from ..core.config_manager import resolve_llm_config
             llm_cfg = resolve_llm_config()
             if llm_cfg.api_key:
                 embedder_config.api_key = llm_cfg.api_key
@@ -133,8 +132,8 @@ def search_cmd(query: str, top: int, source_type: Optional[str], min_score: floa
 
         vibecollab search "Git 规范" --min-score 0.3
     """
-    from .embedder import Embedder, EmbedderConfig
-    from .vector_store import VectorStore
+    from ..insight.embedder import Embedder, EmbedderConfig
+    from ..search.vector_store import VectorStore
 
     config_path = Path(config)
     project_root = config_path.parent if config_path.parent != Path(".") else Path.cwd()

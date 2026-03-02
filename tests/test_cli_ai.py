@@ -9,7 +9,7 @@ from unittest import mock
 import pytest
 from click.testing import CliRunner
 
-from vibecollab.cli_ai import (
+from vibecollab.cli.ai import (
     DEFAULT_MAX_CYCLES,
     DEFAULT_MAX_RSS_MB,
     DEFAULT_MAX_SLEEP_S,
@@ -24,9 +24,9 @@ from vibecollab.cli_ai import (
     _release_lock,
     ai,
 )
-from vibecollab.event_log import Event, EventLog, EventType
-from vibecollab.llm_client import LLMConfig, LLMResponse
-from vibecollab.task_manager import TaskManager, TaskStatus
+from vibecollab.domain.event_log import Event, EventLog, EventType
+from vibecollab.agent.llm_client import LLMConfig, LLMResponse
+from vibecollab.domain.task_manager import TaskManager, TaskStatus
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -200,7 +200,7 @@ class TestAskCommand:
                 ])
                 assert result.exit_code != 0
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_ask_success(self, MockClient, runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
         instance.config = LLMConfig()
@@ -214,7 +214,7 @@ class TestAskCommand:
         assert "Test answer" in result.output
         instance.chat.assert_called_once()
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_ask_no_context(self, MockClient, runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
         instance.config = LLMConfig()
@@ -228,7 +228,7 @@ class TestAskCommand:
         assert result.exit_code == 0
         instance.ask.assert_called_once()
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_ask_verbose(self, MockClient, runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
         instance.config = LLMConfig()
@@ -240,7 +240,7 @@ class TestAskCommand:
         assert result.exit_code == 0
         assert "tokens" in result.output.lower() or "100" in result.output
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_ask_records_event(self, MockClient, runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
         instance.config = LLMConfig()
@@ -265,7 +265,7 @@ class TestAskCommand:
 # ---------------------------------------------------------------------------
 
 class TestChatCommand:
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_chat_exit(self, MockClient, runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
         instance.config = LLMConfig()
@@ -276,8 +276,8 @@ class TestChatCommand:
         assert result.exit_code == 0
         assert "对话结束" in result.output
 
-    @mock.patch("vibecollab.cli_ai.Console")
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.console")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_chat_single_turn(self, MockClient, MockConsole, runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
         instance.config = LLMConfig()
@@ -288,7 +288,7 @@ class TestChatCommand:
         ], input="hello\nexit\n")
         assert result.exit_code == 0
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_chat_quit_variants(self, MockClient, runner, tmp_project, mock_llm_env):
         """Test that quit/bye also exit the loop."""
         instance = MockClient.return_value
@@ -306,7 +306,7 @@ class TestChatCommand:
 # ---------------------------------------------------------------------------
 
 class TestAgentPlanCommand:
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_plan_success(self, MockClient, runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
         instance.config = LLMConfig()
@@ -326,7 +326,7 @@ class TestAgentPlanCommand:
 # ---------------------------------------------------------------------------
 
 class TestAgentRunCommand:
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_run_dry_run(self, MockClient, runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
         instance.config = LLMConfig()
@@ -342,7 +342,7 @@ class TestAgentRunCommand:
         assert result.exit_code == 0
         assert "Dry-run" in result.output or "dry" in result.output.lower()
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_run_blocked_by_pending(self, MockClient, runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
         instance.config = LLMConfig()
@@ -360,7 +360,7 @@ class TestAgentRunCommand:
         assert result.exit_code != 0
         assert "固化" in result.output or "review" in result.output.lower()
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_run_full_cycle(self, MockClient, runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
         instance.config = LLMConfig()
@@ -378,10 +378,10 @@ class TestAgentRunCommand:
 # ---------------------------------------------------------------------------
 
 class TestAgentServeCommand:
-    @mock.patch("vibecollab.cli_ai.random")
-    @mock.patch("vibecollab.cli_ai._execute_agent_cycle", return_value=True)
-    @mock.patch("vibecollab.cli_ai.time")
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.random")
+    @mock.patch("vibecollab.cli.ai._execute_agent_cycle", return_value=True)
+    @mock.patch("vibecollab.cli.ai.time")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_serve_single_cycle(self, MockClient, mock_time, mock_cycle, mock_random,
                                  runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
@@ -400,7 +400,7 @@ class TestAgentServeCommand:
         assert "Agent 服务结束" in result.output
         mock_cycle.assert_called_once()
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_serve_lock_conflict(self, MockClient, runner, tmp_project, mock_llm_env):
         instance = MockClient.return_value
         instance.config = LLMConfig()
@@ -462,10 +462,10 @@ class TestAgentStatusCommand:
 class TestServeCircuitBreaker:
     """serve 中连续失败触发断路器后等待并重置."""
 
-    @mock.patch("vibecollab.cli_ai.random")
-    @mock.patch("vibecollab.cli_ai._execute_agent_cycle")
-    @mock.patch("vibecollab.cli_ai.time")
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.random")
+    @mock.patch("vibecollab.cli.ai._execute_agent_cycle")
+    @mock.patch("vibecollab.cli.ai.time")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_circuit_breaker_triggers(self, MockClient, mock_time, mock_cycle,
                                        mock_random, runner, tmp_project, mock_llm_env):
         """连续 3 次失败触发断路器，等待后重置."""
@@ -488,10 +488,10 @@ class TestServeCircuitBreaker:
 class TestServeAdaptiveBackoff:
     """serve 中失败后退避时间指数增长."""
 
-    @mock.patch("vibecollab.cli_ai.random")
-    @mock.patch("vibecollab.cli_ai._execute_agent_cycle")
-    @mock.patch("vibecollab.cli_ai.time")
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.random")
+    @mock.patch("vibecollab.cli.ai._execute_agent_cycle")
+    @mock.patch("vibecollab.cli.ai.time")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_backoff_doubles_on_failure(self, MockClient, mock_time, mock_cycle,
                                         mock_random, runner, tmp_project, mock_llm_env):
         """失败后 sleep 时间增加."""
@@ -517,11 +517,11 @@ class TestServeAdaptiveBackoff:
 class TestServeMemoryThreshold:
     """serve 中内存超限时停止服务."""
 
-    @mock.patch("vibecollab.cli_ai._check_rss_mb", return_value=999.0)
-    @mock.patch("vibecollab.cli_ai.random")
-    @mock.patch("vibecollab.cli_ai._execute_agent_cycle")
-    @mock.patch("vibecollab.cli_ai.time")
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai._check_rss_mb", return_value=999.0)
+    @mock.patch("vibecollab.cli.ai.random")
+    @mock.patch("vibecollab.cli.ai._execute_agent_cycle")
+    @mock.patch("vibecollab.cli.ai.time")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_memory_over_threshold_stops(self, MockClient, mock_time, mock_cycle,
                                           mock_random, mock_rss,
                                           runner, tmp_project, mock_llm_env):
@@ -545,11 +545,11 @@ class TestServeMemoryThreshold:
 class TestServePendingSolidify:
     """serve 中检测到 pending solidify 时跳过周期."""
 
-    @mock.patch("vibecollab.cli_ai.random")
-    @mock.patch("vibecollab.cli_ai._execute_agent_cycle", return_value=True)
-    @mock.patch("vibecollab.cli_ai._is_pending_solidify")
-    @mock.patch("vibecollab.cli_ai.time")
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.random")
+    @mock.patch("vibecollab.cli.ai._execute_agent_cycle", return_value=True)
+    @mock.patch("vibecollab.cli.ai._is_pending_solidify")
+    @mock.patch("vibecollab.cli.ai.time")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_pending_solidify_waits(self, MockClient, mock_time, mock_pending,
                                      mock_cycle, mock_random,
                                      runner, tmp_project, mock_llm_env):
@@ -591,7 +591,7 @@ class TestExecuteAgentCycle:
 
     def test_plan_failure(self, tmp_project):
         """Plan 阶段 LLM 返回失败."""
-        from vibecollab.cli_ai import _execute_agent_cycle
+        from vibecollab.cli.ai import _execute_agent_cycle
         event_log = EventLog(tmp_project)
         task_mgr = TaskManager(tmp_project, event_log)
 
@@ -603,7 +603,7 @@ class TestExecuteAgentCycle:
 
     def test_exec_failure(self, tmp_project):
         """Execute 阶段 LLM 返回失败."""
-        from vibecollab.cli_ai import _execute_agent_cycle
+        from vibecollab.cli.ai import _execute_agent_cycle
         event_log = EventLog(tmp_project)
         task_mgr = TaskManager(tmp_project, event_log)
 
@@ -617,7 +617,7 @@ class TestExecuteAgentCycle:
 
     def test_no_parseable_changes(self, tmp_project):
         """LLM 返回内容无法解析为变更 → 返回 True（非失败）."""
-        from vibecollab.cli_ai import _execute_agent_cycle
+        from vibecollab.cli.ai import _execute_agent_cycle
         event_log = EventLog(tmp_project)
         task_mgr = TaskManager(tmp_project, event_log)
 
@@ -631,7 +631,7 @@ class TestExecuteAgentCycle:
 
     def test_exception_in_cycle(self, tmp_project):
         """Cycle 中抛出异常 → 返回 False."""
-        from vibecollab.cli_ai import _execute_agent_cycle
+        from vibecollab.cli.ai import _execute_agent_cycle
         event_log = EventLog(tmp_project)
         task_mgr = TaskManager(tmp_project, event_log)
 
@@ -643,7 +643,7 @@ class TestExecuteAgentCycle:
 
     def test_successful_cycle_with_changes(self, tmp_project):
         """成功的 cycle: plan → execute(有效 JSON) → apply → test → commit."""
-        from vibecollab.cli_ai import _execute_agent_cycle
+        from vibecollab.cli.ai import _execute_agent_cycle
         event_log = EventLog(tmp_project)
         task_mgr = TaskManager(tmp_project, event_log)
 
@@ -658,7 +658,7 @@ class TestExecuteAgentCycle:
         client.chat.side_effect = [plan_resp, exec_resp]
 
         # Mock execute_full_cycle 以避免真实 git 操作
-        from vibecollab.agent_executor import ExecutionResult
+        from vibecollab.agent.executor import ExecutionResult
         mock_result = ExecutionResult(
             success=True,
             changes_applied=["create: hello.txt"],
@@ -666,7 +666,7 @@ class TestExecuteAgentCycle:
             git_committed=True,
             git_hash="abc1234",
         )
-        with mock.patch("vibecollab.agent_executor.AgentExecutor") as MockExe:
+        with mock.patch("vibecollab.agent.executor.AgentExecutor") as MockExe:
             instance = MockExe.return_value
             instance.parse_changes.return_value = [
                 mock.MagicMock(file="hello.txt", action="create")
@@ -687,7 +687,7 @@ class TestExecuteAgentCycle:
 class TestRunCommandFullPath:
     """run 命令的更多路径测试."""
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_run_with_valid_changes(self, MockClient, runner, tmp_project, mock_llm_env):
         """run 命令接收到有效 JSON 变更并执行."""
         instance = MockClient.return_value
@@ -709,7 +709,7 @@ class TestRunCommandFullPath:
         ])
         assert result.exit_code == 0
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_run_plan_failure(self, MockClient, runner, tmp_project, mock_llm_env):
         """run 命令 plan 阶段 LLM 失败."""
         instance = MockClient.return_value
@@ -728,7 +728,7 @@ class TestRunCommandFullPath:
 # ---------------------------------------------------------------------------
 
 class TestAskCommandEdge:
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_ask_llm_exception(self, MockClient, runner, tmp_project, mock_llm_env):
         """ask 命令 LLM 抛出 RuntimeError."""
         instance = MockClient.return_value
@@ -747,7 +747,7 @@ class TestAskCommandEdge:
 # ---------------------------------------------------------------------------
 
 class TestChatCommandEdge:
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_chat_empty_input_skipped(self, MockClient, runner, tmp_project, mock_llm_env):
         """空输入行被跳过."""
         instance = MockClient.return_value
@@ -761,7 +761,7 @@ class TestChatCommandEdge:
         # chat.call_count = 1 (只有 "hello" 触发调用, 空行被跳过)
         assert instance.chat.call_count == 1
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_chat_llm_error_response(self, MockClient, runner, tmp_project, mock_llm_env):
         """LLM 返回失败响应."""
         instance = MockClient.return_value
@@ -773,7 +773,7 @@ class TestChatCommandEdge:
         ], input="hello\nexit\n")
         assert result.exit_code == 0
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_chat_llm_exception(self, MockClient, runner, tmp_project, mock_llm_env):
         """LLM 调用异常时继续运行."""
         instance = MockClient.return_value
@@ -791,7 +791,7 @@ class TestChatCommandEdge:
 # ---------------------------------------------------------------------------
 
 class TestPlanCommandEdge:
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_plan_llm_failure(self, MockClient, runner, tmp_project, mock_llm_env):
         """plan 命令 LLM 返回空内容."""
         instance = MockClient.return_value
@@ -804,7 +804,7 @@ class TestPlanCommandEdge:
         assert result.exit_code == 0
         assert "空响应" in result.output or "LLM" in result.output
 
-    @mock.patch("vibecollab.cli_ai.LLMClient")
+    @mock.patch("vibecollab.cli.ai.LLMClient")
     def test_plan_exception(self, MockClient, runner, tmp_project, mock_llm_env):
         """plan 命令异常处理."""
         instance = MockClient.return_value
