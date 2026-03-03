@@ -88,7 +88,7 @@ class TestGetTemplate:
 
     def test_get_nonexistent_raises(self, templates_dir):
         mgr = TemplateManager(templates_dir=templates_dir)
-        with pytest.raises(FileNotFoundError, match="模板不存在"):
+        with pytest.raises(FileNotFoundError, match="Template not found"):
             mgr.get_template("nonexistent")
 
 

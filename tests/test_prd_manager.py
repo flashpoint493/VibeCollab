@@ -1,7 +1,7 @@
 """
-PRDManager 模块单元测试
+PRDManager module unit tests
 
-测试产品需求文档管理功能。
+Tests for Product Requirements Document management functionality.
 """
 
 # Import built-in modules
@@ -20,10 +20,10 @@ from vibecollab.domain.prd_manager import PRDManager, Requirement
 # ============================================================================
 
 class TestRequirement:
-    """测试 Requirement 数据类"""
+    """Test Requirement dataclass"""
 
     def test_init_defaults(self):
-        """测试默认初始化"""
+        """Test default initialization"""
         req = Requirement(
             id="REQ-001",
             title="Test Requirement",
@@ -33,15 +33,15 @@ class TestRequirement:
         assert req.id == "REQ-001"
         assert req.title == "Test Requirement"
         assert req.original_description == "Test description"
-        assert req.current_description == "Test description"  # 默认等于原始描述
+        assert req.current_description == "Test description"  # default equals original
         assert req.status == "draft"
         assert req.priority == "medium"
         assert req.changes == []
-        assert req.created_at  # 自动生成
-        assert req.updated_at  # 自动生成
+        assert req.created_at  # auto-generated
+        assert req.updated_at  # auto-generated
 
     def test_init_with_explicit_values(self):
-        """测试显式初始化"""
+        """Test explicit initialization"""
         req = Requirement(
             id="REQ-002",
             title="Feature X",
@@ -63,7 +63,7 @@ class TestRequirement:
         assert len(req.changes) == 1
 
     def test_post_init_sets_current_description(self):
-        """测试 __post_init__ 设置 current_description"""
+        """Test __post_init__ sets current_description"""
         req = Requirement(
             id="REQ-003",
             title="Test",
@@ -73,7 +73,7 @@ class TestRequirement:
         assert req.current_description == "Original"
 
     def test_post_init_sets_dates(self):
-        """测试 __post_init__ 设置日期"""
+        """Test __post_init__ sets dates"""
         req = Requirement(
             id="REQ-004",
             title="Test",
@@ -90,10 +90,10 @@ class TestRequirement:
 # ============================================================================
 
 class TestPRDManagerInit:
-    """测试 PRDManager 初始化"""
+    """Test PRDManager initialization"""
 
     def test_init_with_nonexistent_file(self):
-        """测试文件不存在时的初始化"""
+        """Test initialization when file does not exist"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             manager = PRDManager(prd_path)
@@ -102,20 +102,20 @@ class TestPRDManagerInit:
             assert manager.requirements == {}
 
     def test_init_with_existing_markdown_file(self):
-        """测试从现有 Markdown 文件初始化"""
+        """Test initialization from existing Markdown file"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             prd_content = """# PRD
 
 ## REQ-001: Test Feature
 
-**原始描述**:
+**Original Description**:
 > This is the original description
 
-**状态**: confirmed
-**优先级**: high
-**创建时间**: 2026-01-15
-**更新时间**: 2026-02-20
+**Status**: confirmed
+**Priority**: high
+**Created**: 2026-01-15
+**Updated**: 2026-02-20
 """
             prd_path.write_text(prd_content, encoding="utf-8")
 
@@ -128,9 +128,9 @@ class TestPRDManagerInit:
             assert req.priority == "high"
 
     def test_init_markdown_parse_no_requirements(self):
-        """测试 Markdown 解析无需求时返回空"""
+        """Test Markdown parsing returns empty when no requirements"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            # 有效的 Markdown 但没有 REQ- 格式的需求
+            # Valid Markdown but no REQ- formatted requirements
             prd_path = Path(tmpdir) / "PRD.md"
             content = """# Some Document
 
@@ -143,7 +143,7 @@ Some content here.
 
             manager = PRDManager(prd_path)
 
-            # 应该成功加载但没有需求
+            # Should load successfully but with no requirements
             assert len(manager.requirements) == 0
 
 
@@ -152,17 +152,17 @@ Some content here.
 # ============================================================================
 
 class TestPRDManagerCRUD:
-    """测试 PRDManager CRUD 操作"""
+    """Test PRDManager CRUD operations"""
 
     @pytest.fixture
     def manager(self):
-        """创建临时 PRDManager"""
+        """Create temporary PRDManager"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             yield PRDManager(prd_path)
 
     def test_add_requirement(self, manager):
-        """测试添加需求"""
+        """Test adding requirement"""
         req = manager.add_requirement(
             title="New Feature",
             description="Feature description",
@@ -177,7 +177,7 @@ class TestPRDManagerCRUD:
         assert "REQ-001" in manager.requirements
 
     def test_add_multiple_requirements(self, manager):
-        """测试添加多个需求"""
+        """Test adding multiple requirements"""
         req1 = manager.add_requirement("Feature 1", "Desc 1")
         req2 = manager.add_requirement("Feature 2", "Desc 2")
         req3 = manager.add_requirement("Feature 3", "Desc 3")
@@ -188,7 +188,7 @@ class TestPRDManagerCRUD:
         assert len(manager.requirements) == 3
 
     def test_get_requirement(self, manager):
-        """测试获取需求"""
+        """Test getting requirement"""
         manager.add_requirement("Test", "Description")
 
         req = manager.get_requirement("REQ-001")
@@ -196,12 +196,12 @@ class TestPRDManagerCRUD:
         assert req.title == "Test"
 
     def test_get_nonexistent_requirement(self, manager):
-        """测试获取不存在的需求"""
+        """Test getting non-existent requirement"""
         req = manager.get_requirement("REQ-999")
         assert req is None
 
     def test_list_requirements(self, manager):
-        """测试列出所有需求"""
+        """Test listing all requirements"""
         manager.add_requirement("Feature 1", "Desc 1")
         manager.add_requirement("Feature 2", "Desc 2")
 
@@ -209,7 +209,7 @@ class TestPRDManagerCRUD:
         assert len(reqs) == 2
 
     def test_list_requirements_by_status(self, manager):
-        """测试按状态列出需求"""
+        """Test listing requirements by status"""
         manager.add_requirement("Feature 1", "Desc 1")
         manager.add_requirement("Feature 2", "Desc 2")
         manager.set_status("REQ-001", "confirmed")
@@ -228,11 +228,11 @@ class TestPRDManagerCRUD:
 # ============================================================================
 
 class TestPRDManagerUpdate:
-    """测试 PRDManager 更新操作"""
+    """Test PRDManager update operations"""
 
     @pytest.fixture
     def manager_with_req(self):
-        """创建带需求的 PRDManager"""
+        """Create PRDManager with a requirement"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             manager = PRDManager(prd_path)
@@ -240,7 +240,7 @@ class TestPRDManagerUpdate:
             yield manager
 
     def test_update_requirement(self, manager_with_req):
-        """测试更新需求"""
+        """Test updating requirement"""
         manager = manager_with_req
 
         manager.update_requirement(
@@ -251,12 +251,12 @@ class TestPRDManagerUpdate:
 
         req = manager.get_requirement("REQ-001")
         assert req.current_description == "Updated description"
-        assert req.original_description == "Original description"  # 原始描述不变
+        assert req.original_description == "Original description"  # original unchanged
         assert len(req.changes) == 1
         assert req.changes[0]["reason"] == "Clarified requirements"
 
     def test_update_requirement_multiple_times(self, manager_with_req):
-        """测试多次更新需求"""
+        """Test updating requirement multiple times"""
         manager = manager_with_req
 
         manager.update_requirement("REQ-001", "Version 2", "First update")
@@ -267,14 +267,14 @@ class TestPRDManagerUpdate:
         assert len(req.changes) == 2
 
     def test_update_nonexistent_requirement(self, manager_with_req):
-        """测试更新不存在的需求"""
+        """Test updating non-existent requirement"""
         manager = manager_with_req
 
-        with pytest.raises(ValueError, match="需求不存在"):
+        with pytest.raises(ValueError, match="Requirement not found"):
             manager.update_requirement("REQ-999", "New desc", "Reason")
 
     def test_set_status(self, manager_with_req):
-        """测试设置状态"""
+        """Test setting status"""
         manager = manager_with_req
 
         manager.set_status("REQ-001", "confirmed")
@@ -283,14 +283,14 @@ class TestPRDManagerUpdate:
         assert req.status == "confirmed"
 
     def test_set_status_nonexistent(self, manager_with_req):
-        """测试设置不存在需求的状态"""
+        """Test setting status of non-existent requirement"""
         manager = manager_with_req
 
-        with pytest.raises(ValueError, match="需求不存在"):
+        with pytest.raises(ValueError, match="Requirement not found"):
             manager.set_status("REQ-999", "confirmed")
 
     def test_status_workflow(self, manager_with_req):
-        """测试状态工作流"""
+        """Test status workflow"""
         manager = manager_with_req
 
         # draft -> confirmed -> in_progress -> completed
@@ -309,21 +309,21 @@ class TestPRDManagerUpdate:
 # ============================================================================
 
 class TestPRDManagerPersistence:
-    """测试 PRDManager 持久化"""
+    """Test PRDManager persistence"""
 
     def test_save_and_load(self):
-        """测试保存和加载"""
+        """Test save and load"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "docs" / "PRD.md"
 
-            # 创建并保存
+            # Create and save
             manager1 = PRDManager(prd_path)
             manager1.add_requirement("Feature A", "Description A", "high")
             manager1.add_requirement("Feature B", "Description B", "low")
             manager1.set_status("REQ-001", "confirmed")
             manager1.save()
 
-            # 重新加载
+            # Reload
             manager2 = PRDManager(prd_path)
 
             assert len(manager2.requirements) == 2
@@ -331,7 +331,7 @@ class TestPRDManagerPersistence:
             assert "REQ-002" in manager2.requirements
 
     def test_save_creates_directory(self):
-        """测试保存时创建目录"""
+        """Test save creates directory"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "nested" / "dir" / "PRD.md"
 
@@ -343,7 +343,7 @@ class TestPRDManagerPersistence:
             assert prd_path.parent.exists()
 
     def test_save_with_changes_history(self):
-        """测试保存包含变更历史的需求"""
+        """Test saving requirement with change history"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
 
@@ -352,9 +352,9 @@ class TestPRDManagerPersistence:
             manager.update_requirement("REQ-001", "Updated", "Clarification")
             manager.save()
 
-            # 验证文件内容
+            # Verify file content
             content = prd_path.read_text(encoding="utf-8")
-            assert "需求变化历史" in content
+            assert "Change History" in content
             assert "Clarification" in content
 
 
@@ -363,7 +363,7 @@ class TestPRDManagerPersistence:
 # ============================================================================
 
 class TestPRDManagerMarkdown:
-    """测试 PRDManager Markdown 生成"""
+    """Test PRDManager Markdown generation"""
 
     @pytest.fixture
     def manager(self):
@@ -372,14 +372,14 @@ class TestPRDManagerMarkdown:
             yield PRDManager(prd_path)
 
     def test_generate_markdown_empty(self, manager):
-        """测试空 PRD 的 Markdown 生成"""
+        """Test Markdown generation for empty PRD"""
         content = manager._generate_markdown()
 
-        assert "# 产品需求文档 (PRD)" in content
-        assert "## 需求统计" in content
+        assert "# Product Requirements Document (PRD)" in content
+        assert "## Requirement Statistics" in content
 
     def test_generate_markdown_with_requirements(self, manager):
-        """测试带需求的 Markdown 生成"""
+        """Test Markdown generation with requirements"""
         manager.add_requirement("Feature A", "Description A", "high")
         manager.add_requirement("Feature B", "Description B", "low")
 
@@ -391,27 +391,27 @@ class TestPRDManagerMarkdown:
         assert "Description B" in content
 
     def test_generate_markdown_status_table(self, manager):
-        """测试状态统计表"""
+        """Test status statistics table"""
         manager.add_requirement("F1", "D1")
         manager.add_requirement("F2", "D2")
         manager.set_status("REQ-001", "confirmed")
 
         content = manager._generate_markdown()
 
-        assert "| 状态 | 数量 |" in content
+        assert "| Status | Count |" in content
         assert "| draft | 1 |" in content
         assert "| confirmed | 1 |" in content
 
     def test_generate_markdown_with_updated_description(self, manager):
-        """测试包含更新描述的 Markdown"""
+        """Test Markdown with updated description"""
         manager.add_requirement("Feature", "Original description")
         manager.update_requirement("REQ-001", "New description", "Updated")
 
         content = manager._generate_markdown()
 
-        assert "**原始描述**:" in content
+        assert "**Original Description**:" in content
         assert "Original description" in content
-        assert "**当前描述**:" in content
+        assert "**Current Description**:" in content
         assert "New description" in content
 
 
@@ -420,10 +420,10 @@ class TestPRDManagerMarkdown:
 # ============================================================================
 
 class TestPRDManagerParsing:
-    """测试 PRDManager Markdown 解析"""
+    """Test PRDManager Markdown parsing"""
 
     def test_parse_basic_requirement(self):
-        """测试解析基本需求"""
+        """Test parsing basic requirement"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             content = """# PRD
@@ -432,8 +432,8 @@ class TestPRDManagerParsing:
 
 > This is the description
 
-**状态**: draft
-**优先级**: medium
+**Status**: draft
+**Priority**: medium
 """
             prd_path.write_text(content, encoding="utf-8")
 
@@ -447,7 +447,7 @@ class TestPRDManagerParsing:
             assert req.priority == "medium"
 
     def test_parse_multiple_requirements(self):
-        """测试解析多个需求"""
+        """Test parsing multiple requirements"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             content = """# PRD
@@ -456,7 +456,7 @@ class TestPRDManagerParsing:
 
 > Description A
 
-**状态**: confirmed
+**Status**: confirmed
 
 ---
 
@@ -464,7 +464,7 @@ class TestPRDManagerParsing:
 
 > Description B
 
-**状态**: in_progress
+**Status**: in_progress
 """
             prd_path.write_text(content, encoding="utf-8")
 
@@ -475,7 +475,7 @@ class TestPRDManagerParsing:
             assert manager.requirements["REQ-002"].status == "in_progress"
 
     def test_parse_requirement_with_dates(self):
-        """测试解析带日期的需求"""
+        """Test parsing requirement with dates"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             content = """# PRD
@@ -484,10 +484,10 @@ class TestPRDManagerParsing:
 
 > Description
 
-**状态**: draft
-**优先级**: high
-**创建时间**: 2026-01-15
-**更新时间**: 2026-02-20
+**Status**: draft
+**Priority**: high
+**Created**: 2026-01-15
+**Updated**: 2026-02-20
 """
             prd_path.write_text(content, encoding="utf-8")
 
@@ -498,7 +498,7 @@ class TestPRDManagerParsing:
             assert req.updated_at == "2026-02-20"
 
     def test_parse_empty_file(self):
-        """测试解析空文件"""
+        """Test parsing empty file"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             prd_path.write_text("", encoding="utf-8")
@@ -508,7 +508,7 @@ class TestPRDManagerParsing:
             assert len(manager.requirements) == 0
 
     def test_parse_malformed_content(self):
-        """测试解析格式错误的内容"""
+        """Test parsing malformed content"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             content = """This is not a valid PRD format
@@ -517,7 +517,7 @@ Without proper structure
 """
             prd_path.write_text(content, encoding="utf-8")
 
-            # 应该不抛出异常，只是没有解析到需求
+            # Should not throw exception, just no requirements parsed
             manager = PRDManager(prd_path)
             assert len(manager.requirements) == 0
 
@@ -527,10 +527,10 @@ Without proper structure
 # ============================================================================
 
 class TestPRDManagerEdgeCases:
-    """测试边界情况"""
+    """Test edge cases"""
 
     def test_requirement_with_special_characters(self):
-        """测试包含特殊字符的需求"""
+        """Test requirement with special characters"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             manager = PRDManager(prd_path)
@@ -542,30 +542,30 @@ class TestPRDManagerEdgeCases:
 
             manager.save()
 
-            # 重新加载验证
+            # Reload and verify
             manager2 = PRDManager(prd_path)
             assert "REQ-001" in manager2.requirements
 
     def test_requirement_with_unicode(self):
-        """测试包含 Unicode 字符的需求"""
+        """Test requirement with Unicode characters"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             manager = PRDManager(prd_path)
 
             manager.add_requirement(
-                "功能：用户认证 🔐",
-                "实现用户登录和注册功能，支持多语言 🌍"
+                "Feature: User Auth",
+                "Implement user login and registration with multi-language support"
             )
 
             manager.save()
 
-            # 重新加载验证
+            # Reload and verify
             manager2 = PRDManager(prd_path)
             assert "REQ-001" in manager2.requirements
-            assert "用户认证" in manager2.requirements["REQ-001"].title
+            assert "User Auth" in manager2.requirements["REQ-001"].title
 
     def test_long_description(self):
-        """测试长描述"""
+        """Test long description"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             manager = PRDManager(prd_path)
@@ -575,13 +575,13 @@ class TestPRDManagerEdgeCases:
 
             manager.save()
 
-            # 验证保存成功
+            # Verify save succeeded
             assert prd_path.exists()
             content = prd_path.read_text(encoding="utf-8")
             assert "Long Feature" in content
 
     def test_update_preserves_original(self):
-        """测试更新保留原始描述"""
+        """Test update preserves original description"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             manager = PRDManager(prd_path)
@@ -593,11 +593,11 @@ class TestPRDManagerEdgeCases:
 
             req = manager.get_requirement("REQ-001")
 
-            # 原始描述应该保持不变
+            # Original description should remain unchanged
             assert req.original_description == "Original"
-            # 当前描述应该是最新的
+            # Current description should be the latest
             assert req.current_description == "Update 3"
-            # 应该有 3 条变更记录
+            # Should have 3 change records
             assert len(req.changes) == 3
 
 
@@ -606,11 +606,11 @@ class TestPRDManagerEdgeCases:
 # ============================================================================
 
 class TestPRDManagerSorting:
-    """测试需求排序"""
+    """Test requirement sorting"""
 
     @pytest.fixture
     def manager_with_mixed_reqs(self):
-        """创建带混合状态需求的 PRDManager"""
+        """Create PRDManager with mixed status requirements"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
             manager = PRDManager(prd_path)
@@ -626,19 +626,19 @@ class TestPRDManagerSorting:
             yield manager
 
     def test_markdown_sorts_by_status_and_priority(self, manager_with_mixed_reqs):
-        """测试 Markdown 按状态和优先级排序"""
+        """Test Markdown sorts by status and priority"""
         manager = manager_with_mixed_reqs
         content = manager._generate_markdown()
 
-        # 找到各需求在内容中的位置
+        # Find position of each requirement in content
         pos_draft_high = content.find("REQ-002")  # draft, high
         pos_draft_low = content.find("REQ-001")   # draft, low
         pos_confirmed = content.find("REQ-003")   # confirmed
         pos_in_progress = content.find("REQ-004") # in_progress
 
-        # draft 应该在 confirmed 之前
+        # draft should be before confirmed
         assert pos_draft_high < pos_confirmed
-        # confirmed 应该在 in_progress 之前
+        # confirmed should be before in_progress
         assert pos_confirmed < pos_in_progress
-        # 同状态下，high 优先级在 low 之前
+        # Same status, high priority before low
         assert pos_draft_high < pos_draft_low

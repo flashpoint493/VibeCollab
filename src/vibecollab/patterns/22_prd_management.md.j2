@@ -1,114 +1,118 @@
 {%- set prd = prd_management if prd_management else {} -%}
 {%- set prd_file = prd.get('prd_file', 'docs/PRD.md') -%}
-# 十三、产品需求文档 (PRD) 管理
+# XIII. Product Requirements Document (PRD) Management
 
-## 13.1 PRD 的作用
+## 13.1 Purpose of PRD
 
-> **我们虽然是一个启发式对话，需求在对话中推进，不过我们目前没有一个记录原始需求和变化的 PRD.md。我认为项目需求也在随着对话变化和成长。**
+> **Although we use heuristic dialogue where requirements evolve through conversation, we need a PRD.md to record original requirements and their changes. Project requirements grow and change along with dialogue.**
 
-PRD.md 用于：
-- 📝 **记录原始需求**: 保存用户最初提出的需求描述
-- 📊 **跟踪需求变化**: 记录需求在对话中的演进过程
-- 🔍 **需求追溯**: 了解每个需求从提出到实现的完整历程
-- 📈 **需求统计**: 了解项目需求的状态分布
+PRD.md is used for:
+- **Recording original requirements**: Preserve the user's initial requirement descriptions
+- **Tracking requirement changes**: Record how requirements evolve through dialogue
+- **Requirement traceability**: Understand the complete journey from proposal to implementation
+- **Requirement statistics**: Overview of requirement status distribution
 
-## 13.2 PRD 文档结构
+## 13.2 PRD Document Structure
 
-PRD.md 位于 `{{ prd_file }}`，包含以下内容：
+PRD.md is located at `{{ prd_file }}` and contains:
 
-### 需求列表
+### Requirement List
 
-每个需求包含：
-- **需求 ID**: REQ-001, REQ-002, ...
-- **需求标题**: 简洁的需求名称
-- **原始描述**: 用户最初提出的需求描述
-- **当前描述**: 经过澄清和演进后的需求描述
-- **状态**: draft / confirmed / in_progress / completed / cancelled
-- **优先级**: high / medium / low
-- **创建时间**: 需求首次记录的时间
-- **更新时间**: 需求最后修改的时间
-- **需求变化历史**: 记录需求描述的变化轨迹
+Each requirement includes:
+- **Requirement ID**: REQ-001, REQ-002, ...
+- **Title**: Concise requirement name
+- **Original Description**: User's initial requirement description
+- **Current Description**: Refined description after clarification and evolution
+- **Status**: draft / confirmed / in_progress / completed / cancelled
+- **Priority**: high / medium / low
+- **Created At**: When the requirement was first recorded
+- **Updated At**: When the requirement was last modified
+- **Change History**: Record of requirement description changes
 
-### 需求统计
+### Requirement Statistics
 
-自动统计各状态需求的数量。
+Auto-generated statistics of requirements by status.
 
-## 13.3 PRD 使用流程
+## 13.3 PRD Usage Flow
 
-### 需求提出阶段
+### Requirement Proposal Phase
 
-1. **用户提出需求**: 在对话中描述需求
-2. **AI 记录需求**: 
-   - 使用需求澄清协议，将模糊描述转化为结构化需求
-   - 在 PRD.md 中创建新需求条目（REQ-XXX）
-   - 记录原始描述和当前描述
+1. **User proposes requirement**: Describes requirement in dialogue
+2. **AI records requirement**: 
+   - Uses requirement clarification protocol to transform vague descriptions into structured requirements
+   - Creates new requirement entry (REQ-XXX) in PRD.md
+   - Records original and current descriptions
 
-### 需求演进阶段
+### Requirement Evolution Phase
 
-1. **需求澄清**: 在对话中进一步明确需求细节
-2. **更新 PRD**: 
-   - 更新需求的当前描述
-   - 在变化历史中记录变化原因
-   - 更新需求状态（如从 draft → confirmed）
+1. **Requirement clarification**: Further define requirement details in dialogue
+2. **Update PRD**: 
+   - Update the requirement's current description
+   - Record change reason in change history
+   - Update requirement status (e.g., draft -> confirmed)
 
-### 需求实现阶段
+### Requirement Implementation Phase
 
-1. **开始实现**: 将需求状态更新为 in_progress
-2. **完成实现**: 将需求状态更新为 completed
-3. **记录关联**: 在需求中关联对应的 TASK-ID
+1. **Start implementation**: Update requirement status to in_progress
+2. **Complete implementation**: Update requirement status to completed
+3. **Record association**: Associate the corresponding TASK-ID in the requirement
 
-## 13.4 PRD 管理触发词
+## 13.4 PRD Management Trigger Words
 
-在对话中使用以下触发词，AI 应主动管理 PRD：
+Use the following trigger phrases in dialogue, and the AI should proactively manage the PRD:
 
-- "记录需求"
-- "更新 PRD"
-- "查看需求"
-- "需求状态"
+- "record requirement"
+- "update PRD"
+- "view requirements"
+- "requirement status"
 - "PRD"
-- "需求文档"
+- "requirements document"
 
-## 13.5 PRD 与需求澄清协议的关系
+## 13.5 Relationship Between PRD and Requirement Clarification Protocol
 
-PRD 是需求澄清协议的**输出产物**：
+PRD is the **output artifact** of the requirement clarification protocol:
 
 ```
-用户提出需求
-    ↓
-需求澄清协议（结构化需求）
-    ↓
-记录到 PRD.md
-    ↓
-需求演进和实现
+User proposes requirement
+    |
+    v
+Requirement Clarification Protocol (structured requirement)
+    |
+    v
+Record in PRD.md
+    |
+    v
+Requirement evolution and implementation
 ```
 
-## 13.6 PRD 更新时机
+## 13.6 PRD Update Timing
 
-AI 应在以下时机更新 PRD：
+The AI should update PRD at these times:
 
-1. **新需求提出时**: 创建新需求条目
-2. **需求澄清后**: 更新当前描述和变化历史
-3. **需求状态变化时**: 更新状态字段
-4. **需求实现完成时**: 更新状态为 completed，关联 TASK-ID
+1. **When new requirement is proposed**: Create new requirement entry
+2. **After requirement clarification**: Update current description and change history
+3. **When requirement status changes**: Update the status field
+4. **When requirement implementation completes**: Update status to completed, associate TASK-ID
 
-## 13.7 PRD 最佳实践
+## 13.7 PRD Best Practices
 
-### 需求描述规范
-- **原始描述**: 保持用户原话，不做修改
-- **当前描述**: 经过澄清后的结构化描述
-- **变化原因**: 清晰说明为什么需求发生变化
+### Requirement Description Standards
+- **Original Description**: Keep user's exact words, no modification
+- **Current Description**: Structured description after clarification
+- **Change Reason**: Clearly explain why the requirement changed
 
-### 需求状态流转
+### Requirement Status Flow
 ```
-draft → confirmed → in_progress → completed
-  ↓                    ↓
-cancelled          cancelled
+draft -> confirmed -> in_progress -> completed
+  |                      |
+  v                      v
+cancelled            cancelled
 ```
 
-### 需求关联
-- 需求可以关联到 TASK-ID
-- 一个需求可能对应多个任务
-- 在需求中记录关联的任务 ID
+### Requirement Association
+- Requirements can be associated with TASK-IDs
+- One requirement may correspond to multiple tasks
+- Record associated task IDs in the requirement
 
 ---
 

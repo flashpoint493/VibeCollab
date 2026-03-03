@@ -35,11 +35,11 @@ def project_dir():
 
         # Create test Insights
         for i, (title, tags, cat) in enumerate([
-            ("CLI 命令组模式", ["cli", "click", "architecture", "modularity"], "workflow"),
-            ("Jinja2 模板引擎", ["jinja2", "template", "engine", "pattern"], "technique"),
-            ("Git 提交规范", ["git", "commit", "workflow", "convention"], "workflow"),
-            ("测试驱动开发", ["test", "pytest", "tdd", "quality"], "technique"),
-            ("认证模块设计", ["auth", "security", "module", "architecture"], "technique"),
+            ("CLI command group pattern", ["cli", "click", "architecture", "modularity"], "workflow"),
+            ("Jinja2 template engine", ["jinja2", "template", "engine", "pattern"], "technique"),
+            ("Git commit convention", ["git", "commit", "workflow", "convention"], "workflow"),
+            ("Test driven development", ["test", "pytest", "tdd", "quality"], "technique"),
+            ("Authentication module design", ["auth", "security", "module", "architecture"], "technique"),
         ], start=1):
             insight_data = {
                 "kind": "insight",
@@ -344,7 +344,7 @@ class TestCLI:
         insight_data = {
             "kind": "insight", "version": "1",
             "id": "INS-001",
-            "title": "CLI 命令组模式",
+            "title": "CLI command group pattern",
             "tags": ["cli", "click", "architecture"],
             "category": "workflow",
             "body": {"scenario": "test", "approach": "test"},
@@ -503,7 +503,7 @@ class TestCLI:
             try:
                 result = runner.invoke(task_group, ["list"])
                 assert result.exit_code == 0
-                assert "无任务" in result.output
+                assert "No tasks" in result.output
             finally:
                 os.chdir(old_cwd)
 

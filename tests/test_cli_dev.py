@@ -70,12 +70,14 @@ class TestDevWhoami:
             config_path = _make_multi_dev_project(Path(tmpdir))
             result = self.runner.invoke(main, ["dev", "whoami", "-c", str(config_path)])
             assert result.exit_code == 0
-            assert "当前开发者" in result.output
+            assert "Current developer" in result.output.lower() or "Current Developer" in result.output
 
     def test_whoami_no_config(self):
         result = self.runner.invoke(main, ["dev", "whoami", "-c", "/nonexistent/project.yaml"])
         assert result.exit_code != 0
-        assert "不存在" in result.output
+        assert "not found" in result.output.lower()
+
+
 
 
 class TestDevList:
@@ -95,7 +97,7 @@ class TestDevList:
             config_path = _make_single_dev_project(Path(tmpdir))
             result = self.runner.invoke(main, ["dev", "list", "-c", str(config_path)])
             assert result.exit_code != 0
-            assert "未启用" in result.output
+            assert "not enabled" in result.output.lower()
 
 
 class TestDevStatus:
@@ -122,7 +124,7 @@ class TestDevStatus:
             config_path = _make_single_dev_project(Path(tmpdir))
             result = self.runner.invoke(main, ["dev", "status", "-c", str(config_path)])
             assert result.exit_code != 0
-            assert "未启用" in result.output
+            assert "not enabled" in result.output.lower()
 
 
 class TestDevSync:
@@ -134,7 +136,7 @@ class TestDevSync:
             config_path = _make_multi_dev_project(Path(tmpdir))
             result = self.runner.invoke(main, ["dev", "sync", "-c", str(config_path)])
             assert result.exit_code == 0
-            assert "聚合完成" in result.output
+            assert "Aggregation complete" in result.output
             # Verify global CONTEXT.md was created
             global_ctx = Path(tmpdir) / "docs" / "CONTEXT.md"
             assert global_ctx.exists()
@@ -144,7 +146,7 @@ class TestDevSync:
             config_path = _make_single_dev_project(Path(tmpdir))
             result = self.runner.invoke(main, ["dev", "sync", "-c", str(config_path)])
             assert result.exit_code != 0
-            assert "未启用" in result.output
+            assert "not enabled" in result.output.lower()
 
 
 class TestDevInit:
@@ -158,7 +160,7 @@ class TestDevInit:
                 main, ["dev", "init", "-d", "charlie", "-c", str(config_path)]
             )
             assert result.exit_code == 0
-            assert "初始化完成" in result.output
+            assert "Initialization complete" in result.output
             charlie_ctx = Path(tmpdir) / "docs" / "developers" / "charlie" / "CONTEXT.md"
             assert charlie_ctx.exists()
 
@@ -169,7 +171,7 @@ class TestDevInit:
                 main, ["dev", "init", "-d", "charlie", "-c", str(config_path)]
             )
             assert result.exit_code != 0
-            assert "未启用" in result.output
+            assert "not enabled" in result.output.lower()
 
 
 class TestDevSwitch:
@@ -198,7 +200,7 @@ class TestDevSwitch:
                 main, ["dev", "switch", "--clear", "-c", str(config_path)]
             )
             assert result.exit_code == 0
-            assert "清除" in result.output
+            assert "cleared" in result.output.lower()
 
     def test_switch_disabled(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -207,7 +209,7 @@ class TestDevSwitch:
                 main, ["dev", "switch", "alice", "-c", str(config_path)]
             )
             assert result.exit_code != 0
-            assert "未启用" in result.output
+            assert "not enabled" in result.output.lower()
 
 
 class TestDevConflicts:

@@ -1,27 +1,27 @@
 {%- set levels = decision_levels if decision_levels is iterable and decision_levels is not mapping else [] -%}
-# 三、决策分级制度
+# III. Decision Classification System
 
-## 3.1 决策等级
+## 3.1 Decision Levels
 
-| 等级 | 类型 | 影响范围 | Review 要求 |
-|-----|------|---------|------------|
+| Level | Type | Scope | Review Requirements |
+|-------|------|-------|---------------------|
 {% for level in levels -%}
 | **{{ level.get('level', '') }}** | {{ level.get('name', '') }} | {{ level.get('scope', '') }} | {{ level.get('review', {}) | format_review }} |
 {% endfor %}
-## 3.2 决策记录格式
+## 3.2 Decision Record Format
 
 ```markdown
-## DECISION-{序号}: {标题}
-- **等级**: S/A/B/C
-- **角色**: [角色代号]
-- **问题**: {需要决策的问题}
-- **选项**: 
-  - A: {选项A}
-  - B: {选项B}
-- **决策**: {最终选择}
-- **理由**: {为什么这么选}
-- **日期**: {YYYY-MM-DD}
-- **状态**: PENDING / CONFIRMED / REVISED
+## DECISION-{number}: {title}
+- **Level**: S/A/B/C
+- **Role**: [role code]
+- **Problem**: {the issue requiring a decision}
+- **Options**: 
+  - A: {option A}
+  - B: {option B}
+- **Decision**: {final choice}
+- **Rationale**: {why this was chosen}
+- **Date**: {YYYY-MM-DD}
+- **Status**: PENDING / CONFIRMED / REVISED
 ```
 
 ---

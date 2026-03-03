@@ -43,21 +43,21 @@ def _get_managers(config_path: str):
 
 @click.group("task")
 def task_group():
-    """Task 管理（含 Insight 自动关联）"""
+    """Task management (with Insight auto-linking)"""
     pass
 
 
 @task_group.command("create")
 @click.option("--id", "task_id", required=True, help="Task ID (TASK-{ROLE}-{SEQ})")
-@click.option("--role", required=True, help="角色代码 (DEV/PM/ARCH/...)")
-@click.option("--feature", required=True, help="功能描述")
-@click.option("--assignee", default=None, help="负责人")
-@click.option("--description", default="", help="详细描述")
-@click.option("--milestone", default="", help="关联的 ROADMAP 里程碑 (如 v0.9.3)")
-@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
-@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+@click.option("--role", required=True, help="Role code (DEV/PM/ARCH/...)")
+@click.option("--feature", required=True, help="Feature description")
+@click.option("--assignee", default=None, help="Assignee")
+@click.option("--description", default="", help="Detailed description")
+@click.option("--milestone", default="", help="Associated ROADMAP milestone (e.g. v0.9.3)")
+@click.option("--config", "-c", default="project.yaml", help="Config file path")
+@click.option("--json-output", "--json", is_flag=True, help="JSON output")
 def create_task(task_id, role, feature, assignee, description, milestone, config, json_output):
-    """创建任务，自动搜索关联 Insight"""
+    """Create a task and auto-search related Insights"""
     tm, im = _get_managers(config)
 
     try:
@@ -68,7 +68,6 @@ def create_task(task_id, role, feature, assignee, description, milestone, config
             actor=assignee or "cli",
         )
     except ValueError as e:
-        click.echo(f"错误: {e}", err=True)
         raise SystemExit(1)
 
     related = task.metadata.get("related_insights", [])
@@ -78,28 +77,28 @@ def create_task(task_id, role, feature, assignee, description, milestone, config
         click.echo(json.dumps(output, ensure_ascii=False, indent=2))
         return
 
-    click.echo(f"已创建: {task.id}  [{task.role}]  {task.feature}")
+    click.echo(f"Created: {task.id}  [{task.role}]  {task.feature}")
     if task.assignee:
-        click.echo(f"  负责人: {task.assignee}")
+        click.echo(f"  Assignee: {task.assignee}")
     if task.description:
-        click.echo(f"  描述: {task.description}")
+        click.echo(f"  Description: {task.description}")
 
     if related:
-        click.echo(f"\n  关联 Insight ({len(related)} 条):")
+        click.echo(f"\n  Related Insights ({len(related)}):")
         for r in related:
             click.echo(f"    - {r['id']}: {r['title']}  (score: {r['score']})")
     else:
-        click.echo("\n  (未找到关联 Insight)")
+        click.echo("\n  (No related Insights found)")
 
 
 @task_group.command("list")
-@click.option("--status", default=None, help="按状态筛选 (TODO/IN_PROGRESS/REVIEW/DONE)")
-@click.option("--assignee", default=None, help="按负责人筛选")
-@click.option("--milestone", default=None, help="按里程碑筛选 (如 v0.9.3)")
-@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
-@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+@click.option("--status", default=None, help="Filter by status (TODO/IN_PROGRESS/REVIEW/DONE)")
+@click.option("--assignee", default=None, help="Filter by assignee")
+@click.option("--milestone", default=None, help="Filter by milestone (e.g. v0.9.3)")
+@click.option("--config", "-c", default="project.yaml", help="Config file path")
+@click.option("--json-output", "--json", is_flag=True, help="JSON output")
 def list_tasks(status, assignee, milestone, config, json_output):
-    """列出任务"""
+    """List tasks"""
     tm, _ = _get_managers(config)
     tasks = tm.list_tasks(status=status, assignee=assignee, milestone=milestone)
 
@@ -111,7 +110,7 @@ def list_tasks(status, assignee, milestone, config, json_output):
         return
 
     if not tasks:
-        click.echo("(无任务)")
+        click.echo("(No tasks)")
         return
 
     for t in tasks:
@@ -125,15 +124,15 @@ def list_tasks(status, assignee, milestone, config, json_output):
 
 @task_group.command("show")
 @click.argument("task_id")
-@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
-@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+@click.option("--config", "-c", default="project.yaml", help="Config file path")
+@click.option("--json-output", "--json", is_flag=True, help="JSON output")
 def show_task(task_id, config, json_output):
-    """查看任务详情"""
+    """View task details"""
     tm, _ = _get_managers(config)
     task = tm.get_task(task_id)
 
     if task is None:
-        click.echo(f"错误: 任务 '{task_id}' 不存在", err=True)
+        click.echo(f"Error: Task '{task_id}' does not exist", err=True)
         raise SystemExit(1)
 
     if json_output:
@@ -141,35 +140,35 @@ def show_task(task_id, config, json_output):
         return
 
     click.echo(f"ID:       {task.id}")
-    click.echo(f"角色:     {task.role}")
-    click.echo(f"功能:     {task.feature}")
-    click.echo(f"状态:     {task.status}")
-    click.echo(f"负责人:   {task.assignee or '-'}")
+    click.echo(f"Role:       {task.role}")
+    click.echo(f"Feature:    {task.feature}")
+    click.echo(f"Status:     {task.status}")
+    click.echo(f"Assignee:   {task.assignee or '-'}")
     if task.milestone:
-        click.echo(f"里程碑:   {task.milestone}")
+        click.echo(f"Milestone:  {task.milestone}")
     if task.description:
-        click.echo(f"描述:     {task.description}")
+        click.echo(f"Desc:       {task.description}")
     if task.output:
-        click.echo(f"产出:     {task.output}")
+        click.echo(f"Output:     {task.output}")
     if task.dependencies:
-        click.echo(f"依赖:     {', '.join(task.dependencies)}")
-    click.echo(f"创建于:   {task.created_at}")
-    click.echo(f"更新于:   {task.updated_at}")
+        click.echo(f"Deps:       {', '.join(task.dependencies)}")
+    click.echo(f"Created:    {task.created_at}")
+    click.echo(f"Updated:    {task.updated_at}")
 
     related = task.metadata.get("related_insights", [])
     if related:
-        click.echo(f"\n关联 Insight ({len(related)} 条):")
+        click.echo(f"\nRelated Insights ({len(related)}):")
         for r in related:
             click.echo(f"  - {r['id']}: {r['title']}  (score: {r['score']})")
 
 
 @task_group.command("suggest")
 @click.argument("task_id")
-@click.option("--limit", "-n", default=5, help="最大推荐数")
-@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
-@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+@click.option("--limit", "-n", default=5, help="Max recommendations")
+@click.option("--config", "-c", default="project.yaml", help="Config file path")
+@click.option("--json-output", "--json", is_flag=True, help="JSON output")
 def suggest_insights(task_id, limit, config, json_output):
-    """为已有任务推荐关联 Insight"""
+    """Recommend related Insights for an existing task"""
     tm, _ = _get_managers(config)
 
     results = tm.suggest_insights(task_id, limit=limit)
@@ -181,12 +180,12 @@ def suggest_insights(task_id, limit, config, json_output):
     if not results:
         task = tm.get_task(task_id)
         if task is None:
-            click.echo(f"错误: 任务 '{task_id}' 不存在", err=True)
+            click.echo(f"Error: Task '{task_id}' does not exist", err=True)
             raise SystemExit(1)
-        click.echo(f"任务 {task_id} 未找到关联 Insight")
+        click.echo(f"No related Insights found for task {task_id}")
         return
 
-    click.echo(f"任务 {task_id} 的关联 Insight 推荐:")
+    click.echo(f"Related Insight suggestions for task {task_id}:")
     for r in results:
         tags_str = ", ".join(r["tags"][:5])
         click.echo(f"  {r['id']}: {r['title']}  (score: {r['score']})")
@@ -199,22 +198,22 @@ VALID_STATUS_VALUES = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"]
 @task_group.command("transition")
 @click.argument("task_id")
 @click.argument("new_status", type=click.Choice(VALID_STATUS_VALUES, case_sensitive=False))
-@click.option("--reason", "-r", default="", help="状态变更原因")
-@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
-@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+@click.option("--reason", "-r", default="", help="Reason for status change")
+@click.option("--config", "-c", default="project.yaml", help="Config file path")
+@click.option("--json-output", "--json", is_flag=True, help="JSON output")
 def transition_task(task_id, new_status, reason, config, json_output):
-    """推进任务状态
+    """Transition task status
 
-    合法状态转换:
-      TODO → IN_PROGRESS
-      IN_PROGRESS → REVIEW / TODO
-      REVIEW → DONE / IN_PROGRESS
+    Valid status transitions:
+      TODO -> IN_PROGRESS
+      IN_PROGRESS -> REVIEW / TODO
+      REVIEW -> DONE / IN_PROGRESS
 
     Examples:
 
         vibecollab task transition TASK-DEV-001 IN_PROGRESS
 
-        vibecollab task transition TASK-DEV-001 REVIEW -r "代码已完成"
+        vibecollab task transition TASK-DEV-001 REVIEW -r "Code completed"
     """
     tm, _ = _get_managers(config)
     target = TaskStatus(new_status.upper())
@@ -226,26 +225,26 @@ def transition_task(task_id, new_status, reason, config, json_output):
 
     if result.ok:
         task = tm.get_task(task_id)
-        click.echo(f"已转换: {task_id} → {new_status.upper()}")
+        click.echo(f"Transitioned: {task_id} -> {new_status.upper()}")
         if task:
-            click.echo(f"  功能: {task.feature}")
+            click.echo(f"  Feature: {task.feature}")
     else:
         for v in result.violations:
-            click.echo(f"错误: {v}", err=True)
+            click.echo(f"Error: {v}", err=True)
         raise SystemExit(1)
 
 
 @task_group.command("solidify")
 @click.argument("task_id")
-@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
-@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+@click.option("--config", "-c", default="project.yaml", help="Config file path")
+@click.option("--json-output", "--json", is_flag=True, help="JSON output")
 def solidify_task(task_id, config, json_output):
-    """固化任务 — 通过验证门控后标记为 DONE
+    """Solidify task -- mark as DONE after passing validation gate
 
-    要求任务处于 REVIEW 状态。自动执行验证检查:
-    - 必填字段完整性
-    - 依赖任务是否全部完成
-    - 产出描述是否填写
+    Requires the task to be in REVIEW status. Auto-runs validation checks:
+    - Required field completeness
+    - Whether all dependency tasks are completed
+    - Whether output description is filled
 
     Examples:
 
@@ -259,35 +258,35 @@ def solidify_task(task_id, config, json_output):
         return
 
     if result.ok:
-        click.echo(f"已固化: {task_id} → DONE")
+        click.echo(f"Solidified: {task_id} -> DONE")
         if result.warnings:
             for w in result.warnings:
-                click.echo(f"  警告: {w}")
+                click.echo(f"  Warning: {w}")
     else:
-        click.echo(f"固化失败: {task_id}", err=True)
+        click.echo(f"Solidify failed: {task_id}", err=True)
         for v in result.violations:
-            click.echo(f"  违规: {v}", err=True)
+            click.echo(f"  Violation: {v}", err=True)
         raise SystemExit(1)
 
 
 @task_group.command("rollback")
 @click.argument("task_id")
-@click.option("--reason", "-r", default="", help="回滚原因")
-@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
-@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+@click.option("--reason", "-r", default="", help="Rollback reason")
+@click.option("--config", "-c", default="project.yaml", help="Config file path")
+@click.option("--json-output", "--json", is_flag=True, help="JSON output")
 def rollback_task(task_id, reason, config, json_output):
-    """回滚任务到上一个状态
+    """Rollback task to previous status
 
-    回滚规则:
-      IN_PROGRESS → TODO
-      REVIEW → IN_PROGRESS
-      DONE 状态不可回滚
+    Rollback rules:
+      IN_PROGRESS -> TODO
+      REVIEW -> IN_PROGRESS
+      DONE status cannot be rolled back
 
     Examples:
 
         vibecollab task rollback TASK-DEV-001
 
-        vibecollab task rollback TASK-DEV-001 -r "需要重新设计"
+        vibecollab task rollback TASK-DEV-001 -r "Needs redesign"
     """
     tm, _ = _get_managers(config)
     result = tm.rollback(task_id, actor="cli", reason=reason)
@@ -299,10 +298,10 @@ def rollback_task(task_id, reason, config, json_output):
     if result.ok:
         task = tm.get_task(task_id)
         status = task.status if task else "?"
-        click.echo(f"已回滚: {task_id} → {status}")
+        click.echo(f"Rolled back: {task_id} -> {status}")
         if reason:
-            click.echo(f"  原因: {reason}")
+            click.echo(f"  Reason: {reason}")
     else:
         for v in result.violations:
-            click.echo(f"错误: {v}", err=True)
-        raise SystemExit(1)
+            click.echo(f"Error: {v}", err=True)
+        raise SystemE

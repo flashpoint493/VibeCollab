@@ -1,5 +1,5 @@
 """
-InsightManager 全覆盖单元测试
+InsightManager full-coverage unit tests
 """
 
 
@@ -115,7 +115,7 @@ class TestOrigin:
             created_by="alice", created_at="2026-02-25",
             context="Refactoring session",
             source_type="decision",
-            source_desc="砍掉 Web UI，转向两层分离的 Insight 沉淀系统",
+            source_desc="Dropped Web UI, switched to two-layer Insight solidification system",
             source_ref="DECISION-012",
             source_url="https://github.com/user/repo/issues/42",
             source_project="VibeCollab",
@@ -123,7 +123,7 @@ class TestOrigin:
         d = o.to_dict()
         assert d["context"] == "Refactoring session"
         assert d["source"]["type"] == "decision"
-        assert d["source"]["description"] == "砍掉 Web UI，转向两层分离的 Insight 沉淀系统"
+        assert d["source"]["description"] == "Dropped Web UI, switched to two-layer Insight solidification system"
         assert d["source"]["ref"] == "DECISION-012"
         assert d["source"]["url"] == "https://github.com/user/repo/issues/42"
         assert d["source"]["project"] == "VibeCollab"
@@ -134,7 +134,7 @@ class TestOrigin:
         assert o2.source_project == o.source_project
 
     def test_source_without_ref(self):
-        """source 可以只有 description 没有 ref — 跨项目可移植"""
+        """source can have only description without ref - cross-project portable"""
         o = Origin(
             created_by="bob", created_at="2026-02-25",
             source_type="external",
@@ -461,7 +461,7 @@ class TestSearch:
 
 
 # ===========================================================================
-# InsightManager — 溯源
+# InsightManager - Provenance
 # ===========================================================================
 
 class TestDerivedTree:
@@ -492,7 +492,7 @@ class TestDerivedTree:
 
 
 # ===========================================================================
-# InsightManager — 完整溯源
+# InsightManager - Full Provenance
 # ===========================================================================
 
 class TestFullTrace:
@@ -549,7 +549,7 @@ class TestFullTrace:
 
 
 # ===========================================================================
-# InsightManager — 跨开发者共享
+# InsightManager - Cross-developer Sharing
 # ===========================================================================
 
 class TestCrossDeveloper:
@@ -609,7 +609,7 @@ class TestCrossDeveloper:
 
 
 # ===========================================================================
-# InsightManager — 一致性校验
+# InsightManager - Consistency Check
 # ===========================================================================
 
 class TestConsistency:
@@ -687,7 +687,7 @@ class TestConsistency:
 
 
 # ===========================================================================
-# InsightManager — EventLog 集成
+# InsightManager - EventLog Integration
 # ===========================================================================
 
 class TestEventLogIntegration:
@@ -727,20 +727,20 @@ class TestEventLogIntegration:
 
 
 # ===========================================================================
-# 边界情况
+# Edge Cases
 # ===========================================================================
 
 class TestEdgeCases:
     def test_unicode_content(self, mgr):
         ins = mgr.create(
-            title="模板替换硬编码", tags=["重构", "模板"],
+            title="Template replace hardcoded", tags=["refactor", "template"],
             category="technique",
-            body={"scenario": "大量中文硬编码", "approach": "使用 Jinja2 模板"},
-            created_by="小明",
+            body={"scenario": "Lots of hardcoded text", "approach": "Use Jinja2 templates"},
+            created_by="xiaoming",
         )
         reloaded = mgr.get(ins.id)
-        assert reloaded.title == "模板替换硬编码"
-        assert reloaded.origin.created_by == "小明"
+        assert reloaded.title == "Template replace hardcoded"
+        assert reloaded.origin.created_by == "xiaoming"
 
     def test_many_insights(self, mgr):
         for i in range(20):
@@ -772,14 +772,14 @@ class TestEdgeCases:
 
 
 # ---------------------------------------------------------------------------
-# Test: 大规模 Insight 压力测试
+# Test: Large-scale Insight stress test
 # ---------------------------------------------------------------------------
 
 class TestLargeScaleInsight:
-    """100+ 条 Insight 下的性能和正确性测试."""
+    """Performance and correctness tests with 100+ Insights."""
 
     def test_create_100_insights(self, mgr):
-        """批量创建 100 条 Insight，ID 连续."""
+        """Batch create 100 Insights with sequential IDs."""
         for i in range(100):
             mgr.create(
                 title=f"Insight {i}",
@@ -790,12 +790,12 @@ class TestLargeScaleInsight:
             )
         all_ins = mgr.list_all()
         assert len(all_ins) == 100
-        # ID 应连续
+        # IDs should be sequential
         ids = sorted(int(ins.id.split("-")[1]) for ins in all_ins)
         assert ids == list(range(1, 101))
 
     def test_search_100_insights(self, mgr):
-        """100 条 Insight 中搜索，结果按权重排序."""
+        """Search among 100 Insights, results sorted by weight."""
         for i in range(100):
             mgr.create(
                 title=f"Topic {i}",
@@ -804,17 +804,17 @@ class TestLargeScaleInsight:
                 body=_body(),
                 created_by="test",
             )
-        # 给部分 insight 增加权重
+        # Boost weight for some insights
         for i in range(1, 11):
             mgr.record_use(f"INS-{i:03d}", used_by="test")
 
         results = mgr.search_by_tags(["tag-0", "area-0"])
         assert len(results) > 0
-        # search_by_tags 返回已排序的 List[Insight]，验证有结果即可
-        # （分数在内部排序，外部无法直接获取）
+        # search_by_tags returns sorted List[Insight], just verify we have results
+        # (score is sorted internally, not directly accessible externally)
 
     def test_list_all_100_insights(self, mgr):
-        """list_all 处理 100 条 Insight 不崩溃."""
+        """list_all handles 100 Insights without crashing."""
         for i in range(100):
             mgr.create(
                 title=f"Item {i}",
@@ -827,7 +827,7 @@ class TestLargeScaleInsight:
         assert len(all_ins) == 100
 
     def test_decay_100_insights(self, mgr):
-        """对 100 条 Insight 执行衰减."""
+        """Apply decay to 100 Insights."""
         for i in range(100):
             mgr.create(
                 title=f"Decayable {i}",
@@ -836,14 +836,14 @@ class TestLargeScaleInsight:
                 body=_body(),
                 created_by="test",
             )
-        # 初始权重都是 1.0
+        # Initial weights are all 1.0
         mgr.apply_decay()
         entries, _ = mgr.get_registry()
         for eid, entry in entries.items():
             assert abs(entry.weight - 0.95) < 0.01
 
     def test_search_many_tags(self, mgr):
-        """Insight 有 20+ tags 时搜索正常."""
+        """Search works normally with 20+ tags on an Insight."""
         many_tags = [f"tag-{i}" for i in range(25)]
         mgr.create(
             title="Many tags",
@@ -856,7 +856,7 @@ class TestLargeScaleInsight:
         assert len(results) == 1
 
     def test_deep_derivation_chain(self, mgr):
-        """10 层深的溯源链 get_full_trace 不死循环."""
+        """10-level deep trace chain - get_full_trace should not infinite loop."""
         prev_id = None
         for i in range(10):
             derived = [prev_id] if prev_id else None
@@ -871,19 +871,19 @@ class TestLargeScaleInsight:
             prev_id = ins.id
 
         trace = mgr.get_full_trace(prev_id)
-        # 完整链应该能获取到所有上游
+        # Full chain should be able to retrieve all upstream
         assert trace is not None
 
 
 # ---------------------------------------------------------------------------
-# Test: 衰减/奖励长期运行模拟
+# Test: Decay/reward long-term simulation
 # ---------------------------------------------------------------------------
 
 class TestDecayLongTerm:
-    """多轮衰减 + 奖励交替的长期行为验证."""
+    """Multi-round decay + reward alternation long-term behavior verification."""
 
     def test_50_rounds_decay_converges_to_zero(self, mgr):
-        """50 轮衰减后权重趋近 0 并被停用."""
+        """After 50 rounds of decay, weight approaches 0 and gets deactivated."""
         mgr.create(
             title="Decay target",
             tags=["decay"],
@@ -896,12 +896,12 @@ class TestDecayLongTerm:
 
         entries, _ = mgr.get_registry()
         entry = entries["INS-001"]
-        # 0.95^50 ≈ 0.0769 < 0.1 阈值 → 应被停用
+        # 0.95^50 ~ 0.0769 < 0.1 threshold -> should be deactivated
         assert entry.active is False
         assert entry.weight < 0.1
 
     def test_decay_plus_reward_steady_state(self, mgr):
-        """衰减 + 使用奖励交替，权重应在合理范围内波动."""
+        """Decay + usage reward alternation, weight should fluctuate in reasonable range."""
         mgr.create(
             title="Steady state",
             tags=["steady"],
@@ -909,7 +909,7 @@ class TestDecayLongTerm:
             body=_body(),
             created_by="test",
         )
-        # 模拟 20 轮：每 5 轮使用一次
+        # Simulate 20 rounds: use once every 5 rounds
         for i in range(20):
             mgr.apply_decay()
             if i % 5 == 0:
@@ -917,12 +917,12 @@ class TestDecayLongTerm:
 
         entries, _ = mgr.get_registry()
         entry = entries["INS-001"]
-        # 应仍为 active（因为有定期 reward）
+        # Should still be active (due to periodic reward)
         assert entry.active is True
         assert entry.weight > 0.1
 
     def test_massive_record_use_weight_grows(self, mgr):
-        """大量 record_use 后权重持续增长（无上限验证）."""
+        """Weight keeps growing with many record_use calls (no upper limit)."""
         mgr.create(
             title="Popular",
             tags=["popular"],
@@ -935,12 +935,12 @@ class TestDecayLongTerm:
 
         entries, _ = mgr.get_registry()
         entry = entries["INS-001"]
-        # 初始 1.0 + 100 * 0.1 = 11.0
+        # Initial 1.0 + 100 * 0.1 = 11.0
         assert entry.weight >= 10.0
         assert entry.used_count == 100
 
     def test_weight_precision_after_many_decays(self, mgr):
-        """多次衰减后权重精度（浮点累积误差）."""
+        """Weight precision after many decays (floating point accumulation error)."""
         mgr.create(
             title="Precision",
             tags=["prec"],
@@ -954,11 +954,11 @@ class TestDecayLongTerm:
         entries, _ = mgr.get_registry()
         entry = entries["INS-001"]
         expected = round(0.95 ** 20, 4)
-        # 允许微小浮点误差
+        # Allow minor floating point error
         assert abs(entry.weight - expected) < 0.001
 
     def test_decay_reactivation_cycle(self, mgr):
-        """衰减到停用 → record_use 重新激活 → 再衰减."""
+        """Decay to deactivation -> record_use reactivates -> decay again."""
         mgr.create(
             title="Reactivation",
             tags=["re"],
@@ -966,25 +966,25 @@ class TestDecayLongTerm:
             body=_body(),
             created_by="test",
         )
-        # 衰减直到停用
+        # Decay until deactivated
         for _ in range(60):
             mgr.apply_decay()
         entries, _ = mgr.get_registry()
         assert entries["INS-001"].active is False
 
-        # 使用重新激活
+        # Use to reactivate
         mgr.record_use("INS-001", used_by="user")
         entries, _ = mgr.get_registry()
         assert entries["INS-001"].active is True
         assert entries["INS-001"].weight > 0.1
 
-        # 再次衰减
+        # Decay again
         mgr.apply_decay()
         entries, _ = mgr.get_registry()
-        assert entries["INS-001"].active is True  # 刚激活不会立即停用
+        assert entries["INS-001"].active is True  # Just reactivated, won't deactivate immediately
 
     def test_threshold_exact_boundary(self, mgr):
-        """权重恰好等于阈值时不停用（< threshold 才停用）."""
+        """Weight exactly at threshold is not deactivated (< threshold to deactivate)."""
         mgr.create(
             title="Boundary",
             tags=["edge"],
@@ -992,7 +992,7 @@ class TestDecayLongTerm:
             body=_body(),
             created_by="test",
         )
-        # 手动设置权重恰好 = 0.1
+        # Manually set weight exactly = 0.1
         entries, settings = mgr.get_registry()
         entries["INS-001"].weight = 0.1
         registry_path = mgr.insights_dir / "registry.yaml"
@@ -1004,20 +1004,20 @@ class TestDecayLongTerm:
             yaml.dump(registry_data, allow_unicode=True),
             encoding="utf-8",
         )
-        mgr.apply_decay()  # 0.1 * 0.95 = 0.095 < 0.1 → 停用
+        mgr.apply_decay()  # 0.1 * 0.95 = 0.095 < 0.1 -> deactivated
         entries, _ = mgr.get_registry()
         assert entries["INS-001"].active is False
 
 
 # ---------------------------------------------------------------------------
-# Test: Task-Insight 关联精度
+# Test: Task-Insight association precision
 # ---------------------------------------------------------------------------
 
 class TestTaskInsightRelation:
-    """Task-Insight 关联的搜索精度测试."""
+    """Task-Insight association search precision tests."""
 
     def test_search_empty_tags(self, mgr):
-        """空标签列表搜索返回空结果."""
+        """Empty tag list search returns empty results."""
         mgr.create(
             title="Something",
             tags=["test"],
@@ -1029,7 +1029,7 @@ class TestTaskInsightRelation:
         assert results == []
 
     def test_search_no_match(self, mgr):
-        """无匹配标签返回空结果."""
+        """No matching tags returns empty results."""
         mgr.create(
             title="Python tip",
             tags=["python", "testing"],
@@ -1041,9 +1041,9 @@ class TestTaskInsightRelation:
         assert results == []
 
     def test_search_chinese_tags(self, mgr):
-        """中文标签搜索正常."""
+        """Chinese tag search works correctly."""
         mgr.create(
-            title="中文洞察",
+            title="Chinese insight",
             tags=["测试", "架构", "重构"],
             category="technique",
             body=_body(),
@@ -1053,7 +1053,7 @@ class TestTaskInsightRelation:
         assert len(results) == 1
 
     def test_search_mixed_case(self, mgr):
-        """大小写不敏感搜索."""
+        """Case-insensitive search."""
         mgr.create(
             title="Case test",
             tags=["Python", "Testing"],
@@ -1065,7 +1065,7 @@ class TestTaskInsightRelation:
         assert len(results) == 1
 
     def test_search_partial_overlap(self, mgr):
-        """部分标签重叠时返回结果."""
+        """Partial tag overlap returns results."""
         mgr.create(
             title="Partial match",
             tags=["api", "testing", "python"],
@@ -1075,19 +1075,19 @@ class TestTaskInsightRelation:
         )
         results = mgr.search_by_tags(["api", "deployment", "docker"])
         assert len(results) == 1
-        # 返回 Insight 对象，验证标题即可
+        # Returns Insight objects, just verify title
         assert results[0].title == "Partial match"
 
 
 # ---------------------------------------------------------------------------
-# Test: 溯源循环保护
+# Test: Trace cycle protection
 # ---------------------------------------------------------------------------
 
 class TestDerivationCycleProtection:
-    """测试 get_full_trace 的循环引用保护."""
+    """Test get_full_trace circular reference protection."""
 
     def test_circular_derivation(self, mgr):
-        """A → B → A 循环引用不死循环."""
+        """A -> B -> A circular reference doesn't infinite loop."""
         ins_a = mgr.create(
             title="A",
             tags=["loop"],
@@ -1103,12 +1103,12 @@ class TestDerivationCycleProtection:
             created_by="test",
             derived_from=[ins_a.id],
         )
-        # 手动修改 A 的 derived_from 为 B（制造循环）
+        # Manually modify A's derived_from to B (create a cycle)
         a_path = mgr.insights_dir / f"{ins_a.id}.yaml"
         a_data = yaml.safe_load(a_path.read_text(encoding="utf-8"))
         a_data["derived_from"] = [ins_b.id]
         a_path.write_text(yaml.dump(a_data, allow_unicode=True), encoding="utf-8")
 
-        # get_full_trace 应不死循环
+        # get_full_trace should not infinite loop
         trace = mgr.get_full_trace(ins_a.id)
         assert trace is not None

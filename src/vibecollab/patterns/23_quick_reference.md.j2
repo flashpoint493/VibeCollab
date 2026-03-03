@@ -1,40 +1,40 @@
 {%- set docs = documentation if documentation else {} -%}
 {%- set context_file = docs.get('context_file', 'docs/CONTEXT.md') -%}
-# 十四、快速参考
+# XIV. Quick Reference
 
-## 开始新对话时说
-
-```
-继续项目开发。
-请先读取 CONTRIBUTING_AI.md 和 {{ context_file }} 恢复上下文。
-本次对话目标: {你的目标}
-```
-
-## 结束对话前说
+## Starting a New Dialogue
 
 ```
-请更新 {{ context_file }} 保存当前进度。
-总结本次对话的决策和产出。
-然后 git commit 记录本次对话。
+Continue project development.
+Please read CONTRIBUTING_AI.md and {{ context_file }} to restore context first.
+Goal for this dialogue: {your goal}
 ```
 
-## 协议自检触发
+## Before Ending a Dialogue
 
 ```
-检查协议
-或
-协议自检
-或
+Please update {{ context_file }} to save current progress.
+Summarize the decisions and outputs of this dialogue.
+Then git commit to record this dialogue.
+```
+
+## Protocol Self-Check Trigger
+
+```
+check protocol
+or
+protocol check
+or
 vibecollab check
 ```
 
 ## Vibe Check
 
 ```
-在继续之前，确认一下：
-- 我们对齐理解了吗？
-- 这个方向对吗？
-- 有什么我没考虑到的？
+Before continuing, let's confirm:
+- Are we aligned in understanding?
+- Is this the right direction?
+- Is there anything I haven't considered?
 ```
 
 ---

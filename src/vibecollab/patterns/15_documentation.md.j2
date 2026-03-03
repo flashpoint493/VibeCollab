@@ -3,30 +3,30 @@
 {%- set context_file = docs.get('context_file', 'docs/CONTEXT.md') -%}
 {%- set decisions_file = docs.get('decisions_file', 'docs/DECISIONS.md') -%}
 {%- set changelog_file = docs.get('changelog_file', 'docs/CHANGELOG.md') -%}
-# 九、上下文管理
+# IX. Context Management
 
-## 9.1 关键文件职责
+## 9.1 Key File Responsibilities
 
-| 文件 | 职责 | 更新时机 |
-|-----|------|---------|
+| File | Purpose | Update Trigger |
+|------|---------|----------------|
 {% for f in key_files -%}
 | `{{ f.get('path', '') }}` | {{ f.get('purpose', '') }} | {{ f.get('update_trigger', '') }} |
 {% endfor %}
-## 9.2 上下文恢复协议
+## 9.2 Context Restoration Protocol
 
-当开启新对话时，AI 应：
-1. 读取 `CONTRIBUTING_AI.md` 了解协作规则
-2. 读取 `{{ context_file }}` 恢复当前状态
-3. 读取 `{{ decisions_file }}` 了解已确认和待定决策
-4. 运行 `git log --oneline -10` 了解最近进展
-5. 询问用户本次对话目标
+When starting a new dialogue, the AI should:
+1. Read `CONTRIBUTING_AI.md` to understand collaboration rules
+2. Read `{{ context_file }}` to restore current state
+3. Read `{{ decisions_file }}` to review confirmed and pending decisions
+4. Run `git log --oneline -10` to review recent progress
+5. Ask the user about the goal of this dialogue
 
-## 9.3 上下文保存协议
+## 9.3 Context Save Protocol
 
-每次对话结束时，AI 应：
-1. 更新 `{{ context_file }}` 保存当前状态
-2. 更新 `{{ changelog_file }}` 记录本次产出
-3. 如有新决策，更新 `{{ decisions_file }}`
-4. **必须执行 git commit** 记录本次对话产出
+At the end of each dialogue, the AI should:
+1. Update `{{ context_file }}` to save current state
+2. Update `{{ changelog_file }}` to record outputs from this session
+3. If new decisions were made, update `{{ decisions_file }}`
+4. **Must execute git commit** to record this dialogue's outputs
 
 ---

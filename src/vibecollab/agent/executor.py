@@ -1,18 +1,18 @@
 """
-Agent Executor — 将 LLM 计划转化为实际文件变更
+Agent Executor -- Transforms LLM plans into actual file changes
 
-职责：
-1. 解析 LLM 返回的 JSON 文件变更指令
-2. 应用变更到文件系统 (create/modify/delete)
-3. 运行测试验证
-4. 执行 git commit
-5. 返回执行结果报告
+Responsibilities:
+1. Parse JSON file change instructions returned by LLM
+2. Apply changes to the file system (create/modify/delete)
+3. Run test verification
+4. Execute git commit
+5. Return execution result report
 
-安全措施：
-- 所有路径限制在 project_root 内 (防止目录穿越)
-- 最大单次变更文件数限制
-- 写入前创建备份
-- 测试失败时自动回滚
+Safety measures:
+- All paths restricted within project_root (prevent directory traversal)
+- Maximum single-batch file change limit
+- Create backups before writing
+- Auto-rollback on test failure
 """
 
 import json
@@ -28,7 +28,7 @@ MAX_FILE_SIZE_BYTES = 500_000  # 500KB
 
 @dataclass
 class FileChange:
-    """单个文件变更指令"""
+    """Single file change instruction"""
     file: str
     action: str  # create | modify | delete
     content: str = ""
@@ -37,7 +37,7 @@ class FileChange:
 
 @dataclass
 class ExecutionResult:
-    """执行结果报告"""
+    """Execution result report"""
     success: bool = False
     changes_applied: List[str] = field(default_factory=list)
     changes_skipped: List[str] = field(default_factory=list)
@@ -62,7 +62,7 @@ class ExecutionResult:
 
 
 class AgentExecutor:
-    """将 LLM 输出转化为实际项目变更"""
+    """Transforms LLM output into actual project changes"""
 
     def __init__(self, project_root: Path, dry_run: bool = False):
         self.project_root = Path(project_root).resolve()
@@ -70,15 +70,15 @@ class AgentExecutor:
         self._backups: Dict[str, Optional[str]] = {}
 
     def parse_changes(self, llm_output: str) -> List[FileChange]:
-        """从 LLM 输出中解析文件变更指令
+        """Parse file change instructions from LLM output
 
-        支持两种格式:
+        Supports two formats:
         1. JSON code blocks: ```json {"file": ..., "action": ..., "content": ...} ```
         2. JSON array: ```json [{"file": ..., ...}, ...] ```
         """
         changes = []
 
-        # 提取所有 JSON code blocks
+        # Extract all JSON code blocks
         json_blocks = re.findall(r'```json\s*\n(.*?)```', llm_output, re.DOTALL)
 
         for block in json_blocks:
@@ -94,7 +94,7 @@ class AgentExecutor:
                     if change:
                         changes.append(change)
             elif isinstance(parsed, dict):
-                # 可能是 plan JSON (有 steps 字段) 而非 change JSON
+                # May be plan JSON (has steps field) rather than change JSON
                 if "file" in parsed and "action" in parsed:
                     change = self._parse_single_change(parsed)
                     if change:
@@ -109,7 +109,7 @@ class AgentExecutor:
 
     @staticmethod
     def _parse_single_change(item: dict) -> Optional[FileChange]:
-        """解析单个变更指令"""
+        """Parse a single change instruction"""
         if not isinstance(item, dict):
             return None
         file_path = item.get("file", "")
@@ -124,52 +124,52 @@ class AgentExecutor:
         )
 
     def validate_changes(self, changes: List[FileChange]) -> List[str]:
-        """验证变更安全性，返回错误列表"""
+        """Validate change safety, return list of errors"""
         errors = []
 
         if len(changes) > MAX_FILES_PER_CYCLE:
             errors.append(
-                f"变更文件数 ({len(changes)}) 超过单次限制 ({MAX_FILES_PER_CYCLE})"
+                f"Number of changed files ({len(changes)}) exceeds single-batch limit ({MAX_FILES_PER_CYCLE})"
             )
 
         for change in changes:
-            # 路径安全检查
+            # Path safety check
             try:
                 target = (self.project_root / change.file).resolve()
                 if not str(target).startswith(str(self.project_root)):
-                    errors.append(f"路径穿越拒绝: {change.file}")
+                    errors.append(f"Path traversal denied: {change.file}")
                     continue
             except (ValueError, OSError):
-                errors.append(f"无效路径: {change.file}")
+                errors.append(f"Invalid path: {change.file}")
                 continue
 
-            # 文件大小检查
+            # File size check
             if change.content and len(change.content.encode("utf-8")) > MAX_FILE_SIZE_BYTES:
-                errors.append(f"文件过大: {change.file} ({len(change.content)} bytes)")
+                errors.append(f"File too large: {change.file} ({len(change.content)} bytes)")
 
-            # 危险路径检查
+            # Dangerous path check
             dangerous = [".git/", ".env", "project.yaml", "pyproject.toml"]
             for d in dangerous:
                 if change.file == d or change.file.startswith(d):
-                    errors.append(f"受保护文件: {change.file}")
+                    errors.append(f"Protected file: {change.file}")
 
         return errors
 
     def apply_changes(self, changes: List[FileChange]) -> ExecutionResult:
-        """应用文件变更到磁盘"""
+        """Apply file changes to disk"""
         result = ExecutionResult()
 
-        # 验证
+        # Validate
         errors = self.validate_changes(changes)
         if errors:
             result.errors = errors
             return result
 
         if not changes:
-            result.errors.append("没有可应用的变更")
+            result.errors.append("No applicable changes")
             return result
 
-        # 备份
+        # Backup
         self._backups.clear()
         for change in changes:
             target = self.project_root / change.file
@@ -181,7 +181,7 @@ class AgentExecutor:
             else:
                 self._backups[change.file] = None
 
-        # 应用
+        # Apply
         for change in changes:
             target = self.project_root / change.file
             try:
@@ -205,7 +205,7 @@ class AgentExecutor:
                     result.changes_applied.append(f"{change.action}: {change.file}")
 
             except Exception as e:
-                result.errors.append(f"写入失败 {change.file}: {e}")
+                result.errors.append(f"Write failed {change.file}: {e}")
 
         if self.dry_run:
             result.success = True
@@ -215,7 +215,7 @@ class AgentExecutor:
         return result
 
     def run_tests(self, test_command: Optional[str] = None) -> tuple:
-        """运行测试，返回 (passed: bool, output: str)"""
+        """Run tests, return (passed: bool, output: str)"""
         if self.dry_run:
             return True, "[dry-run] tests skipped"
 
@@ -235,18 +235,18 @@ class AgentExecutor:
             passed = proc.returncode == 0
             return passed, output
         except subprocess.TimeoutExpired:
-            return False, "测试超时 (300s)"
+            return False, "Test timeout (300s)"
         except BaseException as e:
-            return False, f"测试执行失败: {e}"
+            return False, f"Test execution failed: {e}"
 
     def rollback(self) -> List[str]:
-        """回滚所有已备份的文件变更"""
+        """Rollback all backed-up file changes"""
         rolled_back = []
         for file_path, original_content in self._backups.items():
             target = self.project_root / file_path
             try:
                 if original_content is None:
-                    # 原本不存在，删除新创建的文件
+                    # Did not exist originally, delete newly created file
                     if target.exists():
                         target.unlink()
                         rolled_back.append(f"removed: {file_path}")
@@ -259,7 +259,7 @@ class AgentExecutor:
         return rolled_back
 
     def git_commit(self, message: str) -> tuple:
-        """执行 git add + commit，返回 (success: bool, hash_or_error: str)"""
+        """Execute git add + commit, return (success: bool, hash_or_error: str)"""
         if self.dry_run:
             return True, "[dry-run]"
 
@@ -277,7 +277,7 @@ class AgentExecutor:
                 capture_output=True, text=True, timeout=30,
             )
             if proc.returncode == 0:
-                # 获取 commit hash
+                # Get commit hash
                 hash_proc = subprocess.run(
                     ["git", "rev-parse", "--short", "HEAD"],
                     cwd=str(self.project_root),
@@ -298,13 +298,13 @@ class AgentExecutor:
         commit_message: str = "[AGENT] automated changes",
         test_command: Optional[str] = None,
     ) -> ExecutionResult:
-        """完整执行周期: parse → validate → apply → test → commit/rollback"""
+        """Full execution cycle: parse -> validate -> apply -> test -> commit/rollback"""
         result = ExecutionResult()
 
         # Step 1: Parse
         changes = self.parse_changes(llm_output)
         if not changes:
-            result.errors.append("LLM 输出中未找到可解析的文件变更")
+            result.errors.append("No parsable file changes found in LLM output")
             return result
 
         # Step 2: Validate
@@ -327,11 +327,11 @@ class AgentExecutor:
         result.test_output = test_output
 
         if not test_passed:
-            # 测试失败 → 回滚
+            # Test failed -> rollback
             rolled = self.rollback()
             result.rollback_performed = True
             result.success = False
-            result.errors.append(f"测试失败，已回滚 {len(rolled)} 个文件")
+            result.errors.append(f"Tests failed, rolled back {len(rolled)} file(s)")
             return result
 
         # Step 5: Git commit
@@ -339,7 +339,7 @@ class AgentExecutor:
         result.git_committed = committed
         result.git_hash = hash_or_err
         if not committed:
-            result.errors.append(f"Git commit 失败: {hash_or_err}")
+            result.errors.append(f"Git commit failed: {hash_or_err}")
 
         result.success = committed
         return result

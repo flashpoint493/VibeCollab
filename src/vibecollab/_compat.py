@@ -1,15 +1,15 @@
 """
-Windows GBK 编码兼容层
+Windows GBK encoding compatibility layer
 
-在 Windows GBK 终端中，emoji 和特殊 Unicode 字符会导致 UnicodeEncodeError。
-本模块提供三层防御:
+On Windows GBK terminals, emoji and special Unicode characters cause UnicodeEncodeError.
+This module provides three layers of defense:
 
-1. ensure_safe_stdout() — 在 CLI 入口调用，将 stdout/stderr 的编码错误模式
-   从 'strict' 改为 'replace'，让无法编码的字符变成 '?' 而非崩溃
-2. safe_console() — Rich Console 工厂函数，确保 Console 输出也安全
-3. EMOJI / BULLET 映射 — 将 emoji 替换为 ASCII 等价物
+1. ensure_safe_stdout() -- Called at CLI entry, changes stdout/stderr error mode
+   from 'strict' to 'replace', turning unencodable characters into '?' instead of crashing
+2. safe_console() -- Rich Console factory function, ensures Console output is safe
+3. EMOJI / BULLET mapping -- Replaces emoji with ASCII equivalents
 
-所有 CLI 模块应从此处导入，禁止各自实现编码检测。
+All CLI modules should import from here; do not implement encoding detection individually.
 """
 
 import io
@@ -19,7 +19,7 @@ from typing import Optional
 
 
 def is_windows_gbk() -> bool:
-    """检测是否为 Windows 且终端不支持 emoji 编码"""
+    """Detect whether the platform is Windows with a terminal that cannot encode emoji"""
     if platform.system() != "Windows":
         return False
     try:
@@ -34,19 +34,20 @@ _GBK = is_windows_gbk()
 
 
 # ============================================================
-# 第一层防御: stdout / stderr 编码安全
+# Layer 1: stdout / stderr encoding safety
 # ============================================================
 
 _stdio_patched = False
 
 
 def ensure_safe_stdout() -> None:
-    """确保 stdout/stderr 在 Windows GBK 环境下不会因 Unicode 而崩溃。
+    """Ensure stdout/stderr do not crash due to Unicode on Windows GBK.
 
-    原理: 将 stdout/stderr 的 errors 模式从 'strict' 改为 'replace'，
-    无法编码的字符会变成 '?' 而非抛出 UnicodeEncodeError。
+    Principle: Change stdout/stderr errors mode from 'strict' to 'replace',
+    so unencodable characters become '?' instead of raising UnicodeEncodeError.
 
-    此函数幂等——多次调用只生效一次。应在 CLI 入口点最早期调用。
+    This function is idempotent -- multiple calls only take effect once.
+    Should be called at the earliest point in the CLI entry.
     """
     global _stdio_patched
     if _stdio_patched:
@@ -63,21 +64,21 @@ def ensure_safe_stdout() -> None:
 
         encoding = getattr(stream, "encoding", None) or "utf-8"
 
-        # 如果编码本身就支持完整 Unicode (utf-8)，则无需处理
+        # If encoding natively supports full Unicode (utf-8), no action needed
         try:
             "\u2705\u26a0\u2194\u2588\u2591".encode(encoding)
             continue
         except (UnicodeEncodeError, LookupError):
             pass
 
-        # 如果 errors 已经是 replace/ignore/xmlcharrefreplace/backslashreplace，
-        # 则已安全。注意: surrogateescape 在非 UTF 编码下仍会崩溃
+        # If errors is already replace/ignore/xmlcharrefreplace/backslashreplace,
+        # it's safe. Note: surrogateescape can still crash on non-UTF encodings
         current_errors = getattr(stream, "errors", "strict")
         if current_errors in ("replace", "ignore", "xmlcharrefreplace",
                               "backslashreplace", "namereplace"):
             continue
 
-        # Python 3.7+ TextIOWrapper 支持 reconfigure
+        # Python 3.7+ TextIOWrapper supports reconfigure
         if hasattr(stream, "reconfigure"):
             try:
                 stream.reconfigure(errors="replace")
@@ -85,7 +86,7 @@ def ensure_safe_stdout() -> None:
             except Exception:
                 pass
 
-        # Fallback: 用新的 TextIOWrapper 替换
+        # Fallback: replace with a new TextIOWrapper
         try:
             binary = getattr(stream, "buffer", None)
             if binary is not None:
@@ -101,14 +102,14 @@ def ensure_safe_stdout() -> None:
 
 
 # ============================================================
-# 第二层防御: Rich Console 安全工厂
+# Layer 2: Rich Console safe factory
 # ============================================================
 
 def safe_console(**kwargs) -> "Console":
-    """创建一个编码安全的 Rich Console 实例。
+    """Create an encoding-safe Rich Console instance.
 
-    在 Windows GBK 环境下，先确保 stdout 安全，再创建 Console。
-    支持传入任何 Console 构造参数。
+    On Windows GBK, ensures stdout is safe before creating Console.
+    Accepts any Console constructor arguments.
     """
     ensure_safe_stdout()
     from rich.console import Console
@@ -116,12 +117,12 @@ def safe_console(**kwargs) -> "Console":
 
 
 # ============================================================
-# 第三层防御: Emoji / 特殊字符映射
+# Layer 3: Emoji / special character mapping
 # ============================================================
 
-# 通用 emoji 替代映射
+# Universal emoji substitution mapping
 EMOJI = {
-    # 长名称（cli/main.py / cli/lifecycle.py 使用）
+    # Long names (used by cli/main.py / cli/lifecycle.py)
     "success": "OK" if _GBK else "✅",
     "warning": "!" if _GBK else "⚠️",
     "error": "X" if _GBK else "❌",
@@ -142,29 +143,29 @@ EMOJI = {
     "arrow": "<->" if _GBK else "↔",
     "bar_fill": "#" if _GBK else "█",
     "bar_empty": "-" if _GBK else "░",
-    # severity（conflict_detector 使用）
+    # severity (used by conflict_detector)
     "high": "[!]" if _GBK else "🔴",
     "medium": "[~]" if _GBK else "🟡",
     "low": "[*]" if _GBK else "🟢",
     "idea": "[?]" if _GBK else "💡",
-    # 短别名（cli/ai.py 使用）
+    # Short aliases (used by cli/ai.py)
     "ok": "OK" if _GBK else "✅",
     "warn": "!" if _GBK else "⚠️",
     "err": "X" if _GBK else "❌",
 }
 
-# Bullet point 替代
+# Bullet point substitute
 BULLET = "-" if _GBK else "•"
 
 
 # ============================================================
-# 辅助: 安全化任意文本输出
+# Helper: sanitize arbitrary text output
 # ============================================================
 
 def safe_str(text: str, encoding: Optional[str] = None) -> str:
-    """将文本中无法编码的字符替换为 '?'，用于输出来自用户数据的文本。
+    """Replace unencodable characters in text with '?', for outputting user data.
 
-    encoding 默认取 sys.stdout.encoding，适用于 click.echo / print 场景。
+    encoding defaults to sys.stdout.encoding, suitable for click.echo / print.
     """
     if encoding is None:
         encoding = getattr(sys.stdout, "encoding", None) or "utf-8"

@@ -447,7 +447,7 @@ class TestRunCliEdge:
         from vibecollab.agent.mcp_server import _run_cli
         with patch("subprocess.run", side_effect=PermissionError("denied")):
             result = _run_cli(["vibecollab", "check"], project_dir)
-            assert "错误" in result
+            assert "Error" in result
             assert "denied" in result
 
 

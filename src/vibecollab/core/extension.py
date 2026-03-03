@@ -1,7 +1,7 @@
 """
-LLMContext Extension - 扩展机制处理器
+LLMContext Extension - Extension mechanism processor
 
-扩展 = 流程钩子 + 上下文注入 + 引用文档
+Extension = Process hooks + Context injection + Reference documents
 """
 
 import re
@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 
 @dataclass
 class Context:
-    """上下文定义"""
+    """Context definition"""
     id: str
     type: str  # reference | template | computed | file_list
     source: Optional[str] = None       # type=reference
@@ -27,9 +27,9 @@ class Context:
 
 @dataclass
 class Hook:
-    """钩子定义"""
-    trigger: str      # 触发点
-    action: str       # 动作类型
+    """Hook definition"""
+    trigger: str      # Trigger point
+    action: str       # Action type
     context_id: Optional[str] = None
     condition: Optional[str] = None
     priority: int = 0
@@ -37,7 +37,7 @@ class Hook:
 
 @dataclass
 class Extension:
-    """扩展定义"""
+    """Extension definition"""
     domain: str
     hooks: List[Hook] = field(default_factory=list)
     contexts: Dict[str, Context] = field(default_factory=dict)
@@ -47,9 +47,9 @@ class Extension:
 
 
 class ExtensionProcessor:
-    """扩展处理器"""
+    """Extension processor"""
 
-    # 支持的触发点
+    # Supported trigger points
     TRIGGERS = {
         "dialogue.start",
         "dialogue.end",
@@ -63,7 +63,7 @@ class ExtensionProcessor:
         "milestone.planning",
     }
 
-    # 支持的动作
+    # Supported actions
     ACTIONS = {
         "inject_context",
         "append_checklist",
@@ -77,10 +77,10 @@ class ExtensionProcessor:
         self._project_config: Dict[str, Any] = {}
 
     def load_extension(self, ext_data: Dict[str, Any], domain: str) -> Extension:
-        """加载扩展定义"""
+        """Load extension definition"""
         ext = Extension(domain=domain)
 
-        # 加载钩子
+        # Load hooks
         for hook_data in ext_data.get("hooks", []):
             hook = Hook(
                 trigger=hook_data.get("trigger", ""),
@@ -91,7 +91,7 @@ class ExtensionProcessor:
             )
             ext.hooks.append(hook)
 
-        # 加载上下文
+        # Load contexts
         for ctx_id, ctx_data in ext_data.get("contexts", {}).items():
             ctx = Context(
                 id=ctx_id,
@@ -107,47 +107,47 @@ class ExtensionProcessor:
             )
             ext.contexts[ctx_id] = ctx
 
-        # 加载额外文件
+        # Load additional files
         ext.additional_files = ext_data.get("additional_files", [])
 
-        # 加载配置
+        # Load config
         ext.config = ext_data.get("config", {})
 
         self.extensions[domain] = ext
         return ext
 
     def load_from_config(self, config: Dict[str, Any]) -> None:
-        """从项目配置中加载所有扩展"""
+        """Load all extensions from project config"""
         self._project_config = config
 
-        # 加载 roles_override (顶级)
+        # Load roles_override (top-level)
         roles_override = config.get("roles_override", [])
 
-        # 加载 domain_extensions
+        # Load domain_extensions
         domain_exts = config.get("domain_extensions", {}) or {}
         for domain, ext_data in domain_exts.items():
-            if ext_data:  # 确保 ext_data 不为 None
+            if ext_data:  # Ensure ext_data is not None
                 ext = self.load_extension(ext_data, domain)
                 ext.roles_override = roles_override
 
     def get_hooks_for_trigger(self, trigger: str) -> List[Hook]:
-        """获取指定触发点的所有钩子，按优先级排序"""
+        """Get all hooks for a trigger point, sorted by priority"""
         hooks = []
         for ext in self.extensions.values():
             for hook in ext.hooks:
                 if hook.trigger == trigger:
                     hooks.append(hook)
 
-        # 按优先级降序排列
+        # Sort by priority descending
         return sorted(hooks, key=lambda h: h.priority, reverse=True)
 
     def evaluate_condition(self, condition: Optional[str], runtime_ctx: Dict[str, Any]) -> bool:
-        """评估条件表达式"""
+        """Evaluate condition expression"""
         if not condition:
             return True
 
-        # 简单条件解析器
-        # 支持: files.exists('path'), project.has_feature('x'), project.domain == 'x'
+        # Simple condition parser
+        # Supports: files.exists('path'), project.has_feature('x'), project.domain == 'x'
 
         # files.exists('path')
         match = re.match(r"files\.exists\(['\"](.+)['\"]\)", condition)
@@ -169,18 +169,18 @@ class ExtensionProcessor:
             current_domain = self._project_config.get("project", {}).get("domain", "")
             return current_domain == target_domain
 
-        # topic.relates_to('x') - 需要运行时上下文
+        # topic.relates_to('x') - needs runtime context
         match = re.match(r"topic\.relates_to\(['\"](.+)['\"]\)", condition)
         if match:
             topic = match.group(1)
             current_topic = runtime_ctx.get("topic", "")
             return topic.lower() in current_topic.lower()
 
-        # 默认返回 True（未知条件不阻止执行）
+        # Default return True (unknown conditions don't block execution)
         return True
 
     def resolve_context(self, ctx: Context, variables: Dict[str, Any]) -> str:
-        """解析上下文内容"""
+        """Resolve context content"""
         if ctx.type == "reference":
             return self._resolve_reference(ctx)
         elif ctx.type == "template":
@@ -192,71 +192,71 @@ class ExtensionProcessor:
         return ""
 
     def _resolve_reference(self, ctx: Context) -> str:
-        """解析引用类型上下文"""
+        """Resolve reference type context"""
         if not ctx.source:
             return ""
 
         file_path = self.project_root / ctx.source
         if not file_path.exists():
-            return f"<!-- 引用文件不存在: {ctx.source} -->"
+            return f"<!-- Referenced file not found: {ctx.source} -->"
 
         content = file_path.read_text(encoding="utf-8")
 
-        # 如果指定了章节，提取该章节
+        # If section is specified, extract that section
         if ctx.section:
             content = self._extract_section(content, ctx.section)
 
-        # 如果内容较短且配置了内联，返回完整内容
+        # If content is short and inline is configured, return full content
         if ctx.inline_if_short and len(content) < 500:
             return content
 
-        # 否则返回引用提示
-        return f"📄 见 `{ctx.source}`" + (f" → {ctx.section}" if ctx.section else "")
+        # Otherwise return reference hint
+        return f"See `{ctx.source}`" + (f" -> {ctx.section}" if ctx.section else "")
 
     def _resolve_template(self, ctx: Context, variables: Dict[str, Any]) -> str:
-        """解析模板类型上下文"""
+        """Resolve template type context"""
         if not ctx.content:
             return ""
 
         content = ctx.content
 
-        # 替换变量 {variable_name}
+        # Replace variables {variable_name}
         for key, value in variables.items():
             content = content.replace(f"{{{key}}}", str(value))
 
         return content
 
     def _resolve_file_list(self, ctx: Context) -> str:
-        """解析文件列表类型上下文"""
+        """Resolve file list type context"""
         if not ctx.pattern:
             return ""
 
         files = list(self.project_root.glob(ctx.pattern))
         if not files:
-            return f"<!-- 未找到匹配 {ctx.pattern} 的文件 -->"
+            return f"<!-- No files matching {ctx.pattern} found -->"
 
-        result = f"**{ctx.description or '相关文件'}**:\n"
+        result = f"**{ctx.description or 'Related files'}**:\n"
         for f in files:
             result += f"- `{f.relative_to(self.project_root)}`\n"
         return result
 
     def _resolve_computed(self, ctx: Context, variables: Dict[str, Any]) -> str:
-        """解析计算类型上下文"""
+        """Resolve computed type context"""
         if not ctx.from_path:
             return ""
 
-        # 从配置中获取数据
+        # Get data from config
         data = self._get_nested_value(self._project_config, ctx.from_path)
         if data is None:
             return ""
 
-        # 简单转换
+        # Simple transform
         if isinstance(data, list):
             return "\n".join(f"- {item}" for item in data)
         return str(data)
 
     def _extract_section(self, content: str, section_header: str) -> str:
-        """从 Markdown 中提取指定章节"""
+        """Extract a specific section from Markdown"""
         lines = content.split("\n")
         result = []
         in_section = False
@@ -264,13 +264,13 @@ class ExtensionProcessor:
 
         for line in lines:
             if line.strip().startswith("#"):
-                # 检查是否是目标章节
+                # Check if this is the target section
                 if section_header in line:
                     in_section = True
                     section_level = len(line) - len(line.lstrip("#"))
                     result.append(line)
                     continue
-                # 检查是否离开了目标章节
+                # Check if we've left the target section
                 elif in_section:
                     current_level = len(line) - len(line.lstrip("#"))
                     if current_level <= section_level:
@@ -281,7 +281,7 @@ class ExtensionProcessor:
         return "\n".join(result)
 
     def _get_nested_value(self, data: Dict, path: str) -> Any:
-        """获取嵌套字典的值，支持点号路径"""
+        """Get value from nested dict using dot-separated path"""
         keys = path.split(".")
         value = data
         for key in keys:
@@ -298,19 +298,19 @@ class ExtensionProcessor:
         variables: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """
-        处理触发点，返回需要执行的动作列表
+        Process a trigger point, return list of actions to execute
 
         Args:
-            trigger: 触发点标识
-            runtime_ctx: 运行时上下文（如当前话题）
-            variables: 模板变量
+            trigger: Trigger point identifier
+            runtime_ctx: Runtime context (e.g. current topic)
+            variables: Template variables
 
         Returns:
-            动作列表，每个动作包含:
-            - action: 动作类型
-            - content: 要注入的内容（如果有）
-            - context_id: 上下文ID
-            - source: 来源扩展
+            List of actions, each containing:
+            - action: Action type
+            - content: Content to inject (if any)
+            - context_id: Context ID
+            - source: Source extension
         """
         runtime_ctx = runtime_ctx or {}
         variables = variables or {}
@@ -319,7 +319,7 @@ class ExtensionProcessor:
         hooks = self.get_hooks_for_trigger(trigger)
 
         for hook in hooks:
-            # 评估条件
+            # Evaluate condition
             if not self.evaluate_condition(hook.condition, runtime_ctx):
                 continue
 
@@ -328,12 +328,12 @@ class ExtensionProcessor:
                 "context_id": hook.context_id,
             }
 
-            # 如果需要注入上下文，解析内容
+            # If context injection is needed, resolve content
             if hook.action == "inject_context" and hook.context_id:
                 for ext in self.extensions.values():
                     if hook.context_id in ext.contexts:
                         ctx = ext.contexts[hook.context_id]
-                        # 合并扩展配置到变量
+                        # Merge extension config into variables
                         merged_vars = {**ext.config, **variables}
                         result["content"] = self.resolve_context(ctx, merged_vars)
                         result["source"] = ext.domain
@@ -344,19 +344,19 @@ class ExtensionProcessor:
         return results
 
     def generate_extension_section(self, domain: str) -> str:
-        """为指定领域生成扩展章节内容"""
+        """Generate extension section content for a domain"""
         if domain not in self.extensions:
             return ""
 
         ext = self.extensions[domain]
-        content = f"""# 领域扩展: {domain.upper()}
+        content = f"""# Domain Extension: {domain.upper()}
 
-## 扩展钩子
+## Extension Hooks
 
-以下钩子在特定流程节点自动触发：
+The following hooks are automatically triggered at specific process points:
 
-| 触发点 | 动作 | 条件 | 上下文 |
-|-------|------|------|--------|
+| Trigger | Action | Condition | Context |
+|---------|--------|-----------|---------|
 """
         for hook in ext.hooks:
             condition = hook.condition or "-"
@@ -364,24 +364,24 @@ class ExtensionProcessor:
             content += f"| `{hook.trigger}` | {hook.action} | {condition} | {ctx_id} |\n"
 
         content += """
-## 可用上下文
+## Available Contexts
 
 """
         for ctx_id, ctx in ext.contexts.items():
             desc = ctx.description or ""
             content += f"### {ctx_id}\n\n"
-            content += f"- **类型**: {ctx.type}\n"
+            content += f"- **Type**: {ctx.type}\n"
             if ctx.source:
-                content += f"- **来源**: `{ctx.source}`\n"
+                content += f"- **Source**: `{ctx.source}`\n"
             if desc:
-                content += f"- **说明**: {desc}\n"
+                content += f"- **Description**: {desc}\n"
             content += "\n"
 
         return content
 
 
 def load_extension_from_file(path: Path, project_root: Optional[Path] = None) -> ExtensionProcessor:
-    """从 YAML 文件加载扩展"""
+    """Load extension from YAML file"""
     import yaml
 
     with open(path, "r", encoding="utf-8") as f:

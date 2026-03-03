@@ -386,16 +386,16 @@ class TestLLMClient:
 
 
 # ---------------------------------------------------------------------------
-# LLMConfig — 配置文件层 + 边界情况
+# LLMConfig — Config file layer + edge cases
 # ---------------------------------------------------------------------------
 
 class TestLLMConfigFileLayer:
-    """测试三层配置解析中的配置文件层."""
+    """Test config file layer in three-tier config resolution."""
 
     @patch.dict(os.environ, {}, clear=True)
     @patch("vibecollab.core.config_manager.resolve_llm_config")
     def test_config_file_fallback(self, mock_resolve):
-        """环境变量为空时，从配置文件获取值."""
+        """Falls back to config file when env vars are empty."""
         mock_resolve.return_value = {
             "provider": "anthropic",
             "api_key": "file-key-123",
@@ -403,7 +403,7 @@ class TestLLMConfigFileLayer:
             "base_url": "https://custom.api.com",
             "max_tokens": "8192",
         }
-        # 清除环境变量以确保不干扰
+        # Clear env vars to ensure no interference
         for env in [ENV_PROVIDER, ENV_API_KEY, ENV_MODEL, ENV_BASE_URL, ENV_MAX_TOKENS]:
             os.environ.pop(env, None)
 
@@ -417,17 +417,17 @@ class TestLLMConfigFileLayer:
     @patch.dict(os.environ, {ENV_PROVIDER: "openai", ENV_API_KEY: "env-key"}, clear=False)
     @patch("vibecollab.core.config_manager.resolve_llm_config")
     def test_env_overrides_file(self, mock_resolve):
-        """环境变量优先于配置文件."""
+        """Env vars take priority over config file."""
         mock_resolve.return_value = {
             "provider": "anthropic",
             "api_key": "file-key",
         }
         cfg = LLMConfig()
-        assert cfg.provider == "openai"  # env 优先
-        assert cfg.api_key == "env-key"  # env 优先
+        assert cfg.provider == "openai"  # env wins
+        assert cfg.api_key == "env-key"  # env wins
 
     def test_explicit_overrides_all(self):
-        """显式参数优先于环境变量和配置文件."""
+        """Explicit args override env vars and config file."""
         with patch.dict(os.environ, {ENV_PROVIDER: "anthropic", ENV_API_KEY: "env-key"}):
             cfg = LLMConfig(provider="openai", api_key="explicit-key")
             assert cfg.provider == "openai"
@@ -436,18 +436,18 @@ class TestLLMConfigFileLayer:
     @patch("vibecollab.core.config_manager.resolve_llm_config",
            side_effect=Exception("config read error"))
     def test_config_file_exception_graceful(self, mock_resolve):
-        """配置文件读取异常时静默降级."""
+        """Gracefully degrades when config file read fails."""
         cfg = LLMConfig()
-        # 不抛异常，使用默认值
+        # No exception, falls back to defaults
         assert cfg.provider == DEFAULT_PROVIDER
 
 
 # ---------------------------------------------------------------------------
-# Dual Provider — 深度测试
+# Dual Provider — Deep tests
 # ---------------------------------------------------------------------------
 
 class TestDualProviderDeep:
-    """测试 OpenAI 和 Anthropic 的深度行为."""
+    """Test in-depth behavior of OpenAI and Anthropic providers."""
 
     def _make_mock_httpx(self, status_code=200, json_data=None, text=""):
         mock_httpx = MagicMock()
@@ -463,7 +463,7 @@ class TestDualProviderDeep:
         return mock_httpx, mock_client
 
     def test_openai_default_url(self):
-        """OpenAI 无 base_url 时使用默认 URL."""
+        """OpenAI uses default URL when base_url is empty."""
         client = LLMClient(LLMConfig(api_key="test", base_url=""))
         mock_httpx, mock_client = self._make_mock_httpx(json_data={
             "choices": [{"message": {"content": "hi"}}],
@@ -476,7 +476,7 @@ class TestDualProviderDeep:
         assert call_url == "https://api.openai.com/v1/chat/completions"
 
     def test_openai_custom_base_url_with_trailing_slash(self):
-        """OpenAI 自定义 base_url 尾部斜杠被去掉."""
+        """OpenAI custom base_url trailing slash is stripped."""
         client = LLMClient(LLMConfig(api_key="test", base_url="https://custom.api/v1/"))
         mock_httpx, mock_client = self._make_mock_httpx(json_data={
             "choices": [{"message": {"content": "hi"}}],
@@ -488,7 +488,7 @@ class TestDualProviderDeep:
         assert call_url == "https://custom.api/v1/chat/completions"
 
     def test_anthropic_default_url(self):
-        """Anthropic 无 base_url 时使用默认 URL."""
+        """Anthropic uses default URL when base_url is empty."""
         client = LLMClient(LLMConfig(
             provider="anthropic", api_key="test", base_url=""))
         mock_httpx, mock_client = self._make_mock_httpx(json_data={
@@ -501,7 +501,7 @@ class TestDualProviderDeep:
         assert call_url == "https://api.anthropic.com/v1/messages"
 
     def test_openai_auth_header(self):
-        """OpenAI 请求包含正确的 Authorization header."""
+        """OpenAI request includes correct Authorization header."""
         client = LLMClient(LLMConfig(api_key="sk-test-key"))
         mock_httpx, mock_client = self._make_mock_httpx(json_data={
             "choices": [{"message": {"content": "hi"}}],
@@ -513,7 +513,7 @@ class TestDualProviderDeep:
         assert headers["Authorization"] == "Bearer sk-test-key"
 
     def test_anthropic_headers(self):
-        """Anthropic 请求包含 x-api-key 和 anthropic-version header."""
+        """Anthropic request includes x-api-key and anthropic-version headers."""
         client = LLMClient(LLMConfig(
             provider="anthropic", api_key="ant-key"))
         mock_httpx, mock_client = self._make_mock_httpx(json_data={
@@ -527,7 +527,7 @@ class TestDualProviderDeep:
         assert headers["anthropic-version"] == "2023-06-01"
 
     def test_unknown_provider_falls_to_openai(self):
-        """未知 provider 走 OpenAI 路径."""
+        """Unknown provider falls back to OpenAI path."""
         client = LLMClient(LLMConfig(provider="gemini", api_key="test"))
         mock_httpx, mock_client = self._make_mock_httpx(json_data={
             "choices": [{"message": {"content": "response"}}],
@@ -536,12 +536,12 @@ class TestDualProviderDeep:
 
         resp = client.chat([Message(role="user", content="test")])
         assert resp.content == "response"
-        # 验证调用了 OpenAI 风格 URL
+        # Verify OpenAI-style URL was called
         call_url = mock_client.post.call_args[0][0]
         assert "chat/completions" in call_url
 
     def test_anthropic_no_system_message(self):
-        """Anthropic 无 system 消息时 payload 不包含 system 字段."""
+        """Anthropic payload omits system field when no system message."""
         client = LLMClient(LLMConfig(
             provider="anthropic", api_key="test"))
         mock_httpx, mock_client = self._make_mock_httpx(json_data={
@@ -554,7 +554,7 @@ class TestDualProviderDeep:
         assert "system" not in payload
 
     def test_anthropic_multiple_system_messages(self):
-        """Anthropic 多个 system 消息被拼接."""
+        """Anthropic concatenates multiple system messages."""
         client = LLMClient(LLMConfig(
             provider="anthropic", api_key="test"))
         mock_httpx, mock_client = self._make_mock_httpx(json_data={
@@ -573,7 +573,7 @@ class TestDualProviderDeep:
         assert "Rule 2" in payload["system"]
 
     def test_anthropic_multi_content_blocks(self):
-        """Anthropic 响应多个 text 块被拼接."""
+        """Anthropic response concatenates multiple text blocks."""
         client = LLMClient(LLMConfig(
             provider="anthropic", api_key="test"))
         mock_httpx, _ = self._make_mock_httpx(json_data={
@@ -589,7 +589,7 @@ class TestDualProviderDeep:
         assert resp.content == "Hello World"
 
     def test_openai_empty_choices(self):
-        """OpenAI 空 choices 返回空 content."""
+        """OpenAI empty choices returns empty content."""
         client = LLMClient(LLMConfig(api_key="test"))
         mock_httpx, _ = self._make_mock_httpx(json_data={
             "choices": [],
@@ -601,7 +601,7 @@ class TestDualProviderDeep:
         assert not resp.ok
 
     def test_openai_500_error(self):
-        """OpenAI 500 错误抛出 RuntimeError."""
+        """OpenAI 500 error raises RuntimeError."""
         client = LLMClient(LLMConfig(api_key="test"))
         mock_httpx, _ = self._make_mock_httpx(
             status_code=500, text="Internal Server Error")
@@ -612,12 +612,12 @@ class TestDualProviderDeep:
 
 
 # ---------------------------------------------------------------------------
-# build_project_context — 更多边界情况
+# build_project_context — More edge cases
 # ---------------------------------------------------------------------------
 
 class TestBuildProjectContextEdge:
     def test_include_context_false(self, tmp_path):
-        """include_context=False 时不包含 CONTEXT.md."""
+        """include_context=False excludes CONTEXT.md."""
         (tmp_path / "docs").mkdir()
         (tmp_path / "docs" / "CONTEXT.md").write_text("# Context\nContent here")
         ctx = build_project_context(tmp_path, include_context=False)
@@ -634,12 +634,12 @@ class TestBuildProjectContextEdge:
         assert "T1" not in ctx
 
     def test_tasks_json_corrupted(self, tmp_path):
-        """tasks.json 损坏时不崩溃."""
+        """Corrupted tasks.json does not crash."""
         vc = tmp_path / ".vibecollab"
         vc.mkdir()
         (vc / "tasks.json").write_text("{invalid json")
         ctx = build_project_context(tmp_path)
-        # 不抛异常，tasks section 被跳过
+        # No exception, tasks section skipped
         assert isinstance(ctx, str)
 
     def test_events_jsonl_partial_corrupt(self, tmp_path):
@@ -656,7 +656,7 @@ class TestBuildProjectContextEdge:
         assert "good event" in ctx or isinstance(ctx, str)
 
     def test_events_jsonl_empty(self, tmp_path):
-        """events.jsonl 空文件不崩溃."""
+        """Empty events.jsonl does not crash."""
         vc = tmp_path / ".vibecollab"
         vc.mkdir()
         (vc / "events.jsonl").write_text("")
@@ -664,7 +664,7 @@ class TestBuildProjectContextEdge:
         assert isinstance(ctx, str)
 
     def test_all_tasks_done(self, tmp_path):
-        """所有任务为 DONE 时不包含 Active Tasks section."""
+        """All tasks DONE excludes Active Tasks section."""
         vc = tmp_path / ".vibecollab"
         vc.mkdir()
         (vc / "tasks.json").write_text(json.dumps({
@@ -675,7 +675,7 @@ class TestBuildProjectContextEdge:
 
 
 # ---------------------------------------------------------------------------
-# LLMClient.ask() — 更多路径
+# LLMClient.ask() — More paths
 # ---------------------------------------------------------------------------
 
 class TestAskMethodEdge:
@@ -698,7 +698,7 @@ class TestAskMethodEdge:
         return client, mock_client
 
     def test_ask_with_both_system_and_project(self, tmp_path):
-        """同时提供 system_prompt 和 project_root 时，用自定义 system."""
+        """When both system_prompt and project_root are given, uses custom system."""
         (tmp_path / "project.yaml").write_text("project_name: test")
         client, mock_client = self._make_client()
 
@@ -713,7 +713,7 @@ class TestAskMethodEdge:
         assert "Custom system prompt" in system_msg
 
     def test_ask_temperature_passed(self):
-        """ask() 将 temperature 传递到底层 chat()."""
+        """ask() passes temperature to underlying chat()."""
         client, mock_client = self._make_client()
 
         with patch.object(client, "chat", wraps=client.chat) as mock_chat:
@@ -722,7 +722,7 @@ class TestAskMethodEdge:
             assert mock_chat.call_args[1]["temperature"] == 0.1
 
     def test_client_default_config(self):
-        """LLMClient() 无参数构造使用默认 LLMConfig."""
+        """LLMClient() with no args uses default LLMConfig."""
         client = LLMClient()
         assert client.config.provider == DEFAULT_PROVIDER
         assert client.config.model == DEFAULT_MODEL_OPENAI

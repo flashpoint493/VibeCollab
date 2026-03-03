@@ -1,6 +1,6 @@
 """
-PRD Manager - 产品需求文档管理器
-用于管理和跟踪项目需求的原始描述和变化历史
+PRD Manager - Product Requirements Document Manager
+Manages and tracks project requirements including original descriptions and change history
 """
 
 from dataclasses import dataclass
@@ -13,7 +13,7 @@ import yaml
 
 @dataclass
 class Requirement:
-    """需求项"""
+    """Requirement item"""
     id: str
     title: str
     original_description: str
@@ -22,7 +22,7 @@ class Requirement:
     priority: str = "medium"  # high, medium, low
     created_at: str = ""
     updated_at: str = ""
-    changes: List[Dict] = None  # 需求变化历史
+    changes: List[Dict] = None  # Requirement change history
 
     def __post_init__(self):
         if self.changes is None:
@@ -36,7 +36,7 @@ class Requirement:
 
 
 class PRDManager:
-    """PRD 管理器"""
+    """PRD Manager"""
 
     def __init__(self, prd_path: Path):
         self.prd_path = Path(prd_path)
@@ -44,16 +44,16 @@ class PRDManager:
         self._load()
 
     def _load(self):
-        """从文件加载 PRD"""
+        """Load PRD from file"""
         if not self.prd_path.exists():
             return
 
         try:
             content = self.prd_path.read_text(encoding="utf-8")
-            # 解析 Markdown 格式的 PRD
+            # Parse Markdown format PRD
             self._parse_markdown(content)
         except Exception:
-            # 如果解析失败，尝试作为 YAML 加载（向后兼容）
+            # If parsing fails, try loading as YAML (backward compatible)
             try:
                 with open(self.prd_path, "r", encoding="utf-8") as f:
                     data = yaml.safe_load(f)
@@ -65,19 +65,19 @@ class PRDManager:
                 pass
 
     def _parse_markdown(self, content: str):
-        """解析 Markdown 格式的 PRD"""
+        """Parse Markdown format PRD"""
         lines = content.split("\n")
         current_req = None
         in_requirement = False
 
         for line in lines:
-            # 检测需求标题 (## REQ-XXX: Title)
+            # Detect requirement title (## REQ-XXX: Title)
             if line.startswith("## REQ-"):
-                # 保存上一个需求
+                # Save previous requirement
                 if current_req:
                     self.requirements[current_req.id] = current_req
 
-                # 解析新需求
+                # Parse new requirement
                 parts = line[2:].split(":", 1)
                 req_id = parts[0].strip()
                 title = parts[1].strip() if len(parts) > 1 else ""
@@ -94,49 +94,49 @@ class PRDManager:
             if not in_requirement or not current_req:
                 continue
 
-            # 解析需求内容
-            if line.startswith("**原始描述**:"):
+            # Parse requirement content
+            if line.startswith("**Original Description**:"):
                 continue
-            elif line.startswith("**当前描述**:"):
+            elif line.startswith("**Current Description**:"):
                 continue
-            elif line.startswith("**状态**:"):
+            elif line.startswith("**Status**:"):
                 status = line.split(":", 1)[1].strip()
                 current_req.status = status
-            elif line.startswith("**优先级**:"):
+            elif line.startswith("**Priority**:"):
                 priority = line.split(":", 1)[1].strip()
                 current_req.priority = priority
-            elif line.startswith("**创建时间**:"):
+            elif line.startswith("**Created**:"):
                 created_at = line.split(":", 1)[1].strip()
                 current_req.created_at = created_at
-            elif line.startswith("**更新时间**:"):
+            elif line.startswith("**Updated**:"):
                 updated_at = line.split(":", 1)[1].strip()
                 current_req.updated_at = updated_at
             elif line.strip().startswith(">") and not current_req.original_description:
-                # 原始描述通常在引用块中
+                # Original description is usually in a blockquote
                 current_req.original_description = line.strip()[1:].strip()
             elif line.strip() and not line.startswith("#") and not line.startswith("|"):
-                # 普通文本，可能是描述的一部分
+                # Plain text, possibly part of description
                 if not current_req.original_description:
                     current_req.original_description = line.strip()
                 elif not current_req.current_description or current_req.current_description == current_req.original_description:
                     current_req.current_description = line.strip()
 
-        # 保存最后一个需求
+        # Save last requirement
         if current_req:
             self.requirements[current_req.id] = current_req
 
     def add_requirement(self, title: str, description: str, priority: str = "medium") -> Requirement:
-        """添加新需求
+        """Add a new requirement
 
         Args:
-            title: 需求标题
-            description: 需求描述
-            priority: 优先级
+            title: Requirement title
+            description: Requirement description
+            priority: Priority level
 
         Returns:
-            Requirement: 创建的需求对象
+            Requirement: The created requirement object
         """
-        # 生成需求 ID
+        # Generate requirement ID
         req_id = f"REQ-{len(self.requirements) + 1:03d}"
 
         req = Requirement(
@@ -154,20 +154,20 @@ class PRDManager:
         return req
 
     def update_requirement(self, req_id: str, new_description: str, change_reason: str = ""):
-        """更新需求
+        """Update a requirement
 
         Args:
-            req_id: 需求 ID
-            new_description: 新的需求描述
-            change_reason: 变化原因
+            req_id: Requirement ID
+            new_description: New requirement description
+            change_reason: Reason for change
         """
         if req_id not in self.requirements:
-            raise ValueError(f"需求不存在: {req_id}")
+            raise ValueError(f"Requirement not found: {req_id}")
 
         req = self.requirements[req_id]
         old_description = req.current_description
 
-        # 记录变化
+        # Record change
         change_entry = {
             "date": datetime.now().strftime("%Y-%m-%d"),
             "from": old_description,
@@ -176,42 +176,42 @@ class PRDManager:
         }
         req.changes.append(change_entry)
 
-        # 更新需求
+        # Update requirement
         req.current_description = new_description
         req.updated_at = datetime.now().strftime("%Y-%m-%d")
 
     def set_status(self, req_id: str, status: str):
-        """设置需求状态
+        """Set requirement status
 
         Args:
-            req_id: 需求 ID
-            status: 新状态
+            req_id: Requirement ID
+            status: New status
         """
         if req_id not in self.requirements:
-            raise ValueError(f"需求不存在: {req_id}")
+            raise ValueError(f"Requirement not found: {req_id}")
 
         req = self.requirements[req_id]
         req.status = status
         req.updated_at = datetime.now().strftime("%Y-%m-%d")
 
     def save(self):
-        """保存 PRD 到文件"""
+        """Save PRD to file"""
         content = self._generate_markdown()
         self.prd_path.parent.mkdir(parents=True, exist_ok=True)
         self.prd_path.write_text(content, encoding="utf-8")
 
     def _generate_markdown(self) -> str:
-        """生成 Markdown 格式的 PRD"""
+        """Generate Markdown format PRD"""
         lines = [
-            "# 产品需求文档 (PRD)",
+            "# Product Requirements Document (PRD)",
             "",
-            "本文档记录项目的原始需求和需求变化历史。",
+            "This document records the project's original requirements and change history.",
             "",
-            "## 需求列表",
+            "## Requirements List",
             ""
         ]
 
-        # 按状态和优先级排序
+        # Sort by status and priority
         sorted_reqs = sorted(
             self.requirements.values(),
             key=lambda r: (
@@ -224,70 +224,70 @@ class PRDManager:
         for req in sorted_reqs:
             lines.append(f"## {req.id}: {req.title}")
             lines.append("")
-            lines.append("**原始描述**:")
+            lines.append("**Original Description**:")
             lines.append(f"> {req.original_description}")
             lines.append("")
 
             if req.current_description != req.original_description:
-                lines.append("**当前描述**:")
+                lines.append("**Current Description**:")
                 lines.append(f"> {req.current_description}")
                 lines.append("")
 
-            lines.append(f"**状态**: {req.status}")
-            lines.append(f"**优先级**: {req.priority}")
-            lines.append(f"**创建时间**: {req.created_at}")
-            lines.append(f"**更新时间**: {req.updated_at}")
+            lines.append(f"**Status**: {req.status}")
+            lines.append(f"**Priority**: {req.priority}")
+            lines.append(f"**Created**: {req.created_at}")
+            lines.append(f"**Updated**: {req.updated_at}")
             lines.append("")
 
             if req.changes:
-                lines.append("**需求变化历史**:")
+                lines.append("**Change History**:")
                 lines.append("")
                 for change in req.changes:
-                    lines.append(f"- **{change['date']}**: {change['reason'] or '需求更新'}")
+                    lines.append(f"- **{change['date']}**: {change['reason'] or 'Requirement updated'}")
                     if change['from'] != change['to']:
-                        lines.append(f"  - 从: {change['from'][:100]}...")
-                        lines.append(f"  - 到: {change['to'][:100]}...")
+                        lines.append(f"  - From: {change['from'][:100]}...")
+                        lines.append(f"  - To: {change['to'][:100]}...")
                 lines.append("")
 
             lines.append("---")
             lines.append("")
 
-        # 添加需求统计
-        lines.append("## 需求统计")
+        # Add requirement statistics
+        lines.append("## Requirement Statistics")
         lines.append("")
         status_counts = {}
         for req in self.requirements.values():
             status_counts[req.status] = status_counts.get(req.status, 0) + 1
 
-        lines.append("| 状态 | 数量 |")
+        lines.append("| Status | Count |")
         lines.append("|------|------|")
         for status, count in sorted(status_counts.items()):
             lines.append(f"| {status} | {count} |")
         lines.append("")
 
-        lines.append(f"*最后更新: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
+        lines.append(f"*Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
 
         return "\n".join(lines)
 
     def get_requirement(self, req_id: str) -> Optional[Requirement]:
-        """获取需求
+        """Get a requirement
 
         Args:
-            req_id: 需求 ID
+            req_id: Requirement ID
 
         Returns:
-            Optional[Requirement]: 需求对象，如果不存在返回 None
+            Optional[Requirement]: The requirement object, or None if not found
         """
         return self.requirements.get(req_id)
 
     def list_requirements(self, status: Optional[str] = None) -> List[Requirement]:
-        """列出需求
+        """List requirements
 
         Args:
-            status: 可选的状态过滤
+            status: Optional status filter
 
         Returns:
-            List[Requirement]: 需求列表
+            List[Requirement]: List of requirements
         """
         reqs = list(self.requirements.values())
         if status:

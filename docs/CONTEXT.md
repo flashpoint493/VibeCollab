@@ -1,62 +1,68 @@
-# VibeCollab 全局上下文
+# VibeCollab Global Context
 
-> ! **此文件自动生成，请勿手动编辑**
-> 上次更新: 2026-03-02
-> 聚合自: alice, ocarina
+> ! **Auto-generated, do not edit manually**
+> Last updated: 2026-03-03
+> Aggregated from: alice, ocarina
 
-## 项目整体状态
-- **版本**: v0.9.7 (开发中)
-- **上一版本**: v0.9.6 (PyPI 已发布)
-- **活跃开发者**: 2 (alice, ocarina)
-- **测试**: 1344 passed, 89% 覆盖率
-- **当前阶段**: v0.9.7 迭代，推进 v0.10.0 功能冻结
+## Project Status
+- **Version**: v0.10.1-dev (in development)
+- **Previous release**: v0.9.7 (PyPI published)
+- **Active developers**: 2 (alice, ocarina)
+- **Tests**: 1344 passed, 89% coverage
+- **Current phase**: Code i18n (v0.10.1), progressing toward v0.10.0 feature freeze
 
-## 各开发者工作状态
+## Developer Status
 
 ### alice
-- **上次更新**: 2026-02-25
-- **活跃度**: 暂停（上次活跃于 v0.5.4）
-- **已完成**: CLI 开发者切换功能 (TASK-DEV-004), switch 命令测试和文档 (TASK-DEV-005)
-- **无遗留任务**
+- **Last updated**: 2026-02-25
+- **Activity**: Paused (last active at v0.5.4)
+- **Completed**: CLI developer switch (TASK-DEV-004), switch command tests and docs (TASK-DEV-005)
+- **No pending tasks**
 
 ### ocarina
-- **上次更新**: 2026-03-02
-- **当前任务**: 目录重构 + GBK 编码修复
-- **最近完成**:
-  - 目录重构: 36 个平铺 .py 文件重组为 7 个子包 (cli/core/domain/insight/search/agent/utils)
-  - GBK 编码彻底修复: 三层防御体系 (ensure_safe_stdout + safe_console + EMOJI 映射扩充)
-  - v0.9.5 ROADMAP / Task 集成 (RoadmapParser + CLI + MCP + 40 tests)
-  - README 双语重构 (英文主 README + README.zh-CN.md)
-  - PyPI v0.9.5/v0.9.6 发布
+- **Last updated**: 2026-03-03
+- **Current task**: Code i18n — translate all Chinese text to English
+- **Recently completed**:
+  - **Code i18n (v0.10.1)**: Full English translation of 96 files (62 source + 34 test files)
+    - All source .py files: docstrings, comments, error messages, CLI output strings
+    - All 27 .j2 template files + manifest.yaml
+    - All 34 test files: assertions, comments, docstrings (preserving functional Chinese test data)
+    - Fixed 2 source code truncation bugs (health.py, vector_store.py)
+    - Fixed previous session leftover Chinese in test_cli_insight.py, test_insight_quality.py, test_insight_manager.py
+    - 1344 tests all passing, zero regression
+  - Directory restructure: 36 flat .py files reorganized into 7 sub-packages
+  - GBK encoding fix: 3-layer defense system
+  - v0.9.5 ROADMAP/Task integration
+  - PyPI v0.9.5/v0.9.6/v0.9.7 releases
 
-## 活跃任务
+## Active Tasks
 
-无活跃任务
+- CLI i18n architecture: implement locale-based CLI output (default English, optional Chinese)
 
-## 架构变更 (v0.9.7)
+## Architecture (v0.9.7+)
 
-### 目录重构
-36 个平铺模块重组为 7 个子包:
-- `cli/` (11 文件) — CLI 命令层 (main, ai, guide, config, lifecycle, insight, task, roadmap, mcp, index)
-- `core/` (8 文件) — 核心业务 (generator, project, templates, pattern_engine, extension, health, protocol_checker)
-- `domain/` (8 文件) — 领域模型 (task_manager, event_log, developer, lifecycle, roadmap_parser, conflict_detector, prd_manager, session_store)
-- `insight/` (3 文件) — Insight 沉淀系统 (manager, signal)
-- `search/` (2 文件) — 语义检索 (embedder, indexer, vector_store)
-- `agent/` (3 文件) — Agent/LLM/MCP (llm_client, agent_executor, mcp_server)
-- `utils/` (2 文件) — 工具 (git, llmstxt)
+### Directory Structure
+36 flat modules reorganized into 7 sub-packages:
+- `cli/` (11 files) — CLI commands (main, ai, guide, config, lifecycle, insight, task, roadmap, mcp, index)
+- `core/` (8 files) — Core business (generator, project, templates, pattern_engine, extension, health, protocol_checker)
+- `domain/` (8 files) — Domain models (task_manager, event_log, developer, lifecycle, roadmap_parser, conflict_detector, prd_manager, session_store)
+- `insight/` (3 files) — Insight solidification system (manager, signal)
+- `search/` (3 files) — Semantic search (embedder, indexer, vector_store)
+- `agent/` (3 files) — Agent/LLM/MCP (llm_client, agent_executor, mcp_server)
+- `utils/` (2 files) — Utilities (git, llmstxt)
 
-### GBK 编码三层防御
-- 第一层: `ensure_safe_stdout()` — CLI 启动时 reconfigure stdout/stderr errors='replace'
-- 第二层: `safe_console()` — Rich Console 工厂函数
-- 第三层: EMOJI 映射扩充 — 新增 check/cross/arrow/bar_fill/bar_empty/severity 等
+### GBK Encoding 3-Layer Defense
+- Layer 1: `ensure_safe_stdout()` — reconfigure stdout/stderr errors='replace' at CLI startup
+- Layer 2: `safe_console()` — Rich Console factory function
+- Layer 3: EMOJI mapping expansion — check/cross/arrow/bar_fill/bar_empty/severity etc.
 
-## 跨开发者协作
-(详见 docs/developers/COLLABORATION.md)
+## Cross-Developer Collaboration
+(See docs/developers/COLLABORATION.md)
 
-## 全局技术债务
-- 外部 QA 验证 (Phase 11 TC-E2E-001~010) 待执行
-- events.jsonl Windows 文件锁问题需排查
-- i18n 英文化待推进
+## Technical Debt
+- External QA validation (Phase 11 TC-E2E-001~010) pending
+- events.jsonl Windows file lock issue needs investigation
+- CLI i18n localization framework (default English, optional Chinese) — next step
 
 ---
-*此文件由多开发者上下文自动聚合生成*
+*This file is auto-aggregated from multi-developer contexts*

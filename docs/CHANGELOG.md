@@ -1,6 +1,36 @@
-# VibeCollab 变更日志
+# VibeCollab Changelog
 
-## v0.9.7 (2026-03-02) - 目录重构 + GBK 编码彻底修复
+## v0.10.1-dev (2026-03-03) - Code Internationalization (i18n)
+
+### i18n
+- **Full English translation** of all source code and test files (96 files, ~4900 lines changed)
+  - 62 source `.py` files: all Chinese docstrings, comments, error messages, and runtime output strings translated to English
+  - 27 `.j2` template files + `manifest.yaml`: all Chinese content translated
+  - 34 test files: all Chinese assertions, comments, and docstrings translated
+    - Test assertions updated to match new English source output strings
+    - `pytest.raises(match=...)` patterns updated from Chinese to English/regex
+    - Functional Chinese test data preserved (Unicode preservation tests, backward-compat parsing patterns, Chinese tag search tests, Chinese NLP tag extraction tests)
+  - Cross-referenced source output strings via subagent before updating test assertions to ensure consistency
+
+### Bug Fix
+- Fixed `health.py` truncated `return "F"` (was `ret`) causing `NameError`
+- Fixed `vector_store.py` truncated `return False` (was `return Fa`) causing `NameError`
+- Fixed `test_cli_insight.py` 6 leftover Chinese assertions from previous sessions
+- Fixed `test_insight_quality.py` 6 leftover Chinese comments/docstrings
+- Fixed `test_insight_manager.py` incorrect Chinese-to-English tag search test (preserved Chinese tags as functional test data)
+
+### Test
+- All **1344 tests passed**, zero regression
+- Intentionally preserved Chinese in 7 test files (31 occurrences) for functional testing:
+  - `test_developer.py`: Chinese headings for backward-compat parsing + Unicode stripping
+  - `test_event_log.py`: Unicode payload preservation
+  - `test_insight_manager.py`: Chinese tag search functionality
+  - `test_indexer.py`: Chinese CONTRIBUTING_AI.md content simulation
+  - `test_llm_client.py`: Unicode content preservation
+  - `test_task_insight_integration.py`: Chinese NLP tag extraction
+  - `test_task_manager.py`: Unicode feature preservation
+
+## v0.9.7 (2026-03-02) - Directory Restructure + GBK Encoding Fix
 
 ### Refactor
 - **目录重构**: 36 个平铺 `.py` 模块重组为 7 个功能子包

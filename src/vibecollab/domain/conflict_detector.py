@@ -1,7 +1,7 @@
 """
-跨开发者冲突检测模块
+Cross-developer conflict detection module
 
-提供多开发者协作中的冲突检测功能。
+Provides conflict detection capabilities in multi-developer collaboration.
 """
 
 import re
@@ -21,28 +21,28 @@ EMOJI_MAP = _COMPAT_EMOJI
 
 
 class ConflictType:
-    """冲突类型枚举"""
-    FILE = "file"              # 文件冲突
-    TASK = "task"              # 任务冲突
-    DEPENDENCY = "dependency"  # 依赖冲突
-    NAMING = "naming"          # 命名冲突
+    """Conflict type enum"""
+    FILE = "file"              # File conflict
+    TASK = "task"              # Task conflict
+    DEPENDENCY = "dependency"  # Dependency conflict
+    NAMING = "naming"          # Naming conflict
 
 
 class Conflict:
-    """冲突对象"""
+    """Conflict object"""
 
     def __init__(self, conflict_type: str, severity: str,
                  developers: List[str], description: str,
                  details: Optional[Dict] = None):
         """
-        初始化冲突对象
+        Initialize conflict object
 
         Args:
-            conflict_type: 冲突类型（file/task/dependency/naming）
-            severity: 严重程度（high/medium/low）
-            developers: 涉及的开发者列表
-            description: 冲突描述
-            details: 详细信息（可选）
+            conflict_type: Conflict type (file/task/dependency/naming)
+            severity: Severity level (high/medium/low)
+            developers: List of involved developers
+            description: Conflict description
+            details: Detail info (optional)
         """
         self.type = conflict_type
         self.severity = severity
@@ -52,7 +52,7 @@ class Conflict:
         self.detected_at = datetime.now()
 
     def to_dict(self) -> Dict:
-        """转为字典格式"""
+        """Convert to dict format"""
         return {
             'type': self.type,
             'severity': self.severity,
@@ -63,32 +63,32 @@ class Conflict:
         }
 
     def __str__(self) -> str:
-        """字符串表示"""
+        """String representation"""
         devs = ', '.join(self.developers)
-        return f"[{self.severity.upper()}] {self.type}: {self.description} (涉及: {devs})"
+        return f"[{self.severity.upper()}] {self.type}: {self.description} (developers: {devs})"
 
 
 class ConflictDetector:
-    """跨开发者冲突检测器"""
+    """Cross-developer conflict detector"""
 
     def __init__(self, project_root: Path, config: dict):
         """
-        初始化冲突检测器
+        Initialize conflict detector
 
         Args:
-            project_root: 项目根目录
-            config: 项目配置
+            project_root: Project root directory
+            config: Project configuration
         """
         self.project_root = project_root
         self.config = config
         self.multi_dev_config = config.get('multi_developer', {})
 
-        # 开发者目录
+        # Developer directory
         self.developers_dir = project_root / self.multi_dev_config.get('context', {}).get(
             'per_developer_dir', 'docs/developers'
         )
 
-        # 缓存
+        # Cache
         self._developer_contexts = {}
         self._collaboration_data = None
         self._git_changed_files = {}
@@ -96,23 +96,23 @@ class ConflictDetector:
     def detect_all_conflicts(self, target_developer: Optional[str] = None,
                             between_developers: Optional[Tuple[str, str]] = None) -> List[Conflict]:
         """
-        检测所有类型的冲突
+        Detect all types of conflicts
 
         Args:
-            target_developer: 目标开发者（None 则检测当前开发者）
-            between_developers: 检测两个特定开发者之间的冲突
+            target_developer: Target developer (None to detect current developer)
+            between_developers: Detect conflicts between two specific developers
 
         Returns:
-            冲突列表
+            List of conflicts
         """
         conflicts = []
 
-        # 加载数据
+        # Load data
         self._load_developer_contexts()
         self._load_collaboration_data()
         self._load_git_changes()
 
-        # 确定要检查的开发者范围
+        # Determine developer scope to check
         if between_developers:
             dev1, dev2 = between_developers
             if dev1 not in self._developer_contexts or dev2 not in self._developer_contexts:
@@ -124,23 +124,23 @@ class ConflictDetector:
             other_devs = [d for d in self._developer_contexts.keys() if d != target_developer]
             check_pairs = [(target_developer, other) for other in other_devs]
         else:
-            # 检测所有开发者之间的冲突
+            # Detect conflicts among all developers
             devs = list(self._developer_contexts.keys())
             check_pairs = [(devs[i], devs[j]) for i in range(len(devs)) for j in range(i+1, len(devs))]
 
-        # 执行各类冲突检测
+        # Execute conflict detection for each type
         for dev1, dev2 in check_pairs:
             conflicts.extend(self._detect_file_conflicts(dev1, dev2))
             conflicts.extend(self._detect_task_conflicts(dev1, dev2))
             conflicts.extend(self._detect_naming_conflicts(dev1, dev2))
 
-        # 检测依赖冲突（全局检测，不限于两两对比）
+        # Detect dependency conflicts (global, not limited to pairwise)
         conflicts.extend(self._detect_dependency_conflicts())
 
         return conflicts
 
     def _load_developer_contexts(self):
-        """加载所有开发者的上下文"""
+        """Load all developer contexts"""
         if not self.developers_dir.exists():
             return
 
@@ -155,10 +155,10 @@ class ConflictDetector:
             if context_file.exists():
                 context_content = context_file.read_text(encoding='utf-8')
 
-                # 提取关键信息
+                # Extract key info
                 current_tasks = self._extract_current_tasks(context_content)
-                recent_work = self._extract_section_content(context_content, "最近完成")
-                issues = self._extract_section_content(context_content, "待解决问题")
+                recent_work = self._extract_section_content(context_content, "Recently Completed")
+                issues = self._extract_section_content(context_content, "Pending Issues")
 
                 metadata = {}
                 if metadata_file.exists():
@@ -174,7 +174,7 @@ class ConflictDetector:
                 }
 
     def _load_collaboration_data(self):
-        """加载协作文档数据"""
+        """Load collaboration document data"""
         collab_config = self.multi_dev_config.get('collaboration', {})
         collab_file = self.project_root / collab_config.get('file', 'docs/developers/COLLABORATION.md')
 
@@ -184,7 +184,7 @@ class ConflictDetector:
 
         content = collab_file.read_text(encoding='utf-8')
 
-        # 解析任务分配矩阵
+        # Parse task assignment matrix
         tasks = {}
         task_pattern = r'\| (TASK-[A-Z]+-\d+)[:\s]([^\|]+) \| ([^\|]+) \| ([^\|]*) \| ([^\|]+) \| ([^\|]+) \|'
         for match in re.finditer(task_pattern, content):
@@ -206,17 +206,17 @@ class ConflictDetector:
         self._collaboration_data = {'tasks': tasks}
 
     def _load_git_changes(self):
-        """加载 Git 变更文件（从各开发者的 CONTEXT 推断）"""
-        # 简化版：从 CONTEXT.md 的"最近完成"章节提取文件路径
+        """Load Git changed files (inferred from each developer's CONTEXT)"""
+        # Simplified: extract file paths from the "Recently Completed" section of CONTEXT.md
         for developer, ctx_data in self._developer_contexts.items():
             recent = ctx_data.get('recent_work', '')
 
-            # 提取可能的文件路径（简单正则）
+            # Extract possible file paths (simple regex)
             file_patterns = re.findall(r'`([^\`]+\.[a-z]{2,4})`', recent)
             self._git_changed_files[developer] = set(file_patterns)
 
     def _detect_file_conflicts(self, dev1: str, dev2: str) -> List[Conflict]:
-        """检测文件冲突"""
+        """Detect file conflicts"""
         conflicts = []
 
         files1 = self._git_changed_files.get(dev1, set())
@@ -229,29 +229,29 @@ class ConflictDetector:
                 conflict_type=ConflictType.FILE,
                 severity="medium",
                 developers=[dev1, dev2],
-                description="同时修改了相同的文件",
+                description="Modified the same files simultaneously",
                 details={'files': list(common_files)}
             ))
 
         return conflicts
 
     def _detect_task_conflicts(self, dev1: str, dev2: str) -> List[Conflict]:
-        """检测任务冲突"""
+        """Detect task conflicts"""
         conflicts = []
 
         tasks1 = self._developer_contexts.get(dev1, {}).get('tasks', [])
         tasks2 = self._developer_contexts.get(dev2, {}).get('tasks', [])
 
-        # 检测相似任务描述（简单字符串匹配）
+        # Detect similar task descriptions (simple string matching)
         for task1 in tasks1:
             for task2 in tasks2:
                 similarity = self._calculate_similarity(task1, task2)
-                if similarity > 0.6:  # 60% 相似度阈值
+                if similarity > 0.6:  # 60% similarity threshold
                     conflicts.append(Conflict(
                         conflict_type=ConflictType.TASK,
                         severity="high",
                         developers=[dev1, dev2],
-                        description="可能存在重复或重叠的任务",
+                        description="Possible duplicate or overlapping tasks",
                         details={
                             f'{dev1}_task': task1,
                             f'{dev2}_task': task2,
@@ -262,18 +262,18 @@ class ConflictDetector:
         return conflicts
 
     def _detect_dependency_conflicts(self) -> List[Conflict]:
-        """检测依赖冲突（循环依赖、不一致依赖）"""
+        """Detect dependency conflicts (circular deps, inconsistent deps)"""
         conflicts = []
 
         tasks = self._collaboration_data.get('tasks', {})
 
-        # 构建依赖图
+        # Build dependency graph
         dep_graph = defaultdict(set)
         for task_id, task_data in tasks.items():
             for dep in task_data.get('dependencies', []):
                 dep_graph[task_id].add(dep)
 
-        # 检测循环依赖（深度优先搜索）
+        # Detect circular dependencies (depth-first search)
         visited = set()
         rec_stack = set()
 
@@ -286,13 +286,13 @@ class ConflictDetector:
                     if has_cycle(neighbor, path + [neighbor]):
                         return True
                 elif neighbor in rec_stack:
-                    # 找到循环
+                    # Found cycle
                     cycle = path[path.index(neighbor):] + [neighbor]
                     conflicts.append(Conflict(
                         conflict_type=ConflictType.DEPENDENCY,
                         severity="high",
                         developers=self._get_developers_for_tasks(cycle),
-                        description="检测到循环依赖",
+                        description="Circular dependency detected",
                         details={'cycle': ' → '.join(cycle)}
                     ))
                     return True
@@ -307,14 +307,14 @@ class ConflictDetector:
         return conflicts
 
     def _detect_naming_conflicts(self, dev1: str, dev2: str) -> List[Conflict]:
-        """检测命名冲突（函数名、类名等）"""
+        """Detect naming conflicts (function names, class names, etc.)"""
         conflicts = []
 
-        # 从 CONTEXT 中提取可能的命名（简化版）
+        # Extract possible names from CONTEXT (simplified)
         ctx1 = self._developer_contexts.get(dev1, {}).get('raw_content', '')
         ctx2 = self._developer_contexts.get(dev2, {}).get('raw_content', '')
 
-        # 提取代码块中的类名/函数名
+        # Extract class/function names from code blocks
         names1 = self._extract_code_names(ctx1)
         names2 = self._extract_code_names(ctx2)
 
@@ -325,20 +325,20 @@ class ConflictDetector:
                 conflict_type=ConflictType.NAMING,
                 severity="low",
                 developers=[dev1, dev2],
-                description="使用了相同的命名",
+                description="Using identical naming",
                 details={'names': list(common_names)}
             ))
 
         return conflicts
 
     def _extract_current_tasks(self, content: str) -> List[str]:
-        """从 CONTEXT 中提取当前任务"""
+        """Extract current tasks from CONTEXT"""
         tasks = []
 
-        # 提取"当前任务"章节
-        section = self._extract_section_content(content, "当前任务")
+        # Extract "Current Tasks" section
+        section = self._extract_section_content(content, "Current Tasks")
 
-        # 提取列表项
+        # Extract list items
         lines = section.split('\n')
         for line in lines:
             line = line.strip()
@@ -350,7 +350,7 @@ class ConflictDetector:
         return tasks
 
     def _extract_section_content(self, content: str, section_header: str) -> str:
-        """从 Markdown 中提取指定章节的内容"""
+        """Extract content of a specified section from Markdown"""
         pattern = rf'##\s+{re.escape(section_header)}\s*\n(.*?)(?=\n##|\Z)'
         match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
 
@@ -359,43 +359,43 @@ class ConflictDetector:
         return ""
 
     def _extract_code_names(self, content: str) -> Set[str]:
-        """从内容中提取代码命名（类名、函数名等）"""
+        """Extract code names (class names, function names, etc.) from content"""
         names = set()
 
-        # 提取代码块
+        # Extract code blocks
         code_blocks = re.findall(r'```[a-z]*\n(.*?)\n```', content, re.DOTALL)
 
         for code in code_blocks:
-            # 提取类名（class ClassName）
+            # Extract class names (class ClassName)
             class_names = re.findall(r'class\s+([A-Z][a-zA-Z0-9_]*)', code)
             names.update(class_names)
 
-            # 提取函数名（def function_name 或 function functionName）
+            # Extract function names (def function_name or function functionName)
             func_names = re.findall(r'(?:def|function)\s+([a-z_][a-zA-Z0-9_]*)', code)
             names.update(func_names)
 
         return names
 
     def _calculate_similarity(self, str1: str, str2: str) -> float:
-        """计算两个字符串的相似度（简单版Jaccard相似度）"""
+        """Calculate similarity between two strings (simple Jaccard similarity)"""
         if not str1 or not str2:
             return 0.0
 
-        # 转小写并分词
+        # Convert to lowercase and tokenize
         words1 = set(re.findall(r'\w+', str1.lower()))
         words2 = set(re.findall(r'\w+', str2.lower()))
 
         if not words1 or not words2:
             return 0.0
 
-        # Jaccard 相似度
+        # Jaccard similarity
         intersection = words1 & words2
         union = words1 | words2
 
         return len(intersection) / len(union)
 
     def _get_developers_for_tasks(self, task_ids: List[str]) -> List[str]:
-        """获取任务对应的开发者"""
+        """Get developers associated with tasks"""
         tasks = self._collaboration_data.get('tasks', {})
         developers = set()
 
@@ -409,22 +409,22 @@ class ConflictDetector:
 
     def generate_conflict_report(self, conflicts: List[Conflict], verbose: bool = False) -> str:
         """
-        生成冲突报告
+        Generate conflict report
 
         Args:
-            conflicts: 冲突列表
-            verbose: 是否包含详细信息
+            conflicts: List of conflicts
+            verbose: Whether to include details
 
         Returns:
-            报告文本
+            Report text
         """
         if not conflicts:
-            return f"{EMOJI_MAP['success']} 未检测到冲突"
+            return f"{EMOJI_MAP['success']} No conflicts detected"
 
         lines = []
-        lines.append(f"{EMOJI_MAP['warning']} 检测到 {len(conflicts)} 个潜在冲突\n")
+        lines.append(f"{EMOJI_MAP['warning']} Detected {len(conflicts)} potential conflicts\n")
 
-        # 按严重程度分组
+        # Group by severity
         by_severity = defaultdict(list)
         for conflict in conflicts:
             by_severity[conflict.severity].append(conflict)
@@ -441,25 +441,25 @@ class ConflictDetector:
             if not items:
                 continue
 
-            lines.append(f"\n{severity_icons[severity]} {severity.upper()} 优先级 ({len(items)} 个):")
+            lines.append(f"\n{severity_icons[severity]} {severity.upper()} priority ({len(items)} items):")
             lines.append("-" * 60)
 
             for i, conflict in enumerate(items, 1):
                 devs = ', '.join(conflict.developers)
                 lines.append(f"{i}. [{conflict.type.upper()}] {conflict.description}")
-                lines.append(f"   涉及开发者: {devs}")
+                lines.append(f"   Developers: {devs}")
 
                 if verbose and conflict.details:
-                    lines.append("   详细信息:")
+                    lines.append("   Details:")
                     for key, value in conflict.details.items():
                         lines.append(f"     - {key}: {value}")
 
                 lines.append("")
 
         lines.append("\n" + "=" * 60)
-        lines.append(f"{EMOJI_MAP['idea']} 建议:")
-        lines.append("  1. 与相关开发者沟通，明确分工边界")
-        lines.append("  2. 更新 COLLABORATION.md 记录协作决策")
-        lines.append("  3. 考虑任务重新分配或合并")
+        lines.append(f"{EMOJI_MAP['idea']} Suggestions:")
+        lines.append("  1. Communicate with relevant developers to clarify division of work")
+        lines.append("  2. Update COLLABORATION.md to record collaboration decisions")
+        lines.append("  3. Consider task reassignment or merging")
 
         return '\n'.join(lines)

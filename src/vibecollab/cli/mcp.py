@@ -1,13 +1,13 @@
 """
-MCP Server CLI 命令 — vibecollab mcp serve
+MCP Server CLI Commands -- vibecollab mcp serve
 
-提供 MCP Server 启动命令，让 AI IDE (Cursor/Cline/CodeBuddy) 通过
-Model Context Protocol 自动接入 VibeCollab 协议。
+Provides MCP Server startup commands for AI IDEs (Cursor/Cline/CodeBuddy)
+to auto-connect to VibeCollab protocol via Model Context Protocol.
 
-使用:
-    vibecollab mcp serve                # stdio 模式 (IDE 直连)
-    vibecollab mcp serve --transport sse # SSE 模式 (远程调试)
-    vibecollab mcp config               # 输出 IDE 配置文件内容
+Usage:
+    vibecollab mcp serve                # stdio mode (IDE direct connect)
+    vibecollab mcp serve --transport sse # SSE mode (remote debugging)
+    vibecollab mcp config               # Output IDE config file content
 """
 
 from pathlib import Path
@@ -17,9 +17,9 @@ import click
 
 @click.group("mcp")
 def mcp_group():
-    """MCP Server 管理 (v0.9.1+)
+    """MCP Server management (v0.9.1+)
 
-    通过 Model Context Protocol 让 AI IDE 自动接入 VibeCollab 协议。
+    Let AI IDEs automatically connect to VibeCollab protocol via Model Context Protocol.
     """
     pass
 
@@ -30,23 +30,23 @@ def mcp_group():
     "-t",
     type=click.Choice(["stdio", "sse"]),
     default="stdio",
-    help="传输模式: stdio (IDE直连) 或 sse (远程调试)",
+    help="Transport mode: stdio (IDE direct) or sse (remote debugging)",
 )
 @click.option(
     "--project-root",
     "-p",
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     default=None,
-    help="项目根目录 (默认: 自动查找 project.yaml)",
+    help="Project root directory (default: auto-find project.yaml)",
 )
 def serve(transport: str, project_root: Path):
-    """启动 MCP Server
+    """Start MCP Server
 
-    stdio 模式 (默认): 通过标准输入/输出通信，适合 IDE 直接调用。
-    sse 模式: 通过 HTTP Server-Sent Events 通信，适合远程调试。
+    stdio mode (default): Communicates via stdin/stdout, suitable for IDE direct invocation.
+    sse mode: Communicates via HTTP Server-Sent Events, suitable for remote debugging.
 
     \b
-    IDE 配置示例 (Cursor .cursor/mcp.json):
+    IDE configuration example (Cursor .cursor/mcp.json):
       {
         "mcpServers": {
           "vibecollab": {
@@ -60,15 +60,15 @@ def serve(transport: str, project_root: Path):
         from ..agent.mcp_server import run_server
     except ImportError:
         click.echo(
-            "错误: MCP Server 需要 mcp 依赖。\n"
-            "请安装: pip install vibe-collab[mcp]",
+            "Error: MCP Server requires mcp dependency.\n"
+            "Install: pip install vibe-collab[mcp]",
             err=True,
         )
         raise SystemExit(1)
 
-    click.echo(f"启动 VibeCollab MCP Server (transport={transport})", err=True)
+    click.echo(f"Starting VibeCollab MCP Server (transport={transport})", err=True)
     if project_root:
-        click.echo(f"项目根目录: {project_root}", err=True)
+        click.echo(f"Project root: {project_root}", err=True)
 
     run_server(project_root=project_root, transport=transport)
 
@@ -78,12 +78,12 @@ def serve(transport: str, project_root: Path):
     "--ide",
     type=click.Choice(["cursor", "cline", "codebuddy"]),
     default="cursor",
-    help="目标 IDE",
+    help="Target IDE",
 )
 def config(ide: str):
-    """输出 IDE 的 MCP 配置内容
+    """Output IDE MCP configuration content
 
-    将输出内容复制到对应 IDE 的配置文件中即可启用 VibeCollab MCP。
+    Copy the output to the corresponding IDE config file to enable VibeCollab MCP.
     """
     import json as json_mod
 
@@ -125,7 +125,7 @@ def config(ide: str):
     }
 
     cfg = configs[ide]
-    click.echo(f"# 将以下内容写入 {cfg['path']}:\n")
+    click.echo(f"# Write the following content to {cfg['path']}:\n")
     click.echo(json_mod.dumps(cfg["content"], indent=2, ensure_ascii=False))
 
 
@@ -134,19 +134,19 @@ def config(ide: str):
     "--ide",
     type=click.Choice(["cursor", "cline", "codebuddy", "all"]),
     default="all",
-    help="目标 IDE (默认: all)",
+    help="Target IDE (default: all)",
 )
 @click.option(
     "--project-root",
     "-p",
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     default=None,
-    help="项目根目录",
+    help="Project root directory",
 )
 def inject(ide: str, project_root: Path):
-    """自动注入 MCP 配置到 IDE 配置文件
+    """Auto-inject MCP config into IDE configuration files
 
-    自动创建/更新 IDE 的 MCP 配置文件，无需手动复制粘贴。
+    Automatically create/update IDE MCP config files, no manual copy-paste needed.
     """
     import json as json_mod
 
@@ -169,7 +169,7 @@ def inject(ide: str, project_root: Path):
         config_path = targets[target_ide]
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # 读取已有配置或创建新的
+        # Read existing config or create new
         existing = {}
         if config_path.exists():
             try:
@@ -177,7 +177,7 @@ def inject(ide: str, project_root: Path):
             except (json_mod.JSONDecodeError, OSError):
                 existing = {}
 
-        # 合并 vibecollab 配置
+        # Merge vibecollab config
         if "mcpServers" not in existing:
             existing["mcpServers"] = {}
 
@@ -192,6 +192,6 @@ def inject(ide: str, project_root: Path):
             json_mod.dumps(existing, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
-        click.echo(f"已注入: {config_path}")
+        click.echo(f"Injected: {config_path}")
 
-    click.echo(f"\n完成! 重启 IDE 后 VibeCollab MCP Server 将自动生效。")
+    click.echo(f"\nDone! VibeCollab MCP Server will take effect after restarting IDE.")

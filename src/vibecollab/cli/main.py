@@ -1,5 +1,5 @@
 """
-LLMContext CLI - 命令行接口
+LLMContext CLI - Command line interface
 """
 
 from pathlib import Path
@@ -19,7 +19,7 @@ from ..core.project import Project
 from ..core.protocol_checker import ProtocolChecker
 from ..core.templates import TemplateManager
 
-# 兼容旧变量名
+# Backward compatible variable names
 USE_EMOJI = not is_windows_gbk()
 EMOJI_MAP = EMOJI
 
@@ -28,36 +28,36 @@ console = safe_console()
 DOMAINS = ["generic", "game", "web", "data", "mobile", "infra"]
 
 
-def _safe_load_yaml(path: Path, label: str = "配置文件") -> dict:
-    """安全加载 YAML 文件，提供友好错误提示。
+def _safe_load_yaml(path: Path, label: str = "config file") -> dict:
+    """Safely load a YAML file with friendly error messages.
 
-    处理: 文件不存在、YAML 语法错误、空文件。
+    Handles: file not found, YAML syntax error, empty file.
     """
     if not path.exists():
-        console.print(f"[red]错误:[/red] {label}不存在: {path}")
-        console.print("[dim]提示: 在项目目录下运行，或使用 -c 指定路径[/dim]")
+        console.print(f"[red]Error:[/red] {label} not found: {path}")
+        console.print("[dim]Hint: run in the project directory or use -c to specify the path[/dim]")
         raise SystemExit(1)
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except yaml.YAMLError as e:
-        console.print(f"[red]错误:[/red] {label} YAML 格式有误: {path}")
+        console.print(f"[red]Error:[/red] {label} has invalid YAML syntax: {path}")
         console.print(f"[dim]{e}[/dim]")
         raise SystemExit(1)
     except OSError as e:
-        console.print(f"[red]错误:[/red] 无法读取{label}: {e}")
+        console.print(f"[red]Error:[/red] Cannot read {label}: {e}")
         raise SystemExit(1)
     if data is None:
-        console.print(f"[red]错误:[/red] {label}为空: {path}")
+        console.print(f"[red]Error:[/red] {label} is empty: {path}")
         raise SystemExit(1)
     if not isinstance(data, dict):
-        console.print(f"[red]错误:[/red] {label}格式无效 (应为 YAML 字典): {path}")
+        console.print(f"[red]Error:[/red] {label} has invalid format (expected YAML dict): {path}")
         raise SystemExit(1)
     return data
 
 
 def deep_merge(base: dict, override: dict) -> dict:
-    """深度合并两个字典，override 优先"""
+    """Deep merge two dicts; override takes precedence."""
     result = base.copy()
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -70,29 +70,29 @@ def deep_merge(base: dict, override: dict) -> dict:
 @click.group()
 @click.version_option(version=__version__, prog_name="vibecollab")
 def main():
-    """VibeCollab - AI 协作协议生成器
+    """VibeCollab - AI Collaboration Protocol Generator
 
-    从 YAML 配置生成标准化的 AI 协作协议文档，
-    支持 Vibe Development 哲学的人机协作工程化部署。
-    自动集成 llms.txt 标准。
+    Generate standardized AI collaboration protocol documents from YAML config,
+    supporting Vibe Development philosophy for human-AI collaboration.
+    Automatically integrates llms.txt standard.
     """
     pass
 
 
 @main.command()
-@click.option("--name", "-n", required=True, help="项目名称")
+@click.option("--name", "-n", required=True, help="Project name")
 @click.option(
     "--domain", "-d",
     type=click.Choice(DOMAINS),
     default="generic",
-    help="业务领域"
+    help="Business domain"
 )
-@click.option("--output", "-o", required=True, help="输出目录")
-@click.option("--force", "-f", is_flag=True, help="强制覆盖已存在的目录")
-@click.option("--no-git", is_flag=True, help="不自动初始化 Git 仓库")
-@click.option("--multi-dev", is_flag=True, help="启用多开发者模式")
+@click.option("--output", "-o", required=True, help="Output directory")
+@click.option("--force", "-f", is_flag=True, help="Force overwrite existing directory")
+@click.option("--no-git", is_flag=True, help="Skip automatic Git initialization")
+@click.option("--multi-dev", is_flag=True, help="Enable multi-developer mode")
 def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_dev: bool):
-    """初始化新项目
+    """Initialize a new project
 
     Examples:
 
@@ -100,108 +100,103 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
 
         vibecollab init -n "GameProject" -d game -o ./game --force
 
-        vibecollab init -n "TeamProject" -o ./team --multi-dev  # 多开发者模式
+        vibecollab init -n "TeamProject" -o ./team --multi-dev
     """
     output_path = Path(output)
 
     if output_path.exists() and not force:
         if any(output_path.iterdir()):
-            console.print(f"[red]错误:[/red] 目录 {output} 已存在且非空。使用 --force 强制覆盖。")
+            console.print(f"[red]Error:[/red] Directory {output} already exists and is not empty. Use --force to overwrite.")
             raise SystemExit(1)
 
-    with console.status(f"[bold green]正在初始化项目 {name}..."):
+    with console.status(f"[bold green]Initializing project {name}..."):
         try:
             project = Project.create(name=name, domain=domain, output_dir=output_path, multi_dev=multi_dev)
             project.generate_all(auto_init_git=not no_git)
         except PermissionError as e:
-            console.print(f"[red]错误:[/red] 权限不足，无法创建项目文件: {e}")
+            console.print(f"[red]Error:[/red] Permission denied: {e}")
             raise SystemExit(1)
         except OSError as e:
-            console.print(f"[red]错误:[/red] 文件系统错误 (磁盘满/路径无效): {e}")
+            console.print(f"[red]Error:[/red] File system error (disk full/invalid path): {e}")
             raise SystemExit(1)
         except Exception as e:
-            console.print(f"[red]错误:[/red] 项目初始化失败: {e}")
+            console.print(f"[red]Error:[/red] Project initialization failed: {e}")
             raise SystemExit(1)
 
-    # 成功提示
     console.print()
-    mode_text = "多开发者" if multi_dev else "单开发者"
+    mode_text = "multi-developer" if multi_dev else "single-developer"
     console.print(Panel.fit(
-        f"[bold green]{EMOJI_MAP['success']} 项目 {name} 初始化成功![/bold green]\n\n"
-        f"[dim]目录:[/dim] {output_path.absolute()}\n"
-        f"[dim]领域:[/dim] {domain}\n"
-        f"[dim]模式:[/dim] {mode_text}",
-        title="完成"
+        f"[bold green]{EMOJI_MAP['success']} Project {name} initialized![/bold green]\n\n"
+        f"[dim]Directory:[/dim] {output_path.absolute()}\n"
+        f"[dim]Domain:[/dim] {domain}\n"
+        f"[dim]Mode:[/dim] {mode_text}",
+        title="Done"
     ))
 
-    # 生成的文件列表
-    table = Table(title="生成的文件", show_header=True)
-    table.add_column("文件", style="cyan")
-    table.add_column("说明")
-    table.add_row("CONTRIBUTING_AI.md", "AI 协作规则文档")
-    table.add_row("llms.txt", "项目上下文文档（已集成协作规则引用）")
-    table.add_row("project.yaml", "项目配置 (可编辑)")
+    table = Table(title="Generated Files", show_header=True)
+    table.add_column("File", style="cyan")
+    table.add_column("Description")
+    table.add_row("CONTRIBUTING_AI.md", "AI collaboration rules")
+    table.add_row("llms.txt", "Project context (with collaboration rules reference)")
+    table.add_row("project.yaml", "Project config (editable)")
 
     if multi_dev:
-        table.add_row("docs/CONTEXT.md", "全局聚合上下文（自动生成）")
-        table.add_row("docs/developers/{dev}/CONTEXT.md", "各开发者上下文")
-        table.add_row("docs/developers/COLLABORATION.md", "协作文档")
+        table.add_row("docs/CONTEXT.md", "Global aggregated context (auto-generated)")
+        table.add_row("docs/developers/{dev}/CONTEXT.md", "Per-developer context")
+        table.add_row("docs/developers/COLLABORATION.md", "Collaboration document")
     else:
-        table.add_row("docs/CONTEXT.md", "当前上下文")
+        table.add_row("docs/CONTEXT.md", "Current context")
 
-    table.add_row("docs/DECISIONS.md", "决策记录")
-    table.add_row("docs/CHANGELOG.md", "变更日志")
-    table.add_row("docs/ROADMAP.md", "路线图")
-    table.add_row("docs/QA_TEST_CASES.md", "测试用例")
+    table.add_row("docs/DECISIONS.md", "Decision records")
+    table.add_row("docs/CHANGELOG.md", "Changelog")
+    table.add_row("docs/ROADMAP.md", "Roadmap")
+    table.add_row("docs/QA_TEST_CASES.md", "Test cases")
     console.print(table)
 
-    # Git 状态提示
     git_warning = project.config.get("_meta", {}).get("git_warning")
     git_auto_init = project.config.get("_meta", {}).get("git_auto_init", False)
 
     if git_auto_init:
         console.print()
-        console.print(f"[green]{EMOJI_MAP['success']} Git 仓库已自动初始化[/green]")
+        console.print(f"[green]{EMOJI_MAP['success']} Git repository initialized automatically[/green]")
     elif git_warning:
         console.print()
         console.print(f"[yellow]{EMOJI_MAP['warning']} {git_warning}[/yellow]")
-        console.print("[dim]提示: 建议初始化 Git 仓库以跟踪项目变更[/dim]")
+        console.print("[dim]Hint: consider initializing a Git repository to track changes[/dim]")
 
-    # 多开发者模式额外提示
     if multi_dev:
         from ..domain.developer import DeveloperManager
         dm = DeveloperManager(output_path, project.config)
         current_dev = dm.get_current_developer()
 
         console.print()
-        console.print("[bold cyan]多开发者模式已启用[/bold cyan]")
-        console.print(f"  {BULLET} 当前开发者: {current_dev}")
-        console.print(f"  {BULLET} 使用 'vibecollab dev' 查看相关命令")
+        console.print("[bold cyan]Multi-developer mode enabled[/bold cyan]")
+        console.print(f"  {BULLET} Current developer: {current_dev}")
+        console.print(f"  {BULLET} Use 'vibecollab dev' for related commands")
 
-    # 下一步提示
     console.print()
-    console.print("[bold]下一步:[/bold]")
+    console.print("[bold]Next steps:[/bold]")
     console.print(f"  1. cd {output}")
     step = 2
     if not is_git_repo(output_path):
-        console.print(f"  {step}. git init  # 初始化 Git 仓库（如未自动初始化）")
+        console.print(f"  {step}. git init  # Initialize Git repository")
         step += 1
     if multi_dev:
-        console.print(f"  {step}. vibecollab dev whoami  # 查看当前开发者")
+        console.print(f"  {step}. vibecollab dev whoami  # Check current developer")
         step += 1
-    console.print(f"  {step}. 编辑 project.yaml 自定义配置")
+    console.print(f"  {step}. Edit project.yaml to customize configuration")
     step += 1
-    console.print(f"  {step}. vibecollab generate -c project.yaml  # 重新生成")
+    console.print(f"  {step}. vibecollab generate -c project.yaml  # Regenerate")
     step += 1
-    console.print(f"  {step}. 开始你的 Vibe Development 之旅!")
+    console.print(f"  {step}. Start your Vibe Development journey!")
 
 
 @main.command()
-@click.option("--config", "-c", required=True, help="YAML 配置文件路径")
-@click.option("--output", "-o", default="CONTRIBUTING_AI.md", help="输出文件路径")
-@click.option("--no-llmstxt", is_flag=True, help="不集成 llms.txt")
+@click.option("--config", "-c", required=True, help="YAML config file path")
+@click.option("--output", "-o", default="CONTRIBUTING_AI.md", help="Output file path")
+@click.option("--no-llmstxt", is_flag=True, help="Skip llms.txt integration")
 def generate(config: str, output: str, no_llmstxt: bool):
-    """从配置文件生成 AI 协作规则文档并集成 llms.txt
+    """Generate AI collaboration rules document from config and integrate llms.txt
 
     Examples:
 
@@ -214,16 +209,16 @@ def generate(config: str, output: str, no_llmstxt: bool):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
         raise SystemExit(1)
 
-    with console.status("[bold green]正在生成协作规则文档..."):
+    with console.status("[bold green]Generating collaboration rules document..."):
         try:
             generator = LLMContextGenerator.from_file(config_path, project_root)
             content = generator.generate()
             output_path.write_text(content, encoding="utf-8")
 
-            # 集成 llms.txt（除非指定不集成）
+            # Integrate llms.txt (unless skipped)
             if not no_llmstxt:
                 project_config = generator.config
                 project_name = project_config.get("project", {}).get("name", "Project")
@@ -238,29 +233,29 @@ def generate(config: str, output: str, no_llmstxt: bool):
 
                 if updated:
                     if llmstxt_path and llmstxt_path.exists():
-                        console.print(f"[green]{EMOJI_MAP['success']} 已更新:[/green] {llmstxt_path}")
+                        console.print(f"[green]{EMOJI_MAP['success']} Updated:[/green] {llmstxt_path}")
                     else:
-                        console.print(f"[green]{EMOJI_MAP['success']} 已创建:[/green] {llmstxt_path}")
+                        console.print(f"[green]{EMOJI_MAP['success']} Created:[/green] {llmstxt_path}")
                 else:
-                    console.print("[dim]Info: llms.txt 已包含协作规则引用[/dim]")
+                    console.print("[dim]Info: llms.txt already contains collaboration rules reference[/dim]")
         except yaml.YAMLError as e:
-            console.print(f"[red]错误:[/red] 配置文件 YAML 格式有误: {e}")
+            console.print(f"[red]Error:[/red] Invalid YAML in config file: {e}")
             raise SystemExit(1)
         except FileNotFoundError as e:
-            console.print(f"[red]错误:[/red] 所需文件不存在: {e}")
+            console.print(f"[red]Error:[/red] Required file not found: {e}")
             raise SystemExit(1)
         except Exception as e:
-            console.print(f"[red]错误:[/red] 文档生成失败: {e}")
+            console.print(f"[red]Error:[/red] Document generation failed: {e}")
             raise SystemExit(1)
 
-    console.print(f"[green]{EMOJI_MAP['success']} 已生成:[/green] {output_path}")
-    console.print(f"[dim]配置:[/dim] {config_path}")
+    console.print(f"[green]{EMOJI_MAP['success']} Generated:[/green] {output_path}")
+    console.print(f"[dim]Config:[/dim] {config_path}")
 
 
 @main.command()
-@click.option("--config", "-c", required=True, help="YAML 配置文件路径")
+@click.option("--config", "-c", required=True, help="YAML config file path")
 def validate(config: str):
-    """验证配置文件
+    """Validate configuration file
 
     Examples:
 
@@ -269,44 +264,44 @@ def validate(config: str):
     config_path = Path(config)
 
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
         raise SystemExit(1)
 
-    with console.status("[bold green]正在验证配置..."):
+    with console.status("[bold green]Validating configuration..."):
         try:
             generator = LLMContextGenerator.from_file(config_path)
             errors = generator.validate()
         except yaml.YAMLError as e:
-            console.print(f"[red]错误:[/red] 配置文件 YAML 格式有误: {e}")
+            console.print(f"[red]Error:[/red] Invalid YAML in config file: {e}")
             raise SystemExit(1)
         except Exception as e:
-            console.print(f"[red]错误:[/red] 配置解析失败: {e}")
+            console.print(f"[red]Error:[/red] Config parsing failed: {e}")
             raise SystemExit(1)
 
     if errors:
-        console.print(f"[red]{EMOJI_MAP['error']} 发现 {len(errors)} 个问题:[/red]")
+        console.print(f"[red]{EMOJI_MAP['error']} Found {len(errors)} issue(s):[/red]")
         for err in errors:
             console.print(f"  - {err}")
         raise SystemExit(1)
     else:
-        console.print(f"[green]{EMOJI_MAP['success']} 配置有效:[/green] {config}")
+        console.print(f"[green]{EMOJI_MAP['success']} Config valid:[/green] {config}")
 
 
 @main.command()
 def domains():
-    """列出支持的业务领域"""
-    table = Table(title="支持的业务领域", show_header=True)
-    table.add_column("领域", style="cyan")
-    table.add_column("说明")
-    table.add_column("特有配置")
+    """List supported business domains"""
+    table = Table(title="Supported Domains", show_header=True)
+    table.add_column("Domain", style="cyan")
+    table.add_column("Description")
+    table.add_column("Features")
 
     domain_info = {
-        "generic": ("通用项目", "基础配置"),
-        "game": ("游戏开发", "GM 控制台、GDD 文档"),
-        "web": ("Web 应用", "API 文档、部署环境"),
-        "data": ("数据工程", "ETL 管道、数据质量"),
-        "mobile": ("移动应用", "平台适配、发布流程"),
-        "infra": ("基础设施", "IaC、监控告警"),
+        "generic": ("General purpose", "Basic config"),
+        "game": ("Game development", "GM console, GDD docs"),
+        "web": ("Web application", "API docs, deployment env"),
+        "data": ("Data engineering", "ETL pipeline, data quality"),
+        "mobile": ("Mobile app", "Platform adaptation, release flow"),
+        "infra": ("Infrastructure", "IaC, monitoring & alerting"),
     }
 
     for domain in DOMAINS:
@@ -318,14 +313,14 @@ def domains():
 
 @main.command()
 def templates():
-    """列出可用的模板"""
+    """List available templates"""
     tm = TemplateManager()
     available = tm.list_templates()
 
-    table = Table(title="可用模板", show_header=True)
-    table.add_column("模板", style="cyan")
-    table.add_column("类型")
-    table.add_column("路径")
+    table = Table(title="Available Templates", show_header=True)
+    table.add_column("Template", style="cyan")
+    table.add_column("Type")
+    table.add_column("Path")
 
     for tpl in available:
         table.add_row(tpl["name"], tpl["type"], str(tpl["path"]))
@@ -334,10 +329,10 @@ def templates():
 
 
 @main.command()
-@click.option("--template", "-t", default="default", help="模板名称")
-@click.option("--output", "-o", default="project.yaml", help="输出文件路径")
+@click.option("--template", "-t", default="default", help="Template name")
+@click.option("--output", "-o", default="project.yaml", help="Output file path")
 def export_template(template: str, output: str):
-    """导出模板配置文件
+    """Export template configuration file
 
     Examples:
 
@@ -351,64 +346,64 @@ def export_template(template: str, output: str):
     try:
         content = tm.get_template(template)
         output_path.write_text(content, encoding="utf-8")
-        console.print(f"[green]{EMOJI_MAP['success']} 已导出模板:[/green] {output_path}")
+        console.print(f"[green]{EMOJI_MAP['success']} Template exported:[/green] {output_path}")
     except FileNotFoundError:
-        console.print(f"[red]错误:[/red] 模板不存在: {template}")
-        console.print("[dim]使用 'vibecollab templates' 查看可用模板[/dim]")
+        console.print(f"[red]Error:[/red] Template not found: {template}")
+        console.print("[dim]Use 'vibecollab templates' to view available templates[/dim]")
         raise SystemExit(1)
 
 
 @main.command()
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
-@click.option("--dry-run", is_flag=True, help="仅显示变更，不实际修改")
-@click.option("--force", "-f", is_flag=True, help="强制升级，不备份")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--dry-run", is_flag=True, help="Dry run: show changes only")
+@click.option("--force", "-f", is_flag=True, help="Force upgrade without backup")
 def upgrade(config: str, dry_run: bool, force: bool):
-    """升级协议到最新版本
+    """Upgrade protocol to the latest version
 
-    智能合并：保留用户自定义配置，同时获取最新协议功能。
+    Smart merge: preserves user-customized configuration while applying latest protocol features.
 
     Examples:
 
-        vibecollab upgrade                    # 升级当前目录的项目
+        vibecollab upgrade                    # Upgrade the project in current directory
 
-        vibecollab upgrade -c project.yaml    # 指定配置文件
+        vibecollab upgrade -c project.yaml    # Specify config file
 
-        vibecollab upgrade --dry-run          # 预览变更
+        vibecollab upgrade --dry-run          # Preview changes
     """
     config_path = Path(config)
 
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
-        console.print("[dim]提示: 在项目目录下运行，或使用 -c 指定配置文件路径[/dim]")
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        console.print("[dim]Hint: Run in the project directory, or use -c to specify the config file path[/dim]")
         raise SystemExit(1)
 
-    # 读取用户配置
+    # Load user config
     user_config = _safe_load_yaml(config_path)
 
-    # 获取最新模板
+    # Get latest template
     tm = TemplateManager()
     try:
         latest_template = yaml.safe_load(tm.get_template("default"))
         if not isinstance(latest_template, dict):
-            console.print("[red]错误:[/red] 内置默认模板格式无效")
+            console.print("[red]Error:[/red] Built-in default template has invalid format")
             raise SystemExit(1)
     except yaml.YAMLError as e:
-        console.print(f"[red]错误:[/red] 内置模板解析失败: {e}")
+        console.print(f"[red]Error:[/red] Built-in template parse failed: {e}")
         raise SystemExit(1)
 
-    # 记录用户自定义的关键字段（不应被覆盖）
+    # Record user-customized key fields (should not be overwritten)
     user_preserved = {
         "project": user_config.get("project", {}),
         "roles": user_config.get("roles"),
         "confirmed_decisions": user_config.get("confirmed_decisions"),
         "domain_extensions": user_config.get("domain_extensions"),
-        "multi_developer": user_config.get("multi_developer"),  # v0.5.0+ 保留多开发者配置
+        "multi_developer": user_config.get("multi_developer"),  # v0.5.0+ preserve multi-developer config
     }
 
-    # 深度合并：latest 为 base，user_preserved 覆盖
+    # Deep merge: latest as base, user_preserved overrides
     merged = deep_merge(latest_template, {k: v for k, v in user_preserved.items() if v is not None})
 
-    # 分析变更
+    # Analyze changes
     new_sections = []
     for key in latest_template:
         if key not in user_config:
@@ -416,59 +411,59 @@ def upgrade(config: str, dry_run: bool, force: bool):
 
     if dry_run:
         console.print(Panel.fit(
-            "[bold yellow]预览模式[/bold yellow] - 不会修改任何文件",
+            "[bold yellow]Preview mode[/bold yellow] - No files will be modified",
             title="Dry Run"
         ))
         console.print()
 
         if new_sections:
-            console.print(f"[bold]{EMOJI['package']} 将新增以下配置项:[/bold]")
+            console.print(f"[bold]{EMOJI['package']} New config sections to be added:[/bold]")
             for section in new_sections:
                 console.print(f"  [green]+ {section}[/green]")
         else:
-            console.print("[dim]没有新增配置项[/dim]")
+            console.print("[dim]No new config sections[/dim]")
 
         console.print()
-        console.print(f"[bold]{EMOJI_MAP['lock']} 将保留以下用户配置:[/bold]")
-        console.print(f"  {BULLET} project.name: {user_preserved['project'].get('name', '(未设置)')}")
-        console.print(f"  {BULLET} project.domain: {user_preserved['project'].get('domain', '(未设置)')}")
+        console.print(f"[bold]{EMOJI_MAP['lock']} User config to be preserved:[/bold]")
+        console.print(f"  {BULLET} project.name: {user_preserved['project'].get('name', '(not set)')}")
+        console.print(f"  {BULLET} project.domain: {user_preserved['project'].get('domain', '(not set)')}")
         if user_preserved.get('roles'):
-            console.print(f"  {BULLET} roles: {len(user_preserved['roles'])} 个角色")
+            console.print(f"  {BULLET} roles: {len(user_preserved['roles'])} role(s)")
         if user_preserved.get('confirmed_decisions'):
-            console.print(f"  {BULLET} confirmed_decisions: {len(user_preserved['confirmed_decisions'])} 条决策")
+            console.print(f"  {BULLET} confirmed_decisions: {len(user_preserved['confirmed_decisions'])} decision(s)")
 
         console.print()
-        console.print("[dim]移除 --dry-run 执行实际升级[/dim]")
+        console.print("[dim]Remove --dry-run to perform the actual upgrade[/dim]")
         return
 
-    # 备份原配置
+    # Backup original config
     backup_path = None
     if not force:
         backup_path = config_path.with_suffix(".yaml.bak")
         try:
             config_path.rename(backup_path)
-            console.print(f"[dim]已备份原配置到: {backup_path}[/dim]")
+            console.print(f"[dim]Original config backed up to: {backup_path}[/dim]")
         except OSError as e:
-            console.print(f"[red]错误:[/red] 备份失败: {e}")
+            console.print(f"[red]Error:[/red] Backup failed: {e}")
             raise SystemExit(1)
 
-    # 写入合并后的配置
+    # Write merged config
     try:
         with open(config_path, "w", encoding="utf-8") as f:
             yaml.dump(merged, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
     except OSError as e:
-        console.print(f"[red]错误:[/red] 写入配置失败: {e}")
+        console.print(f"[red]Error:[/red] Failed to write config: {e}")
         if backup_path and backup_path.exists():
             backup_path.rename(config_path)
-            console.print("[yellow]已从备份恢复原配置[/yellow]")
+            console.print("[yellow]Original config restored from backup[/yellow]")
         raise SystemExit(1)
 
-    # 重新生成协作规则文档并集成 llms.txt
+    # Regenerate collaboration rules document and integrate llms.txt
     contributing_ai_path = config_path.parent / "CONTRIBUTING_AI.md"
     generator = LLMContextGenerator(merged, config_path.parent)
     contributing_ai_path.write_text(generator.generate(), encoding="utf-8")
 
-    # 集成 llms.txt
+    # Integrate llms.txt
     project_name = merged.get("project", {}).get("name", "Project")
     project_desc = merged.get("project", {}).get("description", "AI-assisted development project")
     LLMsTxtManager.ensure_integration(
@@ -478,7 +473,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
         contributing_ai_path
     )
 
-    # 检查并初始化多开发者目录结构
+    # Check and initialize multi-developer directory structure
     multi_dev_config = merged.get("multi_developer", {})
     if multi_dev_config.get("enabled", False):
         from datetime import datetime
@@ -488,10 +483,10 @@ def upgrade(config: str, dry_run: bool, force: bool):
         dm = DeveloperManager(config_path.parent, merged)
         developers_dir = config_path.parent / "docs" / "developers"
 
-        # 检查是否需要初始化
+        # Check if initialization is needed
         initialized = False
 
-        # 初始化每个开发者的上下文
+        # Initialize each developer's context
         developers = multi_dev_config.get("developers", [])
         for dev in developers:
             dev_id = dev.get("id")
@@ -501,10 +496,10 @@ def upgrade(config: str, dry_run: bool, force: bool):
             dev_dir = developers_dir / dev_id
             if not dev_dir.exists():
                 dm.init_developer_context(dev_id)
-                console.print(f"  [green]{EMOJI_MAP['sparkles']} 已初始化开发者目录: docs/developers/{dev_id}/[/green]")
+                console.print(f"  [green]{EMOJI_MAP['sparkles']} Initialized developer directory: docs/developers/{dev_id}/[/green]")
                 initialized = True
 
-        # 创建 COLLABORATION.md
+        # Create COLLABORATION.md
         collab_config = multi_dev_config.get('collaboration', {})
         collab_file = config_path.parent / collab_config.get('file', 'docs/developers/COLLABORATION.md')
 
@@ -512,158 +507,158 @@ def upgrade(config: str, dry_run: bool, force: bool):
             collab_file.parent.mkdir(parents=True, exist_ok=True)
             today = datetime.now().strftime("%Y-%m-%d")
 
-            collab_content = f"""# {project_name} 开发者协作记录
+            collab_content = f"""# {project_name} Developer Collaboration Log
 
-## 当前协作关系
+## Current Collaboration
 
-(暂无协作记录)
+(No collaboration records yet)
 
-## 任务分配矩阵
+## Task Assignment Matrix
 
-| 任务 | 负责人 | 协作者 | 状态 | 依赖 |
-|------|--------|--------|------|------|
-| (待分配) | - | - | - | - |
+| Task | Owner | Collaborator | Status | Dependencies |
+|------|-------|--------------|--------|--------------|
+| (Unassigned) | - | - | - | - |
 
-## 里程碑追踪
+## Milestone Tracking
 
-(暂无里程碑)
+(No milestones yet)
 
-## 协作规则约定
+## Collaboration Rules
 
-1. **文档更新**: 每次任务完成后更新自己的 CONTEXT.md
-2. **冲突避免**: 修改共享文档前先检查是否有其他开发者正在编辑
-3. **交接流程**: 任务交接时在本文档记录交接内容
+1. **Documentation**: Update your own CONTEXT.md after each task completion
+2. **Conflict Avoidance**: Check if other developers are editing shared documents before modifying
+3. **Handoff Process**: Record handoff details in this document during task handoffs
 
-## 交接记录
+## Handoff Records
 
-(暂无交接记录)
+(No handoff records yet)
 
 ---
-*最后更新: {today}*
+*Last updated: {today}*
 """
             collab_file.write_text(collab_content, encoding='utf-8')
-            console.print(f"  [green]{EMOJI_MAP['sparkles']} 已创建协作文档: {collab_config.get('file', 'docs/developers/COLLABORATION.md')}[/green]")
+            console.print(f"  [green]{EMOJI_MAP['sparkles']} Created collaboration document: {collab_config.get('file', 'docs/developers/COLLABORATION.md')}[/green]")
             initialized = True
 
-        # 生成全局聚合 CONTEXT.md
+        # Generate global aggregated CONTEXT.md
         aggregator = ContextAggregator(config_path.parent, merged)
         global_context = config_path.parent / "docs" / "CONTEXT.md"
         if not global_context.exists() or initialized:
             aggregator.generate_and_save()
-            console.print(f"  [green]{EMOJI_MAP['sparkles']} 已生成全局上下文聚合: docs/CONTEXT.md[/green]")
+            console.print(f"  [green]{EMOJI_MAP['sparkles']} Generated global context aggregation: docs/CONTEXT.md[/green]")
 
-    # 成功提示
+    # Success message
     console.print()
     console.print(Panel.fit(
-        f"[bold green]{EMOJI_MAP['success']} 协议已升级到 v{__version__}[/bold green]",
-        title="升级完成"
+        f"[bold green]{EMOJI_MAP['success']} Protocol upgraded to v{__version__}[/bold green]",
+        title="Upgrade Complete"
     ))
 
     if new_sections:
         console.print()
-        console.print(f"[bold]{EMOJI['package']} 新增配置项:[/bold]")
+        console.print(f"[bold]{EMOJI['package']} New config sections:[/bold]")
         for section in new_sections:
             console.print(f"  [green]+ {section}[/green]")
 
     console.print()
-    console.print("[bold]已更新文件:[/bold]")
+    console.print("[bold]Updated files:[/bold]")
     console.print(f"  {BULLET} {config_path}")
     console.print(f"  {BULLET} {contributing_ai_path}")
 
     console.print()
-    console.print("[dim]提示: 使用 git diff 查看具体变更[/dim]")
+    console.print("[dim]Hint: Use git diff to review specific changes[/dim]")
 
 
 @main.command()
 def version_info():
-    """显示版本和协议信息"""
+    """Show version and protocol information"""
     console.print(Panel.fit(
         f"[bold]LLMContext[/bold] v{__version__}\n\n"
-        f"[dim]协议版本:[/dim] 1.0\n"
-        f"[dim]支持领域:[/dim] {', '.join(DOMAINS)}\n"
+        f"[dim]Protocol version:[/dim] 1.0\n"
+        f"[dim]Supported domains:[/dim] {', '.join(DOMAINS)}\n"
         f"[dim]Python:[/dim] 3.8+",
-        title="版本信息"
+        title="Version Info"
     ))
 
 
 @main.command()
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
-@click.option("--strict", is_flag=True, help="严格模式：任何警告都视为失败")
-@click.option("--insights", is_flag=True, help="同时执行 Insight 沉淀系统一致性校验")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--strict", is_flag=True, help="Strict mode: treat warnings as failures")
+@click.option("--insights", is_flag=True, help="Also run Insight consistency check")
 def check(config: str, strict: bool, insights: bool):
-    """检查协议遵循情况
+    """Check protocol compliance
 
-    检查项目是否遵循了 CONTRIBUTING_AI.md 中定义的协作协议。
+    Check whether the project follows the collaboration protocol defined in CONTRIBUTING_AI.md.
 
     Examples:
 
-        vibecollab check                    # 检查当前目录的项目
+        vibecollab check                    # Check the project in current directory
 
-        vibecollab check -c project.yaml    # 指定配置文件
+        vibecollab check -c project.yaml    # Specify config file
 
-        vibecollab check --strict           # 严格模式
+        vibecollab check --strict           # Strict mode
 
-        vibecollab check --insights         # 同时检查 Insight 一致性
+        vibecollab check --insights         # Also check Insight consistency
     """
     config_path = Path(config)
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
-        console.print("[dim]提示: 在项目目录下运行，或使用 -c 指定配置文件路径[/dim]")
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        console.print("[dim]Hint: Run in the project directory, or use -c to specify the config file path[/dim]")
         raise SystemExit(1)
 
-    # 加载配置
+    # Load config
     project_config = _safe_load_yaml(config_path)
 
-    # 执行检查
+    # Run checks
     checker = ProtocolChecker(project_root, project_config)
     results = checker.check_all()
     summary = checker.get_summary(results)
 
-    # 显示结果
+    # Display results
     console.print()
     console.print(Panel.fit(
-        "[bold]协议遵循情况检查[/bold]",
+        "[bold]Protocol Compliance Check[/bold]",
         title="Protocol Check"
     ))
     console.print()
 
-    # 按严重程度分组显示
+    # Group by severity
     errors = [r for r in results if r.severity == "error"]
     warnings = [r for r in results if r.severity == "warning"]
     infos = [r for r in results if r.severity == "info"]
 
     if errors:
-        console.print(f"[bold red]{EMOJI_MAP['error']} 错误:[/bold red]")
+        console.print(f"[bold red]{EMOJI_MAP['error']} Errors:[/bold red]")
         for result in errors:
             console.print(f"  {BULLET} {result.name}: {result.message}")
             if result.suggestion:
-                console.print(f"    [dim]建议: {result.suggestion}[/dim]")
+                console.print(f"    [dim]Suggestion: {result.suggestion}[/dim]")
         console.print()
 
     if warnings:
-        console.print(f"[bold yellow]{EMOJI_MAP['warning']} 警告:[/bold yellow]")
+        console.print(f"[bold yellow]{EMOJI_MAP['warning']} Warnings:[/bold yellow]")
         for result in warnings:
             console.print(f"  {BULLET} {result.name}: {result.message}")
             if result.suggestion:
-                console.print(f"    [dim]建议: {result.suggestion}[/dim]")
+                console.print(f"    [dim]Suggestion: {result.suggestion}[/dim]")
         console.print()
 
     if infos:
-        console.print(f"[bold blue]{EMOJI_MAP['info']} 信息:[/bold blue]")
+        console.print(f"[bold blue]{EMOJI_MAP['info']} Info:[/bold blue]")
         for result in infos:
             console.print(f"  {BULLET} {result.name}: {result.message}")
             if result.suggestion:
-                console.print(f"    [dim]建议: {result.suggestion}[/dim]")
+                console.print(f"    [dim]Suggestion: {result.suggestion}[/dim]")
         console.print()
 
-    # Insight 一致性校验
+    # Insight consistency check
     insight_errors = 0
     insight_warnings = 0
     if insights:
         console.print(Panel.fit(
-            "[bold]Insight 沉淀系统一致性校验[/bold]",
+            "[bold]Insight System Consistency Check[/bold]",
             title="Insight Consistency Check"
         ))
         console.print()
@@ -676,65 +671,65 @@ def check(config: str, strict: bool, insights: bool):
 
             if report.errors:
                 insight_errors = len(report.errors)
-                console.print(f"[bold red]{EMOJI_MAP['error']} Insight 错误:[/bold red]")
+                console.print(f"[bold red]{EMOJI_MAP['error']} Insight Errors:[/bold red]")
                 for err in report.errors:
                     console.print(f"  {BULLET} {err}")
                 console.print()
             if report.warnings:
                 insight_warnings = len(report.warnings)
-                console.print(f"[bold yellow]{EMOJI_MAP['warning']} Insight 警告:[/bold yellow]")
+                console.print(f"[bold yellow]{EMOJI_MAP['warning']} Insight Warnings:[/bold yellow]")
                 for warn in report.warnings:
                     console.print(f"  {BULLET} {warn}")
                 console.print()
             if report.ok and not report.warnings:
-                console.print(f"  [green]{EMOJI_MAP['success']} Insight 一致性校验通过[/green]")
+                console.print(f"  [green]{EMOJI_MAP['success']} Insight consistency check passed[/green]")
                 console.print()
         except Exception as e:
-            console.print(f"  [yellow]{EMOJI_MAP['warning']} Insight 校验跳过: {e}[/yellow]")
+            console.print(f"  [yellow]{EMOJI_MAP['warning']} Insight check skipped: {e}[/yellow]")
             console.print()
 
-    # 合并统计
+    # Merge statistics
     total_errors = len(errors) + insight_errors
     total_warnings = len(warnings) + insight_warnings
     total_checks = summary["total"] + (1 if insights else 0)
 
-    # 显示摘要
+    # Display summary
     if total_errors == 0 and not (strict and total_warnings > 0):
         console.print(Panel.fit(
-            f"[bold green]{EMOJI_MAP['success']} 所有检查通过[/bold green]\n\n"
-            f"总计: {total_checks} 项检查",
-            title="检查完成"
+            f"[bold green]{EMOJI_MAP['success']} All checks passed[/bold green]\n\n"
+            f"Total: {total_checks} check(s)",
+            title="Check Complete"
         ))
     else:
-        status = "失败" if total_errors > 0 or (strict and total_warnings > 0) else "有警告"
+        status = "Failed" if total_errors > 0 or (strict and total_warnings > 0) else "Has Warnings"
         color = "red" if total_errors > 0 or (strict and total_warnings > 0) else "yellow"
         emoji = EMOJI_MAP['error'] if total_errors > 0 or (strict and total_warnings > 0) else EMOJI_MAP['warning']
         console.print(Panel.fit(
-            f"[bold {color}]{emoji} 检查{status}[/bold {color}]\n\n"
-            f"总计: {total_checks} 项\n"
-            f"错误: {total_errors} 项\n"
-            f"警告: {total_warnings} 项",
-            title="检查完成"
+            f"[bold {color}]{emoji} Check {status}[/bold {color}]\n\n"
+            f"Total: {total_checks} check(s)\n"
+            f"Errors: {total_errors}\n"
+            f"Warnings: {total_warnings}",
+            title="Check Complete"
         ))
         if strict and total_warnings > 0:
             console.print()
-            console.print("[dim]提示: 使用 --strict 时，警告也会被视为失败[/dim]")
+            console.print("[dim]Hint: In --strict mode, warnings are treated as failures[/dim]")
 
-    # 返回退出码
+    # Return exit code
     if total_errors > 0 or (strict and total_warnings > 0):
         raise SystemExit(1)
 
 
 @main.command()
-@click.option("-c", "--config", default="project.yaml", help="配置文件路径")
-@click.option("--json", "as_json", is_flag=True, help="输出 JSON 格式")
+@click.option("-c", "--config", default="project.yaml", help="Config file path")
+@click.option("--json", "as_json", is_flag=True, help="Output in JSON format")
 def health(config: str, as_json: bool):
-    """项目健康信号检查"""
+    """Project health signal check"""
     import json as json_mod
 
     config_path = Path(config)
     if not config_path.exists():
-        console.print(f"[red]配置文件不存在: {config}[/red]")
+        console.print(f"[red]Config file not found: {config}[/red]")
         raise SystemExit(1)
 
     cfg = _safe_load_yaml(config_path)
@@ -769,72 +764,72 @@ def health(config: str, as_json: bool):
         raise SystemExit(1)
 
 
-# 导入生涯管理命令
+# Import lifecycle management commands
 from .lifecycle import lifecycle as lifecycle_group  # noqa: E402
 
 main.add_command(lifecycle_group)
 
-# 导入 AI 命令 (人机对话 + Agent 自主模式)
+# Import AI commands (human-AI dialogue + Agent autonomous mode)
 from .ai import ai as ai_group  # noqa: E402
 
 main.add_command(ai_group)
 
-# 导入 Insight 沉淀系统命令
+# Import Insight system commands
 from .insight import insight as insight_group  # noqa: E402
 
 main.add_command(insight_group)
 
-# 导入 AI 引导命令 (onboard + next + prompt)
+# Import AI guidance commands (onboard + next + prompt)
 from .guide import next_step, onboard, prompt_cmd  # noqa: E402
 
 main.add_command(onboard)
 main.add_command(next_step, name="next")
 main.add_command(prompt_cmd, name="prompt")
 
-# 导入 Task 管理命令 (含 Insight 自动关联, v0.7.1+)
+# Import Task management commands (with Insight auto-linking, v0.7.1+)
 from .task import task_group  # noqa: E402
 
 main.add_command(task_group)
 
-# 导入配置管理命令 (v0.8.0+)
+# Import config management commands (v0.8.0+)
 from .config import config_group  # noqa: E402
 
 main.add_command(config_group)
 
-# 导入语义检索命令 (v0.9.0+)
+# Import semantic search commands (v0.9.0+)
 from .index import index_cmd, search_cmd  # noqa: E402
 
 main.add_command(index_cmd, name="index")
 main.add_command(search_cmd, name="search")
 
-# 导入 MCP Server 命令 (v0.9.1+)
+# Import MCP Server commands (v0.9.1+)
 from .mcp import mcp_group  # noqa: E402
 
 main.add_command(mcp_group)
 
-# 导入 Roadmap / Task 集成命令 (v0.10.0+)
+# Import Roadmap / Task integration commands (v0.10.0+)
 from .roadmap import roadmap_group  # noqa: E402
 
 main.add_command(roadmap_group)
 
 
 # ============================================
-# 多开发者管理命令组 (v0.5.0+)
+# Multi-developer management commands (v0.5.0+)
 # ============================================
 
 @main.group()
 def dev():
-    """多开发者管理命令
+    """Multi-developer management commands
 
-    管理多开发者协同开发的项目。
+    Manage projects with multi-developer collaboration.
     """
     pass
 
 
 @dev.command("whoami")
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
 def dev_whoami(config: str):
-    """显示当前开发者身份
+    """Show current developer identity
 
     Examples:
 
@@ -846,7 +841,7 @@ def dev_whoami(config: str):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -858,28 +853,28 @@ def dev_whoami(config: str):
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
 
-    # 身份来源的友好显示
+    # Friendly display for identity source
     source_display = {
-        'local_switch': '[green]CLI 切换[/green] (.vibecollab.local.yaml)',
-        'env_var': '[yellow]环境变量[/yellow] (VIBECOLLAB_DEVELOPER)',
-        'git_username': 'Git 用户名 (git config user.name)',
-        'system_user': '系统用户名',
+        'local_switch': '[green]CLI switch[/green] (.vibecollab.local.yaml)',
+        'env_var': '[yellow]Environment variable[/yellow] (VIBECOLLAB_DEVELOPER)',
+        'git_username': 'Git username (git config user.name)',
+        'system_user': 'System username',
     }.get(identity_source, identity_source)
 
     console.print()
     console.print(Panel.fit(
         f"[bold cyan]{current_dev}[/bold cyan]\n\n"
-        f"多开发者模式: {'[green]启用[/green]' if multi_dev_enabled else '[yellow]未启用[/yellow]'}\n"
-        f"身份来源: {source_display}",
-        title="当前开发者"
+        f"Multi-developer mode: {'[green]Enabled[/green]' if multi_dev_enabled else '[yellow]Not enabled[/yellow]'}\n"
+        f"Identity source: {source_display}",
+        title="Current Developer"
     ))
     console.print()
 
 
 @dev.command("list")
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
 def dev_list(config: str):
-    """列出所有开发者
+    """List all developers
 
     Examples:
 
@@ -891,7 +886,7 @@ def dev_list(config: str):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -899,8 +894,8 @@ def dev_list(config: str):
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
-        console.print("[dim]在 project.yaml 中设置 multi_developer.enabled: true[/dim]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode is not enabled[/yellow]")
+        console.print("[dim]Set multi_developer.enabled: true in project.yaml[/dim]")
         raise SystemExit(1)
 
     dm = DeveloperManager(project_root, project_config)
@@ -909,24 +904,24 @@ def dev_list(config: str):
 
     if not developers:
         console.print()
-        console.print("[yellow]暂无开发者[/yellow]")
-        console.print("[dim]使用 'vibecollab init --multi-dev' 初始化多开发者项目[/dim]")
+        console.print("[yellow]No developers yet[/yellow]")
+        console.print("[dim]Use 'vibecollab init --multi-dev' to initialize a multi-developer project[/dim]")
         console.print()
         return
 
-    table = Table(title="开发者列表", show_header=True)
-    table.add_column("开发者", style="cyan")
-    table.add_column("状态")
-    table.add_column("上次更新")
-    table.add_column("更新次数")
+    table = Table(title="Developer List", show_header=True)
+    table.add_column("Developer", style="cyan")
+    table.add_column("Status")
+    table.add_column("Last Updated")
+    table.add_column("Update Count")
 
     for dev in developers:
         status_info = dm.get_developer_status(dev)
-        is_current = " (当前)" if dev == current_dev else ""
-        status = f"{EMOJI_MAP['success']} 活跃{is_current}" if status_info['exists'] else f"{EMOJI_MAP['warning']} 未初始化"
+        is_current = " (current)" if dev == current_dev else ""
+        status = f"{EMOJI_MAP['success']} Active{is_current}" if status_info['exists'] else f"{EMOJI_MAP['warning']} Not initialized"
         last_updated = status_info.get('last_updated', '-') or '-'
         if last_updated != '-' and len(last_updated) > 19:
-            last_updated = last_updated[:19]  # 截取日期时间部分
+            last_updated = last_updated[:19]  # Trim to datetime portion
         total_updates = str(status_info.get('total_updates', 0))
 
         table.add_row(dev, status, last_updated, total_updates)
@@ -938,15 +933,15 @@ def dev_list(config: str):
 
 @dev.command("status")
 @click.argument("developer", required=False)
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
 def dev_status(developer: Optional[str], config: str):
-    """查看开发者状态
+    """View developer status
 
     Examples:
 
-        vibecollab dev status           # 查看所有开发者
+        vibecollab dev status           # View all developers
 
-        vibecollab dev status alice     # 查看特定开发者
+        vibecollab dev status alice     # View a specific developer
     """
     from ..domain.developer import DeveloperManager
 
@@ -954,7 +949,7 @@ def dev_status(developer: Optional[str], config: str):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -962,21 +957,21 @@ def dev_status(developer: Optional[str], config: str):
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode is not enabled[/yellow]")
         raise SystemExit(1)
 
     dm = DeveloperManager(project_root, project_config)
 
     if developer:
-        # 显示特定开发者
+        # Show specific developer
         developers = [developer]
     else:
-        # 显示所有开发者
+        # Show all developers
         developers = dm.list_developers()
 
     if not developers:
         console.print()
-        console.print("[yellow]暂无开发者[/yellow]")
+        console.print("[yellow]No developers yet[/yellow]")
         console.print()
         return
 
@@ -986,30 +981,30 @@ def dev_status(developer: Optional[str], config: str):
             console.print()
             console.print(Panel.fit(
                 f"[bold]{dev}[/bold]",
-                title="开发者状态"
+                title="Developer Status"
             ))
             console.print()
 
-            # 读取并显示 CONTEXT.md 摘要
+            # Read and display CONTEXT.md summary
             try:
                 content = context_file.read_text(encoding='utf-8')
-                # 显示前20行
+                # Show first 20 lines
                 lines = content.split('\n')[:20]
                 console.print('\n'.join(lines))
                 if len(content.split('\n')) > 20:
-                    console.print(f"\n[dim]... (更多内容见 {context_file})[/dim]")
+                    console.print(f"\n[dim]... (more at {context_file})[/dim]")
             except Exception as e:
-                console.print(f"[red]读取失败:[/red] {e}")
+                console.print(f"[red]Read failed:[/red] {e}")
 
             console.print()
         else:
-            console.print(f"[yellow]{EMOJI_MAP['warning']} 开发者 {dev} 未初始化[/yellow]")
+            console.print(f"[yellow]{EMOJI_MAP['warning']} Developer {dev} not initialized[/yellow]")
 
 
 @dev.command("sync")
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
 def dev_sync(config: str):
-    """手动触发全局 CONTEXT 聚合
+    """Manually trigger global CONTEXT aggregation
 
     Examples:
 
@@ -1021,7 +1016,7 @@ def dev_sync(config: str):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -1029,34 +1024,34 @@ def dev_sync(config: str):
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode is not enabled[/yellow]")
         raise SystemExit(1)
 
     console.print()
-    console.print("[cyan]正在聚合全局 CONTEXT...[/cyan]")
+    console.print("[cyan]Aggregating global CONTEXT...[/cyan]")
 
     try:
         aggregator = ContextAggregator(project_root, project_config)
         output_file = aggregator.generate_and_save()
 
-        console.print(f"[green]{EMOJI_MAP['success']} 聚合完成:[/green] {output_file}")
+        console.print(f"[green]{EMOJI_MAP['success']} Aggregation complete:[/green] {output_file}")
         console.print()
     except Exception as e:
-        console.print(f"[red]聚合失败:[/red] {e}")
+        console.print(f"[red]Aggregation failed:[/red] {e}")
         raise SystemExit(1)
 
 
 @dev.command("init")
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
-@click.option("--developer", "-d", help="开发者名称（留空则自动识别）")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--developer", "-d", help="Developer name (auto-detect if empty)")
 def dev_init(config: str, developer: Optional[str]):
-    """初始化当前开发者的上下文
+    """Initialize current developer's context
 
     Examples:
 
-        vibecollab dev init                 # 自动识别当前开发者
+        vibecollab dev init                 # Auto-detect current developer
 
-        vibecollab dev init -d alice        # 为 alice 初始化
+        vibecollab dev init -d alice        # Initialize for alice
     """
     from ..domain.developer import DeveloperManager
 
@@ -1064,7 +1059,7 @@ def dev_init(config: str, developer: Optional[str]):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -1072,8 +1067,8 @@ def dev_init(config: str, developer: Optional[str]):
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
-        console.print("[dim]在 project.yaml 中设置 multi_developer.enabled: true[/dim]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode is not enabled[/yellow]")
+        console.print("[dim]Set multi_developer.enabled: true in project.yaml[/dim]")
         raise SystemExit(1)
 
     dm = DeveloperManager(project_root, project_config)
@@ -1082,37 +1077,37 @@ def dev_init(config: str, developer: Optional[str]):
         developer = dm.get_current_developer()
 
     console.print()
-    console.print(f"[cyan]正在初始化开发者:[/cyan] {developer}")
+    console.print(f"[cyan]Initializing developer:[/cyan] {developer}")
 
     try:
         dm.init_developer_context(developer)
         context_file = dm.get_developer_context_file(developer)
 
-        console.print(f"[green]{EMOJI_MAP['success']} 初始化完成:[/green]")
-        console.print(f"  {BULLET} 上下文文件: {context_file}")
+        console.print(f"[green]{EMOJI_MAP['success']} Initialization complete:[/green]")
+        console.print(f"  {BULLET} Context file: {context_file}")
         console.print()
     except Exception as e:
-        console.print(f"[red]初始化失败:[/red] {e}")
+        console.print(f"[red]Initialization failed:[/red] {e}")
         raise SystemExit(1)
 
 
 @dev.command("switch")
 @click.argument("developer", required=False)
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
-@click.option("--clear", is_flag=True, help="清除切换设置，恢复使用默认识别策略")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--clear", is_flag=True, help="Clear switch, restore default identity")
 def dev_switch(developer: Optional[str], config: str, clear: bool):
-    """切换当前开发者身份
+    """Switch current developer identity
 
-    通过 CLI 选择要使用的开发者上下文，而无需修改 Git 配置或环境变量。
-    切换后的设置会持久化到本地配置文件 (.vibecollab.local.yaml)。
+    Select a developer context via CLI without modifying Git config or environment variables.
+    The switch setting is persisted to the local config file (.vibecollab.local.yaml).
 
     Examples:
 
-        vibecollab dev switch alice      # 切换到 alice
+        vibecollab dev switch alice      # Switch to alice
 
-        vibecollab dev switch            # 交互式选择开发者
+        vibecollab dev switch            # Interactive developer selection
 
-        vibecollab dev switch --clear    # 清除切换，恢复默认识别
+        vibecollab dev switch --clear    # Clear switch, restore default identity
     """
     from ..domain.developer import DeveloperManager
 
@@ -1120,7 +1115,7 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -1128,122 +1123,123 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
-        console.print("[dim]在 project.yaml 中设置 multi_developer.enabled: true[/dim]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode is not enabled[/yellow]")
+        console.print("[dim]Set multi_developer.enabled: true in project.yaml[/dim]")
         raise SystemExit(1)
 
     dm = DeveloperManager(project_root, project_config)
 
-    # 处理清除切换
+    # Handle clear switch
     if clear:
         console.print()
         if dm.clear_switch():
             default_dev = dm.get_current_developer()
-            console.print(f"[green]{EMOJI_MAP['success']} 已清除切换设置[/green]")
-            console.print(f"  {BULLET} 当前身份: [cyan]{default_dev}[/cyan] (通过默认策略识别)")
+            console.print(f"[green]{EMOJI_MAP['success']} Switch setting cleared[/green]")
+            console.print(f"  {BULLET} Current identity: [cyan]{default_dev}[/cyan] (detected via default strategy)")
         else:
-            console.print("[red]清除失败[/red]")
+            console.print("[red]Clear failed[/red]")
             raise SystemExit(1)
         console.print()
         return
 
-    # 获取可用开发者列表
+    # Get available developer list
     developers = dm.list_developers()
     current_dev = dm.get_current_developer()
 
-    # 如果没有指定开发者，进行交互式选择
+    # If no developer specified, interactive selection
     if developer is None:
         if not developers:
             console.print()
-            console.print("[yellow]暂无开发者[/yellow]")
-            console.print("[dim]使用 'vibecollab dev init -d <name>' 初始化新开发者[/dim]")
+            console.print("[yellow]No developers yet[/yellow]")
+            console.print("[dim]Use 'vibecollab dev init -d <name>' to initialize a new developer[/dim]")
             console.print()
             return
 
         console.print()
-        console.print("[cyan]选择要切换的开发者:[/cyan]")
+        console.print("[cyan]Select a developer to switch to:[/cyan]")
         console.print()
 
         for i, dev in enumerate(developers, 1):
             status_info = dm.get_developer_status(dev)
-            is_current = " [green](当前)[/green]" if dev == current_dev else ""
-            last_update = status_info.get('last_updated', '未知')
+            is_current = " [green](current)[/green]" if dev == current_dev else ""
+            last_update = status_info.get('last_updated', 'unknown')
             console.print(f"  {i}. [bold]{dev}[/bold]{is_current}")
-            console.print(f"     上次更新: {last_update}")
+            console.print(f"     Last updated: {last_update}")
 
         console.print()
-        console.print("  0. [dim]取消[/dim]")
+        console.print("  0. [dim]Cancel[/dim]")
         console.print()
 
-        # 读取用户选择
+        # Read user selection
         try:
-            choice = click.prompt("请输入序号", type=int, default=0)
+            choice = click.prompt("Enter number", type=int, default=0)
         except click.Abort:
-            console.print("\n[dim]已取消[/dim]")
+            console.print("\n[dim]Cancelled[/dim]")
             return
 
         if choice == 0:
-            console.print("[dim]已取消[/dim]")
+            console.print("[dim]Cancelled[/dim]")
             return
 
         if choice < 1 or choice > len(developers):
-            console.print(f"[red]无效的选择: {choice}[/red]")
+            console.print(f"[red]Invalid choice: {choice}[/red]")
             raise SystemExit(1)
 
         developer = developers[choice - 1]
 
-    # 标准化开发者名称
+    # Normalize developer name
     identity_config = project_config.get('multi_developer', {}).get('identity', {})
     if identity_config.get('normalize', True):
         developer = dm._normalize_developer_name(developer)
 
-    # 检查开发者是否存在
+    # Check if developer exists
     if developer not in developers:
         console.print()
-        console.print(f"[yellow]{EMOJI_MAP['warning']} 开发者 '{developer}' 不存在[/yellow]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} Developer '{developer}' does not exist[/yellow]")
         console.print()
 
-        # 询问是否要初始化
-        create = click.confirm(f"是否为 '{developer}' 初始化上下文?", default=True)
+        # Ask whether to initialize
+        create = click.confirm(f"Initialize context for '{developer}'?", default=True)
         if create:
             dm.init_developer_context(developer)
-            console.print(f"[green]{EMOJI_MAP['success']} 已为 '{developer}' 初始化上下文[/green]")
+            console.print(f"[green]{EMOJI_MAP['success']} Initialized context for '{developer}'[/green]")
         else:
-            console.print("[dim]已取消[/dim]")
+            console.print("[dim]Cancelled[/dim]")
             return
 
-    # 执行切换
+    # Execute switch
     console.print()
     if dm.switch_developer(developer):
-        console.print(f"[green]{EMOJI_MAP['success']} 已切换到开发者: [bold cyan]{developer}[/bold cyan][/green]")
+        console.print(f"[green]{EMOJI_MAP['success']} Switched to developer: [bold cyan]{developer}[/bold cyan][/green]")
         console.print()
-        console.print(f"  {BULLET} 上下文文件: {dm.get_developer_context_file(developer)}")
-        console.print(f"  {BULLET} 持久化位置: .vibecollab.local.yaml")
+        console.print(f"  {BULLET} Context file: {dm.get_developer_context_file(developer)}")
+        console.print(f"  {BULLET} Persisted to: .vibecollab.local.yaml")
         console.print()
-        console.print("[dim]提示: 使用 'vibecollab dev switch --clear' 可恢复默认识别[/dim]")
+        console.print("[dim]Hint: Use 'vibecollab dev switch --clear' to restore default identity[/dim]")
     else:
-        console.print("[red]切换失败[/red]")
+        console.print("[red]Switch failed[/red]")
         raise SystemExit(1)
 
     console.print()
 
 
 @dev.command("conflicts")
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
-@click.option("--verbose", "-v", is_flag=True, help="显示详细冲突信息")
-@click.option("--between", nargs=2, help="检测两个特定开发者之间的冲突 (例: --between alice bob)")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--verbose", "-v", is_flag=True, help="Show detailed conflict info")
+@click.option("--between", nargs=2, help="Detect conflicts between two developers (e.g. --between alice bob)")
 def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]):
-    """检测跨开发者工作冲突
+    """Detect cross-developer work conflicts
 
-    检测多个开发者之间的潜在冲突，包括文件冲突、任务冲突、依赖冲突等。
+    Detects potential conflicts between multiple developers, including file conflicts,
+    task conflicts, dependency conflicts, etc.
 
     Examples:
 
-        vibecollab dev conflicts                 # 检测所有开发者的冲突
+        vibecollab dev conflicts                 # Detect all developer conflicts
 
-        vibecollab dev conflicts -v              # 显示详细信息
+        vibecollab dev conflicts -v              # Show detailed info
 
-        vibecollab dev conflicts --between alice bob  # 检测特定两人之间的冲突
+        vibecollab dev conflicts --between alice bob  # Detect conflicts between two specific developers
     """
     from ..domain.conflict_detector import ConflictDetector
 
@@ -1251,7 +1247,7 @@ def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -1259,33 +1255,33 @@ def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} 多开发者模式未启用[/yellow]")
-        console.print("[dim]在 project.yaml 中设置 multi_developer.enabled: true[/dim]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode not enabled[/yellow]")
+        console.print("[dim]Set multi_developer.enabled: true in project.yaml[/dim]")
         raise SystemExit(1)
 
     console.print()
-    console.print("[cyan]正在检测跨开发者冲突...[/cyan]")
+    console.print("[cyan]Detecting cross-developer conflicts...[/cyan]")
     console.print()
 
     try:
         detector = ConflictDetector(project_root, project_config)
 
-        # 执行冲突检测
+        # Execute conflict detection
         conflicts = detector.detect_all_conflicts(
             target_developer=None,
             between_developers=between
         )
 
-        # 生成并显示报告
+        # Generate and display report
         report = detector.generate_conflict_report(conflicts, verbose=verbose)
         console.print(report)
 
-        # 如果有冲突，返回非零退出码
+        # Return non-zero exit code if conflicts found
         if conflicts:
             raise SystemExit(1)
 
     except Exception as e:
-        console.print(f"[red]冲突检测失败:[/red] {e}")
+        console.print(f"[red]Conflict detection failed:[/red] {e}")
         if verbose:
             import traceback
             console.print(traceback.format_exc())

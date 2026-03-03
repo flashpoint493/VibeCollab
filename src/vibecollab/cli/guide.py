@@ -1,12 +1,12 @@
 """
-Guide CLI 命令 — AI Agent 接入引导与行动建议
+Guide CLI commands -- AI Agent onboarding and action suggestions
 
-提供三个核心命令，让 AI Agent 能自主理解项目、自主推进开发：
+Provides three core commands for AI Agents to understand and drive project development:
 
-命令:
-    vibecollab onboard              AI 接入时的上下文引导（Rich 面板）
-    vibecollab prompt               生成 LLM 可直接使用的上下文 prompt 文本
-    vibecollab next                 修改后的下一步行动建议
+Commands:
+    vibecollab onboard              Onboarding context guide for AI (Rich panel)
+    vibecollab prompt               Generate LLM-ready context prompt text
+    vibecollab next                 Next-step action suggestions after modifications
 """
 
 import json
@@ -31,9 +31,9 @@ console = safe_console()
 def _search_related_insights(
     project_root: Path, query_text: str, top_k: int = 5
 ) -> List[Dict]:
-    """从向量索引中搜索与查询文本相关的 Insight
+    """Search for Insights related to query text from vector index
 
-    返回 [{id, title, tags, score}] 列表，如果索引不存在则返回空列表。
+    Returns [{id, title, tags, score}] list, or empty list if index does not exist.
     """
     db_path = project_root / ".vibecollab" / "vectors" / "index.db"
     if not db_path.exists():
@@ -43,7 +43,7 @@ def _search_related_insights(
         from ..insight.embedder import Embedder, EmbedderConfig
         from ..search.vector_store import VectorStore
 
-        # 从已有 DB 推断维度
+        # Infer dimensions from existing DB
         import sqlite3
 
         conn = sqlite3.connect(str(db_path))
@@ -77,12 +77,12 @@ def _search_related_insights(
         return related
 
     except Exception as e:
-        logger.debug("语义搜索 Insight 失败: %s", e)
+        logger.debug("Semantic search for Insight failed: %s", e)
         return []
 
 
 def _safe_load_yaml(path: Path) -> Optional[dict]:
-    """安全加载 YAML，失败返回 None"""
+    """Safely load YAML, return None on failure"""
     if not path.exists():
         return None
     try:
@@ -93,7 +93,7 @@ def _safe_load_yaml(path: Path) -> Optional[dict]:
 
 
 def _safe_read_text(path: Path, max_lines: int = 0) -> str:
-    """安全读取文本文件"""
+    """Safely read a text file"""
     if not path.exists():
         return ""
     try:
@@ -107,7 +107,7 @@ def _safe_read_text(path: Path, max_lines: int = 0) -> str:
 
 
 def _get_git_uncommitted(project_root: Path) -> List[str]:
-    """获取未提交的文件列表"""
+    """Get list of uncommitted files"""
     try:
         result = subprocess.run(
             ["git", "status", "--short"],
@@ -121,7 +121,7 @@ def _get_git_uncommitted(project_root: Path) -> List[str]:
 
 
 def _get_git_diff_files(project_root: Path) -> List[str]:
-    """获取 git diff 的文件名列表"""
+    """Get list of git diff file names"""
     try:
         result = subprocess.run(
             ["git", "diff", "--name-only"],
@@ -135,7 +135,7 @@ def _get_git_diff_files(project_root: Path) -> List[str]:
 
 
 def _get_recent_decisions(decisions_path: Path, count: int = 3) -> List[str]:
-    """从 DECISIONS.md 提取最近 N 条决策标题"""
+    """Extract the last N decision titles from DECISIONS.md"""
     text = _safe_read_text(decisions_path)
     if not text:
         return []
@@ -147,7 +147,7 @@ def _get_recent_decisions(decisions_path: Path, count: int = 3) -> List[str]:
 
 
 def _extract_pending_from_roadmap(roadmap_path: Path) -> List[str]:
-    """从 ROADMAP.md 提取未完成项 (- [ ])"""
+    """Extract incomplete items (- [ ]) from ROADMAP.md"""
     text = _safe_read_text(roadmap_path)
     if not text:
         return []
@@ -162,7 +162,7 @@ def _extract_pending_from_roadmap(roadmap_path: Path) -> List[str]:
 def _check_linked_groups_freshness(
     project_root: Path, config: dict
 ) -> List[Dict]:
-    """检查关联文档组的新鲜度，返回需要同步的组"""
+    """Check freshness of linked document groups, return groups needing sync"""
     doc_config = config.get("documentation", {})
     consistency_config = doc_config.get("consistency", {})
     if not consistency_config.get("enabled", False):
@@ -179,7 +179,7 @@ def _check_linked_groups_freshness(
         if len(files) < 2:
             continue
 
-        # 收集文件的 mtime
+        # Collect file mtimes
         mtimes = {}
         for f in files:
             full_path = project_root / f
@@ -192,7 +192,7 @@ def _check_linked_groups_freshness(
         sorted_files = sorted(mtimes.items(), key=lambda x: x[1], reverse=True)
         newest_file, newest_time = sorted_files[0]
 
-        # 只关注 24h 内有修改的组
+        # Only care about groups modified within 24h
         hours_since = (datetime.now() - newest_time).total_seconds() / 3600
         if hours_since > 24:
             continue
@@ -214,17 +214,17 @@ def _check_linked_groups_freshness(
 
 
 def _get_read_files_list(config: dict) -> List[str]:
-    """获取 dialogue_protocol.on_start.read_files"""
+    """Get dialogue_protocol.on_start.read_files"""
     return config.get("dialogue_protocol", {}).get("on_start", {}).get("read_files", [])
 
 
 def _get_update_files_list(config: dict) -> List[str]:
-    """获取 dialogue_protocol.on_end.update_files"""
+    """Get dialogue_protocol.on_end.update_files"""
     return config.get("dialogue_protocol", {}).get("on_end", {}).get("update_files", [])
 
 
 def _suggest_commit_message(diff_files: List[str]) -> str:
-    """根据 diff 文件列表建议 commit message prefix"""
+    """Suggest commit message prefix based on diff file list"""
     has_src = any(f.startswith("src/") for f in diff_files)
     has_test = any(f.startswith("tests/") for f in diff_files)
     has_doc = any(
@@ -255,10 +255,10 @@ def _suggest_commit_message(diff_files: List[str]) -> str:
 def _collect_project_context(
     config_path: Path, developer: Optional[str] = None
 ) -> Dict:
-    """收集项目上下文数据（onboard 和 prompt 共用）
+    """Collect project context data (shared by onboard and prompt)
 
     Returns:
-        Dict 包含: project_root, project_name, project_version, project_desc,
+        Dict containing: project_root, project_name, project_version, project_desc,
         context_text, recent_decisions, pending_roadmap, uncommitted,
         read_files, developer_info, key_files, insight_count, top_insights,
         project_config
@@ -271,7 +271,7 @@ def _collect_project_context(
 
     proj = project_config.get("project", {})
 
-    # 开发者信息
+    # Developer info
     developer_info = None
     if developer:
         dev_context_path = project_root / "docs" / "developers" / developer / "CONTEXT.md"
@@ -298,7 +298,7 @@ def _collect_project_context(
                     "tags": ins_data.get("tags", []),
                 })
 
-    # Task 概览
+    # Task overview
     active_tasks: List[Dict] = []
     task_summary: Dict = {"total": 0, "todo": 0, "in_progress": 0, "review": 0, "done": 0}
     try:
@@ -320,7 +320,7 @@ def _collect_project_context(
     except Exception:
         pass
 
-    # EventLog 最近事件
+    # EventLog recent events
     recent_events: List[Dict] = []
     try:
         from ..domain.event_log import EventLog
@@ -335,11 +335,11 @@ def _collect_project_context(
     except Exception:
         pass
 
-    # 语义搜索: 从当前任务描述匹配相关 Insight
+    # Semantic search: match related Insights from current task description
     context_text = _safe_read_text(project_root / "docs" / "CONTEXT.md", max_lines=30)
     related_insights: List[Dict] = []
 
-    # 构建查询文本: 优先用开发者上下文，否则用项目 CONTEXT.md
+    # Build query text: prefer developer context, otherwise use project CONTEXT.md
     query_text = ""
     if developer_info and developer_info.get("context"):
         query_text = developer_info["context"]
@@ -376,27 +376,27 @@ def _collect_project_context(
 # ============================================================
 
 @click.command()
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
-@click.option("--developer", "-d", default=None, help="指定开发者 ID")
-@click.option("--json", "as_json", is_flag=True, help="JSON 输出")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--developer", "-d", default=None, help="Developer ID")
+@click.option("--json", "as_json", is_flag=True, help="JSON output")
 def onboard(config: str, developer: Optional[str], as_json: bool):
-    """AI Agent 接入时的上下文引导
+    """Onboarding context guide for AI Agent
 
-    输出项目全貌、当前进度、待办事项、应读文件列表，
-    让 AI 无需猜测即可理解项目状态并开始工作。
+    Outputs project overview, current progress, TODOs, and files to read,
+    so AI can understand project state without guessing and start working.
 
     Examples:
 
-        vibecollab onboard                  # 标准引导
+        vibecollab onboard                  # Standard onboarding
 
-        vibecollab onboard -d ocarina       # 指定开发者视角
+        vibecollab onboard -d ocarina       # Developer-specific perspective
 
-        vibecollab onboard --json           # 机器可读输出
+        vibecollab onboard --json           # Machine-readable output
     """
     config_path = Path(config)
     ctx = _collect_project_context(config_path, developer)
     if not ctx:
-        console.print("[red]错误:[/red] 无法加载 project.yaml")
+        console.print("[red]Error:[/red] Cannot load project.yaml")
         raise SystemExit(1)
 
     project_root = ctx["project_root"]
@@ -417,7 +417,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
     task_summary = ctx.get("task_summary", {})
     recent_events = ctx.get("recent_events", [])
 
-    # === 输出 ===
+    # === Output ===
     if as_json:
         output = {
             "project": {"name": project_name, "version": project_version, "description": project_desc},
@@ -442,35 +442,35 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         click.echo(json.dumps(output, ensure_ascii=False, indent=2))
         return
 
-    # Rich 输出
+    # Rich output
     console.print()
     console.print(Panel.fit(
         f"[bold cyan]{project_name}[/bold cyan] {project_version}\n"
         f"[dim]{project_desc}[/dim]",
-        title="项目概况",
+        title="Project Overview",
     ))
 
-    # 应读文件
+    # Files to read
     console.print()
-    console.print("[bold]你应该先读的文件:[/bold]")
+    console.print("[bold]Files you should read first:[/bold]")
     for f in read_files:
         full_path = project_root / f
         exists = full_path.exists()
-        status = "[green]存在[/green]" if exists else "[red]缺失[/red]"
+        status = "[green]Exists[/green]" if exists else "[red]Missing[/red]"
         console.print(f"  {status}  {f}")
 
-    # 当前进度
+    # Current progress
     if context_text:
         console.print()
-        console.print(Panel(context_text, title="当前进度 (docs/CONTEXT.md)", border_style="blue"))
+        console.print(Panel(context_text, title="Current Progress (docs/CONTEXT.md)", border_style="blue"))
 
-    # 开发者信息
+    # Developer info
     if developer_info:
         console.print()
         if developer_info["context"]:
             console.print(Panel(
                 developer_info["context"],
-                title=f"开发者 {developer} 的上下文",
+                title=f"Developer {developer} Context",
                 border_style="cyan"
             ))
         if developer_info["metadata"]:
@@ -483,44 +483,44 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
                 console.print(f"  [dim]Contributed:[/dim] {', '.join(contributed[:5])}")
                 console.print(f"  [dim]Bookmarks:[/dim] {', '.join(bookmarks[:5])}")
 
-    # 最近决策
+    # Recent decisions
     if recent_decisions:
         console.print()
-        console.print("[bold]最近决策:[/bold]")
+        console.print("[bold]Recent Decisions:[/bold]")
         for d in recent_decisions:
             console.print(f"  {BULLET} {d}")
 
-    # 路线图待办
+    # Roadmap TODOs
     if pending_roadmap:
         console.print()
-        console.print("[bold yellow]路线图待办:[/bold yellow]")
+        console.print("[bold yellow]Roadmap TODOs:[/bold yellow]")
         for item in pending_roadmap[:10]:
             console.print(f"  [ ] {item}")
 
-    # 未提交变更
+    # Uncommitted changes
     if uncommitted:
         console.print()
-        console.print(f"[bold yellow]未提交变更: {len(uncommitted)} 个文件[/bold yellow]")
+        console.print(f"[bold yellow]Uncommitted Changes: {len(uncommitted)} file(s)[/bold yellow]")
         for line in uncommitted[:8]:
             console.print(f"  {line}")
         if len(uncommitted) > 8:
-            console.print(f"  [dim]... 还有 {len(uncommitted) - 8} 个[/dim]")
+            console.print(f"  [dim]... {len(uncommitted) - 8} more[/dim]")
 
-    # Insight 统计 + Top-N 摘要
+    # Insight stats + Top-N summary
     if insight_count > 0:
         console.print()
-        console.print(f"[bold]Insight 沉淀: {insight_count} 条[/bold]")
+        console.print(f"[bold]Insight Distillation: {insight_count} entries[/bold]")
         if top_insights:
             for ins in top_insights:
                 tags_str = ", ".join(ins["tags"][:4]) if ins["tags"] else ""
                 tag_label = f" [dim]({tags_str})[/dim]" if tags_str else ""
                 console.print(f"  {BULLET} {ins['id']}: {ins['title']}{tag_label}")
             if insight_count > 5:
-                console.print(f"  [dim]... 还有 {insight_count - 5} 条 (vibecollab insight list 查看)[/dim]")
+                console.print(f"  [dim]... {insight_count - 5} more (vibecollab insight list)[/dim]")
         else:
-            console.print(f"  [dim]vibecollab insight list 查看全部[/dim]")
+            console.print(f"  [dim]vibecollab insight list to see all[/dim]")
 
-    # 与当前任务相关的 Insight（语义匹配）
+    # Related Insights for current task (semantic match)
     if related_insights:
         console.print()
         ri_lines = []
@@ -533,22 +533,22 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
             )
         console.print(Panel(
             "\n".join(ri_lines),
-            title="与当前任务相关的 Insight (语义匹配)",
+            title="Insights Related to Current Task (Semantic Match)",
             border_style="magenta",
         ))
 
-    # Task 概览
+    # Task overview
     total_tasks = task_summary.get("total", 0)
     if total_tasks > 0:
         console.print()
         ts = task_summary
         console.print(
-            f"[bold]任务概览:[/bold] "
+            f"[bold]Task Overview:[/bold] "
             f"TODO={ts.get('todo', 0)} "
             f"IN_PROGRESS={ts.get('in_progress', 0)} "
             f"REVIEW={ts.get('review', 0)} "
             f"DONE={ts.get('done', 0)} "
-            f"(共 {total_tasks})"
+            f"(total {total_tasks})"
         )
         if active_tasks:
             for at in active_tasks[:8]:
@@ -560,9 +560,9 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
                     f"{at['feature']}  (@{at['assignee']})"
                 )
             if len(active_tasks) > 8:
-                console.print(f"  [dim]... 还有 {len(active_tasks) - 8} 个活跃任务[/dim]")
+                console.print(f"  [dim]... {len(active_tasks) - 8} more active tasks[/dim]")
 
-    # 最近 EventLog 事件
+    # Recent EventLog events
     if recent_events:
         console.print()
         evt_lines = []
@@ -573,16 +573,16 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
             )
         console.print(Panel(
             "\n".join(evt_lines),
-            title="最近事件 (EventLog)",
+            title="Recent Events (EventLog)",
             border_style="dim",
         ))
 
-    # 关键文件清单
+    # Key files list
     console.print()
-    table = Table(title="关键文件清单", show_header=True)
-    table.add_column("文件", style="cyan")
-    table.add_column("用途")
-    table.add_column("状态")
+    table = Table(title="Key Files", show_header=True)
+    table.add_column("File", style="cyan")
+    table.add_column("Purpose")
+    table.add_column("Status")
     for kf in key_files:
         path = kf.get("path", "")
         purpose = kf.get("purpose", "")
@@ -591,38 +591,38 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         table.add_row(path, purpose, status)
     console.print(table)
 
-    # 最后的引导建议
+    # Final guidance suggestions
     console.print()
     suggestions = []
     if uncommitted:
-        suggestions.append("有未提交变更 → 先 `git status` 检查是否需要 commit")
+        suggestions.append("Uncommitted changes found -> run `git status` to check if commit is needed")
     if pending_roadmap:
-        suggestions.append(f"路线图有 {len(pending_roadmap)} 项待办 → 查看 `docs/ROADMAP.md`")
+        suggestions.append(f"Roadmap has {len(pending_roadmap)} pending items -> check `docs/ROADMAP.md`")
     if not developer:
-        suggestions.append("可用 `vibecollab onboard -d <你的ID>` 查看你的个人上下文")
+        suggestions.append("Use `vibecollab onboard -d <your-ID>` to see your personal context")
 
-    suggestions.append("修改文件后用 `vibecollab next` 查看下一步建议")
-    suggestions.append("用 `vibecollab check --insights` 执行一致性自检")
+    suggestions.append("After modifying files, use `vibecollab next` for next-step suggestions")
+    suggestions.append("Use `vibecollab check --insights` to run consistency self-check")
 
     console.print(Panel(
         "\n".join(f"  {BULLET} {s}" for s in suggestions),
-        title="建议的下一步",
+        title="Suggested Next Steps",
         border_style="green"
     ))
 
 
 # ============================================================
-# vibecollab prompt — 生成 LLM 上下文 prompt
+# vibecollab prompt -- Generate LLM context prompt
 # ============================================================
 
-# 协议章节与 CONTRIBUTING_AI.md 的标题映射
+# Protocol section to CONTRIBUTING_AI.md heading mapping
 _SECTION_MAP = {
     "protocol": [
         "# 一、核心理念",
         "# 三、决策分级制度",
         "## 4.2 标准对话流程",
     ],
-    "context": [],       # 动态生成，不从文件提取
+    "context": [],       # Dynamically generated, not extracted from file
     "insight": [
         "# 经验沉淀工作流 (Insight Workflow)",
     ],
@@ -641,12 +641,12 @@ _ALL_SECTIONS = ["protocol", "context", "insight"]
 
 
 def _extract_md_sections(text: str, start_headings: List[str]) -> str:
-    """从 Markdown 文本中提取指定标题开始到下一个同级标题结束的内容"""
+    """Extract content from Markdown text starting from specified headings to next same-level heading"""
     lines = text.splitlines()
     result_parts: List[str] = []
 
     for start_heading in start_headings:
-        # 确定标题级别
+        # Determine heading level
         heading_level = len(start_heading) - len(start_heading.lstrip("#"))
         capturing = False
         section_lines: List[str] = []
@@ -676,35 +676,35 @@ def _build_prompt_text(
     sections: List[str],
     compact: bool = False,
 ) -> str:
-    """构建 LLM prompt 纯文本"""
+    """Build LLM prompt plain text"""
     parts: List[str] = []
     project_root = ctx["project_root"]
 
     # Header
-    parts.append(f"# 项目上下文: {ctx['project_name']} {ctx['project_version']}")
+    parts.append(f"# Project Context: {ctx['project_name']} {ctx['project_version']}")
     parts.append(f"> {ctx['project_desc']}")
     parts.append("")
 
-    # Protocol section — 从 CONTRIBUTING_AI.md 提取关键章节
+    # Protocol section -- extract key sections from CONTRIBUTING_AI.md
     if "protocol" in sections:
         contrib_path = project_root / "CONTRIBUTING_AI.md"
         if contrib_path.exists():
             contrib_text = _safe_read_text(contrib_path)
             headings = _SECTION_MAP["protocol"]
             if not compact:
-                # 完整模式: 加上更多章节
+                # Full mode: add more sections
                 headings = headings + _SECTION_MAP.get("roles", []) + _SECTION_MAP.get("git", [])
             extracted = _extract_md_sections(contrib_text, headings)
             if extracted:
                 parts.append("---")
-                parts.append("## 协作协议")
+                parts.append("## Collaboration Protocol")
                 parts.append(extracted)
                 parts.append("")
 
     # Context section
     if "context" in sections:
         parts.append("---")
-        parts.append("## 当前状态")
+        parts.append("## Current Status")
         parts.append("")
 
         if ctx["context_text"]:
@@ -713,42 +713,42 @@ def _build_prompt_text(
 
         dev_info = ctx.get("developer_info")
         if dev_info and dev_info.get("context"):
-            parts.append(f"### 开发者: {dev_info['id']}")
+            parts.append(f"### Developer: {dev_info['id']}")
             parts.append(dev_info["context"])
             parts.append("")
 
         if ctx["recent_decisions"]:
-            parts.append("### 最近决策")
+            parts.append("### Recent Decisions")
             for d in ctx["recent_decisions"]:
                 parts.append(f"- {d}")
             parts.append("")
 
         if not compact and ctx["pending_roadmap"]:
-            parts.append("### 路线图待办")
+            parts.append("### Roadmap TODOs")
             for item in ctx["pending_roadmap"][:10]:
                 parts.append(f"- [ ] {item}")
             parts.append("")
 
         if ctx["uncommitted"]:
-            parts.append(f"### 未提交变更: {len(ctx['uncommitted'])} 个文件")
+            parts.append(f"### Uncommitted Changes: {len(ctx['uncommitted'])} file(s)")
             parts.append("")
 
     # Insight section
     if "insight" in sections and ctx["top_insights"]:
         parts.append("---")
-        parts.append(f"## Insight 沉淀 ({ctx['insight_count']} 条)")
+        parts.append(f"## Insight Distillation ({ctx['insight_count']} entries)")
         parts.append("")
         for ins in ctx["top_insights"]:
             tags_str = ", ".join(ins["tags"][:4]) if ins["tags"] else ""
             tag_part = f" ({tags_str})" if tags_str else ""
             parts.append(f"- **{ins['id']}**: {ins['title']}{tag_part}")
         if ctx["insight_count"] > 5:
-            parts.append(f"- ... 还有 {ctx['insight_count'] - 5} 条")
+            parts.append(f"- ... {ctx['insight_count'] - 5} more")
         parts.append("")
-        parts.append("> 使用 `vibecollab insight search --tags <关键词>` 检索相关经验")
+        parts.append("> Use `vibecollab insight search --tags <keyword>` to search related experiences")
         parts.append("")
 
-        # 在非 compact 模式下，附加 Insight 工作流说明
+        # In non-compact mode, append Insight workflow description
         if not compact:
             contrib_path = project_root / "CONTRIBUTING_AI.md"
             if contrib_path.exists():
@@ -760,20 +760,20 @@ def _build_prompt_text(
 
     # Footer
     parts.append("---")
-    parts.append("*由 `vibecollab prompt` 自动生成*")
+    parts.append("*Auto-generated by `vibecollab prompt`*")
 
     return "\n".join(parts)
 
 
 @click.command("prompt")
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
-@click.option("--developer", "-d", default=None, help="指定开发者 ID")
-@click.option("--compact", is_flag=True, help="精简模式（仅协议核心 + 当前状态）")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--developer", "-d", default=None, help="Developer ID")
+@click.option("--compact", is_flag=True, help="Compact mode (core protocol + state only)")
 @click.option(
     "--sections", "-s", default=None,
-    help="选择性注入章节，逗号分隔 (protocol,context,insight,roles,testing,git)"
+    help="Select sections, comma separated (protocol,context,insight,roles,testing,git)"
 )
-@click.option("--copy", "to_clipboard", is_flag=True, help="复制到剪贴板")
+@click.option("--copy", "to_clipboard", is_flag=True, help="Copy to clipboard")
 def prompt_cmd(
     config: str,
     developer: Optional[str],
@@ -781,30 +781,31 @@ def prompt_cmd(
     sections: Optional[str],
     to_clipboard: bool,
 ):
-    """生成 LLM 可直接使用的上下文 prompt
+    """Generate LLM-ready context prompt
 
-    输出纯 Markdown 文本，包含协作协议摘要、项目当前状态、
-    Insight 经验等，可直接复制粘贴到任何 LLM 对话窗口。
+    Outputs plain Markdown text containing collaboration protocol summary,
+    project current status, Insight experiences, etc. Can be directly
+    copied and pasted into any LLM conversation window.
 
     Examples:
 
-        vibecollab prompt                     # 完整 prompt
+        vibecollab prompt                     # Full prompt
 
-        vibecollab prompt --compact           # 精简版
+        vibecollab prompt --compact           # Compact version
 
-        vibecollab prompt --copy              # 直接复制到剪贴板
+        vibecollab prompt --copy              # Copy directly to clipboard
 
-        vibecollab prompt -d ocarina          # 含开发者上下文
+        vibecollab prompt -d ocarina          # Include developer context
 
-        vibecollab prompt -s protocol,context # 只要协议+状态
+        vibecollab prompt -s protocol,context # Only protocol + status
     """
     config_path = Path(config)
     ctx = _collect_project_context(config_path, developer)
     if not ctx:
-        console.print("[red]错误:[/red] 无法加载 project.yaml")
+        console.print("[red]Error:[/red] Cannot load project.yaml")
         raise SystemExit(1)
 
-    # 解析 sections
+    # Parse sections
     if sections:
         selected = [s.strip() for s in sections.split(",") if s.strip()]
     else:
@@ -819,64 +820,64 @@ def prompt_cmd(
             process.communicate(text.encode("utf-16-le"))
             token_estimate = len(text) // 4
             console.print(
-                f"[green]OK[/green] prompt 已复制到剪贴板 "
+                f"[green]OK[/green] Prompt copied to clipboard "
                 f"(~{token_estimate} tokens, {len(text)} chars)"
             )
         except Exception:
             click.echo(text)
-            console.print("[yellow]警告: 剪贴板复制失败，已输出到 stdout[/yellow]")
+            console.print("[yellow]Warning: clipboard copy failed, output to stdout[/yellow]")
     else:
         click.echo(text)
 
 
 # ============================================================
-# Insight 沉淀提示辅助
+# Insight distillation prompt helper
 # ============================================================
 
 def _check_insight_opportunity(project_root: Path, diff_files: List[str]) -> Optional[str]:
-    """检查当前工作区是否存在值得沉淀 Insight 的信号。
+    """Check if current workspace has signals worth distilling into an Insight.
 
-    返回提示原因字符串，如果无需提示则返回 None。
+    Returns a prompt reason string, or None if no prompt is needed.
     """
     if not diff_files:
         return None
 
-    # 信号 1: 变更涉及多种文件类型 → 可能是跨模块集成经验
+    # Signal 1: Changes involve multiple file types -> possible cross-module integration experience
     extensions = {Path(f).suffix for f in diff_files if Path(f).suffix}
     multi_type = len(extensions) >= 3
 
-    # 信号 2: 变更涉及测试文件 → 可能修复了 bug 或发现了新模式
+    # Signal 2: Changes involve test files -> possible bug fix or new pattern discovery
     has_test_changes = any("test" in f.lower() for f in diff_files)
 
-    # 信号 3: 变更涉及配置/CI 文件 → 可能有工具/工作流经验
+    # Signal 3: Changes involve config/CI files -> possible tool/workflow experience
     config_patterns = (".yml", ".yaml", ".toml", ".cfg", ".ini", ".json")
     has_config_changes = any(Path(f).suffix in config_patterns for f in diff_files)
 
-    # 信号 4: 较大量的变更 → 可能是重要的重构或特性
+    # Signal 4: Large number of changes -> possible important refactor or feature
     large_changeset = len(diff_files) >= 8
 
-    # 信号 5: .vibecollab 目录尚无 Insight → 引导首次沉淀
+    # Signal 5: .vibecollab directory has no Insight yet -> guide first distillation
     insights_dir = project_root / ".vibecollab" / "insights"
     no_insights_yet = not insights_dir.exists() or not list(insights_dir.glob("INS-*.yaml"))
 
     reasons = []
     if no_insights_yet:
-        reasons.append("项目尚无 Insight 沉淀，建议开始积累经验")
+        reasons.append("No Insights in project yet, suggest starting to accumulate experiences")
     if multi_type and has_test_changes:
-        reasons.append("变更涉及多种文件类型+测试，可能有值得记录的调试/集成经验")
+        reasons.append("Changes involve multiple file types + tests, may have debug/integration experience worth recording")
     elif has_test_changes:
-        reasons.append("变更涉及测试文件，可能发现了 bug 或新测试模式")
+        reasons.append("Changes involve test files, may have discovered a bug or new test pattern")
     elif multi_type:
-        reasons.append("变更涉及多种文件类型，可能有跨模块集成经验")
+        reasons.append("Changes involve multiple file types, may have cross-module integration experience")
     if has_config_changes:
-        reasons.append("变更涉及配置文件，可能有工具/工作流经验")
+        reasons.append("Changes involve config files, may have tool/workflow experience")
     if large_changeset and not reasons:
-        reasons.append(f"本次变更涉及 {len(diff_files)} 个文件，建议回顾是否有值得沉淀的经验")
+        reasons.append(f"This change involves {len(diff_files)} files, suggest reviewing for experiences worth distilling")
 
     if not reasons:
         return None
 
-    return "；".join(reasons)
+    return "; ".join(reasons)
 
 
 # ============================================================
@@ -884,37 +885,37 @@ def _check_insight_opportunity(project_root: Path, diff_files: List[str]) -> Opt
 # ============================================================
 
 @click.command()
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
-@click.option("--json", "as_json", is_flag=True, help="JSON 输出")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--json", "as_json", is_flag=True, help="JSON output")
 def next_step(config: str, as_json: bool):
-    """修改后的下一步行动建议
+    """Next-step action suggestions after modifications
 
-    基于当前工作区状态（git diff、文件 mtime、linked_groups 配置）
-    生成具体的行动建议：哪些文档需要同步、建议的 commit message、
-    下一步应该做什么。
+    Based on current workspace state (git diff, file mtime, linked_groups config),
+    generates specific action suggestions: which documents need syncing,
+    suggested commit message, what to do next.
 
     Examples:
 
-        vibecollab next                     # 查看行动建议
+        vibecollab next                     # View action suggestions
 
-        vibecollab next --json              # 机器可读输出
+        vibecollab next --json              # Machine-readable output
     """
     config_path = Path(config)
     project_root = config_path.parent if config_path.parent != Path(".") else Path.cwd()
 
     project_config = _safe_load_yaml(config_path)
     if not project_config:
-        console.print("[red]错误:[/red] 无法加载 project.yaml")
+        console.print("[red]Error:[/red] Cannot load project.yaml")
         raise SystemExit(1)
 
-    # === 1. Git 状态 ===
+    # === 1. Git status ===
     uncommitted = _get_git_uncommitted(project_root)
     diff_files = _get_git_diff_files(project_root)
 
-    # === 2. 关联文档同步检查 ===
+    # === 2. Linked document sync check ===
     stale_groups = _check_linked_groups_freshness(project_root, project_config)
 
-    # === 3. 对话结束应更新的文件 ===
+    # === 3. Files to update at end of dialogue ===
     update_files = _get_update_files_list(project_config)
     check_config = project_config.get("protocol_check", {}).get("checks", {}).get("documentation", {})
     threshold_hours = check_config.get("update_threshold_hours", 0.25)
@@ -927,10 +928,10 @@ def next_step(config: str, as_json: bool):
             if hours_since > threshold_hours:
                 overdue_update_files.append((f, int(hours_since * 60)))
 
-    # === 4. Commit message 建议 ===
+    # === 4. Commit message suggestion ===
     suggested_prefix = _suggest_commit_message(diff_files) if diff_files else None
 
-    # === 5. 关键文件缺失 ===
+    # === 5. Missing key files ===
     key_files = project_config.get("documentation", {}).get("key_files", [])
     missing_key_files = []
     for kf in key_files:
@@ -938,55 +939,55 @@ def next_step(config: str, as_json: bool):
         if path and not (project_root / path).exists():
             missing_key_files.append(path)
 
-    # === 6. 构建行动列表 ===
+    # === 6. Build action list ===
     actions: List[Dict] = []
     priority = 0
 
-    # P0: 关联文档同步
+    # P0: Linked document sync
     for group in stale_groups:
         for f, diff_min in group["stale"]:
             priority += 1
             actions.append({
                 "priority": f"P0-{priority}",
                 "type": "sync_document",
-                "action": f"同步更新 {f}",
-                "reason": f"{group['leader']} 已修改，{f} 落后 {diff_min} 分钟",
+                "action": f"Sync update {f}",
+                "reason": f"{group['leader']} modified, {f} is {diff_min} min behind",
                 "group": group["group"],
             })
 
-    # P1: 对话结束应更新的文件
+    # P1: Files to update at end of dialogue
     for f, minutes in overdue_update_files:
         priority += 1
         actions.append({
             "priority": f"P1-{priority}",
             "type": "update_document",
-            "action": f"更新 {f}",
-            "reason": f"协议要求对话结束时更新，已超过 {minutes} 分钟",
+            "action": f"Update {f}",
+            "reason": f"Protocol requires update at dialogue end, overdue by {minutes} min",
         })
 
-    # P1: 有变更未提交
+    # P1: Uncommitted changes
     if uncommitted:
         priority += 1
         prefix = suggested_prefix or "[FEAT]"
         actions.append({
             "priority": f"P1-{priority}",
             "type": "git_commit",
-            "action": f"提交变更 ({len(uncommitted)} 个文件)",
-            "reason": "存在未提交的更改",
-            "suggestion": f'git commit -m "{prefix} <描述>"',
+            "action": f"Commit changes ({len(uncommitted)} files)",
+            "reason": "Uncommitted changes exist",
+            "suggestion": f'git commit -m "{prefix} <description>"',
         })
 
-    # P2: 关键文件缺失
+    # P2: Missing key files
     for f in missing_key_files:
         priority += 1
         actions.append({
             "priority": f"P2-{priority}",
             "type": "create_file",
-            "action": f"创建 {f}",
-            "reason": "在 documentation.key_files 中声明但不存在",
+            "action": f"Create {f}",
+            "reason": "Declared in documentation.key_files but does not exist",
         })
 
-    # P1~P2: Task 状态推荐行动
+    # P1~P2: Task status recommended actions
     try:
         from ..domain.task_manager import TaskManager
         tm = TaskManager(project_root=project_root)
@@ -999,12 +1000,12 @@ def next_step(config: str, as_json: bool):
                 actions.append({
                     "priority": f"P1-{priority}",
                     "type": "task_solidify",
-                    "action": f"固化任务 {t.id}: {t.feature}",
-                    "reason": f"任务处于 REVIEW 状态，可尝试固化",
+                    "action": f"Solidify task {t.id}: {t.feature}",
+                    "reason": f"Task is in REVIEW status, can attempt solidification",
                     "suggestion": f"vibecollab task solidify {t.id}",
                 })
 
-        # 检查被依赖阻塞的任务
+        # Check tasks blocked by dependencies
         blocked_tasks = []
         for t in all_tasks:
             if t.status == "DONE":
@@ -1020,48 +1021,48 @@ def next_step(config: str, as_json: bool):
                 actions.append({
                     "priority": f"P2-{priority}",
                     "type": "task_blocked",
-                    "action": f"任务 {t.id} 被 {dep_id} 阻塞",
-                    "reason": f"依赖 {dep_id} 尚未完成",
+                    "action": f"Task {t.id} blocked by {dep_id}",
+                    "reason": f"Dependency {dep_id} not yet completed",
                     "suggestion": f"vibecollab task show {dep_id}",
                 })
 
-        # TODO 积压提示
+        # TODO backlog alert
         todo_count = sum(1 for t in all_tasks if t.status == "TODO")
         if todo_count > 3:
             priority += 1
             actions.append({
                 "priority": f"P2-{priority}",
                 "type": "task_backlog",
-                "action": f"{todo_count} 个待办任务积压",
-                "reason": "建议开始处理或拆分任务",
+                "action": f"{todo_count} TODO tasks in backlog",
+                "reason": "Suggest starting to process or split tasks",
                 "suggestion": "vibecollab task list --status TODO",
             })
     except Exception:
         pass
 
-    # P2: Insight 沉淀提示
+    # P2: Insight distillation prompt
     insight_prompt = _check_insight_opportunity(project_root, diff_files)
     if insight_prompt:
         priority += 1
         actions.append({
             "priority": f"P2-{priority}",
             "type": "insight_review",
-            "action": "检查是否有值得沉淀的经验 (Insight)",
+            "action": "Check if there are experiences worth distilling (Insight)",
             "reason": insight_prompt,
-            "suggestion": 'vibecollab insight add --title "<标题>" --tags "<标签>" --category <类别> --body "<经验描述>"',
+            "suggestion": 'vibecollab insight add --title "<title>" --tags "<tags>" --category <category> --body "<experience description>"',
         })
 
-    # P3: 建议运行 check
+    # P3: Suggest running check
     if actions:
         priority += 1
         actions.append({
             "priority": f"P3-{priority}",
             "type": "run_check",
-            "action": "运行 vibecollab check --insights",
-            "reason": "完成上述操作后建议自检一致性",
+            "action": "Run vibecollab check --insights",
+            "reason": "Suggest running consistency self-check after completing above actions",
         })
 
-    # === 输出 ===
+    # === Output ===
     if as_json:
         output = {
             "uncommitted_count": len(uncommitted),
@@ -1079,50 +1080,50 @@ def next_step(config: str, as_json: bool):
 
     if not actions:
         console.print(Panel.fit(
-            "[bold green]一切就绪，无需额外操作[/bold green]\n\n"
-            "[dim]工作区干净，关联文档同步，无过期文件。[/dim]",
+            "[bold green]All clear, no additional actions needed[/bold green]\n\n"
+            "[dim]Workspace clean, linked documents synced, no overdue files.[/dim]",
             title="Next Step"
         ))
         return
 
     console.print(Panel.fit(
-        f"[bold]发现 {len(actions)} 项待处理事项[/bold]",
+        f"[bold]Found {len(actions)} pending items[/bold]",
         title="Next Step"
     ))
     console.print()
 
-    # 按优先级分组展示
+    # Display grouped by priority
     for action in actions:
         prio = action["priority"]
         if prio.startswith("P0"):
             style = "bold red"
-            label = "紧急"
+            label = "URGENT"
         elif prio.startswith("P1"):
             style = "bold yellow"
-            label = "重要"
+            label = "IMPORTANT"
         elif prio.startswith("P2"):
             style = "yellow"
-            label = "建议"
+            label = "SUGGEST"
         else:
             style = "dim"
-            label = "提示"
+            label = "HINT"
 
         console.print(f"  [{style}][{label}][/{style}] {action['action']}")
-        console.print(f"         [dim]原因: {action['reason']}[/dim]")
+        console.print(f"         [dim]Reason: {action['reason']}[/dim]")
         if "suggestion" in action:
-            console.print(f"         [cyan]→ {action['suggestion']}[/cyan]")
+            console.print(f"         [cyan]-> {action['suggestion']}[/cyan]")
         if "group" in action:
-            console.print(f"         [dim]关联组: {action['group']}[/dim]")
+            console.print(f"         [dim]Linked group: {action['group']}[/dim]")
         console.print()
 
-    # diff 文件概览
+    # Diff files overview
     if diff_files:
-        console.print("[bold]当前变更文件:[/bold]")
+        console.print("[bold]Changed files:[/bold]")
         for f in diff_files[:15]:
             console.print(f"  {f}")
         if len(diff_files) > 15:
-            console.print(f"  [dim]... 还有 {len(diff_files) - 15} 个[/dim]")
+            console.print(f"  [dim]... {len(diff_files) - 15} more[/dim]")
 
         if suggested_prefix:
             console.print()
-            console.print(f"[dim]建议的 commit prefix: {suggested_prefix}[/dim]")
+            console.print(f"[dim]Suggested commit prefix: {suggested_prefix}[/dim]")

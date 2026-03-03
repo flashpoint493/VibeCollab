@@ -180,7 +180,7 @@ class TestResolveContext:
     def test_resolve_reference_file_missing(self, processor):
         ctx = Context(id="r", type="reference", source="missing.md")
         result = processor.resolve_context(ctx, {})
-        assert "不存在" in result
+        assert "not found" in result  # referenced file not found
 
     def test_resolve_reference_no_source(self, processor):
         ctx = Context(id="r", type="reference", source=None)
@@ -190,7 +190,7 @@ class TestResolveContext:
         (tmp_path / "long.md").write_text("x" * 600, encoding="utf-8")
         ctx = Context(id="r", type="reference", source="long.md", inline_if_short=True)
         result = processor.resolve_context(ctx, {})
-        assert "见" in result  # should show reference link, not inline
+        assert "See" in result  # should show reference link, not inline
 
     def test_resolve_reference_with_section(self, processor, tmp_path):
         content = "# Top\n## Setup\nsetup text\n## Other\nother text"
@@ -210,7 +210,7 @@ class TestResolveContext:
     def test_resolve_file_list_no_matches(self, processor):
         ctx = Context(id="f", type="file_list", pattern="*.xyz")
         result = processor.resolve_context(ctx, {})
-        assert "未找到" in result
+        assert "No files matching" in result
 
     def test_resolve_file_list_no_pattern(self, processor):
         ctx = Context(id="f", type="file_list", pattern=None)

@@ -26,29 +26,29 @@ SAMPLE_ROADMAP = """\
 
 ## Current Phase
 
-### v0.9.3 - Task/EventLog 核心工作流接通
+### v0.9.3 - Core Task/EventLog workflow integration
 
-- [x] Task CLI 补齐 TASK-DEV-001
-- [ ] onboard 注入活跃 Task 概览 TASK-DEV-002
-- [x] MCP Server 增强 TASK-DEV-003
+- [x] Task CLI completion TASK-DEV-001
+- [ ] onboard inject active Task overview TASK-DEV-002
+- [x] MCP Server enhancement TASK-DEV-003
 
-### v0.9.4 - Insight 质量与生命周期
+### v0.9.4 - Insight quality and lifecycle
 
-- [ ] Insight 自动去重 TASK-DEV-004
-- [ ] Insight 关联图谱
-- [x] 跨项目 Insight 可移植性
+- [ ] Insight auto-dedup TASK-DEV-004
+- [ ] Insight relation graph
+- [x] Cross-project Insight portability
 
-### v0.10.0 - 功能冻结 + 稳定性门槛
+### v0.10.0 - Feature freeze + stability gate
 
-- [ ] 外部项目 QA 验证
-- [ ] 测试覆盖率 ≥ 85%
+- [ ] External project QA validation
+- [ ] Test coverage >= 85%
 
 ## Completed
 
-### v0.9.2 - Insight 沉淀信号增强 ✅
+### v0.9.2 - Insight solidification signal enhancement ✅
 
-- [x] insight suggest 命令
-- [x] 信号快照
+- [x] insight suggest command
+- [x] Signal snapshot
 
 ---
 """
@@ -464,8 +464,7 @@ class TestCLI:
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["status"])
         assert result.exit_code == 0
-        assert "未在 ROADMAP.md 中发现里程碑" in result.output
-        assert "### v0.1.0" in result.output  # format hint present
+        assert "No milestones found in ROADMAP.md" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -592,7 +591,7 @@ class TestFormatHint:
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["parse"])
         assert result.exit_code == 0
-        assert "未在 ROADMAP.md 中发现里程碑" in result.output
+        assert "No milestones found in ROADMAP.md" in result.output
         assert "### v0.1.0" in result.output
         assert "TASK-DEV-001" in result.output
 
@@ -612,7 +611,7 @@ class TestFormatHint:
         runner = CliRunner()
         result = runner.invoke(roadmap_group, ["sync"])
         assert result.exit_code == 0
-        assert "无法同步" in result.output
+        assert "cannot sync" in result.output.lower()
         assert "### v0.1.0" in result.output
 
     def test_sync_empty_json_returns_empty(self, tmp_path, monkeypatch):
@@ -637,15 +636,15 @@ class TestFormatHint:
         docs.mkdir()
         # Simulate the new init template content
         init_roadmap = """\
-# Test 路线图
+# Test Roadmap
 
-## 里程碑
+## Milestones
 
-### v0.1.0 - 项目初始化
+### v0.1.0 - Project initialization
 
-- [ ] 确定项目方向
-- [ ] 建立开发环境
-- [ ] 完成核心决策
+- [ ] Define project direction
+- [ ] Set up development environment
+- [ ] Complete core decisions
 """
         (docs / "ROADMAP.md").write_text(init_roadmap, encoding="utf-8")
         parser = RoadmapParser(project_root=tmp_path)

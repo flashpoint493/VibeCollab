@@ -57,13 +57,13 @@ class TestDocProtocol:
         config["dialogue_protocol"]["on_end"]["update_files"] = ["docs/CONTEXT.md"]
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_documentation_protocol()
-        errors = [r for r in results if "文档存在性" in r.name]
+        errors = [r for r in results if "Doc Existence" in r.name]
         assert len(errors) == 1
         assert errors[0].severity == "error"
         assert "CONTEXT.md" in errors[0].message
 
     def test_threshold_hours_format(self, tmp_path):
-        """Line 131: threshold >= 1 hour shows '小时' instead of '分钟'."""
+        """Line 131: threshold >= 1 hour shows 'hours' instead of 'minutes'."""
         (tmp_path / "docs").mkdir()
         ctx = tmp_path / "docs" / "CONTEXT.md"
         ctx.write_text("old", encoding="utf-8")
@@ -76,9 +76,9 @@ class TestDocProtocol:
         config["protocol_check"] = {"checks": {"documentation": {"update_threshold_hours": 2}}}
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_documentation_protocol()
-        warnings = [r for r in results if "文档更新" in r.name]
+        warnings = [r for r in results if "Doc Update" in r.name]
         assert len(warnings) == 1
-        assert "小时" in warnings[0].message
+        assert "hours" in warnings[0].message
 
     def test_prd_enabled_but_missing(self, tmp_path):
         """Line 145: PRD management enabled but PRD.md doesn't exist."""
@@ -105,7 +105,7 @@ class TestDocProtocol:
         }
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_documentation_protocol()
-        stale = [r for r in results if "协作文档更新" in r.name]
+        stale = [r for r in results if "Collaboration Doc Update" in r.name]
         assert len(stale) == 1
         assert stale[0].severity == "info"
 
@@ -122,7 +122,7 @@ class TestDialogueProtocol:
         config["dialogue_protocol"]["on_start"]["read_files"] = ["CONTRIBUTING_AI.md"]
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_dialogue_protocol()
-        errors = [r for r in results if "对话开始文件" in r.name]
+        errors = [r for r in results if "Dialogue Start File" in r.name]
         assert len(errors) == 1
         assert errors[0].severity == "error"
 
@@ -171,7 +171,7 @@ class TestMultiDevProtocol:
 
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_multi_developer_protocol()
-        ctx_missing = [r for r in results if "CONTEXT.md 不存在" in r.message]
+        ctx_missing = [r for r in results if "CONTEXT.md does not exist" in r.message]
         assert len(ctx_missing) == 1
         assert ctx_missing[0].severity == "error"
 
@@ -195,7 +195,7 @@ class TestMultiDevProtocol:
 
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_multi_developer_protocol()
-        stale = [r for r in results if "天未更新" in r.message and "alice" in r.message.lower()]
+        stale = [r for r in results if "days" in r.message and "alice" in r.message.lower()]
         assert len(stale) == 1
         assert stale[0].severity == "info"
 
@@ -220,7 +220,7 @@ class TestMultiDevProtocol:
 
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_multi_developer_protocol()
-        stale = [r for r in results if "协作文档更新频率" in r.name]
+        stale = [r for r in results if "Collaboration Doc Update Frequency" in r.name]
         assert len(stale) == 1
         assert stale[0].severity == "info"
 
@@ -318,7 +318,7 @@ class TestGitCommitConsistency:
         results = checker._check_git_commit_consistency("test", ["a.md", "b.md"])
         warnings = [r for r in results if r.severity == "warning"]
         assert len(warnings) >= 1
-        assert "不在同一次 commit" in warnings[0].message
+        assert "not in the same commit" in warnings[0].message
 
     def test_not_git_repo(self, tmp_path):
         """Non-git directory returns empty."""
@@ -453,10 +453,10 @@ class TestGitProtocol:
         old_time = datetime.now() - timedelta(hours=48)
         with patch.object(checker, "_get_last_commit_time", return_value=old_time):
             results = checker._check_git_protocol()
-        freq = [r for r in results if "提交频率" in r.name]
+        freq = [r for r in results if "Commit Frequency" in r.name]
         assert len(freq) == 1
         assert freq[0].severity == "info"
-        assert "48" in freq[0].message or "小时" in freq[0].message
+        assert "48" in freq[0].message or "hours" in freq[0].message
 
     def test_get_last_commit_time_no_git(self, tmp_path):
         """Line 714: non-git repo returns None."""

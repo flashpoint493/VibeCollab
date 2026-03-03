@@ -1,10 +1,10 @@
 """
-v0.9.4 Insight 质量与生命周期 — 单元测试
+v0.9.4 Insight quality and lifecycle - unit tests
 
-覆盖:
-- find_duplicates: 去重检测 (精确匹配 / 标题相似 / 标签重叠 / 无重复 / 阈值)
-- build_graph / to_mermaid: 全局关联图谱
-- export_insights / import_insights: 导入导出 (全量/选择/注册表/冲突策略)
+Coverage:
+- find_duplicates: deduplication (exact match / title similarity / tag overlap / no duplicates / threshold)
+- build_graph / to_mermaid: global association graph
+- export_insights / import_insights: import/export (full/selective/registry/conflict strategies)
 - CLI: graph / export / import / add --force
 """
 
@@ -27,7 +27,7 @@ from vibecollab.insight.manager import InsightManager
 
 @pytest.fixture
 def tmp_project(tmp_path):
-    """创建一个临时项目目录，带 project.yaml 和 .vibecollab/"""
+    """Create a temporary project directory with project.yaml and .vibecollab/"""
     (tmp_path / "project.yaml").write_text(
         "project_name: TestProject\n", encoding="utf-8"
     )
@@ -38,26 +38,26 @@ def tmp_project(tmp_path):
 
 @pytest.fixture
 def mgr(tmp_project):
-    """返回一个带 EventLog 的 InsightManager"""
+    """Return an InsightManager with EventLog"""
     event_log = EventLog(tmp_project / ".vibecollab" / "events.jsonl")
     return InsightManager(project_root=tmp_project, event_log=event_log)
 
 
 @pytest.fixture
 def populated_mgr(mgr):
-    """预填充 3 个 Insight 的 InsightManager"""
+    """Pre-populated InsightManager with 3 Insights"""
     mgr.create(
         title="Windows GBK encoding fix",
         tags=["python", "encoding", "windows"],
         category="debug",
-        body={"scenario": "Windows 终端编码", "approach": "使用 _compat.py 兼容层"},
+        body={"scenario": "Windows terminal encoding", "approach": "Use _compat.py compatibility layer"},
         created_by="ocarina",
     )
     mgr.create(
         title="Pattern Engine architecture",
         tags=["architecture", "jinja2", "template"],
         category="technique",
-        body={"scenario": "生成 Markdown 文档", "approach": "Jinja2 模板 + manifest.yaml"},
+        body={"scenario": "Generate Markdown docs", "approach": "Jinja2 templates + manifest.yaml"},
         created_by="alice",
         derived_from=["INS-001"],
     )
@@ -65,59 +65,59 @@ def populated_mgr(mgr):
         title="MCP Server integration",
         tags=["mcp", "integration", "ide"],
         category="integration",
-        body={"scenario": "IDE 集成", "approach": "Model Context Protocol"},
+        body={"scenario": "IDE integration", "approach": "Model Context Protocol"},
         created_by="bob",
     )
     return mgr
 
 
 # ======================================================================
-# TestFindDuplicates — 去重检测
+# TestFindDuplicates - Deduplication detection
 # ======================================================================
 
 class TestFindDuplicates:
-    """测试 InsightManager.find_duplicates()"""
+    """Test InsightManager.find_duplicates()"""
 
     def test_no_insights_returns_empty(self, mgr):
         result = mgr.find_duplicates("any title", ["any"])
         assert result == []
 
     def test_exact_fingerprint_match(self, populated_mgr):
-        """精确内容匹配 → score=1.0"""
+        """Exact content match -> score=1.0"""
         result = populated_mgr.find_duplicates(
             title="Windows GBK encoding fix",
             tags=["python", "encoding", "windows"],
-            body={"scenario": "Windows 终端编码", "approach": "使用 _compat.py 兼容层"},
+            body={"scenario": "Windows terminal encoding", "approach": "Use _compat.py compatibility layer"},
         )
         assert len(result) == 1
         assert result[0]["score"] == 1.0
         assert result[0]["reason"] == "exact_content"
 
     def test_title_similarity(self, populated_mgr):
-        """标题相似度检测"""
+        """Title similarity detection"""
         result = populated_mgr.find_duplicates(
             title="Windows GBK encoding workaround",
             tags=["windows", "encoding"],
         )
-        # 标题有重叠 (Windows, GBK, encoding), 标签也有重叠
+        # Title has overlap (Windows, GBK, encoding), tags also overlap
         assert len(result) >= 1
         best = result[0]
         assert best["id"] == "INS-001"
         assert best["score"] > 0.5
 
     def test_tag_similarity(self, populated_mgr):
-        """标签重叠检测（降低阈值以匹配纯标签重叠场景）"""
+        """Tag overlap detection (lowered threshold to match pure tag overlap scenario)"""
         result = populated_mgr.find_duplicates(
             title="Completely different title",
             tags=["python", "encoding", "windows", "gbk"],
             threshold=0.3,
         )
-        # 标签有重叠 (python, encoding, windows)
+        # Tags have overlap (python, encoding, windows)
         assert len(result) >= 1
         assert result[0]["id"] == "INS-001"
 
     def test_no_duplicates(self, populated_mgr):
-        """完全不同的内容 → 无重复"""
+        """Completely different content -> no duplicates"""
         result = populated_mgr.find_duplicates(
             title="React hooks best practices",
             tags=["react", "frontend", "hooks"],
@@ -125,7 +125,7 @@ class TestFindDuplicates:
         assert result == []
 
     def test_threshold_control(self, populated_mgr):
-        """阈值过低 → 更多匹配"""
+        """Too low threshold -> more matches"""
         result_high = populated_mgr.find_duplicates(
             title="encoding fix",
             tags=["python"],
@@ -139,24 +139,24 @@ class TestFindDuplicates:
         assert len(result_low) >= len(result_high)
 
     def test_without_body(self, populated_mgr):
-        """不传 body 时跳过指纹匹配"""
+        """No body skips fingerprint matching"""
         result = populated_mgr.find_duplicates(
             title="Windows GBK encoding fix",
             tags=["python", "encoding", "windows"],
-            # 不传 body → 不做指纹检查，走 Jaccard
+            # No body -> skip fingerprint check, use Jaccard
         )
         assert len(result) >= 1
-        # 不会返回 exact_fingerprint reason
-        # (由于标题和标签完全匹配，score 应该很高)
+        # Won't return exact_fingerprint reason
+        # (Since title and tags fully match, score should be high)
         assert result[0]["score"] >= 0.6
 
 
 # ======================================================================
-# TestBuildGraph — 全局关联图谱
+# TestBuildGraph — Global association graph
 # ======================================================================
 
 class TestBuildGraph:
-    """测试 InsightManager.build_graph()"""
+    """Test InsightManager.build_graph()"""
 
     def test_empty_graph(self, mgr):
         graph = mgr.build_graph()
@@ -173,12 +173,12 @@ class TestBuildGraph:
         assert graph["edges"][0]["to"] == "INS-002"
 
     def test_isolated_count(self, populated_mgr):
-        """INS-003 是孤立节点"""
+        """INS-003 is an isolated node"""
         graph = populated_mgr.build_graph()
         assert graph["stats"]["isolated_count"] == 1
 
     def test_components(self, populated_mgr):
-        """3 节点，1 条边 → 2 个连通分量"""
+        """3 nodes, 1 edge -> 2 connected components"""
         graph = populated_mgr.build_graph()
         assert graph["stats"]["components"] == 2
 
@@ -192,7 +192,7 @@ class TestBuildGraph:
 
 
 class TestToMermaid:
-    """测试 InsightManager.to_mermaid()"""
+    """Test InsightManager.to_mermaid()"""
 
     def test_mermaid_output(self, populated_mgr):
         mermaid = populated_mgr.to_mermaid()
@@ -207,11 +207,11 @@ class TestToMermaid:
 
 
 # ======================================================================
-# TestExport — 导出
+# TestExport — Export
 # ======================================================================
 
 class TestExportInsights:
-    """测试 InsightManager.export_insights()"""
+    """Test InsightManager.export_insights()"""
 
     def test_export_all(self, populated_mgr):
         bundle = populated_mgr.export_insights()
@@ -229,7 +229,7 @@ class TestExportInsights:
         assert ids == {"INS-001", "INS-003"}
 
     def test_export_with_registry(self, populated_mgr):
-        # 先使用一下 INS-001
+        # First use INS-001
         populated_mgr.record_use("INS-001", "test_user")
         bundle = populated_mgr.export_insights(include_registry=True)
         assert "registry" in bundle
@@ -243,17 +243,17 @@ class TestExportInsights:
 
 
 # ======================================================================
-# TestImport — 导入
+# TestImport - Import
 # ======================================================================
 
 class TestImportInsights:
-    """测试 InsightManager.import_insights()"""
+    """Test InsightManager.import_insights()"""
 
     def _make_bundle(self, populated_mgr):
         return populated_mgr.export_insights()
 
     def test_import_to_empty_project(self, tmp_path):
-        """导入到空项目"""
+        """Import to empty project"""
         (tmp_path / "project.yaml").write_text("project_name: Target\n")
         (tmp_path / ".vibecollab").mkdir()
         target_mgr = InsightManager(project_root=tmp_path)
@@ -278,14 +278,14 @@ class TestImportInsights:
         assert target_mgr.get("INS-001") is not None
 
     def test_import_skip_existing(self, populated_mgr, tmp_project):
-        """skip 策略：跳过已存在的 ID"""
+        """skip strategy: skip existing IDs"""
         bundle = populated_mgr.export_insights()
         results = populated_mgr.import_insights(bundle, imported_by="test", strategy="skip")
         assert len(results["skipped"]) == 3
         assert len(results["imported"]) == 0
 
     def test_import_rename(self, populated_mgr):
-        """rename 策略：冲突时自动分配新 ID"""
+        """rename strategy: auto-assign new ID on conflict"""
         bundle = populated_mgr.export_insights(insight_ids=["INS-001"])
         results = populated_mgr.import_insights(bundle, imported_by="test", strategy="rename")
         assert len(results["renamed"]) == 1
@@ -295,9 +295,9 @@ class TestImportInsights:
         assert populated_mgr.get(new_id) is not None
 
     def test_import_overwrite(self, populated_mgr):
-        """overwrite 策略：覆盖已有"""
+        """overwrite strategy: overwrite existing"""
         bundle = populated_mgr.export_insights(insight_ids=["INS-001"])
-        # 修改标题
+        # Modify title
         bundle["insights"][0]["title"] = "Updated title"
         results = populated_mgr.import_insights(bundle, imported_by="test", strategy="overwrite")
         assert "INS-001" in results["imported"]
@@ -309,7 +309,7 @@ class TestImportInsights:
         assert results["errors"] == ["Invalid bundle format"]
 
     def test_import_sets_source_project(self, tmp_path):
-        """导入时自动设置来源项目"""
+        """Auto-set source project on import"""
         (tmp_path / "project.yaml").write_text("project_name: Target\n")
         (tmp_path / ".vibecollab").mkdir()
         target_mgr = InsightManager(project_root=tmp_path)
@@ -335,7 +335,7 @@ class TestImportInsights:
         assert ins.origin.source_project == "SourceProject"
 
     def test_import_with_registry(self, tmp_path):
-        """导入时合并注册表使用计数"""
+        """Merge registry use counts on import"""
         (tmp_path / "project.yaml").write_text("project_name: Target\n")
         (tmp_path / ".vibecollab").mkdir()
         target_mgr = InsightManager(project_root=tmp_path)
@@ -364,11 +364,11 @@ class TestImportInsights:
 
 
 # ======================================================================
-# TestCLI — CLI 命令
+# TestCLI - CLI commands
 # ======================================================================
 
 class TestCLIGraph:
-    """测试 vibecollab insight graph"""
+    """Test vibecollab insight graph"""
 
     def test_graph_text(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
@@ -398,7 +398,7 @@ class TestCLIGraph:
 
 
 class TestCLIExportImport:
-    """测试 vibecollab insight export / import"""
+    """Test vibecollab insight export / import"""
 
     def test_export_stdout(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
@@ -424,11 +424,11 @@ class TestCLIExportImport:
         from vibecollab.cli.insight import insight
         runner = CliRunner()
 
-        # 先导出
+        # Export first
         out_path = str(tmp_project / "bundle.yaml")
         runner.invoke(insight, ["export", "-o", out_path])
 
-        # 导入 (skip 策略 → 全部跳过)
+        # Import (skip strategy -> all skipped)
         result = runner.invoke(insight, ["import", out_path])
         assert result.exit_code == 0
         assert "Skipped" in result.output
@@ -437,7 +437,7 @@ class TestCLIExportImport:
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
         runner = CliRunner()
-        # 不存在的文件
+        # Non-existent file
         result = runner.invoke(insight, ["import", "nonexistent.yaml"])
         assert result.exit_code == 1
 
@@ -455,7 +455,7 @@ class TestCLIExportImport:
 
 
 class TestCLIAddDedup:
-    """测试 vibecollab insight add 的去重检测"""
+    """Test vibecollab insight add deduplication detection"""
 
     def test_add_detects_duplicate(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
@@ -486,7 +486,7 @@ class TestCLIAddDedup:
             "--force",
         ])
         assert result.exit_code == 0
-        assert "已创建" in result.output or "INS-004" in result.output
+        assert "Created" in result.output or "INS-004" in result.output
 
     def test_add_no_duplicate_passes(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
@@ -501,4 +501,4 @@ class TestCLIAddDedup:
             "-a", "unique approach",
         ])
         assert result.exit_code == 0
-        assert "已创建" in result.output
+        assert "Created" in result.output

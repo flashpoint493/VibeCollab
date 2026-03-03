@@ -59,7 +59,7 @@ class TestIndexCmd:
             ["-c", str(tmp_project / "project.yaml"), "-b", "pure_python"],
         )
         assert result.exit_code == 0
-        assert "索引完成" in result.output or "OK" in result.output
+        assert "Index complete" in result.output or "OK" in result.output
 
         # DB file should exist
         db_path = tmp_project / ".vibecollab" / "vectors" / "index.db"
@@ -76,7 +76,7 @@ class TestIndexCmd:
         # Rebuild
         result2 = runner.invoke(index_cmd, config_arg + ["--rebuild"])
         assert result2.exit_code == 0
-        assert "清除" in result2.output or "已清除" in result2.output
+        assert "Cleared" in result2.output or "cleared" in result2.output
 
     def test_index_auto_backend(self, runner, tmp_project):
         """auto backend falls back to pure_python when no ML libs."""
@@ -115,7 +115,7 @@ class TestIndexCmd:
         )
         # Should complete (maybe with 0 documents) or fail gracefully
         # The indexer finds docs relative to project root
-        assert result.exit_code == 0 or "错误" in result.output or "Error" in result.output
+        assert result.exit_code == 0 or "error" in result.output.lower() or "Error" in result.output
 
 
 # ======================================================================
@@ -179,7 +179,7 @@ class TestSearchCmd:
             ["test query", "-c", str(tmp_project / "project.yaml")],
         )
         assert result.exit_code == 1
-        assert "索引不存在" in result.output or "index" in result.output.lower()
+        assert "does not exist" in result.output.lower() or "index" in result.output.lower()
 
     def test_search_basic(self, runner, tmp_project):
         """Basic search returns results."""
@@ -190,7 +190,7 @@ class TestSearchCmd:
             ["context status", "-c", str(tmp_project / "project.yaml")],
         )
         assert result.exit_code == 0
-        assert "搜索" in result.output or "context" in result.output.lower()
+        assert "search" in result.output.lower() or "context" in result.output.lower()
 
     def test_search_type_filter(self, runner, tmp_project):
         """--type filters by source type."""
@@ -212,7 +212,7 @@ class TestSearchCmd:
         )
         assert result.exit_code == 0
         # Very high threshold likely returns no results
-        assert "未找到" in result.output or "Top 0" in result.output or result.output.strip()
+        assert "No results found" in result.output or "Top 0" in result.output or result.output.strip()
 
     def test_search_top_k(self, runner, tmp_project):
         """--top limits result count."""
@@ -249,7 +249,7 @@ class TestSearchCmd:
             ["test", "-c", str(tmp_project / "project.yaml")],
         )
         assert result.exit_code == 1
-        assert "索引为空" in result.output or "empty" in result.output.lower()
+        assert "empty" in result.output.lower() or "empty" in result.output.lower()
 
     def test_search_no_results_with_hint(self, runner, tmp_project):
         """No results with min-score shows hint."""
@@ -264,5 +264,5 @@ class TestSearchCmd:
             ],
         )
         assert result.exit_code == 0
-        if "未找到" in result.output:
-            assert "min-score" in result.output.lower() or "降低" in result.output
+        if "No results found" in result.output:
+            assert "min-score" in result.output.lower() or "lowering" in result.output.lower()

@@ -1,17 +1,17 @@
 """
-AI CLI 命令 — 人机对话 + 自主 Agent 模式
+AI CLI commands -- Human-AI dialogue + autonomous Agent mode
 
-支持三种使用模式：
-1. IDE 对话: 开发者在 Cursor/CodeBuddy 中，读 CONTRIBUTING_AI.md（已有）
-2. CLI 人机交互: vibecollab ai ask / vibecollab ai chat
-3. Agent 自主: vibecollab ai agent run / serve / plan
+Supports three usage modes:
+1. IDE dialogue: Developer in Cursor/CodeBuddy, reads CONTRIBUTING_AI.md (already available)
+2. CLI human-AI interaction: vibecollab ai ask / vibecollab ai chat
+3. Agent autonomous: vibecollab ai agent run / serve / plan
 
-安全门控机制：
-- 最大周期数限制 (max_cycles)
-- 自适应睡眠 + 指数退避
-- pending-solidify 检查 (前次未固化则等待)
-- 单例 PID 锁 (防止多实例)
-- 内存阈值保护
+Safety gate mechanisms:
+- Max cycle limit (max_cycles)
+- Adaptive sleep + exponential backoff
+- pending-solidify check (blocks if previous task not solidified)
+- Singleton PID lock (prevents multiple instances)
+- Memory threshold protection
 """
 
 import json
@@ -45,7 +45,7 @@ def _log_event(event_log: EventLog, event_type: str, summary: str,
     ))
 
 # ---------------------------------------------------------------------------
-# Windows GBK 兼容 (从共享模块导入)
+# Windows GBK compatibility (imported from shared module)
 # ---------------------------------------------------------------------------
 
 USE_EMOJI = not is_windows_gbk()
@@ -54,29 +54,29 @@ EMOJI = _COMPAT_EMOJI
 console = safe_console()
 
 # ---------------------------------------------------------------------------
-# Agent 安全门控
+# Agent safety gates
 # ---------------------------------------------------------------------------
 
-# 默认值 (可通过环境变量覆盖)
+# Defaults (can be overridden via environment variables)
 DEFAULT_MAX_CYCLES = 50
 DEFAULT_MIN_SLEEP_S = 2
 DEFAULT_MAX_SLEEP_S = 300
 DEFAULT_PENDING_SLEEP_S = 60
 DEFAULT_MAX_RSS_MB = 500
-DEFAULT_IDLE_THRESHOLD_S = 1  # 快速周期阈值
+DEFAULT_IDLE_THRESHOLD_S = 1  # Fast cycle threshold
 
-# 环境变量名
+# Environment variable names
 ENV_MAX_CYCLES = "VIBECOLLAB_AGENT_MAX_CYCLES"
 ENV_MIN_SLEEP = "VIBECOLLAB_AGENT_MIN_SLEEP"
 ENV_MAX_SLEEP = "VIBECOLLAB_AGENT_MAX_SLEEP"
 ENV_MAX_RSS_MB = "VIBECOLLAB_AGENT_MAX_RSS_MB"
 
-# PID 锁文件名
+# PID lock file name
 PID_LOCK_FILE = "agent.pid"
 
 
 def _get_agent_config():
-    """读取 Agent 运行配置 (环境变量 > 默认值)."""
+    """Read Agent runtime config (env vars > defaults)."""
     return {
         "max_cycles": int(os.getenv(ENV_MAX_CYCLES, str(DEFAULT_MAX_CYCLES))),
         "min_sleep": float(os.getenv(ENV_MIN_SLEEP, str(DEFAULT_MIN_SLEEP_S))),
@@ -88,20 +88,20 @@ def _get_agent_config():
 
 
 def _acquire_lock(lock_path: Path) -> bool:
-    """单例 PID 锁 — 防止多个 agent 实例同时运行.
+    """Singleton PID lock -- prevent multiple agent instances from running.
 
-    - 锁文件存在 → 检查 PID 是否存活
-    - 存活 → 拒绝启动
-    - 陈旧 → 接管
+    - Lock file exists -> check if PID is alive
+    - Alive -> refuse to start
+    - Stale -> take over
     """
     if lock_path.exists():
         try:
             old_pid = int(lock_path.read_text().strip())
-            # 检查进程是否存活 (signal 0 不发送信号，仅检查)
+            # Check if process is alive (signal 0 doesn't send signal, only checks)
             os.kill(old_pid, 0)
-            return False  # 已有实例在运行
+            return False  # An instance is already running
         except (ValueError, OSError, ProcessLookupError):
-            pass  # 陈旧锁或无效 PID → 接管
+            pass  # Stale lock or invalid PID -> take over
 
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     lock_path.write_text(str(os.getpid()))
@@ -109,7 +109,7 @@ def _acquire_lock(lock_path: Path) -> bool:
 
 
 def _release_lock(lock_path: Path):
-    """释放 PID 锁 — 仅当 PID 匹配时删除."""
+    """Release PID lock -- only delete if PID matches."""
     try:
         if lock_path.exists():
             stored_pid = int(lock_path.read_text().strip())
@@ -120,59 +120,59 @@ def _release_lock(lock_path: Path):
 
 
 def _check_rss_mb() -> float:
-    """获取当前进程 RSS (MB). 跨平台兼容."""
+    """Get current process RSS (MB). Cross-platform compatible."""
     try:
         import resource
-        # Unix: resource.getrusage (单位 KB on Linux, bytes on macOS)
+        # Unix: resource.getrusage (KB on Linux, bytes on macOS)
         ru = resource.getrusage(resource.RUSAGE_SELF)
         rss_kb = ru.ru_maxrss
         if sys.platform == "darwin":
-            return rss_kb / (1024 * 1024)  # macOS: bytes → MB
-        return rss_kb / 1024  # Linux: KB → MB
+            return rss_kb / (1024 * 1024)  # macOS: bytes -> MB
+        return rss_kb / 1024  # Linux: KB -> MB
     except ImportError:
         pass
     try:
         import psutil
         return psutil.Process().memory_info().rss / (1024 * 1024)
     except ImportError:
-        return 0  # 无法检测 → 不限制
+        return 0  # Cannot detect -> no limit
 
 
 def _is_pending_solidify(task_mgr: TaskManager) -> bool:
-    """检查是否有任务处于 REVIEW 状态等待固化.
+    """Check if any tasks are in REVIEW status awaiting solidification.
 
-    前次运行创建/推进的任务如果未完成固化，则阻塞新周期.
+    If tasks created/advanced in a previous run have not been solidified, block new cycles.
     """
     review_tasks = task_mgr.list_tasks(status=TaskStatus.REVIEW)
     return len(review_tasks) > 0
 
 
 # ---------------------------------------------------------------------------
-# 项目根目录检测
+# Project root detection
 # ---------------------------------------------------------------------------
 
 def _find_project_root(start: Optional[str] = None) -> Path:
-    """从指定目录或当前目录向上查找 project.yaml."""
+    """Find project.yaml by searching upward from the specified or current directory."""
     p = Path(start) if start else Path.cwd()
     for candidate in [p] + list(p.parents):
         if (candidate / "project.yaml").exists():
             return candidate
-    return p  # fallback: 当前目录
+    return p  # fallback: current directory
 
 
 def _ensure_llm_configured() -> LLMClient:
-    """确保 LLM 已配置，返回客户端实例."""
+    """Ensure LLM is configured, return client instance."""
     config = LLMConfig()
     if not config.is_configured:
         console.print(
-            f"[red]{EMOJI['err']} LLM 未配置。[/red]\n\n"
-            f"[bold]方式一 (推荐): 交互式配置向导[/bold]\n"
+            f"[red]{EMOJI['err']} LLM not configured.[/red]\n\n"
+            f"[bold]Option 1 (recommended): Interactive setup wizard[/bold]\n"
             f"  vibecollab config setup\n\n"
-            f"[bold]方式二: 手动设置环境变量[/bold]\n"
+            f"[bold]Option 2: Set environment variables manually[/bold]\n"
             f"  export VIBECOLLAB_LLM_API_KEY=your-api-key\n"
-            f"  export VIBECOLLAB_LLM_PROVIDER=openai  # 或 anthropic\n"
-            f"  export VIBECOLLAB_LLM_BASE_URL=https://openrouter.ai/api/v1  # 可选\n\n"
-            f"[bold]方式三: 配置文件[/bold]\n"
+            f"  export VIBECOLLAB_LLM_PROVIDER=openai  # or anthropic\n"
+            f"  export VIBECOLLAB_LLM_BASE_URL=https://openrouter.ai/api/v1  # optional\n\n"
+            f"[bold]Option 3: Config file[/bold]\n"
             f"  vibecollab config set llm.api_key your-api-key\n"
             f"  vibecollab config set llm.provider openai"
         )
@@ -181,7 +181,7 @@ def _ensure_llm_configured() -> LLMClient:
 
 
 def _display_response(resp: LLMResponse, show_usage: bool = False):
-    """格式化显示 LLM 响应."""
+    """Format and display LLM response."""
     if resp.ok:
         console.print()
         console.print(Panel(
@@ -193,16 +193,16 @@ def _display_response(resp: LLMResponse, show_usage: bool = False):
             tokens_in = resp.usage.get("prompt_tokens", resp.usage.get("input_tokens", 0))
             tokens_out = resp.usage.get("completion_tokens", resp.usage.get("output_tokens", 0))
             console.print(
-                f"[dim]模型: {resp.model} | "
-                f"输入: {tokens_in} tokens | "
-                f"输出: {tokens_out} tokens[/dim]"
+                f"[dim]Model: {resp.model} | "
+                f"Input: {tokens_in} tokens | "
+                f"Output: {tokens_out} tokens[/dim]"
             )
     else:
-        console.print(f"[red]{EMOJI['err']} LLM 返回空响应[/red]")
+        console.print(f"[red]{EMOJI['err']} LLM returned empty response[/red]")
 
 
 # ---------------------------------------------------------------------------
-# 系统 Prompt 构建
+# System prompt construction
 # ---------------------------------------------------------------------------
 
 SYSTEM_PROMPT_BASE = (
@@ -236,50 +236,51 @@ SYSTEM_PROMPT_AGENT = (
 
 
 def _build_system_prompt(project_root: Path, agent_mode: bool = False) -> str:
-    """构建包含项目上下文的 system prompt."""
+    """Build system prompt with project context."""
     base = SYSTEM_PROMPT_AGENT if agent_mode else SYSTEM_PROMPT_BASE
     context = build_project_context(project_root)
     return f"{base}\n\n# Project Context\n\n{context}"
 
 
 # ---------------------------------------------------------------------------
-# Click 命令组
+# Click command group
 # ---------------------------------------------------------------------------
 
 @click.group()
 def ai():
-    """[experimental] AI 助手命令 -- 人机对话 & Agent 自主模式
+    """[experimental] AI assistant commands -- Human-AI dialogue & Agent autonomous mode
 
-    实验性功能。VibeCollab 的核心定位是协议管理工具，
-    LLM 通信和 Tool Use 建议交给 Cline/Cursor/Aider 等专业终端。
-    本命令组提供轻量替代，但不再作为主力开发方向。
+    Experimental feature. VibeCollab's core positioning is a protocol management tool;
+    LLM communication and Tool Use are best handled by specialized terminals like
+    Cline/Cursor/Aider. This command group provides a lightweight alternative
+    but is not the primary development direction.
     """
     pass
 
 
-# ===== 人机交互命令 =====
+# ===== Human-AI interaction commands =====
 
 @ai.command()
 @click.argument("question")
-@click.option("--project", "-p", default=None, help="项目根目录 (默认自动检测)")
-@click.option("--no-context", is_flag=True, help="不注入项目上下文")
-@click.option("--temperature", "-t", default=0.7, type=float, help="采样温度 (0.0-1.0)")
-@click.option("--verbose", "-v", is_flag=True, help="显示 token 用量等详细信息")
+@click.option("--project", "-p", default=None, help="Project root directory (auto-detect by default)")
+@click.option("--no-context", is_flag=True, help="Do not inject project context")
+@click.option("--temperature", "-t", default=0.7, type=float, help="Sampling temperature (0.0-1.0)")
+@click.option("--verbose", "-v", is_flag=True, help="Show token usage and details")
 def ask(question: str, project: Optional[str], no_context: bool,
         temperature: float, verbose: bool):
-    """向 AI 提问 (单轮，带项目上下文)
+    """Ask AI a question (single turn, with project context)
 
     Examples:
 
-        vibecollab ai ask "下一步应该做什么?"
-        vibecollab ai ask "这个模块的架构设计合理吗?" -v
-        vibecollab ai ask "帮我写个测试" --no-context
+        vibecollab ai ask "What should I do next?"
+        vibecollab ai ask "Is this module's architecture reasonable?" -v
+        vibecollab ai ask "Help me write a test" --no-context
     """
     client = _ensure_llm_configured()
     project_root = _find_project_root(project)
 
-    console.print(f"[dim]项目: {project_root}[/dim]")
-    console.print(f"[dim]模型: {client.config.model} ({client.config.provider})[/dim]")
+    console.print(f"[dim]Project: {project_root}[/dim]")
+    console.print(f"[dim]Model: {client.config.model} ({client.config.provider})[/dim]")
     console.print(f"\n{EMOJI['user']} {question}")
 
     try:
@@ -295,7 +296,7 @@ def ask(question: str, project: Optional[str], no_context: bool,
 
         _display_response(resp, show_usage=verbose)
 
-        # 记录到 EventLog
+        # Log to EventLog
         event_log = EventLog(project_root)
         _log_event(event_log, EventType.CUSTOM,
                    f"AI ask: {question[:100]}", actor="cli",
@@ -303,20 +304,20 @@ def ask(question: str, project: Optional[str], no_context: bool,
 
     except ImportError as e:
         console.print(f"[red]{EMOJI['err']} {e}[/red]")
-        console.print("[dim]安装 LLM 依赖: pip install vibe-collab[llm][/dim]")
+        console.print("[dim]Install LLM dependencies: pip install vibe-collab[llm][/dim]")
         raise SystemExit(1)
     except (RuntimeError, ValueError) as e:
-        console.print(f"[red]{EMOJI['err']} LLM 调用失败: {e}[/red]")
+        console.print(f"[red]{EMOJI['err']} LLM call failed: {e}[/red]")
         raise SystemExit(1)
 
 
 @ai.command()
-@click.option("--project", "-p", default=None, help="项目根目录 (默认自动检测)")
-@click.option("--no-context", is_flag=True, help="不注入项目上下文")
-@click.option("--temperature", "-t", default=0.7, type=float, help="采样温度")
-@click.option("--verbose", "-v", is_flag=True, help="显示 token 用量")
+@click.option("--project", "-p", default=None, help="Project root directory (auto-detect by default)")
+@click.option("--no-context", is_flag=True, help="Do not inject project context")
+@click.option("--temperature", "-t", default=0.7, type=float, help="Sampling temperature")
+@click.option("--verbose", "-v", is_flag=True, help="Show token usage")
 def chat(project: Optional[str], no_context: bool, temperature: float, verbose: bool):
-    """与 AI 多轮对话 (Ctrl+C 退出)
+    """Multi-turn conversation with AI (Ctrl+C to exit)
 
     Examples:
 
@@ -326,11 +327,11 @@ def chat(project: Optional[str], no_context: bool, temperature: float, verbose: 
     client = _ensure_llm_configured()
     project_root = _find_project_root(project)
 
-    console.print(f"[dim]项目: {project_root}[/dim]")
-    console.print(f"[dim]模型: {client.config.model} ({client.config.provider})[/dim]")
-    console.print("[dim]输入 'exit' 或 Ctrl+C 退出[/dim]\n")
+    console.print(f"[dim]Project: {project_root}[/dim]")
+    console.print(f"[dim]Model: {client.config.model} ({client.config.provider})[/dim]")
+    console.print("[dim]Type 'exit' or Ctrl+C to quit[/dim]\n")
 
-    # 初始化消息历史
+    # Initialize message history
     messages = []
     if not no_context:
         system = _build_system_prompt(project_root)
@@ -345,7 +346,7 @@ def chat(project: Optional[str], no_context: bool, temperature: float, verbose: 
                 break
 
             if user_input.strip().lower() in ("exit", "quit", "bye", "/exit", "/quit"):
-                console.print(f"\n{EMOJI['ok']} 对话结束")
+                console.print(f"\n{EMOJI['ok']} Conversation ended")
                 break
 
             if not user_input.strip():
@@ -361,17 +362,17 @@ def chat(project: Optional[str], no_context: bool, temperature: float, verbose: 
                     _display_response(resp, show_usage=verbose)
                     turn_count += 1
                 else:
-                    console.print(f"[red]{EMOJI['err']} 空响应，请重试[/red]")
-                    messages.pop()  # 移除未成功的用户消息
+                    console.print(f"[red]{EMOJI['err']} Empty response, please retry[/red]")
+                    messages.pop()  # Remove unsuccessful user message
 
             except (RuntimeError, ValueError) as e:
-                console.print(f"[red]{EMOJI['err']} 调用失败: {e}[/red]")
+                console.print(f"[red]{EMOJI['err']} Call failed: {e}[/red]")
                 messages.pop()
 
     except KeyboardInterrupt:
-        console.print(f"\n\n{EMOJI['ok']} 对话结束 ({turn_count} 轮)")
+        console.print(f"\n\n{EMOJI['ok']} Conversation ended ({turn_count} turns)")
 
-    # 记录到 EventLog
+    # Log to EventLog
     if turn_count > 0:
         event_log = EventLog(project_root)
         _log_event(event_log, EventType.CUSTOM,
@@ -379,22 +380,22 @@ def chat(project: Optional[str], no_context: bool, temperature: float, verbose: 
                    payload={"turns": turn_count, "model": client.config.model})
 
 
-# ===== Agent 自主命令 =====
+# ===== Agent autonomous commands =====
 
 @ai.group()
 def agent():
-    """Agent 自主模式 — 服务器部署，自驱开发"""
+    """Agent autonomous mode -- server deployment, self-driven development"""
     pass
 
 
 @agent.command()
-@click.option("--project", "-p", default=None, help="项目根目录")
-@click.option("--verbose", "-v", is_flag=True, help="详细输出")
+@click.option("--project", "-p", default=None, help="Project root directory")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 def plan(project: Optional[str], verbose: bool):
-    """分析项目状态，生成行动计划 (不执行)
+    """Analyze project state, generate action plan (read-only)
 
-    读取项目上下文、任务列表、事件日志，让 LLM 生成下一步计划。
-    这是一个只读操作，不会修改任何文件。
+    Reads project context, task list, and event log; lets LLM generate next-step plan.
+    This is a read-only operation -- no files are modified.
 
     Examples:
 
@@ -405,7 +406,7 @@ def plan(project: Optional[str], verbose: bool):
     project_root = _find_project_root(project)
 
     console.print(Panel.fit(
-        f"[bold]Agent Plan 模式[/bold]\n项目: {project_root}",
+        f"[bold]Agent Plan Mode[/bold]\nProject: {project_root}",
         border_style="cyan",
     ))
 
@@ -427,12 +428,12 @@ def plan(project: Optional[str], verbose: bool):
     ]
 
     try:
-        console.print(f"[cyan]{EMOJI['think']} 分析项目状态...[/cyan]")
-        resp = client.chat(messages, temperature=0.3)  # 低温度，更确定性
+        console.print(f"[cyan]{EMOJI['think']} Analyzing project status...[/cyan]")
+        resp = client.chat(messages, temperature=0.3)  # Low temperature for determinism
 
         _display_response(resp, show_usage=verbose)
 
-        # 记录到 EventLog
+        # Log to EventLog
         event_log = EventLog(project_root)
         _log_event(event_log, EventType.CUSTOM,
                    "Agent plan: generated action plan", actor="agent",
@@ -444,13 +445,13 @@ def plan(project: Optional[str], verbose: bool):
 
 
 @agent.command()
-@click.option("--project", "-p", default=None, help="项目根目录")
-@click.option("--dry-run", is_flag=True, help="试运行 (只生成计划，不执行)")
-@click.option("--verbose", "-v", is_flag=True, help="详细输出")
+@click.option("--project", "-p", default=None, help="Project root directory")
+@click.option("--dry-run", is_flag=True, help="Dry run (only generate plan, do not execute)")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 def run(project: Optional[str], dry_run: bool, verbose: bool):
-    """执行单次 Agent 周期: Plan -> Execute -> Solidify
+    """Execute a single Agent cycle: Plan -> Execute -> Solidify
 
-    适合 cron 定时任务或手动触发。每次运行只执行一个周期。
+    Suitable for cron scheduled tasks or manual triggers. Only one cycle per run.
 
     Examples:
 
@@ -467,19 +468,19 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
     task_mgr = TaskManager(project_root, event_log)
 
     console.print(Panel.fit(
-        f"[bold]Agent Run 模式[/bold] (单次周期)\n"
-        f"项目: {project_root}\n"
-        f"Dry-run: {'是' if dry_run else '否'}",
+        f"[bold]Agent Run Mode[/bold] (single cycle)\n"
+        f"Project: {project_root}\n"
+        f"Dry-run: {'Yes' if dry_run else 'No'}",
         border_style="yellow",
     ))
 
-    # Gate: pending solidify 检查
+    # Gate: pending solidify check
     if _is_pending_solidify(task_mgr):
         review_tasks = task_mgr.list_tasks(status=TaskStatus.REVIEW)
         task_ids = [t.id for t in review_tasks]
         console.print(
-            f"[yellow]{EMOJI['warn']} 存在待固化任务: {', '.join(task_ids)}[/yellow]\n"
-            f"请先完成 review 再运行新周期。"
+            f"[yellow]{EMOJI['warn']} Pending solidification tasks: {', '.join(task_ids)}[/yellow]\n"
+            f"Please complete review before running a new cycle."
         )
         raise SystemExit(1)
 
@@ -512,11 +513,11 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
     ]
 
     try:
-        console.print(f"[cyan]{EMOJI['think']} Phase 1: 分析与规划...[/cyan]")
+        console.print(f"[cyan]{EMOJI['think']} Phase 1: Analyzing and planning...[/cyan]")
         plan_resp = client.chat(messages, temperature=0.3)
 
         if not plan_resp.ok:
-            console.print(f"[red]{EMOJI['err']} Plan 阶段失败: 空响应[/red]")
+            console.print(f"[red]{EMOJI['err']} Plan phase failed: empty response[/red]")
             raise SystemExit(1)
 
         console.print(Panel(
@@ -530,10 +531,10 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
                    payload={"model": plan_resp.model, "dry_run": dry_run})
 
         if dry_run:
-            console.print(f"\n[yellow]{EMOJI['warn']} Dry-run 模式: 不执行变更[/yellow]")
+            console.print(f"\n[yellow]{EMOJI['warn']} Dry-run mode: no changes executed[/yellow]")
             return
 
-        # Phase 2: EXECUTE (让 LLM 生成具体代码变更)
+        # Phase 2: EXECUTE (let LLM generate specific code changes)
         console.print("\n[cyan]Phase 2: EXECUTE[/cyan]")
         messages.append(Message(role="assistant", content=plan_resp.content))
         messages.append(Message(role="user", content=(
@@ -550,7 +551,7 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
             "- Follow the project's coding conventions"
         )))
 
-        console.print(f"[cyan]{EMOJI['think']} Phase 2: 生成代码变更...[/cyan]")
+        console.print(f"[cyan]{EMOJI['think']} Phase 2: Generating code changes...[/cyan]")
         exec_resp = client.chat(messages, temperature=0.2)
 
         if exec_resp.ok:
@@ -568,16 +569,16 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
         changes = executor.parse_changes(exec_resp.content if exec_resp.ok else "")
 
         if not changes:
-            console.print(f"[yellow]{EMOJI['warn']} 未从 LLM 输出中解析到文件变更[/yellow]")
+            console.print(f"[yellow]{EMOJI['warn']} No file changes parsed from LLM output[/yellow]")
             _log_event(event_log, EventType.CUSTOM,
                        "Agent run: no parseable changes", actor="agent")
             return
 
-        console.print(f"  解析到 {len(changes)} 个文件变更:")
+        console.print(f"  Parsed {len(changes)} file change(s):")
         for c in changes:
             console.print(f"    {c.action}: {c.file}")
 
-        # 获取测试命令
+        # Get test command
         test_cmd = None
         cfg_path = project_root / "project.yaml"
         if cfg_path.exists():
@@ -595,11 +596,11 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
         )
 
         if result.success:
-            console.print(f"\n{EMOJI['ok']} [green]周期完成![/green]")
+            console.print(f"\n{EMOJI['ok']} [green]Cycle completed![/green]")
             for applied in result.changes_applied:
                 console.print(f"  [green]{applied}[/green]")
             if result.test_passed:
-                console.print(f"  {EMOJI['ok']} 测试通过")
+                console.print(f"  {EMOJI['ok']} Tests passed")
             if result.git_committed:
                 console.print(f"  {EMOJI['ok']} Git commit: {result.git_hash}")
 
@@ -607,34 +608,34 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
                        "Agent run: cycle completed successfully", actor="agent",
                        payload=result.to_dict())
         else:
-            console.print(f"\n[red]{EMOJI['err']} 周期执行失败[/red]")
+            console.print(f"\n[red]{EMOJI['err']} Cycle execution failed[/red]")
             for err in result.errors:
                 console.print(f"  [red]{err}[/red]")
             if result.rollback_performed:
-                console.print(f"  [yellow]{EMOJI['warn']} 已回滚所有变更[/yellow]")
+                console.print(f"  [yellow]{EMOJI['warn']} All changes rolled back[/yellow]")
 
             _log_event(event_log, EventType.VALIDATION_FAILED,
                        "Agent run: execution failed", actor="agent",
                        payload=result.to_dict())
 
     except (ImportError, RuntimeError, ValueError) as e:
-        console.print(f"[red]{EMOJI['err']} Agent run 失败: {e}[/red]")
+        console.print(f"[red]{EMOJI['err']} Agent run failed: {e}[/red]")
         _log_event(event_log, EventType.VALIDATION_FAILED,
                    f"Agent run failed: {str(e)[:200]}", actor="agent")
         raise SystemExit(1)
 
 
 @agent.command()
-@click.option("--project", "-p", default=None, help="项目根目录")
+@click.option("--project", "-p", default=None, help="Project root directory")
 @click.option("--max-cycles", "-n", default=None, type=int,
-              help=f"最大周期数 (默认: {DEFAULT_MAX_CYCLES})")
-@click.option("--verbose", "-v", is_flag=True, help="详细输出")
+              help=f"Max cycles (default: {DEFAULT_MAX_CYCLES})")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
-    """长运行 Agent 服务 — 循环执行 Plan -> Execute -> Solidify
+    """Long-running Agent service -- loop Plan -> Execute -> Solidify
 
-    适合服务器部署，自驱动推进项目开发。
-    包含完整安全门控: 最大周期、自适应睡眠、pending-solidify 等待、
-    PID 锁、内存阈值、修复循环断路器。
+    Suitable for server deployment, self-driven project development.
+    Includes full safety gates: max cycles, adaptive sleep, pending-solidify wait,
+    PID lock, memory threshold, fix-loop circuit breaker.
 
     Examples:
 
@@ -653,12 +654,12 @@ def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
 
     lock_path = vc_dir / PID_LOCK_FILE
 
-    # Gate 1: 单例 PID 锁
+    # Gate 1: Singleton PID lock
     if not _acquire_lock(lock_path):
         console.print(
-            f"[red]{EMOJI['err']} Agent 已有实例在运行。[/red]\n"
-            f"锁文件: {lock_path}\n"
-            f"如确认无其他实例，删除锁文件后重试。"
+            f"[red]{EMOJI['err']} Agent instance already running.[/red]\n"
+            f"Lock file: {lock_path}\n"
+            f"If no other instance is running, delete the lock file and retry."
         )
         raise SystemExit(1)
 
@@ -666,11 +667,11 @@ def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
     task_mgr = TaskManager(project_root, event_log)
 
     console.print(Panel.fit(
-        f"[bold]Agent Serve 模式[/bold] (长运行)\n"
-        f"项目: {project_root}\n"
-        f"最大周期: {agent_cfg['max_cycles']}\n"
+        f"[bold]Agent Serve Mode[/bold] (long-running)\n"
+        f"Project: {project_root}\n"
+        f"Max cycles: {agent_cfg['max_cycles']}\n"
         f"PID: {os.getpid()}\n"
-        f"模型: {client.config.model} ({client.config.provider})",
+        f"Model: {client.config.model} ({client.config.provider})",
         border_style="green",
     ))
 
@@ -682,7 +683,7 @@ def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
     cycle_count = 0
     consecutive_failures = 0
     current_sleep = agent_cfg["min_sleep"]
-    CIRCUIT_BREAKER_THRESHOLD = 3  # 连续失败 N 次触发断路器
+    CIRCUIT_BREAKER_THRESHOLD = 3  # Circuit breaker after N consecutive failures
 
     try:
         while cycle_count < agent_cfg["max_cycles"]:
@@ -696,41 +697,41 @@ def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
             )
             console.print(f"{'=' * 60}")
 
-            # Gate 2: pending solidify 检查
+            # Gate 2: pending solidify check
             if _is_pending_solidify(task_mgr):
                 review_tasks = task_mgr.list_tasks(status=TaskStatus.REVIEW)
                 task_ids = [t.id for t in review_tasks]
                 console.print(
-                    f"[yellow]{EMOJI['warn']} 待固化任务: {', '.join(task_ids)} "
-                    f"— 等待 {agent_cfg['pending_sleep']}s[/yellow]"
+                    f"[yellow]{EMOJI['warn']} Pending solidification tasks: {', '.join(task_ids)} "
+                    f"-- waiting {agent_cfg['pending_sleep']}s[/yellow]"
                 )
                 time.sleep(agent_cfg["pending_sleep"])
-                cycle_count -= 1  # 不计入周期数
+                cycle_count -= 1  # Do not count toward cycle total
                 continue
 
-            # Gate 3: 内存检查
+            # Gate 3: Memory check
             rss_mb = _check_rss_mb()
             if rss_mb > 0 and rss_mb > agent_cfg["max_rss_mb"]:
                 console.print(
-                    f"[red]{EMOJI['stop']} 内存超限: {rss_mb:.0f}MB > {agent_cfg['max_rss_mb']}MB "
-                    f"— 停止服务[/red]"
+                    f"[red]{EMOJI['stop']} Memory exceeded: {rss_mb:.0f}MB > {agent_cfg['max_rss_mb']}MB "
+                    f"-- stopping service[/red]"
                 )
                 break
 
-            # Gate 4: 修复循环断路器
+            # Gate 4: Fix-loop circuit breaker
             if consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD:
                 console.print(
-                    f"[red]{EMOJI['stop']} 断路器触发: 连续 {consecutive_failures} 次失败 "
-                    f"— 等待 {agent_cfg['max_sleep']}s 后重试[/red]"
+                    f"[red]{EMOJI['stop']} Circuit breaker triggered: {consecutive_failures} consecutive failures "
+                    f"-- waiting {agent_cfg['max_sleep']}s before retry[/red]"
                 )
                 _log_event(event_log, EventType.VALIDATION_FAILED,
                            f"Circuit breaker: {consecutive_failures} consecutive failures",
                            actor="agent")
                 time.sleep(agent_cfg["max_sleep"])
-                consecutive_failures = 0  # 重置，给一次机会
+                consecutive_failures = 0  # Reset, give another chance
                 continue
 
-            # 执行周期
+            # Execute cycle
             ok = _execute_agent_cycle(
                 client, project_root, event_log, task_mgr, verbose
             )
@@ -740,28 +741,28 @@ def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
             if ok:
                 consecutive_failures = 0
                 current_sleep = agent_cfg["min_sleep"]
-                console.print(f"[green]{EMOJI['ok']} 周期完成 ({cycle_duration:.1f}s)[/green]")
+                console.print(f"[green]{EMOJI['ok']} Cycle completed ({cycle_duration:.1f}s)[/green]")
             else:
                 consecutive_failures += 1
-                # 自适应退避: 失败或过快 → 指数退避
+                # Adaptive backoff: failure or too fast -> exponential backoff
                 if cycle_duration < agent_cfg["idle_threshold"] or not ok:
                     current_sleep = min(
                         agent_cfg["max_sleep"],
                         max(agent_cfg["min_sleep"], current_sleep * 2)
                     )
                 console.print(
-                    f"[yellow]{EMOJI['warn']} 周期失败 "
-                    f"(连续失败: {consecutive_failures})[/yellow]"
+                    f"[yellow]{EMOJI['warn']} Cycle failed "
+                    f"(consecutive failures: {consecutive_failures})[/yellow]"
                 )
 
-            # 睡眠 (加抖动防止锁步)
+            # Sleep (with jitter to prevent lock-step)
             jitter = random.uniform(0, min(1.0, current_sleep * 0.1))
             sleep_time = current_sleep + jitter
-            console.print(f"[dim]下次周期: {sleep_time:.1f}s 后[/dim]")
+            console.print(f"[dim]Next cycle in: {sleep_time:.1f}s[/dim]")
             time.sleep(sleep_time)
 
     except KeyboardInterrupt:
-        console.print(f"\n\n{EMOJI['stop']} Agent 被用户中断 (已完成 {cycle_count} 周期)")
+        console.print(f"\n\n{EMOJI['stop']} Agent interrupted by user (completed {cycle_count} cycles)")
 
     finally:
         _release_lock(lock_path)
@@ -772,7 +773,7 @@ def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
                        "cycles_completed": cycle_count,
                        "consecutive_failures": consecutive_failures,
                    })
-        console.print(f"\n{EMOJI['ok']} Agent 服务结束。共 {cycle_count} 个周期。")
+        console.print(f"\n{EMOJI['ok']} Agent service ended. Total {cycle_count} cycle(s).")
 
 
 def _execute_agent_cycle(
@@ -782,9 +783,9 @@ def _execute_agent_cycle(
     task_mgr: TaskManager,
     verbose: bool,
 ) -> bool:
-    """执行单个 agent 周期. 返回 True=成功, False=失败.
+    """Execute a single agent cycle. Returns True=success, False=failure.
 
-    三阶段: ASSESS+PLAN → EXECUTE → SOLIDIFY+REPORT
+    Three phases: ASSESS+PLAN -> EXECUTE -> SOLIDIFY+REPORT
     """
     try:
         system = _build_system_prompt(project_root, agent_mode=True)
@@ -839,9 +840,9 @@ def _execute_agent_cycle(
         if not changes:
             _log_event(event_log, EventType.CUSTOM,
                        "Agent cycle: no parseable changes", actor="agent")
-            return True  # 非失败，只是没有可执行的变更
+            return True  # Not a failure, just no executable changes
 
-        # 获取测试命令
+        # Get test command
         test_cmd = None
         cfg_path = project_root / "project.yaml"
         if cfg_path.exists():
@@ -874,9 +875,9 @@ def _execute_agent_cycle(
 
 
 @agent.command()
-@click.option("--project", "-p", default=None, help="项目根目录")
+@click.option("--project", "-p", default=None, help="Project root directory")
 def status(project: Optional[str]):
-    """查看 Agent 运行状态
+    """View Agent runtime status
 
     Examples:
 
@@ -887,31 +888,31 @@ def status(project: Optional[str]):
     lock_path = vc_dir / PID_LOCK_FILE
 
     console.print(Panel.fit(
-        f"[bold]Agent 状态[/bold]\n项目: {project_root}",
+        f"[bold]Agent Status[/bold]\nProject: {project_root}",
         border_style="blue",
     ))
 
-    # 检查 PID 锁
+    # Check PID lock
     if lock_path.exists():
         try:
             pid = int(lock_path.read_text().strip())
             try:
                 os.kill(pid, 0)
-                console.print(f"[green]{EMOJI['ok']} Agent 正在运行 (PID: {pid})[/green]")
+                console.print(f"[green]{EMOJI['ok']} Agent is running (PID: {pid})[/green]")
             except OSError:
-                console.print(f"[yellow]{EMOJI['warn']} 陈旧锁文件 (PID: {pid} 已退出)[/yellow]")
+                console.print(f"[yellow]{EMOJI['warn']} Stale lock file (PID: {pid} has exited)[/yellow]")
         except ValueError:
-            console.print(f"[yellow]{EMOJI['warn']} 无效锁文件[/yellow]")
+            console.print(f"[yellow]{EMOJI['warn']} Invalid lock file[/yellow]")
     else:
-        console.print("[dim]Agent 未运行[/dim]")
+        console.print("[dim]Agent is not running[/dim]")
 
-    # LLM 配置状态
+    # LLM configuration status
     config = LLMConfig()
-    console.print("\n[bold]LLM 配置:[/bold]")
+    console.print("\n[bold]LLM Configuration:[/bold]")
     for k, v in config.to_safe_dict().items():
         console.print(f"  {k}: {v}")
 
-    # 任务统计
+    # Task statistics
     tasks_path = vc_dir / "tasks.json"
     if tasks_path.exists():
         try:
@@ -920,20 +921,20 @@ def status(project: Optional[str]):
             for t in tasks.values():
                 s = t.get("status", "UNKNOWN")
                 by_status[s] = by_status.get(s, 0) + 1
-            console.print("\n[bold]任务统计:[/bold]")
+            console.print("\n[bold]Task Statistics:[/bold]")
             for s, n in sorted(by_status.items()):
                 console.print(f"  {s}: {n}")
         except (json.JSONDecodeError, OSError):
             pass
 
-    # 最近事件
+    # Recent events
     events_path = vc_dir / "events.jsonl"
     if events_path.exists():
         try:
             event_log = EventLog(project_root)
             recent = event_log.read_recent(5)
             if recent:
-                console.print("\n[bold]最近事件:[/bold]")
+                console.print("\n[bold]Recent Events:[/bold]")
                 for evt in recent:
                     console.print(
                         f"  [{evt.event_type}] {evt.summary} "
@@ -943,5 +944,5 @@ def status(project: Optional[str]):
             pass
 
 
-# 导出命令组
+# Export command group
 __all__ = ["ai"]

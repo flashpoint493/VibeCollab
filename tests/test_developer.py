@@ -1,5 +1,5 @@
 """
-DeveloperManager + ContextAggregator + migrate_to_multi_developer 单元测试
+DeveloperManager + ContextAggregator + migrate_to_multi_developer unit tests
 """
 
 import os
@@ -24,7 +24,7 @@ def _base_config(enabled=True, primary="git_username", fallback="system_user",
                  metadata_file=".metadata.yaml",
                  aggregation_file="docs/CONTEXT.md",
                  collaboration_file="docs/developers/COLLABORATION.md"):
-    """构建一份最小可用的多开发者配置"""
+    """Build a minimal usable multi-developer config"""
     return {
         "project": {"name": "TestProject", "version": "v1.0.0"},
         "multi_developer": {
@@ -49,7 +49,7 @@ def _base_config(enabled=True, primary="git_username", fallback="system_user",
 
 @pytest.fixture
 def project_dir(tmp_path):
-    """创建一个临时项目目录"""
+    """Create a temporary project directory"""
     (tmp_path / "docs" / "developers").mkdir(parents=True)
     return tmp_path
 
@@ -65,7 +65,7 @@ def dm(project_dir, config):
 
 
 # ===========================================================================
-# DeveloperManager — 初始化
+# DeveloperManager — Initialization
 # ===========================================================================
 
 class TestDeveloperManagerInit:
@@ -92,7 +92,7 @@ class TestDeveloperManagerInit:
 
 
 # ===========================================================================
-# DeveloperManager — 名称标准化
+# DeveloperManager — Name normalization
 # ===========================================================================
 
 class TestNormalizeName:
@@ -119,7 +119,7 @@ class TestNormalizeName:
 
 
 # ===========================================================================
-# DeveloperManager — 身份识别
+# DeveloperManager — Identity detection
 # ===========================================================================
 
 class TestGetCurrentDeveloper:
@@ -171,7 +171,7 @@ class TestGetCurrentDeveloper:
 
 
 # ===========================================================================
-# DeveloperManager — 身份来源
+# DeveloperManager — Identity source
 # ===========================================================================
 
 class TestGetIdentitySource:
@@ -240,7 +240,7 @@ class TestSwitchDeveloper:
 
 
 # ===========================================================================
-# DeveloperManager — 目录和文件路径
+# DeveloperManager — Directories and file paths
 # ===========================================================================
 
 class TestPaths:
@@ -267,7 +267,7 @@ class TestPaths:
 
 
 # ===========================================================================
-# DeveloperManager — 列表、创建、初始化
+# DeveloperManager — List, create, initialize
 # ===========================================================================
 
 class TestListAndInit:
@@ -330,7 +330,7 @@ class TestListAndInit:
 
 
 # ===========================================================================
-# DeveloperManager — 元数据
+# DeveloperManager — Metadata
 # ===========================================================================
 
 class TestMetadata:
@@ -376,7 +376,7 @@ class TestContextAggregator:
         agg = ContextAggregator(project_dir, config)
         content = agg.aggregate()
         assert "TestProject" in content
-        assert "(无开发者)" in content
+        assert "(no developers)" in content
 
     def test_aggregate_with_developers(self, project_dir, config):
         dm = DeveloperManager(project_dir, config)
@@ -386,7 +386,7 @@ class TestContextAggregator:
         content = agg.aggregate()
         assert "alice" in content
         assert "bob" in content
-        assert "活跃开发者" in content
+        assert "Active developers" in content
         assert "2" in content
 
     def test_aggregate_extracts_current_task(self, project_dir, config):
@@ -448,7 +448,7 @@ class TestContextAggregator:
         dm.init_developer_context("alice")
         agg = ContextAggregator(project_dir, config)
         content = agg.aggregate()
-        assert "COLLABORATION" not in content or "跨开发者协作" not in content
+        assert "COLLABORATION" not in content or "Cross-developer collaboration" not in content
 
     def test_generate_and_save(self, project_dir, config):
         dm = DeveloperManager(project_dir, config)
@@ -468,17 +468,17 @@ class TestContextAggregator:
 class TestMigrateToMultiDeveloper:
     @patch("vibecollab.domain.developer.DeveloperManager._get_git_username", return_value="testdev")
     def test_migrate_auto_developer(self, mock_git, project_dir, config):
-        # 准备单开发者 CONTEXT.md
+        # Prepare single-developer CONTEXT.md
         old_ctx = project_dir / "docs" / "CONTEXT.md"
         old_ctx.write_text("# Old context\n## 当前任务\n- task1\n", encoding="utf-8")
         migrate_to_multi_developer(project_dir, config)
-        # 原文件被备份
+        # Original file is backed up
         assert (project_dir / "docs" / "CONTEXT.md.backup").exists()
-        # 开发者目录已创建
+        # Developer directory created
         dev_ctx = project_dir / "docs" / "developers" / "testdev" / "CONTEXT.md"
         assert dev_ctx.exists()
         assert "Old context" in dev_ctx.read_text(encoding="utf-8")
-        # 新的全局 CONTEXT.md 已聚合生成
+        # New global CONTEXT.md has been aggregated
         new_global = project_dir / "docs" / "CONTEXT.md"
         assert new_global.exists()
         assert "testdev" in new_global.read_text(encoding="utf-8")
@@ -499,7 +499,7 @@ class TestMigrateToMultiDeveloper:
         assert "alice" in content
 
     def test_migrate_no_existing_context(self, project_dir, config):
-        # 没有旧 CONTEXT.md 也不应报错
+        # No old CONTEXT.md should not cause error
         migrate_to_multi_developer(project_dir, config, developer_name="alice")
         dev_dir = project_dir / "docs" / "developers" / "alice"
         assert dev_dir.exists()
@@ -507,7 +507,7 @@ class TestMigrateToMultiDeveloper:
     def test_migrate_idempotent(self, project_dir, config):
         (project_dir / "docs" / "CONTEXT.md").write_text("x", encoding="utf-8")
         migrate_to_multi_developer(project_dir, config, developer_name="alice")
-        # 第二次迁移不应覆盖已有的开发者 CONTEXT
+        # Second migration should not overwrite existing developer CONTEXT
         dev_ctx = project_dir / "docs" / "developers" / "alice" / "CONTEXT.md"
         dev_ctx.write_text("custom content", encoding="utf-8")
         migrate_to_multi_developer(project_dir, config, developer_name="alice")
@@ -515,7 +515,7 @@ class TestMigrateToMultiDeveloper:
 
 
 # ===========================================================================
-# 边界情况
+# Edge cases
 # ===========================================================================
 
 class TestEdgeCases:
@@ -523,7 +523,7 @@ class TestEdgeCases:
         local_cfg = project_dir / LOCAL_CONFIG_FILE
         local_cfg.write_text("{{invalid yaml::", encoding="utf-8")
         mgr = DeveloperManager(project_dir, config)
-        # 不应崩溃，应该降级到其他策略
+        # Should not crash, falls back to other strategy
         dev = mgr.get_current_developer()
         assert isinstance(dev, str)
 
@@ -531,7 +531,7 @@ class TestEdgeCases:
         dm.ensure_developer_dir("alice")
         meta = dm.get_developer_metadata_file("alice")
         meta.write_text("{{broken yaml", encoding="utf-8")
-        # update_metadata 在读取损坏 YAML 时会抛出异常
+        # update_metadata raises exception when reading corrupted YAML
         with pytest.raises(yaml.YAMLError):
             dm.update_metadata("alice")
 
@@ -561,7 +561,7 @@ class TestEdgeCases:
 
 
 # ===========================================================================
-# DeveloperManager — Tag 体系扩展
+# DeveloperManager — Tag system extension
 # ===========================================================================
 
 class TestDeveloperTags:

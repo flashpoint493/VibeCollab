@@ -1,5 +1,5 @@
 """
-项目生涯管理 CLI 命令
+Project lifecycle management CLI commands
 """
 
 from pathlib import Path
@@ -17,14 +17,14 @@ console = safe_console()
 
 @click.group()
 def lifecycle():
-    """项目生涯管理命令组"""
+    """Project lifecycle management command group"""
     pass
 
 
 @lifecycle.command()
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
 def check(config: str):
-    """检查当前项目生涯状态
+    """Check current project lifecycle status
 
     Examples:
 
@@ -33,7 +33,7 @@ def check(config: str):
     """
     config_path = Path(config)
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print(f"[red]Error:[/red] Config file does not exist: {config}")
         raise SystemExit(1)
 
     with open(config_path, "r", encoding="utf-8") as f:
@@ -45,76 +45,76 @@ def check(config: str):
     stage_history = manager.get_stage_history()
     milestone_status = manager.check_milestone_completion()
 
-    # 显示当前阶段信息
+    # Display current stage info
     console.print()
     console.print(Panel.fit(
-        f"[bold]{stage_info.get('name', '未知')}[/bold] ({current_stage})\n\n"
+        f"[bold]{stage_info.get('name', 'Unknown')}[/bold] ({current_stage})\n\n"
         f"{stage_info.get('description', '')}",
-        title="当前项目生涯阶段"
+        title="Current Project Lifecycle Stage"
     ))
 
-    # 显示阶段重点和原则
+    # Display stage focus and principles
     console.print()
-    console.print("[bold]阶段重点:[/bold]")
+    console.print("[bold]Stage Focus:[/bold]")
     for focus in stage_info.get('focus', []):
         console.print(f"  {BULLET} {focus}")
 
     console.print()
-    console.print("[bold]阶段原则:[/bold]")
+    console.print("[bold]Stage Principles:[/bold]")
     for principle in stage_info.get('principles', []):
         console.print(f"  {BULLET} {principle}")
 
-    # 显示里程碑状态
+    # Display milestone status
     if milestone_status['total'] > 0:
         console.print()
-        console.print(f"[bold]里程碑进度:[/bold] {milestone_status['completed']}/{milestone_status['total']} 已完成")
-        console.print(f"[dim]完成率:[/dim] {milestone_status['completion_rate']:.0%}")
+        console.print(f"[bold]Milestone Progress:[/bold] {milestone_status['completed']}/{milestone_status['total']} completed")
+        console.print(f"[dim]Completion rate:[/dim] {milestone_status['completion_rate']:.0%}")
 
         if milestone_status['pending'] > 0:
             console.print()
-            console.print("[yellow]待完成的里程碑:[/yellow]")
+            console.print("[yellow]Pending milestones:[/yellow]")
             for milestone in milestone_status['milestones']:
                 if not milestone.get('completed', False):
-                    console.print(f"  {EMOJI['hourglass']} {milestone.get('name', '未命名里程碑')}")
+                    console.print(f"  {EMOJI['hourglass']} {milestone.get('name', 'Unnamed milestone')}")
 
-    # 检查是否可以升级
+    # Check if upgrade is possible
     can_upgrade, next_stage, reason = manager.can_upgrade()
     if can_upgrade:
         console.print()
-        console.print(f"[green]{EMOJI['success']} 可以升级到下一阶段![/green]")
-        console.print(f"[dim]下一阶段:[/dim] {next_stage}")
+        console.print(f"[green]{EMOJI['success']} Ready to upgrade to next stage![/green]")
+        console.print(f"[dim]Next stage:[/dim] {next_stage}")
         console.print()
-        console.print("[bold]升级建议:[/bold]")
+        console.print("[bold]Upgrade suggestions:[/bold]")
         suggestions = manager.get_upgrade_suggestions(next_stage)
         for suggestion in suggestions:
             console.print(f"  {BULLET} {suggestion}")
         console.print()
-        console.print("[dim]运行 'vibecollab lifecycle upgrade' 进行升级[/dim]")
+        console.print("[dim]Run 'vibecollab lifecycle upgrade' to proceed[/dim]")
     elif reason:
         console.print()
-        console.print(f"[yellow]{EMOJI['warning']} 暂不能升级:[/yellow] {reason}")
+        console.print(f"[yellow]{EMOJI['warning']} Cannot upgrade yet:[/yellow] {reason}")
 
-    # 显示阶段历史
+    # Display stage history
     if stage_history:
         console.print()
-        console.print("[bold]阶段历史:[/bold]")
+        console.print("[bold]Stage History:[/bold]")
         for entry in stage_history:
             stage = entry.get("stage", "unknown")
-            started = entry.get("started_at", "未知")
+            started = entry.get("started_at", "Unknown")
             ended = entry.get("ended_at")
 
             if ended:
-                console.print(f"  {BULLET} {stage}: {started} → {ended}")
+                console.print(f"  {BULLET} {stage}: {started} -> {ended}")
             else:
-                console.print(f"  {BULLET} {stage}: {started} [bold green](进行中)[/bold green]")
+                console.print(f"  {BULLET} {stage}: {started} [bold green](in progress)[/bold green]")
 
 
 @lifecycle.command()
-@click.option("--config", "-c", default="project.yaml", help="项目配置文件路径")
-@click.option("--stage", "-s", type=click.Choice(STAGE_ORDER), help="指定目标阶段（默认升级到下一阶段）")
-@click.option("--force", "-f", is_flag=True, help="强制升级（跳过检查）")
+@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--stage", "-s", type=click.Choice(STAGE_ORDER), help="Target stage (default: upgrade to next stage)")
+@click.option("--force", "-f", is_flag=True, help="Force upgrade (skip checks)")
 def upgrade(config: str, stage: Optional[str], force: bool):
-    """升级项目到下一阶段或指定阶段
+    """Upgrade project to next or specified stage
 
     Examples:
 
@@ -124,7 +124,7 @@ def upgrade(config: str, stage: Optional[str], force: bool):
     """
     config_path = Path(config)
     if not config_path.exists():
-        console.print(f"[red]错误:[/red] 配置文件不存在: {config}")
+        console.print(f"[red]Error:[/red] Config file does not exist: {config}")
         raise SystemExit(1)
 
     with open(config_path, "r", encoding="utf-8") as f:
@@ -133,24 +133,24 @@ def upgrade(config: str, stage: Optional[str], force: bool):
     manager = LifecycleManager(project_config)
     manager.get_current_stage()
 
-    # 确定目标阶段
+    # Determine target stage
     if stage is None:
         can_upgrade, next_stage, reason = manager.can_upgrade()
         if not can_upgrade and not force:
-            console.print(f"[red]错误:[/red] {reason}")
-            console.print("[dim]使用 --force 强制升级（不推荐）[/dim]")
+            console.print(f"[red]Error:[/red] {reason}")
+            console.print("[dim]Use --force to force upgrade (not recommended)[/dim]")
             raise SystemExit(1)
         target_stage = next_stage
     else:
         target_stage = stage
 
-    # 执行升级
+    # Execute upgrade
     success, error = manager.upgrade_to_stage(target_stage)
     if not success:
-        console.print(f"[red]错误:[/red] {error}")
+        console.print(f"[red]Error:[/red] {error}")
         raise SystemExit(1)
 
-    # 保存配置
+    # Save config
     project_config.update(manager.to_config_dict())
     with open(config_path, "w", encoding="utf-8") as f:
         yaml.dump(
@@ -161,28 +161,28 @@ def upgrade(config: str, stage: Optional[str], force: bool):
             sort_keys=False
         )
 
-    # 显示升级成功信息
+    # Display upgrade success info
     target_info = manager.get_stage_info(target_stage)
     console.print()
     console.print(Panel.fit(
-        f"[bold green]{EMOJI['success']} 项目已升级到 {target_info.get('name', target_stage)} 阶段[/bold green]",
-        title="升级成功"
+        f"[bold green]{EMOJI['success']} Project upgraded to {target_info.get('name', target_stage)} stage[/bold green]",
+        title="Upgrade Successful"
     ))
 
-    # 显示升级建议
+    # Display upgrade suggestions
     suggestions = manager.get_upgrade_suggestions(target_stage)
     if suggestions:
         console.print()
-        console.print("[bold]升级后需要关注的变化:[/bold]")
+        console.print("[bold]Changes to note after upgrade:[/bold]")
         for suggestion in suggestions:
             console.print(f"  {BULLET} {suggestion}")
 
     console.print()
-    console.print("[bold]下一步:[/bold]")
-    console.print("  1. 重新生成 CONTRIBUTING_AI.md: vibecollab generate -c project.yaml")
-    console.print("  2. 更新 ROADMAP.md 中的阶段信息")
-    console.print("  3. 根据新阶段的原则调整开发流程")
+    console.print("[bold]Next steps:[/bold]")
+    console.print("  1. Regenerate CONTRIBUTING_AI.md: vibecollab generate -c project.yaml")
+    console.print("  2. Update stage info in ROADMAP.md")
+    console.print("  3. Adjust development workflow according to new stage principles")
 
 
-# 导出命令组
+# Export command group
 __all__ = ["lifecycle"]

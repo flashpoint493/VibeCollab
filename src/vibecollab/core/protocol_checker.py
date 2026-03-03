@@ -1,6 +1,6 @@
 """
-Protocol Checker - 协议遵循情况检查器
-用于检查 AI 是否遵循了协作协议中的各项要求
+Protocol Checker - Protocol compliance checker
+Used to check whether AI follows the requirements of the collaboration protocol
 """
 
 import subprocess
@@ -14,7 +14,7 @@ from ..utils.git import get_git_status, is_git_repo
 
 @dataclass
 class CheckResult:
-    """检查结果"""
+    """Check result"""
     name: str
     passed: bool
     message: str
@@ -23,7 +23,7 @@ class CheckResult:
 
 
 class ProtocolChecker:
-    """协议检查器"""
+    """Protocol checker"""
 
     def __init__(self, project_root: Path, config: Optional[Dict] = None):
         self.project_root = Path(project_root)
@@ -31,76 +31,76 @@ class ProtocolChecker:
         self.docs_dir = self.project_root / "docs"
 
     def check_all(self) -> List[CheckResult]:
-        """执行所有协议检查
+        """Execute all protocol checks
 
         Returns:
-            List[CheckResult]: 检查结果列表
+            List[CheckResult]: List of check results
         """
         results = []
 
-        # 检查 Git 相关
+        # Check Git related
         results.extend(self._check_git_protocol())
 
-        # 检查文档更新
+        # Check documentation updates
         results.extend(self._check_documentation_protocol())
 
-        # 检查对话流程协议
+        # Check dialogue flow protocol
         results.extend(self._check_dialogue_protocol())
 
-        # 检查多开发者协议
+        # Check multi-developer protocol
         results.extend(self._check_multi_developer_protocol())
 
-        # 检查关联文档一致性
+        # Check document consistency
         results.extend(self._check_document_consistency())
 
         return results
 
     def _check_git_protocol(self) -> List[CheckResult]:
-        """检查 Git 协议遵循情况"""
+        """Check Git protocol compliance"""
         results = []
 
-        # 检查是否是 Git 仓库
+        # Check if it's a Git repository
         if not is_git_repo(self.project_root):
             results.append(CheckResult(
-                name="Git 仓库初始化",
+                name="Git Repository Init",
                 passed=False,
-                message="项目目录不是 Git 仓库",
+                message="Project directory is not a Git repository",
                 severity="error",
-                suggestion="运行 'git init' 初始化仓库，或使用 'vibecollab init' 创建新项目"
+                suggestion="Run 'git init' to initialize the repository, or use 'vibecollab init' to create a new project"
             ))
-            return results  # 如果不是 Git 仓库，其他检查无意义
+            return results  # If not a Git repo, other checks are meaningless
 
-        # 检查是否有未提交的更改
+        # Check for uncommitted changes
         git_status = get_git_status(self.project_root)
         if git_status and git_status.get("has_uncommitted_changes"):
             results.append(CheckResult(
-                name="Git 提交要求",
+                name="Git Commit Requirement",
                 passed=False,
-                message="存在未提交的更改",
+                message="There are uncommitted changes",
                 severity="warning",
-                suggestion="根据协议，每次有效对话后应执行 git commit。运行 'git status' 查看更改，然后提交"
+                suggestion="Per protocol, git commit should be done after each effective dialogue. Run 'git status' to view changes, then commit"
             ))
 
-        # 检查最近的提交时间（如果可能）
+        # Check recent commit time (if possible)
         last_commit_time = self._get_last_commit_time()
         if last_commit_time:
             hours_since_commit = (datetime.now() - last_commit_time).total_seconds() / 3600
             if hours_since_commit > 24:
                 results.append(CheckResult(
-                    name="Git 提交频率",
+                    name="Git Commit Frequency",
                     passed=True,
-                    message=f"距离上次提交已过去 {int(hours_since_commit)} 小时",
+                    message=f"{int(hours_since_commit)} hours since last commit",
                     severity="info",
-                    suggestion="如果最近有对话产出，记得提交到 Git"
+                    suggestion="If there was recent dialogue output, remember to commit to Git"
                 ))
 
         return results
 
     def _check_documentation_protocol(self) -> List[CheckResult]:
-        """检查文档更新协议"""
+        """Check documentation update protocol"""
         results = []
 
-        # 从配置读取更新阈值，默认 0.25 小时 = 15 分钟
+        # Read update threshold from config, default 0.25 hours = 15 minutes
         check_config = self.config.get("protocol_check", {}).get("checks", {}).get("documentation", {})
         threshold_hours = check_config.get("update_threshold_hours", 0.25)
 
@@ -112,45 +112,45 @@ class ProtocolChecker:
             full_path = self.project_root / file_path
             if not full_path.exists():
                 results.append(CheckResult(
-                    name=f"文档存在性: {file_path}",
+                    name=f"Doc Existence: {file_path}",
                     passed=False,
-                    message=f"必需文档不存在: {file_path}",
+                    message=f"Required document does not exist: {file_path}",
                     severity="error",
-                    suggestion=f"创建文件 {file_path}，或使用 'vibecollab init' 初始化项目"
+                    suggestion=f"Create file {file_path}, or use 'vibecollab init' to initialize the project"
                 ))
                 continue
 
-            # 检查文件是否在阈值时间内更新
+            # Check if file was updated within threshold
             file_mtime = datetime.fromtimestamp(full_path.stat().st_mtime)
             hours_since_update = (datetime.now() - file_mtime).total_seconds() / 3600
 
             if hours_since_update > threshold_hours:
                 if threshold_hours < 1:
-                    time_desc = f"{int(threshold_hours * 60)} 分钟"
+                    time_desc = f"{int(threshold_hours * 60)} minutes"
                 else:
-                    time_desc = f"{int(threshold_hours)} 小时"
+                    time_desc = f"{int(threshold_hours)} hours"
                 results.append(CheckResult(
-                    name=f"文档更新: {file_path}",
+                    name=f"Doc Update: {file_path}",
                     passed=False,
-                    message=f"文档 {file_path} 超过 {time_desc} 未更新",
+                    message=f"Document {file_path} has not been updated for over {time_desc}",
                     severity="warning",
-                    suggestion=f"根据协议，对话结束后应更新 {file_path}。如果最近有对话，请更新此文档"
+                    suggestion=f"Per protocol, {file_path} should be updated after dialogue ends. If there was recent dialogue, please update this document"
                 ))
 
-        # 检查 PRD.md（如果配置要求）
+        # Check PRD.md (if configured)
         prd_config = self.config.get("prd_management", {})
         if prd_config.get("enabled", False):
             prd_path = self.project_root / prd_config.get("prd_file", "docs/PRD.md")
             if not prd_path.exists():
                 results.append(CheckResult(
-                    name="PRD 文档",
+                    name="PRD Document",
                     passed=False,
-                    message="PRD.md 文档不存在",
+                    message="PRD.md document does not exist",
                     severity="warning",
-                    suggestion="创建 docs/PRD.md 记录项目需求和需求变化"
+                    suggestion="Create docs/PRD.md to record project requirements and requirement changes"
                 ))
 
-        # 检查多开发者协作文档（如果启用多开发者模式）
+        # Check multi-developer collaboration document (if multi-developer mode enabled)
         multi_dev_config = self.config.get("multi_developer", {})
         if multi_dev_config.get("enabled", False):
             collab_config = multi_dev_config.get("collaboration", {})
@@ -159,57 +159,57 @@ class ProtocolChecker:
 
             if not collab_path.exists():
                 results.append(CheckResult(
-                    name="协作文档",
+                    name="Collaboration Doc",
                     passed=False,
-                    message=f"多开发者协作文档不存在: {collab_file}",
+                    message=f"Multi-developer collaboration document does not exist: {collab_file}",
                     severity="warning",
-                    suggestion=f"创建 {collab_file} 记录开发者之间的协作关系、任务分配和依赖关系"
+                    suggestion=f"Create {collab_file} to record developer collaboration, task assignments and dependencies"
                 ))
             else:
-                # 检查文件是否最近更新（7天内）
+                # Check if file was recently updated (within 7 days)
                 file_mtime = datetime.fromtimestamp(collab_path.stat().st_mtime)
                 days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
 
                 if days_since_update > 7:
                     results.append(CheckResult(
-                        name="协作文档更新",
+                        name="Collaboration Doc Update",
                         passed=True,
-                        message=f"{collab_file} 已超过 7 天未更新",
+                        message=f"{collab_file} has not been updated for over 7 days",
                         severity="info",
-                        suggestion="建议定期（每周）更新协作文档，记录任务进展和团队变更"
+                        suggestion="Recommend updating collaboration document regularly (weekly) to record task progress and team changes"
                     ))
 
         return results
 
     def _check_dialogue_protocol(self) -> List[CheckResult]:
-        """检查对话流程协议"""
+        """Check dialogue flow protocol"""
         results = []
 
         dialogue_protocol = self.config.get("dialogue_protocol", {})
         on_start = dialogue_protocol.get("on_start", {})
         required_reads = on_start.get("read_files", [])
 
-        # 检查对话开始时应该读取的文件是否存在
+        # Check if files that should be read at dialogue start exist
         for file_path in required_reads:
             full_path = self.project_root / file_path
             if not full_path.exists():
                 results.append(CheckResult(
-                    name=f"对话开始文件: {file_path}",
+                    name=f"Dialogue Start File: {file_path}",
                     passed=False,
-                    message=f"对话开始时应该读取的文件不存在: {file_path}",
+                    message=f"File that should be read at dialogue start does not exist: {file_path}",
                     severity="error",
-                    suggestion=f"确保文件 {file_path} 存在，或使用 'vibecollab init' 初始化项目"
+                    suggestion=f"Ensure file {file_path} exists, or use 'vibecollab init' to initialize the project"
                 ))
 
         return results
 
     def _check_multi_developer_protocol(self) -> List[CheckResult]:
-        """检查多开发者协议遵循情况"""
+        """Check multi-developer protocol compliance"""
         results = []
 
         multi_dev_config = self.config.get("multi_developer", {})
         if not multi_dev_config.get("enabled", False):
-            # 多开发者模式未启用，跳过检查
+            # Multi-developer mode not enabled, skip checks
             return results
 
         developers = multi_dev_config.get("developers", [])
@@ -219,7 +219,7 @@ class ProtocolChecker:
         )
         developers_dir = self.project_root / developers_dir_name
 
-        # 如果没有静态配置开发者列表，从文件系统动态发现
+        # If no static developer list, discover dynamically from filesystem
         if not developers:
             if developers_dir.exists():
                 discovered = []
@@ -230,149 +230,149 @@ class ProtocolChecker:
 
             if not developers:
                 results.append(CheckResult(
-                    name="开发者配置",
+                    name="Developer Config",
                     passed=False,
-                    message="多开发者模式已启用但未发现任何开发者",
+                    message="Multi-developer mode is enabled but no developers were found",
                     severity="warning",
                     suggestion=(
-                        "使用 'vibecollab dev init -d <name>' 初始化开发者，"
-                        "或在 multi_developer.developers 中静态配置"
+                        "Use 'vibecollab dev init -d <name>' to initialize a developer, "
+                        "or configure statically in multi_developer.developers"
                     )
                 ))
                 return results
 
-        # 检查每个开发者的上下文文件
+        # Check each developer's context files
         for dev in developers:
             dev_id = dev.get("id") if isinstance(dev, dict) else dev
             dev_name = (dev.get("name", dev_id) if isinstance(dev, dict) else dev)
 
             if not dev_id:
                 results.append(CheckResult(
-                    name="开发者ID",
+                    name="Developer ID",
                     passed=False,
-                    message=f"开发者 '{dev_name}' 缺少必需的 'id' 字段",
+                    message=f"Developer '{dev_name}' is missing the required 'id' field",
                     severity="error",
-                    suggestion="为每个开发者配置唯一的 id 标识符"
+                    suggestion="Configure a unique id identifier for each developer"
                 ))
                 continue
 
             dev_dir = developers_dir / dev_id
 
-            # 检查开发者目录是否存在
+            # Check if developer directory exists
             if not dev_dir.exists():
                 results.append(CheckResult(
-                    name=f"开发者目录: {dev_name}",
+                    name=f"Developer Dir: {dev_name}",
                     passed=False,
-                    message=f"开发者 '{dev_name}' 的目录不存在: docs/developers/{dev_id}",
+                    message=f"Developer '{dev_name}' directory does not exist: docs/developers/{dev_id}",
                     severity="error",
-                    suggestion=f"创建目录 docs/developers/{dev_id} 并添加 CONTEXT.md 和 .metadata.yaml"
+                    suggestion=f"Create directory docs/developers/{dev_id} and add CONTEXT.md and .metadata.yaml"
                 ))
                 continue
 
-            # 检查 CONTEXT.md
+            # Check CONTEXT.md
             context_file = dev_dir / "CONTEXT.md"
             if not context_file.exists():
                 results.append(CheckResult(
-                    name=f"开发者上下文: {dev_name}",
+                    name=f"Developer Context: {dev_name}",
                     passed=False,
-                    message=f"开发者 '{dev_name}' 的 CONTEXT.md 不存在",
+                    message=f"Developer '{dev_name}' CONTEXT.md does not exist",
                     severity="error",
-                    suggestion=f"创建 docs/developers/{dev_id}/CONTEXT.md 记录该开发者的工作上下文"
+                    suggestion=f"Create docs/developers/{dev_id}/CONTEXT.md to record the developer's work context"
                 ))
             else:
-                # 检查 CONTEXT.md 是否最近更新（7天内有活动）
+                # Check if CONTEXT.md was recently updated (activity within 7 days)
                 file_mtime = datetime.fromtimestamp(context_file.stat().st_mtime)
                 days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
 
                 if days_since_update > 7:
                     results.append(CheckResult(
-                        name=f"开发者上下文更新: {dev_name}",
+                        name=f"Developer Context Update: {dev_name}",
                         passed=True,
-                        message=f"开发者 '{dev_name}' 的 CONTEXT.md 已超过 {int(days_since_update)} 天未更新",
+                        message=f"Developer '{dev_name}' CONTEXT.md has not been updated for {int(days_since_update)} days",
                         severity="info",
-                        suggestion=f"如果 {dev_name} 最近有开发活动，记得更新其 CONTEXT.md"
+                        suggestion=f"If {dev_name} has had recent development activity, remember to update their CONTEXT.md"
                     ))
                 else:
                     results.append(CheckResult(
-                        name=f"开发者上下文更新: {dev_name}",
+                        name=f"Developer Context Update: {dev_name}",
                         passed=True,
-                        message=f"开发者 '{dev_name}' 的 CONTEXT.md 在 {int(days_since_update)} 天前更新",
+                        message=f"Developer '{dev_name}' CONTEXT.md was updated {int(days_since_update)} days ago",
                         severity="info"
                     ))
 
-            # 检查 .metadata.yaml
+            # Check .metadata.yaml
             metadata_file = dev_dir / ".metadata.yaml"
             if not metadata_file.exists():
                 results.append(CheckResult(
-                    name=f"开发者元数据: {dev_name}",
+                    name=f"Developer Metadata: {dev_name}",
                     passed=False,
-                    message=f"开发者 '{dev_name}' 的 .metadata.yaml 不存在",
+                    message=f"Developer '{dev_name}' .metadata.yaml does not exist",
                     severity="warning",
-                    suggestion=f"创建 docs/developers/{dev_id}/.metadata.yaml 记录开发者信息（角色、专长等）"
+                    suggestion=f"Create docs/developers/{dev_id}/.metadata.yaml to record developer info (role, expertise, etc.)"
                 ))
 
-            # 检查 Git 提交中是否包含该开发者的上下文更新
+            # Check if developer's context update is in Git commits
             if context_file.exists():
                 git_tracked = self._is_file_tracked_in_git(context_file)
                 if not git_tracked:
                     results.append(CheckResult(
-                        name=f"Git 追踪: {dev_name} CONTEXT.md",
+                        name=f"Git Tracking: {dev_name} CONTEXT.md",
                         passed=False,
-                        message=f"开发者 '{dev_name}' 的 CONTEXT.md 未纳入 Git 版本控制",
+                        message=f"Developer '{dev_name}' CONTEXT.md is not tracked in Git version control",
                         severity="warning",
-                        suggestion=f"运行 'git add docs/developers/{dev_id}/CONTEXT.md' 并提交"
+                        suggestion=f"Run 'git add docs/developers/{dev_id}/CONTEXT.md' and commit"
                     ))
 
-        # 检查协作文档
+        # Check collaboration document
         collab_config = multi_dev_config.get("collaboration", {})
         collab_file = collab_config.get("file", "docs/developers/COLLABORATION.md")
         collab_path = self.project_root / collab_file
 
         if not collab_path.exists():
             results.append(CheckResult(
-                name="多开发者协作文档",
+                name="Multi-Developer Collaboration Doc",
                 passed=False,
-                message=f"协作文档不存在: {collab_file}",
+                message=f"Collaboration document does not exist: {collab_file}",
                 severity="error",
-                suggestion=f"创建 {collab_file} 记录团队任务分配、里程碑和协作规则"
+                suggestion=f"Create {collab_file} to record team task assignments, milestones and collaboration rules"
             ))
         else:
-            # 检查协作文档更新频率
+            # Check collaboration document update frequency
             file_mtime = datetime.fromtimestamp(collab_path.stat().st_mtime)
             days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
 
             if days_since_update > 7:
                 results.append(CheckResult(
-                    name="协作文档更新频率",
+                    name="Collaboration Doc Update Frequency",
                     passed=True,
-                    message=f"协作文档已超过 {int(days_since_update)} 天未更新",
+                    message=f"Collaboration document has not been updated for {int(days_since_update)} days",
                     severity="info",
-                    suggestion="建议每周更新协作文档，记录任务进展和团队变更"
+                    suggestion="Recommend updating collaboration document weekly to record task progress and team changes"
                 ))
 
-        # 检查冲突检测配置
+        # Check conflict detection config
         conflict_config = multi_dev_config.get("conflict_detection", {})
         if not conflict_config.get("enabled", True):
             results.append(CheckResult(
-                name="冲突检测",
+                name="Conflict Detection",
                 passed=True,
-                message="多开发者冲突检测已禁用",
+                message="Multi-developer conflict detection is disabled",
                 severity="warning",
-                suggestion="建议启用冲突检测以避免多个开发者修改同一文件产生冲突"
+                suggestion="Recommend enabling conflict detection to avoid multiple developers modifying the same files"
             ))
 
         return results
 
     def _check_document_consistency(self) -> List[CheckResult]:
-        """检查关联文档之间的一致性
+        """Check consistency between related documents
 
-        通过 project.yaml 中 documentation.consistency.linked_groups 配置关联文档组，
-        检查同组文档的修改时间是否同步。
+        Through project.yaml documentation.consistency.linked_groups config,
+        check whether documents in the same group have synchronized modification times.
 
-        支持三级检查粒度 (consistency_level):
-          - local_mtime: 本地文件修改时间级别（最敏感，默认 15min 差异阈值）
-          - git_commit:  git 提交时间级别（检查最近一次 commit 是否同步修改了组内文件）
-          - release:     发布版本级别（最宽松，仅检查标签时的文件状态）
+        Supports three check granularity levels (consistency_level):
+          - local_mtime: Local file modification time level (most sensitive, default 15min threshold)
+          - git_commit:  Git commit time level (check if recent commit synchronized group files)
+          - release:     Release version level (most lenient, only check file state at tags)
         """
         results = []
 
@@ -385,7 +385,7 @@ class ProtocolChecker:
         default_level = consistency_config.get("default_level", "local_mtime")
 
         for group in linked_groups:
-            group_name = group.get("name", "未命名组")
+            group_name = group.get("name", "Unnamed Group")
             files = group.get("files", [])
             level = group.get("level", default_level)
             threshold_minutes = group.get("threshold_minutes", 15)
@@ -409,7 +409,7 @@ class ProtocolChecker:
                     self._check_release_consistency(group_name, files)
                 )
 
-        # 检查 key_files 中声明的所有文件存在性 + 可选陈旧性
+        # Check existence + optional staleness of all files declared in key_files
         key_files = doc_config.get("key_files", [])
         for kf in key_files:
             path = kf.get("path", "")
@@ -418,35 +418,35 @@ class ProtocolChecker:
             full_path = self.project_root / path
             if not full_path.exists():
                 results.append(CheckResult(
-                    name=f"关键文档存在性: {path}",
+                    name=f"Key Doc Existence: {path}",
                     passed=False,
-                    message=f"关键文档不存在: {path} (用途: {kf.get('purpose', '未知')})",
+                    message=f"Key document does not exist: {path} (purpose: {kf.get('purpose', 'unknown')})",
                     severity="warning",
-                    suggestion=f"创建 {path}，它被声明为关键文档"
+                    suggestion=f"Create {path}, it is declared as a key document"
                 ))
                 continue
 
-            # 可选陈旧性检查: max_stale_days
+            # Optional staleness check: max_stale_days
             max_stale_days = kf.get("max_stale_days")
             if max_stale_days is not None and max_stale_days > 0:
                 file_mtime = datetime.fromtimestamp(full_path.stat().st_mtime)
                 days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
                 if days_since_update > max_stale_days:
                     results.append(CheckResult(
-                        name=f"关键文档陈旧: {path}",
+                        name=f"Key Doc Stale: {path}",
                         passed=False,
                         message=(
-                            f"关键文档 {path} 已超过 {max_stale_days} 天未更新"
-                            f"（上次更新: {int(days_since_update)} 天前）"
+                            f"Key document {path} has not been updated for over {max_stale_days} days"
+                            f" (last update: {int(days_since_update)} days ago)"
                         ),
                         severity="warning",
                         suggestion=(
-                            f"根据触发条件「{kf.get('update_trigger', '未知')}」，"
-                            f"请检查 {path} 是否需要更新"
+                            f"Based on trigger condition '{kf.get('update_trigger', 'unknown')}', "
+                            f"please check if {path} needs updating"
                         )
                     ))
 
-            # 可选跟随检查: watch_files — 当 watch 的文件更新了但本文件没跟上时告警
+            # Optional follow check: watch_files - warn when watched files updated but this file didn't follow
             watch_files = kf.get("watch_files", [])
             if watch_files and full_path.exists():
                 my_mtime = datetime.fromtimestamp(full_path.stat().st_mtime)
@@ -457,16 +457,16 @@ class ProtocolChecker:
                         lag_minutes = (wf_mtime - my_mtime).total_seconds() / 60
                         if lag_minutes > 15:
                             results.append(CheckResult(
-                                name=f"关键文档滞后: {path}",
+                                name=f"Key Doc Lag: {path}",
                                 passed=False,
                                 message=(
-                                    f"{wf} 已更新，但 {path} 落后 "
-                                    f"{int(lag_minutes)} 分钟未同步"
+                                    f"{wf} has been updated, but {path} is lagging "
+                                    f"{int(lag_minutes)} minutes behind"
                                 ),
                                 severity="warning",
                                 suggestion=(
-                                    f"触发条件「{kf.get('update_trigger', '未知')}」"
-                                    f"可能已满足，请检查 {path} 是否需要更新"
+                                    f"Trigger condition '{kf.get('update_trigger', 'unknown')}' "
+                                    f"may have been met, please check if {path} needs updating"
                                 )
                             ))
 
@@ -476,14 +476,14 @@ class ProtocolChecker:
         self, group_name: str, files: List[str], threshold_minutes: float,
         max_inactive_hours: float = 0
     ) -> List[CheckResult]:
-        """本地文件修改时间级别的一致性检查
+        """Local file modification time level consistency check
 
-        检查同组文件的 mtime 差异是否超过阈值。如果某个文件刚被修改，
-        而关联文件没有跟随修改，产生 warning。
+        Check whether mtime differences among group files exceed the threshold.
+        If a file was recently modified but associated files did not follow, produce a warning.
 
         Args:
-            max_inactive_hours: 组级可配置的非活跃窗口（小时）。
-                为 0 时使用默认值 24h。设为 -1 表示始终检查（禁用非活跃跳过）。
+            max_inactive_hours: Group-level configurable inactive window (hours).
+                0 uses default 24h. -1 means always check (disable inactive skip).
         """
         results = []
         file_mtimes: Dict[str, datetime] = {}
@@ -496,7 +496,7 @@ class ProtocolChecker:
         if len(file_mtimes) < 2:
             return results
 
-        # 找到最近修改和最早修改的文件
+        # Find most recently and least recently modified files
         sorted_files = sorted(file_mtimes.items(), key=lambda x: x[1], reverse=True)
         newest_file, newest_time = sorted_files[0]
         oldest_file, oldest_time = sorted_files[-1]
@@ -505,7 +505,7 @@ class ProtocolChecker:
 
         if diff_minutes > threshold_minutes:
             hours_since_newest = (datetime.now() - newest_time).total_seconds() / 3600
-            # max_inactive_hours: -1 = 始终检查; 0 = 默认 24h; >0 = 自定义
+            # max_inactive_hours: -1 = always check; 0 = default 24h; >0 = custom
             inactive_limit = (
                 float("inf") if max_inactive_hours < 0
                 else (max_inactive_hours if max_inactive_hours > 0 else 24)
@@ -519,16 +519,16 @@ class ProtocolChecker:
                     stale_t = file_mtimes[stale_f]
                     diff_min = int((newest_time - stale_t).total_seconds() / 60)
                     results.append(CheckResult(
-                        name=f"文档关联性: {group_name}",
+                        name=f"Doc Consistency: {group_name}",
                         passed=False,
                         message=(
-                            f"{newest_file} 已修改，但关联文档 {stale_f} "
-                            f"落后 {diff_min} 分钟未同步更新"
+                            f"{newest_file} has been modified, but associated document {stale_f} "
+                            f"is lagging {diff_min} minutes behind"
                         ),
                         severity="warning",
                         suggestion=(
-                            f"关联组 [{group_name}] 要求同步更新。"
-                            f"请检查 {stale_f} 是否需要跟随修改"
+                            f"Linked group [{group_name}] requires synchronized updates. "
+                            f"Please check if {stale_f} needs to be updated accordingly"
                         )
                     ))
 
@@ -537,17 +537,17 @@ class ProtocolChecker:
     def _check_git_commit_consistency(
         self, group_name: str, files: List[str]
     ) -> List[CheckResult]:
-        """Git 提交时间级别的一致性检查
+        """Git commit time level consistency check
 
-        检查同组文件在最近一次 commit 中是否同时被修改。
-        如果某文件在最近 commit 中被修改了，但关联文件不在同一次 commit 中，产生 warning。
+        Check whether group files were modified in the same recent commit.
+        If a file was modified in the latest commit but associated files are not in the same commit, produce a warning.
         """
         results = []
 
         if not is_git_repo(self.project_root):
             return results
 
-        # 获取每个文件最近一次被修改的 commit hash
+        # Get the most recent commit hash for each file
         file_last_commits: Dict[str, Optional[str]] = {}
         for f in files:
             full_path = self.project_root / f
@@ -567,7 +567,7 @@ class ProtocolChecker:
         if len(file_last_commits) < 2:
             return results
 
-        # 找到最近被 commit 的文件
+        # Find the most recently committed file
         commits_with_time: Dict[str, Optional[datetime]] = {}
         for f, commit_hash in file_last_commits.items():
             if commit_hash:
@@ -588,7 +588,7 @@ class ProtocolChecker:
             else:
                 commits_with_time[f] = None
 
-        # 找到最近 commit 的文件
+        # Find the file with the most recent commit
         valid_entries = [(f, t) for f, t in commits_with_time.items() if t is not None]
         if len(valid_entries) < 2:
             return results
@@ -597,22 +597,22 @@ class ProtocolChecker:
         newest_file, newest_time = valid_entries[0]
         newest_commit = file_last_commits[newest_file]
 
-        # 检查其他文件是否在同一次 commit 中
+        # Check if other files are in the same commit
         for f, commit_hash in file_last_commits.items():
             if f == newest_file:
                 continue
             if commit_hash != newest_commit:
                 results.append(CheckResult(
-                    name=f"文档 Git 关联性: {group_name}",
+                    name=f"Doc Git Consistency: {group_name}",
                     passed=False,
                     message=(
-                        f"{newest_file} 在最近 commit 中被修改，"
-                        f"但关联文档 {f} 不在同一次 commit 中"
+                        f"{newest_file} was modified in the recent commit, "
+                        f"but associated document {f} is not in the same commit"
                     ),
                     severity="warning",
                     suggestion=(
-                        f"关联组 [{group_name}] 要求 git 提交同步。"
-                        f"建议在修改 {newest_file} 时同步更新 {f}"
+                        f"Linked group [{group_name}] requires git commit sync. "
+                        f"Recommend updating {f} when modifying {newest_file}"
                     )
                 ))
 
@@ -621,10 +621,10 @@ class ProtocolChecker:
     def _check_release_consistency(
         self, group_name: str, files: List[str]
     ) -> List[CheckResult]:
-        """发布版本级别的一致性检查
+        """Release version level consistency check
 
-        检查在最近的版本标签时，组内所有文件是否都有被修改（相比上个标签）。
-        这是最宽松的检查，适合文档间不需要每次都同步但版本发布时应一致的场景。
+        Check whether all files in the group were modified (compared to previous tag)
+        at the most recent version tag. This is the most lenient check.
         """
         results = []
 
@@ -632,7 +632,7 @@ class ProtocolChecker:
             return results
 
         try:
-            # 获取最近两个版本标签
+            # Get the two most recent version tags
             tag_result = subprocess.run(
                 ["git", "tag", "--sort=-v:refname", "-l", "v*"],
                 cwd=self.project_root,
@@ -648,7 +648,7 @@ class ProtocolChecker:
             latest_tag = tags[0]
             prev_tag = tags[1]
 
-            # 获取两个标签之间修改的文件
+            # Get files modified between the two tags
             diff_result = subprocess.run(
                 ["git", "diff", "--name-only", prev_tag, latest_tag],
                 cwd=self.project_root,
@@ -659,7 +659,7 @@ class ProtocolChecker:
 
             changed_files = set(diff_result.stdout.strip().split("\n"))
 
-            # 检查组内文件是否都在变更列表中
+            # Check if all group files are in the change list
             group_in_diff = {f: f in changed_files for f in files}
             some_changed = any(group_in_diff.values())
             all_changed = all(group_in_diff.values())
@@ -668,16 +668,16 @@ class ProtocolChecker:
                 missing = [f for f, changed in group_in_diff.items() if not changed]
                 for f in missing:
                     results.append(CheckResult(
-                        name=f"文档版本关联性: {group_name}",
+                        name=f"Doc Version Consistency: {group_name}",
                         passed=False,
                         message=(
-                            f"版本 {prev_tag} → {latest_tag} 中，"
-                            f"关联组内部分文档已更新，但 {f} 未同步修改"
+                            f"In version {prev_tag} -> {latest_tag}, "
+                            f"some documents in the linked group were updated, but {f} was not synced"
                         ),
                         severity="info",
                         suggestion=(
-                            f"关联组 [{group_name}] 在版本发布时应保持一致。"
-                            f"请检查 {f} 是否需要更新"
+                            f"Linked group [{group_name}] should be consistent at release. "
+                            f"Please check if {f} needs updating"
                         )
                     ))
         except BaseException:
@@ -686,13 +686,13 @@ class ProtocolChecker:
         return results
 
     def _is_file_tracked_in_git(self, file_path: Path) -> bool:
-        """检查文件是否在 Git 版本控制中
+        """Check if a file is tracked in Git version control
 
         Args:
-            file_path: 文件路径
+            file_path: File path
 
         Returns:
-            bool: 是否被追踪
+            bool: Whether the file is tracked
         """
         if not is_git_repo(self.project_root):
             return False
@@ -709,7 +709,7 @@ class ProtocolChecker:
             return False
 
     def _get_last_commit_time(self) -> Optional[datetime]:
-        """获取最后一次提交的时间"""
+        """Get the time of the last commit"""
         if not is_git_repo(self.project_root):
             return None
 
@@ -727,13 +727,13 @@ class ProtocolChecker:
             return None
 
     def get_summary(self, results: List[CheckResult]) -> Dict:
-        """获取检查结果摘要
+        """Get check results summary
 
         Args:
-            results: 检查结果列表
+            results: List of check results
 
         Returns:
-            Dict: 摘要信息
+            Dict: Summary information
         """
         total = len(results)
         errors = sum(1 for r in results if r.severity == "error")

@@ -1,52 +1,52 @@
 {%- set test_cfg = testing if testing else {} -%}
 {%- set pqa = test_cfg.get('product_qa', {}) -%}
 {%- set qa_cfg = quick_acceptance if quick_acceptance else {} -%}
-## 4.7 QA 验收协议（重要）
+## 4.7 QA Acceptance Protocol (important)
 
-> **每个功能完成后，必须同步更新 QA 测试用例，供验收使用**
+> **After each feature is completed, QA test cases must be updated simultaneously for acceptance**
 
-**QA 测试用例要素**:
-- 测试 ID ({{ pqa.get('case_id_pattern', 'TC-{module}-{seq}') }})
-- 关联功能 (TASK-ID)
-- 前置条件
-- 测试步骤 (可复现的操作序列)
-- 预期结果 (明确、可验证)
-- 测试状态
+**QA Test Case Elements**:
+- Test ID ({{ pqa.get('case_id_pattern', 'TC-{module}-{seq}') }})
+- Related Feature (TASK-ID)
+- Preconditions
+- Test Steps (reproducible operation sequence)
+- Expected Results (clear, verifiable)
+- Test Status
 
-**开发者责任**:
-1. 功能完成时，在 `{{ pqa.get('test_case_file', 'docs/QA_TEST_CASES.md') }}` 添加测试用例
-2. 提供清晰的操作步骤和预期表现
-3. 标注已知限制或边界情况
+**Developer Responsibilities**:
+1. When a feature is complete, add test cases to `{{ pqa.get('test_case_file', 'docs/QA_TEST_CASES.md') }}`
+2. Provide clear operation steps and expected behavior
+3. Note known limitations or edge cases
 
-**QA 责任**:
-1. 按测试用例执行验收测试
-2. 记录实际结果和问题
-3. 更新测试状态 (通过/部分通过/未通过)
-4. **验收失败时**: 附上日志/截图
-5. 提交 Bug 到已知问题表
+**QA Responsibilities**:
+1. Execute acceptance tests per test cases
+2. Record actual results and issues
+3. Update test status (pass/partial/fail)
+4. **On acceptance failure**: Attach logs/screenshots
+5. Submit bugs to the known issues table
 
-## 4.8 快速验收回复模板
+## 4.8 Quick Acceptance Reply Template
 
-功能开发完成后，AI 必须提供**快速验收清单**，用户可直接复制回复：
+After feature development, the AI must provide a **quick acceptance checklist** that users can directly copy and reply:
 
 ```markdown
-## 🧪 快速验收
+## Quick Acceptance
 
-**启动**: `{{ qa_cfg.get('start_command', 'npm run dev') }}`
+**Start**: `{{ qa_cfg.get('start_command', 'npm run dev') }}`
 
-**验收项**:
-- [ ] 功能A: {操作} → {预期}
-- [ ] 功能B: {操作} → {预期}
-- [ ] 功能C: {操作} → {预期}
+**Acceptance Items**:
+- [ ] Feature A: {operation} -> {expected}
+- [ ] Feature B: {operation} -> {expected}
+- [ ] Feature C: {operation} -> {expected}
 
-**快速回复** (复制修改后发送):
-✅ 全部通过
-或
-⚠️ 问题: {描述问题}
+**Quick Reply** (copy and modify before sending):
+[PASS] All passed
+or
+[ISSUE] Problem: {describe the issue}
 ```
 
-**用户回复格式**:
-- `✅` 或 `通过` - 全部验收通过，继续下一步
-- `⚠️ 问题: xxx` - 有问题需要修复
-- `跳过` - 暂不验收，先继续
+**User Reply Format**:
+- `[PASS]` or `pass` - All acceptance passed, proceed to next step
+- `[ISSUE] Problem: xxx` - Issue found, needs fixing
+- `skip` - Skip acceptance for now, continue
 

@@ -1,11 +1,11 @@
 """
-v0.9.3 Task/EventLog 核心工作流接通 — 单元测试
+v0.9.3 Task/EventLog core workflow integration - unit tests
 
-测试覆盖:
-- Task CLI 新命令: transition / solidify / rollback
-- onboard 注入 Task 概览 + EventLog 摘要
-- next 基于 Task 状态推荐行动
-- MCP Server 新 Tool: task_create / task_transition
+Test coverage:
+- Task CLI new commands: transition / solidify / rollback
+- onboard injects Task overview + EventLog summary
+- next recommends actions based on Task status
+- MCP Server new Tools: task_create / task_transition
 """
 
 import json
@@ -24,7 +24,7 @@ from click.testing import CliRunner
 
 @pytest.fixture
 def project_dir(tmp_path):
-    """创建一个完整的测试项目目录"""
+    """Create a complete test project directory"""
     config = {
         "project": {
             "name": "TestProject",
@@ -33,7 +33,7 @@ def project_dir(tmp_path):
         },
         "documentation": {
             "key_files": [
-                {"path": "CONTRIBUTING_AI.md", "purpose": "AI 协作协议"},
+                {"path": "CONTRIBUTING_AI.md", "purpose": "AI collaboration protocol"},
             ],
         },
         "dialogue_protocol": {
@@ -67,12 +67,12 @@ def project_dir(tmp_path):
 
 @pytest.fixture
 def project_with_tasks(project_dir):
-    """带有任务的项目"""
+    """Project with tasks"""
     from vibecollab.domain.task_manager import TaskManager
 
     tm = TaskManager(project_root=project_dir)
-    tm.create_task(id="TASK-DEV-001", role="DEV", feature="实现功能A", assignee="alice")
-    tm.create_task(id="TASK-DEV-002", role="DEV", feature="实现功能B", assignee="bob")
+    tm.create_task(id="TASK-DEV-001", role="DEV", feature="Implement feature A", assignee="alice")
+    tm.create_task(id="TASK-DEV-002", role="DEV", feature="Implement feature B", assignee="bob")
     tm.transition("TASK-DEV-001", "IN_PROGRESS", actor="alice")
     tm.transition("TASK-DEV-002", "IN_PROGRESS", actor="bob")
     tm.transition("TASK-DEV-002", "REVIEW", actor="bob")
@@ -93,19 +93,19 @@ class TestTransitionCommand:
             import os
             os.chdir(project_dir)
 
-            # 先创建任务
+            # Create task first
             result = runner.invoke(task_group, [
                 "create", "--id", "TASK-DEV-001", "--role", "DEV",
                 "--feature", "Test feature",
             ])
             assert result.exit_code == 0
 
-            # 转换到 IN_PROGRESS
+            # Transition to IN_PROGRESS
             result = runner.invoke(task_group, [
                 "transition", "TASK-DEV-001", "IN_PROGRESS",
             ])
             assert result.exit_code == 0
-            assert "已转换" in result.output
+            assert "Transitioned" in result.output
             assert "IN_PROGRESS" in result.output
 
     def test_transition_with_reason(self, project_dir):
@@ -122,7 +122,7 @@ class TestTransitionCommand:
             ])
             result = runner.invoke(task_group, [
                 "transition", "TASK-DEV-001", "IN_PROGRESS",
-                "-r", "开始开发",
+                "-r", "Start development",
             ])
             assert result.exit_code == 0
 
@@ -138,7 +138,7 @@ class TestTransitionCommand:
                 "create", "--id", "TASK-DEV-001", "--role", "DEV",
                 "--feature", "Test",
             ])
-            # TODO → DONE 是非法转换
+            # TODO -> DONE is an illegal transition
             result = runner.invoke(task_group, [
                 "transition", "TASK-DEV-001", "DONE",
             ])
@@ -156,7 +156,7 @@ class TestTransitionCommand:
                 "transition", "TASK-DEV-999", "IN_PROGRESS",
             ])
             assert result.exit_code != 0
-            assert "not found" in result.output.lower() or "错误" in result.output
+            assert "not found" in result.output.lower() or "error" in result.output.lower()
 
     def test_transition_json_output(self, project_dir):
         from vibecollab.cli.task import task_group
@@ -201,7 +201,7 @@ class TestSolidifyCommand:
 
             result = runner.invoke(task_group, ["solidify", "TASK-DEV-001"])
             assert result.exit_code == 0
-            assert "已固化" in result.output
+            assert "Solidified" in result.output
             assert "DONE" in result.output
 
     def test_solidify_not_in_review(self, project_dir):
@@ -216,10 +216,10 @@ class TestSolidifyCommand:
                 "create", "--id", "TASK-DEV-001", "--role", "DEV",
                 "--feature", "Test",
             ])
-            # 尝试在 TODO 状态 solidify
+            # Try solidify in TODO status
             result = runner.invoke(task_group, ["solidify", "TASK-DEV-001"])
             assert result.exit_code != 0
-            assert "固化失败" in result.output
+            assert "Solidify failed" in result.output
 
     def test_solidify_not_found(self, project_dir):
         from vibecollab.cli.task import task_group
@@ -275,7 +275,7 @@ class TestRollbackCommand:
 
             result = runner.invoke(task_group, ["rollback", "TASK-DEV-001"])
             assert result.exit_code == 0
-            assert "已回滚" in result.output
+            assert "Rolled back" in result.output
 
     def test_rollback_with_reason(self, project_dir):
         from vibecollab.cli.task import task_group
@@ -292,10 +292,10 @@ class TestRollbackCommand:
             runner.invoke(task_group, ["transition", "TASK-DEV-001", "IN_PROGRESS"])
 
             result = runner.invoke(task_group, [
-                "rollback", "TASK-DEV-001", "-r", "需要重新设计",
+                "rollback", "TASK-DEV-001", "-r", "Need redesign",
             ])
             assert result.exit_code == 0
-            assert "需要重新设计" in result.output
+            assert "Need redesign" in result.output
 
     def test_rollback_from_todo(self, project_dir):
         from vibecollab.cli.task import task_group
@@ -309,7 +309,7 @@ class TestRollbackCommand:
                 "create", "--id", "TASK-DEV-001", "--role", "DEV",
                 "--feature", "Test",
             ])
-            # TODO 状态不能回滚
+            # TODO status cannot be rolled back
             result = runner.invoke(task_group, ["rollback", "TASK-DEV-001"])
             assert result.exit_code != 0
 
@@ -345,7 +345,7 @@ class TestRollbackCommand:
 
 
 # ============================================================
-# Task CLI: 全链路状态机测试
+# Task CLI: Full lifecycle state machine test
 # ============================================================
 
 
@@ -361,7 +361,7 @@ class TestFullLifecycle:
 
             runner.invoke(task_group, [
                 "create", "--id", "TASK-DEV-001", "--role", "DEV",
-                "--feature", "实现功能 A",
+                "--feature", "Implement feature A",
             ])
             runner.invoke(task_group, ["transition", "TASK-DEV-001", "IN_PROGRESS"])
             runner.invoke(task_group, ["transition", "TASK-DEV-001", "REVIEW"])
@@ -369,7 +369,7 @@ class TestFullLifecycle:
             result = runner.invoke(task_group, ["solidify", "TASK-DEV-001"])
             assert result.exit_code == 0
 
-            # 验证最终状态
+            # Verify final status
             result = runner.invoke(task_group, ["show", "TASK-DEV-001", "--json"])
             data = json.loads(result.output)
             assert data["status"] == "DONE"
@@ -385,25 +385,25 @@ class TestFullLifecycle:
 
             runner.invoke(task_group, [
                 "create", "--id", "TASK-DEV-001", "--role", "DEV",
-                "--feature", "测试功能",
+                "--feature", "test-feature",
             ])
             runner.invoke(task_group, ["transition", "TASK-DEV-001", "IN_PROGRESS"])
             runner.invoke(task_group, ["transition", "TASK-DEV-001", "REVIEW"])
 
-            # 回滚
+            # Rollback
             result = runner.invoke(task_group, [
-                "rollback", "TASK-DEV-001", "-r", "发现 bug",
+                "rollback", "TASK-DEV-001", "-r", "Found bug",
             ])
             assert result.exit_code == 0
 
-            # 重新提审
+            # Re-submit for review
             runner.invoke(task_group, ["transition", "TASK-DEV-001", "REVIEW"])
             result = runner.invoke(task_group, ["solidify", "TASK-DEV-001"])
             assert result.exit_code == 0
 
 
 # ============================================================
-# onboard Task/EventLog 注入
+# onboard Task/EventLog injection
 # ============================================================
 
 
@@ -438,7 +438,7 @@ class TestOnboardInjection:
 
             result = runner.invoke(onboard, [])
             assert result.exit_code == 0
-            assert "任务概览" in result.output
+            assert "Task Overview" in result.output
 
     def test_onboard_no_tasks(self, project_dir):
         from vibecollab.cli.guide import onboard
@@ -464,7 +464,7 @@ class TestOnboardInjection:
             result = runner.invoke(onboard, ["--json"])
             data = json.loads(result.output)
             assert "recent_events" in data
-            # project_with_tasks 创建了任务 + 状态转换，应有事件
+            # project_with_tasks created tasks + state transitions, should have events
             assert len(data["recent_events"]) > 0
 
     def test_onboard_events_rich(self, project_with_tasks):
@@ -477,11 +477,11 @@ class TestOnboardInjection:
 
             result = runner.invoke(onboard, [])
             assert result.exit_code == 0
-            assert "最近事件" in result.output
+            assert "Recent Events" in result.output
 
 
 # ============================================================
-# next Task-based 推荐
+# next Task-based recommendations
 # ============================================================
 
 
@@ -498,7 +498,7 @@ class TestNextTaskRecommendations:
             assert result.exit_code == 0
             data = json.loads(result.output)
 
-            # 应有 solidify 推荐
+            # Should have solidify recommendation
             action_types = [a["type"] for a in data["actions"]]
             assert "task_solidify" in action_types
 
@@ -518,13 +518,13 @@ class TestNextTaskRecommendations:
 
 
 # ============================================================
-# MCP Server 新 Tools
+# MCP Server new Tools
 # ============================================================
 
 
 class TestMcpNewTools:
     def test_task_create_tool(self, project_dir):
-        """task_create tool 应调用正确的 CLI 命令"""
+        """task_create tool should call the correct CLI command"""
         from vibecollab.agent.mcp_server import _run_cli
 
         with patch("subprocess.run") as mock_run:
@@ -547,7 +547,7 @@ class TestMcpNewTools:
             mock_run.assert_called_once()
 
     def test_task_transition_tool(self, project_dir):
-        """task_transition tool 应调用正确的 CLI 命令"""
+        """task_transition tool should call the correct CLI command"""
         from vibecollab.agent.mcp_server import _run_cli
 
         with patch("subprocess.run") as mock_run:
@@ -568,11 +568,11 @@ class TestMcpNewTools:
             mock_run.assert_called_once()
 
     def test_start_conversation_lists_new_tools(self, project_dir):
-        """start_conversation prompt 应包含新工具"""
+        """start_conversation prompt should include new tools"""
         from vibecollab.agent.mcp_server import _safe_load_yaml, _safe_read_text
 
-        # 模拟 prompt 中的工具列表检查
-        # 直接检查 mcp_server.py 源码中的字符串
+        # Check for new tools in prompt tool list
+        # Directly check strings in mcp_server.py source code
         import vibecollab.agent.mcp_server as mod
         import inspect
         source = inspect.getsource(mod)
@@ -582,7 +582,7 @@ class TestMcpNewTools:
 
 
 # ============================================================
-# _collect_project_context 数据完整性
+# _collect_project_context data completeness
 # ============================================================
 
 

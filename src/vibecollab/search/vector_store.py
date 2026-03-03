@@ -1,10 +1,10 @@
 """
-VectorStore — 本地持久化向量存储
+VectorStore - Local persistent vector storage
 
-默认使用 SQLite 存储向量和元数据，纯 Python 余弦相似度计算。
-零外部依赖方案。
+Uses SQLite by default to store vectors and metadata, with pure Python cosine similarity.
+Zero external dependency solution.
 
-存储路径: .vibecollab/vectors/index.db
+Storage path: .vibecollab/vectors/index.db
 """
 
 from __future__ import annotations
@@ -23,32 +23,32 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class VectorDocument:
-    """向量文档 — 存储一条已索引的文本及其向量"""
+    """Vector document -- stores an indexed text and its vector"""
 
-    doc_id: str  # 唯一标识，如 "insight:INS-001" 或 "doc:CONTEXT.md"
+    doc_id: str  # Unique ID, e.g. "insight:INS-001" or "doc:CONTEXT.md"
     text: str
     vector: List[float]
-    source: str = ""  # 来源文件路径
+    source: str = ""  # Source file path
     source_type: str = ""  # "insight" | "document" | "code"
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class SearchResult:
-    """搜索结果"""
+    """Search result"""
 
     doc_id: str
     text: str
-    score: float  # 余弦相似度，0~1
+    score: float  # Cosine similarity, 0~1
     source: str = ""
     source_type: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 def cosine_similarity(a: List[float], b: List[float]) -> float:
-    """纯 Python 余弦相似度"""
+    """Pure Python cosine similarity"""
     if len(a) != len(b):
-        raise ValueError(f"向量维度不匹配: {len(a)} vs {len(b)}")
+        raise ValueError(f"Vector dimension mismatch: {len(a)} vs {len(b)}")
 
     dot = sum(x * y for x, y in zip(a, b))
     norm_a = math.sqrt(sum(x * x for x in a))
@@ -61,20 +61,20 @@ def cosine_similarity(a: List[float], b: List[float]) -> float:
 
 
 def _pack_vector(vector: List[float]) -> bytes:
-    """将 float 列表打包为 bytes（用于 SQLite blob 存储）"""
+    """Pack float list to bytes (for SQLite blob storage)"""
     return struct.pack(f"{len(vector)}f", *vector)
 
 
 def _unpack_vector(data: bytes) -> List[float]:
-    """从 bytes 解包为 float 列表"""
+    """Unpack bytes to float list"""
     count = len(data) // 4  # float32 = 4 bytes
     return list(struct.unpack(f"{count}f", data))
 
 
 class VectorStore:
-    """SQLite 向量存储
+    """SQLite vector store
 
-    表结构:
+    Table schema:
         vectors(
             doc_id TEXT PRIMARY KEY,
             text TEXT,
@@ -90,7 +90,7 @@ class VectorStore:
         self._dimensions = dimensions
 
         if db_path is None:
-            # 内存模式（测试用）
+            # In-memory mode (for testing)
             self._db_path = None
             self._conn = sqlite3.connect(":memory:")
         else:
@@ -119,10 +119,10 @@ class VectorStore:
         self._conn.commit()
 
     def upsert(self, doc: VectorDocument) -> None:
-        """插入或更新一条向量文档"""
+        """Insert or update a vector document"""
         if len(doc.vector) != self._dimensions:
             raise ValueError(
-                f"向量维度不匹配: 期望 {self._dimensions}, 得到 {len(doc.vector)}"
+                f"Vector dimension mismatch: expected {self._dimensions}, got {len(doc.vector)}"
             )
 
         self._conn.execute(
@@ -150,12 +150,12 @@ class VectorStore:
         self._conn.commit()
 
     def upsert_batch(self, docs: Sequence[VectorDocument]) -> int:
-        """批量插入/更新，返回受影响行数"""
+        """Batch insert/update, return affected row count"""
         count = 0
         for doc in docs:
             if len(doc.vector) != self._dimensions:
                 logger.warning(
-                    "跳过 %s: 维度不匹配 (%d vs %d)",
+                    "Skipping %s: dimension mismatch (%d vs %d)",
                     doc.doc_id,
                     len(doc.vector),
                     self._dimensions,
@@ -194,17 +194,17 @@ class VectorStore:
         source_type: Optional[str] = None,
         min_score: float = 0.0,
     ) -> List[SearchResult]:
-        """向量相似度搜索
+        """Vector similarity search
 
         Args:
-            query_vector: 查询向量
-            top_k: 返回结果数量上限
-            source_type: 过滤来源类型
-            min_score: 最低相似度阈值
+            query_vector: Query vector
+            top_k: Maximum number of results
+            source_type: Filter by source type
+            min_score: Minimum similarity threshold
         """
         if len(query_vector) != self._dimensions:
             raise ValueError(
-                f"查询向量维度不匹配: 期望 {self._dimensions}, 得到 {len(query_vector)}"
+                f"Query vector dimension mismatch: expected {self._dimensions}, got {len(query_vector)}"
             )
 
         if source_type:
@@ -239,7 +239,7 @@ class VectorStore:
         return results[:top_k]
 
     def get(self, doc_id: str) -> Optional[VectorDocument]:
-        """根据 doc_id 获取单条文档"""
+        """Get a single document by doc_id"""
         row = self._conn.execute(
             "SELECT doc_id, text, vector, source, source_type, metadata "
             "FROM vectors WHERE doc_id = ?",
@@ -260,13 +260,13 @@ class VectorStore:
         )
 
     def delete(self, doc_id: str) -> bool:
-        """删除单条文档"""
+        """Delete a single document"""
         cursor = self._conn.execute("DELETE FROM vectors WHERE doc_id = ?", (doc_id,))
         self._conn.commit()
         return cursor.rowcount > 0
 
     def delete_by_source_type(self, source_type: str) -> int:
-        """按来源类型批量删除"""
+        """Batch delete by source type"""
         cursor = self._conn.execute(
             "DELETE FROM vectors WHERE source_type = ?", (source_type,)
         )
@@ -274,7 +274,7 @@ class VectorStore:
         return cursor.rowcount
 
     def count(self, source_type: Optional[str] = None) -> int:
-        """统计文档数量"""
+        """Count documents"""
         if source_type:
             row = self._conn.execute(
                 "SELECT COUNT(*) FROM vectors WHERE source_type = ?", (source_type,)
@@ -284,7 +284,7 @@ class VectorStore:
         return row[0] if row else 0
 
     def list_doc_ids(self, source_type: Optional[str] = None) -> List[str]:
-        """列出所有 doc_id"""
+        """List all doc_ids"""
         if source_type:
             rows = self._conn.execute(
                 "SELECT doc_id FROM vectors WHERE source_type = ? ORDER BY doc_id",
@@ -305,7 +305,7 @@ class VectorStore:
         return self._db_path
 
     def close(self):
-        """关闭数据库连接"""
+        """Close database connection"""
         self._conn.close()
 
     def __enter__(self):

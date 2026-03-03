@@ -1,10 +1,10 @@
 """
-Tests for insight_signal.py — 信号收集器 + 候选 Insight 推荐
+Tests for insight_signal.py — Signal collector + candidate Insight recommendations
 
-覆盖：
-- SignalSnapshot: 序列化/反序列化
-- InsightCandidate: 数据结构
-- InsightSignalCollector: 快照 CRUD, git 信号分析, 文档分析, Task 分析, suggest
+Covers:
+- SignalSnapshot: serialization/deserialization
+- InsightCandidate: data structures
+- InsightSignalCollector: snapshot CRUD, git signal analysis, doc analysis, Task analysis, suggest
 """
 
 import json
@@ -176,7 +176,7 @@ class TestGitSignals:
 class TestDocChanges:
     @patch("vibecollab.insight.signal.subprocess.run")
     def test_collect_doc_changes_decisions(self, mock_run, tmp_path):
-        # 创建文档文件
+        # Create doc files
         docs = tmp_path / "docs"
         docs.mkdir()
         (docs / "DECISIONS.md").write_text("content", encoding="utf-8")
@@ -188,7 +188,7 @@ class TestDocChanges:
             r = MagicMock()
             r.returncode = 0
             if "DECISIONS.md" in str(cmd):
-                r.stdout = "+## DECISION-016: 新的架构决策\n-旧内容"
+                r.stdout = "+## DECISION-016: New architecture decision\n-old content"
             else:
                 r.stdout = ""
             return r
@@ -200,7 +200,7 @@ class TestDocChanges:
 
     def test_collect_doc_changes_no_docs(self, tmp_path):
         c = InsightSignalCollector(tmp_path)
-        # 不创建文档文件
+        # Don't create doc files
         changes = c.collect_doc_changes()
         assert changes == {}
 
@@ -307,7 +307,7 @@ class TestAnalysis:
     def test_analyze_doc_decisions(self, tmp_path):
         c = InsightSignalCollector(tmp_path)
         changes = {
-            "docs/DECISIONS.md": ["+## DECISION-016: 新决策"],
+            "docs/DECISIONS.md": ["+## DECISION-016: New decision"],
         }
         candidates = c._analyze_doc_changes(changes)
         assert len(candidates) == 1
@@ -374,7 +374,7 @@ class TestSuggest:
         c = InsightSignalCollector(tmp_path)
         candidates = c.suggest()
         assert len(candidates) >= 2  # git feature + doc decision
-        # 应按 confidence 降序
+        # Should be sorted by confidence descending
         for i in range(len(candidates) - 1):
             assert candidates[i].confidence >= candidates[i + 1].confidence
 
@@ -405,7 +405,7 @@ class TestHelpers:
             InsightCandidate(title="totally different topic"),
         ]
         result = c._deduplicate(candidates)
-        # 前两个应该被去重
+        # First two should be deduplicated
         assert len(result) <= 3
 
     def test_deduplicate_empty(self, tmp_path):
@@ -433,12 +433,12 @@ class TestHelpers:
 
     def test_extract_decision_title(self, tmp_path):
         c = InsightSignalCollector(tmp_path)
-        lines = ["+## DECISION-016: 砍掉 Web UI"]
-        assert "砍掉 Web UI" in c._extract_decision_title(lines)
+        lines = ["+## DECISION-016: Drop Web UI"]
+        assert "Drop Web UI" in c._extract_decision_title(lines)
 
     def test_extract_decision_title_no_match(self, tmp_path):
         c = InsightSignalCollector(tmp_path)
-        assert c._extract_decision_title(["no match"]) == "新的架构/技术决策"
+        assert c._extract_decision_title(["no match"]) == "New architecture/technical decision"
 
     def test_summarize_commits_single(self, tmp_path):
         c = InsightSignalCollector(tmp_path)
@@ -452,7 +452,7 @@ class TestHelpers:
             CommitSignal(hash="b", subject="second", author="x", date="d"),
         ]
         result = c._summarize_commits(commits, "feature")
-        assert "2 项变更" in result
+        assert "other changes" in result
 
     def test_summarize_commits_empty(self, tmp_path):
         c = InsightSignalCollector(tmp_path)

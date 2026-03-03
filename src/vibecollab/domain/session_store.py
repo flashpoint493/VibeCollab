@@ -1,22 +1,22 @@
 """
-Session Store — 对话 summary 持久化存储
+Session Store -- Conversation summary persistent storage
 
-将 AI IDE 对话结束时的 summary 持久化到本地，作为 insight suggest 的输入信号之一。
+Persists AI IDE conversation summaries locally as one of the input signals for insight suggest.
 
-存储结构：
+Storage structure:
     .vibecollab/
-    └── sessions/
-        ├── 2026-02-27T14-30-00.json
-        ├── 2026-02-27T16-00-00.json
-        └── ...
+    +-- sessions/
+        |-- 2026-02-27T14-30-00.json
+        |-- 2026-02-27T16-00-00.json
+        +-- ...
 
-每个 session 文件包含：
-- session_id: 自动生成的时间戳 ID
-- developer: 开发者名称
-- summary: 对话摘要文本
-- key_decisions: 关键决策列表
-- files_changed: 涉及的文件列表
-- created_at: 创建时间
+Each session file contains:
+- session_id: Auto-generated timestamp ID
+- developer: Developer name
+- summary: Conversation summary text
+- key_decisions: List of key decisions
+- files_changed: List of files involved
+- created_at: Creation time
 """
 
 import json
@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional
 
 @dataclass
 class Session:
-    """对话 session 记录"""
+    """Conversation session record"""
 
     session_id: str = ""
     developer: str = ""
@@ -64,19 +64,19 @@ class Session:
             insights_added=data.get("insights_added", []),
             tags=data.get("tags", []),
             created_at=data.get("created_at", ""),
-            _auto_id=False,  # from_dict 不自动生成
+            _auto_id=False,  # from_dict does not auto-generate
         )
 
 
 class SessionStore:
-    """对话 session 存储管理器
+    """Conversation session storage manager
 
     Usage:
         store = SessionStore(project_root=Path("."))
         session = store.save(Session(
             developer="ocarina",
-            summary="实现 MCP Server + AI IDE 集成",
-            key_decisions=["DECISION-015: 砍掉自举能力"],
+            summary="Implemented MCP Server + AI IDE integration",
+            key_decisions=["DECISION-015: Removed self-bootstrap capability"],
             files_changed=["mcp_server.py", "cli_mcp.py"],
         ))
         recent = store.list_recent(5)
@@ -89,7 +89,7 @@ class SessionStore:
         self.sessions_dir = self.project_root / ".vibecollab" / self.SESSIONS_DIR
 
     def save(self, session: Session) -> Session:
-        """保存 session 到文件"""
+        """Save session to file"""
         self.sessions_dir.mkdir(parents=True, exist_ok=True)
         path = self.sessions_dir / f"{session.session_id}.json"
         with open(path, "w", encoding="utf-8") as f:
@@ -97,7 +97,7 @@ class SessionStore:
         return session
 
     def get(self, session_id: str) -> Optional[Session]:
-        """按 ID 获取 session"""
+        """Get session by ID"""
         path = self.sessions_dir / f"{session_id}.json"
         if not path.exists():
             return None
@@ -109,7 +109,7 @@ class SessionStore:
             return None
 
     def list_all(self) -> List[Session]:
-        """列出所有 session，按时间倒序"""
+        """List all sessions, sorted by time descending"""
         if not self.sessions_dir.exists():
             return []
         sessions = []
@@ -123,11 +123,11 @@ class SessionStore:
         return sessions
 
     def list_recent(self, limit: int = 10) -> List[Session]:
-        """列出最近 N 个 session"""
+        """List most recent N sessions"""
         return self.list_all()[:limit]
 
     def list_since(self, since_timestamp: str) -> List[Session]:
-        """列出某时间点之后的 session"""
+        """List sessions after a given timestamp"""
         all_sessions = self.list_all()
         if not since_timestamp:
             return all_sessions
@@ -137,7 +137,7 @@ class SessionStore:
         ]
 
     def delete(self, session_id: str) -> bool:
-        """删除 session"""
+        """Delete session"""
         path = self.sessions_dir / f"{session_id}.json"
         if not path.exists():
             return False
@@ -145,13 +145,13 @@ class SessionStore:
         return True
 
     def count(self) -> int:
-        """session 总数"""
+        """Total session count"""
         if not self.sessions_dir.exists():
             return 0
         return len(list(self.sessions_dir.glob("*.json")))
 
     def get_summaries_text(self, limit: int = 5) -> str:
-        """获取最近 session 的 summary 文本，用于 insight suggest 的输入信号"""
+        """Get recent session summary text as input signal for insight suggest"""
         sessions = self.list_recent(limit)
         if not sessions:
             return ""
@@ -160,5 +160,5 @@ class SessionStore:
             parts.append(f"[{s.created_at[:10]}] {s.summary}")
             if s.key_decisions:
                 for d in s.key_decisions:
-                    parts.append(f"  - 决策: {d}")
+                    parts.append(f"  - Decision: {d}")
         return "\n".join(parts)

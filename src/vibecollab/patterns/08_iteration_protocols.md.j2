@@ -2,99 +2,99 @@
 {%- set build_cfg = build if build else {} -%}
 {%- set vr = version_review if version_review else {} -%}
 {%- set config_iter = iter_cfg.get('config_level_iteration', {}) -%}
-## 4.3 迭代建议管理协议（重要）
+## 4.3 Iteration Suggestion Management Protocol (important)
 
-> **QA 测试中产生的迭代建议，必须经过 PM 评审后决定是否纳入当前里程碑**
+> **Iteration suggestions from QA testing must be reviewed by PM before deciding whether to include in the current milestone**
 
-**迭代建议来源**:
-- QA 测试过程中的体验反馈
-- 开发过程中发现的改进点
-- 用户/人类的直接建议
+**Sources of Iteration Suggestions**:
+- Experience feedback from QA testing
+- Improvements discovered during development
+- Direct suggestions from users/humans
 
-**PM 评审流程**:
+**PM Review Flow**:
 ```
-1. 收集 → 记录到 docs/ROADMAP.md "迭代建议池"
-2. 评审 → 分析优先级、冲突、成本
-3. 决策 → 纳入/延后/拒绝
-4. 排期 → 确定开发顺序
-5. 执行 → 转为 TASK
+1. Collect -> Record in docs/ROADMAP.md "Iteration Suggestion Pool"
+2. Review -> Analyze priority, conflicts, cost
+3. Decide -> Include / Defer / Reject
+4. Schedule -> Determine development order
+5. Execute -> Convert to TASK
 ```
 
 {% if vr.get('enabled', True) -%}
-## 4.4 版本回顾协议（重要）
+## 4.4 Version Review Protocol (important)
 
-> **每次新版本规划前，必须回顾上个版本的测试表现和用户反馈**
+> **Before planning each new version, you must review the previous version's test performance and user feedback**
 
-**回顾时机**: 里程碑验收完成后，开始下一阶段规划前
+**Review Timing**: After milestone acceptance, before starting next phase planning
 
-**回顾内容**:
+**Review Content**:
 ```
-1. 测试表现
-   - 通过率、问题分布
-   - 稳定性评估
+1. Test Performance
+   - Pass rate, issue distribution
+   - Stability assessment
    
-2. 用户体验反馈
-   - 核心功能验证结果
-   - 操作体验、视觉体验
+2. User Experience Feedback
+   - Core feature validation results
+   - Usability, visual experience
    
-3. 技术债务
-   - 已知问题表
-   - 性能瓶颈
+3. Technical Debt
+   - Known issues table
+   - Performance bottlenecks
    
-4. 迭代建议池
-   - 上版本积累的建议
-   - 优先级重新评估
+4. Iteration Suggestion Pool
+   - Accumulated suggestions from previous version
+   - Priority re-evaluation
 ```
 
-**产出**:
-- 补充新的需求到下一阶段
-- 调整任务优先级
-- 记录设计决策
+**Outputs**:
+- Add new requirements to the next phase
+- Adjust task priorities
+- Record design decisions
 
 {% endif -%}
 {% if build_cfg.get('enabled', True) -%}
 {%- set build_cmd = build_cfg.get('command', 'npm run build') -%}
 {%- set dist_entry = build_cfg.get('dist_entry', 'dist/index.html') -%}
-## 4.5 构建打包协议（重要）
+## 4.5 Build & Package Protocol (important)
 
-> **全量验收前必须完成打包流程，打包是开发的一环**
+> **The build process must be completed before full acceptance -- building is part of development**
 
-**构建时机**:
-- ✅ 里程碑全量验收前
-- ✅ Bug 修复期集中测试
-- ✅ 准备分发/演示版本
-- ❌ 不需要每次提交都构建
+**Build Timing**:
+- [x] Before milestone full acceptance
+- [x] During bug fix period for focused testing
+- [x] Preparing distribution/demo versions
+- [ ] NOT required for every commit
 
-**全量验收前 CheckList**:
+**Pre-Acceptance Checklist**:
 ```
 [ ] 1. {{ build_cmd }}
-[ ] 2. 双击 {{ dist_entry }} 测试
-[ ] 3. 确认正常运行
-[ ] 4. 更新操作说明（如有新功能）
+[ ] 2. Open {{ dist_entry }} to test
+[ ] 3. Confirm normal operation
+[ ] 4. Update instructions (if new features added)
 ```
 
 {% endif -%}
 {% if config_iter.get('enabled', True) -%}
-## 4.6 配置级迭代协议（重要）
+## 4.6 Config-Level Iteration Protocol (important)
 
-> **仅修改数值配置、不改动代码逻辑的迭代，可快速执行**
+> **Iterations that only modify configuration values without changing code logic can be executed quickly**
 
-**定义**: 配置级迭代 = 仅调整现有参数值，不增删代码逻辑
+**Definition**: Config-level iteration = only adjusting existing parameter values, no adding/removing code logic
 
-**可快速执行的配置示例**:
+**Examples of quick-execute configurations**:
 {% for ex in config_iter.get('examples', []) -%}
 - {{ ex }}
 {% endfor %}
-**执行规则**:
-1. 用户明确指出"配置调整"或"数值修改"
-2. AI 直接修改对应配置值
-3. 无需 PM 审批，无需创建 TASK
-4. commit 使用 `{{ config_iter.get('commit_prefix', '[CONFIG]') }}` 前缀
+**Execution Rules**:
+1. User explicitly states "config adjustment" or "value change"
+2. AI directly modifies the corresponding config value
+3. No PM approval needed, no TASK creation required
+4. Commit uses `{{ config_iter.get('commit_prefix', '[CONFIG]') }}` prefix
 
-**不适用情况** (需 PM 审核排期):
-- 需要新增函数/类/文件
-- 涉及系统交互逻辑变更
-- 可能影响其他模块
-- 用户不确定该改什么
+**Not Applicable** (requires PM review and scheduling):
+- Requires new functions/classes/files
+- Involves system interaction logic changes
+- May affect other modules
+- User is unsure what to change
 
 {% endif -%}

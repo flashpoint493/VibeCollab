@@ -1,5 +1,5 @@
 """
-LLMs.txt Integration - 与 llms.txt 标准集成
+LLMs.txt Integration - Integration with llms.txt standard
 """
 
 import re
@@ -8,7 +8,7 @@ from typing import Optional, Tuple
 
 
 class LLMsTxtManager:
-    """管理 llms.txt 文件的检测、更新和创建"""
+    """Manage llms.txt file detection, update, and creation"""
 
     AI_COLLAB_SECTION = """## AI Collaboration
 
@@ -19,7 +19,7 @@ class LLMsTxtManager:
 
     @staticmethod
     def find_llmstxt(project_root: Path) -> Optional[Path]:
-        """查找项目中的 llms.txt 文件"""
+        """Find llms.txt file in the project"""
         llmstxt_path = project_root / "llms.txt"
         if llmstxt_path.exists():
             return llmstxt_path
@@ -27,8 +27,8 @@ class LLMsTxtManager:
 
     @staticmethod
     def has_ai_collab_section(content: str) -> bool:
-        """检查内容中是否已包含 AI Collaboration 章节"""
-        # 检查是否存在 AI Collaboration 相关的章节
+        """Check if content already contains AI Collaboration section"""
+        # Check for AI Collaboration related sections
         patterns = [
             r"##\s+AI\s+Collaboration",
             r"##\s+AI\s+.*[Cc]ollaboration",
@@ -42,53 +42,53 @@ class LLMsTxtManager:
 
     @staticmethod
     def find_insertion_point(content: str) -> int:
-        """找到插入 AI Collaboration 章节的最佳位置"""
+        """Find the best insertion point for AI Collaboration section"""
         lines = content.split("\n")
 
-        # 优先在 Documentation 章节后插入
+        # Prefer inserting after Documentation section
         for i, line in enumerate(lines):
             if re.match(r"^##\s+Documentation", line, re.IGNORECASE):
-                # 找到 Documentation 章节的结束位置
+                # Find end of Documentation section
                 for j in range(i + 1, len(lines)):
                     if re.match(r"^##\s+", lines[j]):
                         return j
                 return len(lines)
 
-        # 如果没有 Documentation，在最后插入
+        # If no Documentation section, insert at end
         return len(lines)
 
     @staticmethod
     def update_llmstxt(llmstxt_path: Path, contributing_ai_path: Path) -> bool:
-        """更新现有的 llms.txt 文件，添加 AI Collaboration 引用"""
+        """Update existing llms.txt file, add AI Collaboration reference"""
         try:
             with open(llmstxt_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # 检查是否已存在
+            # Check if already exists
             if LLMsTxtManager.has_ai_collab_section(content):
-                return False  # 已存在，无需更新
+                return False  # Already exists, no update needed
 
-            # 确保引用路径正确（相对路径）
+            # Ensure reference path is correct (relative path)
             rel_path = contributing_ai_path.relative_to(llmstxt_path.parent)
             section = LLMsTxtManager.AI_COLLAB_SECTION.replace(
                 "CONTRIBUTING_AI.md", str(rel_path)
             )
 
-            # 找到插入位置
+            # Find insertion point
             insert_pos = LLMsTxtManager.find_insertion_point(content)
             lines = content.split("\n")
 
-            # 插入新章节
+            # Insert new section
             lines.insert(insert_pos, "")
             lines.insert(insert_pos + 1, section)
 
-            # 写回文件
+            # Write back
             with open(llmstxt_path, "w", encoding="utf-8") as f:
                 f.write("\n".join(lines))
 
             return True
         except Exception as e:
-            raise RuntimeError(f"更新 llms.txt 失败: {e}")
+            raise RuntimeError(f"Failed to update llms.txt: {e}")
 
     @staticmethod
     def create_llmstxt(
@@ -97,10 +97,10 @@ class LLMsTxtManager:
         project_description: str,
         contributing_ai_path: Path,
     ) -> Path:
-        """创建新的 llms.txt 文件"""
+        """Create a new llms.txt file"""
         llmstxt_path = project_root / "llms.txt"
 
-        # 确保引用路径正确
+        # Ensure reference path is correct
         rel_path = contributing_ai_path.relative_to(project_root)
 
         content = f"""# {project_name}
@@ -135,21 +135,21 @@ See [AI Collaboration Guidelines]({rel_path}) for how to work with AI assistants
         contributing_ai_path: Path,
     ) -> Tuple[bool, Optional[Path]]:
         """
-        确保 llms.txt 集成完成
+        Ensure llms.txt integration is complete
 
         Returns:
             (is_updated, llmstxt_path):
-                is_updated: 是否进行了更新（True=更新/创建，False=已存在）
-                llmstxt_path: llms.txt 文件路径
+                is_updated: Whether an update was made (True=updated/created, False=already exists)
+                llmstxt_path: Path to llms.txt file
         """
         llmstxt_path = LLMsTxtManager.find_llmstxt(project_root)
 
         if llmstxt_path:
-            # 存在，尝试更新
+            # Exists, try to update
             updated = LLMsTxtManager.update_llmstxt(llmstxt_path, contributing_ai_path)
             return updated, llmstxt_path
         else:
-            # 不存在，创建新的
+            # Does not exist, create new
             new_path = LLMsTxtManager.create_llmstxt(
                 project_root, project_name, project_description, contributing_ai_path
             )

@@ -1,22 +1,22 @@
 """
-Insight CLI 命令组 — 沉淀系统的 CLI 接口
+Insight CLI command group -- CLI interface for the distillation system
 
-提供沉淀的 CRUD、搜索、使用、衰减、一致性校验、跨开发者共享、溯源可视化等功能。
+Provides CRUD, search, usage, decay, consistency check, cross-developer sharing, traceability visualization, etc.
 
-命令:
-    vibecollab insight list               列出所有沉淀
-    vibecollab insight show <id>          查看沉淀详情
-    vibecollab insight add                交互式创建沉淀
-    vibecollab insight search --tags ...  按标签搜索
-    vibecollab insight use <id>           记录一次使用
-    vibecollab insight decay              执行权重衰减
-    vibecollab insight check              一致性校验
-    vibecollab insight delete <id>        删除沉淀
-    vibecollab insight bookmark <id>      收藏沉淀
-    vibecollab insight unbookmark <id>    取消收藏
-    vibecollab insight trace <id>         溯源树可视化
-    vibecollab insight who <id>           查看跨开发者使用信息
-    vibecollab insight stats              跨开发者共享统计
+Commands:
+    vibecollab insight list               List all insights
+    vibecollab insight show <id>          View insight details
+    vibecollab insight add                Interactively create an insight
+    vibecollab insight search --tags ...  Search by tags
+    vibecollab insight use <id>           Record a usage
+    vibecollab insight decay              Execute weight decay
+    vibecollab insight check              Consistency check
+    vibecollab insight delete <id>        Delete an insight
+    vibecollab insight bookmark <id>      Bookmark an insight
+    vibecollab insight unbookmark <id>    Remove bookmark
+    vibecollab insight trace <id>         Traceability tree visualization
+    vibecollab insight who <id>           View cross-developer usage info
+    vibecollab insight stats              Cross-developer sharing statistics
 """
 
 from pathlib import Path
@@ -28,21 +28,21 @@ from .._compat import EMOJI
 
 
 def _load_insight_manager(config_path: str = "project.yaml"):
-    """加载 InsightManager 实例"""
+    """Load InsightManager instance"""
     from ..domain.event_log import EventLog
     from ..insight.manager import InsightManager
 
     project_root = Path.cwd()
     vibecollab_dir = project_root / ".vibecollab"
     if not vibecollab_dir.exists():
-        click.echo("错误: 未找到 .vibecollab/ 目录。请先运行 vibecollab init", err=True)
+        click.echo("Error: .vibecollab/ directory not found. Please run vibecollab init first", err=True)
         raise SystemExit(1)
     event_log = EventLog(vibecollab_dir / "events.jsonl")
     return InsightManager(project_root=project_root, event_log=event_log)
 
 
 def _load_developer_manager(config_path: str = "project.yaml"):
-    """加载 DeveloperManager 实例"""
+    """Load DeveloperManager instance"""
     from ..domain.developer import DeveloperManager
 
     project_root = Path.cwd()
@@ -57,18 +57,18 @@ def _load_developer_manager(config_path: str = "project.yaml"):
 
 @click.group()
 def insight():
-    """沉淀系统管理命令
+    """Insight system management commands
 
-    管理从开发实践中提炼的可复用知识单元。
+    Manage reusable knowledge units distilled from development practices.
     """
     pass
 
 
 @insight.command("list")
-@click.option("--active-only", is_flag=True, default=False, help="仅显示活跃沉淀")
-@click.option("--json", "as_json", is_flag=True, default=False, help="JSON 格式输出")
+@click.option("--active-only", is_flag=True, default=False, help="Show active insights only")
+@click.option("--json", "as_json", is_flag=True, default=False, help="JSON output")
 def list_insights(active_only, as_json):
-    """列出所有沉淀"""
+    """List all insights"""
     import json as json_mod
 
     mgr = _load_insight_manager()
@@ -97,10 +97,10 @@ def list_insights(active_only, as_json):
         return
 
     if not all_insights:
-        click.echo("暂无沉淀条目。使用 `vibecollab insight add` 创建。")
+        click.echo("No insight entries yet. Use `vibecollab insight add` to create one.")
         return
 
-    click.echo(f"共 {len(all_insights)} 条沉淀：\n")
+    click.echo(f"Total {len(all_insights)} insights:\n")
     for ins in all_insights:
         entry = entries.get(ins.id)
         weight = f"{entry.weight:.2f}" if entry else "1.00"
@@ -113,11 +113,11 @@ def list_insights(active_only, as_json):
 @insight.command("show")
 @click.argument("insight_id")
 def show_insight(insight_id):
-    """查看沉淀详情"""
+    """View insight details"""
     mgr = _load_insight_manager()
     ins = mgr.get(insight_id)
     if not ins:
-        click.echo(f"未找到沉淀: {insight_id}", err=True)
+        click.echo(f"Insight not found: {insight_id}", err=True)
         raise SystemExit(1)
 
     entries, _ = mgr.get_registry()
@@ -169,27 +169,27 @@ def show_insight(insight_id):
 
 
 @insight.command("add")
-@click.option("--title", "-t", required=True, help="沉淀标题")
-@click.option("--tags", required=True, help="标签列表，逗号分隔")
+@click.option("--title", "-t", required=True, help="Insight title")
+@click.option("--tags", required=True, help="Tag list, comma separated")
 @click.option("--category", "-c", required=True,
               type=click.Choice(["technique", "workflow", "decision", "debug", "tool", "integration"]),
-              help="分类")
-@click.option("--scenario", "-s", required=True, help="适用场景")
-@click.option("--approach", "-a", required=True, help="方法/步骤")
-@click.option("--summary", default="", help="一句话摘要")
-@click.option("--validation", default="", help="验证方法")
-@click.option("--context", "origin_context", default="", help="创建背景（自然语言描述）")
+              help="Category")
+@click.option("--scenario", "-s", required=True, help="Applicable scenario")
+@click.option("--approach", "-a", required=True, help="Method/steps")
+@click.option("--summary", default="", help="One-line summary")
+@click.option("--validation", default="", help="Validation method")
+@click.option("--context", "origin_context", default="", help="Creation context (natural language)")
 @click.option("--source-type", default=None, type=click.Choice(["task", "decision", "insight", "external"]))
-@click.option("--source-desc", default=None, help="来源描述（自然语言，跨项目可读）")
-@click.option("--source-ref", default=None, help="来源内部 ID（可选 hint，如 DECISION-012）")
-@click.option("--source-url", default=None, help="来源外部链接（如 GitHub issue URL）")
-@click.option("--source-project", default=None, help="来源项目名")
-@click.option("--derived-from", default=None, help="派生自的 insight ID，逗号分隔")
-@click.option("--force", "-f", is_flag=True, default=False, help="跳过去重检测，强制创建")
+@click.option("--source-desc", default=None, help="Source description (natural language, cross-project readable)")
+@click.option("--source-ref", default=None, help="Source internal ID (optional hint, e.g. DECISION-012)")
+@click.option("--source-url", default=None, help="Source external link (e.g. GitHub issue URL)")
+@click.option("--source-project", default=None, help="Source project name")
+@click.option("--derived-from", default=None, help="Derived from insight IDs, comma separated")
+@click.option("--force", "-f", is_flag=True, default=False, help="Skip dedup check, force create")
 def add_insight(title, tags, category, scenario, approach, summary,
                 validation, origin_context, source_type, source_desc,
                 source_ref, source_url, source_project, derived_from, force):
-    """创建新的沉淀条目"""
+    """Create a new insight entry"""
     mgr = _load_insight_manager()
     dm = _load_developer_manager()
 
@@ -201,7 +201,7 @@ def add_insight(title, tags, category, scenario, approach, summary,
     if validation:
         body["validation"] = validation
 
-    # 去重检测 (v0.9.4)
+    # Dedup check (v0.9.4)
     if not force:
         duplicates = mgr.find_duplicates(title, tag_list, body)
         if duplicates:
@@ -227,10 +227,10 @@ def add_insight(title, tags, category, scenario, approach, summary,
         derived_from=derived_list,
     )
 
-    # 记录到 developer contributed
+    # Record to developer contributed
     dm.add_contributed(ins.id, created_by)
 
-    # 更新信号快照
+    # Update signal snapshot
     try:
         from ..insight.signal import InsightSignalCollector
         collector = InsightSignalCollector(Path.cwd())
@@ -238,22 +238,22 @@ def add_insight(title, tags, category, scenario, approach, summary,
     except Exception:
         pass
 
-    click.echo(f"已创建沉淀: {ins.id} — {ins.title}")
+    click.echo(f"Created insight: {ins.id} -- {ins.title}")
     click.echo(f"  tags: {', '.join(ins.tags)}")
     click.echo(f"  category: {ins.category}")
     click.echo(f"  created_by: {created_by}")
 
 
 @insight.command("search")
-@click.option("--tags", default=None, help="按标签搜索，逗号分隔")
-@click.option("--category", default=None, help="按分类搜索")
-@click.option("--semantic", "-q", default=None, help="语义搜索 (需先 vibecollab index)")
-@click.option("--include-inactive", is_flag=True, default=False, help="包含非活跃沉淀")
-@click.option("--top", "-k", default=10, help="语义搜索返回数量")
+@click.option("--tags", default=None, help="Search by tags, comma separated")
+@click.option("--category", default=None, help="Search by category")
+@click.option("--semantic", "-q", default=None, help="Semantic search (requires vibecollab index first)")
+@click.option("--include-inactive", is_flag=True, default=False, help="Include inactive insights")
+@click.option("--top", "-k", default=10, help="Number of semantic search results")
 def search_insights(tags, category, semantic, include_inactive, top):
-    """搜索沉淀
+    """Search insights
 
-    支持标签搜索、分类搜索、语义搜索三种模式。
+    Supports tag search, category search, and semantic search modes.
 
     Examples:
 
@@ -261,9 +261,9 @@ def search_insights(tags, category, semantic, include_inactive, top):
 
         vibecollab insight search --category debug
 
-        vibecollab insight search --semantic "Windows 编码兼容"
+        vibecollab insight search --semantic "Windows encoding compatibility"
     """
-    # 语义搜索模式
+    # Semantic search mode
     if semantic:
         _semantic_search_insights(semantic, top)
         return
@@ -271,7 +271,7 @@ def search_insights(tags, category, semantic, include_inactive, top):
     mgr = _load_insight_manager()
 
     if not tags and not category:
-        click.echo("请指定 --tags、--category 或 --semantic", err=True)
+        click.echo("Please specify --tags, --category, or --semantic", err=True)
         raise SystemExit(1)
 
     results = []
@@ -282,10 +282,10 @@ def search_insights(tags, category, semantic, include_inactive, top):
         results = mgr.search_by_category(category)
 
     if not results:
-        click.echo("未找到匹配的沉淀。")
+        click.echo("No matching insights found.")
         return
 
-    click.echo(f"找到 {len(results)} 条匹配：\n")
+    click.echo(f"Found {len(results)} matches:\n")
     entries, _ = mgr.get_registry()
     for ins in results:
         entry = entries.get(ins.id)
@@ -295,13 +295,13 @@ def search_insights(tags, category, semantic, include_inactive, top):
 
 
 def _semantic_search_insights(query: str, top_k: int):
-    """语义搜索 Insight（调用向量索引）"""
+    """Semantic search for Insights (uses vector index)"""
     from pathlib import Path
 
     project_root = Path.cwd()
     db_path = project_root / ".vibecollab" / "vectors" / "index.db"
     if not db_path.exists():
-        click.echo("语义索引不存在 — 请先运行 `vibecollab index`", err=True)
+        click.echo("Semantic index does not exist -- please run `vibecollab index` first", err=True)
         raise SystemExit(1)
 
     import sqlite3
@@ -309,7 +309,7 @@ def _semantic_search_insights(query: str, top_k: int):
     row = conn.execute("SELECT dimensions FROM vectors LIMIT 1").fetchone()
     conn.close()
     if not row:
-        click.echo("索引为空 — 请先运行 `vibecollab index`", err=True)
+        click.echo("Index is empty -- please run `vibecollab index` first", err=True)
         raise SystemExit(1)
 
     from ..insight.embedder import Embedder, EmbedderConfig
@@ -323,11 +323,11 @@ def _semantic_search_insights(query: str, top_k: int):
     results = store.search(query_vector, top_k=top_k, source_type="insight")
 
     if not results:
-        click.echo(f"未找到与 \"{query}\" 相关的 Insight。")
+        click.echo(f"No Insights related to \"{query}\" found.")
         store.close()
         return
 
-    click.echo(f"语义搜索: \"{query}\" (Top {len(results)})\n")
+    click.echo(f"Semantic search: \"{query}\" (Top {len(results)})\n")
     for i, r in enumerate(results, 1):
         title = r.metadata.get("title", "")
         tags = r.metadata.get("tags", [])
@@ -344,31 +344,31 @@ def _semantic_search_insights(query: str, top_k: int):
 @insight.command("use")
 @click.argument("insight_id")
 def use_insight(insight_id):
-    """记录一次沉淀使用，奖励权重"""
+    """Record an insight usage, reward weight"""
     mgr = _load_insight_manager()
     dm = _load_developer_manager()
     used_by = dm.get_current_developer()
 
     entry = mgr.record_use(insight_id, used_by=used_by)
     if not entry:
-        click.echo(f"未找到注册条目: {insight_id}", err=True)
+        click.echo(f"Registry entry not found: {insight_id}", err=True)
         raise SystemExit(1)
 
-    click.echo(f"已记录使用: {insight_id}")
+    click.echo(f"Usage recorded: {insight_id}")
     click.echo(f"  weight: {entry.weight:.4f}  used_count: {entry.used_count}  by: {used_by}")
 
 
 @insight.command("decay")
-@click.option("--dry-run", is_flag=True, default=False, help="仅预览，不实际执行")
+@click.option("--dry-run", is_flag=True, default=False, help="Preview only, do not execute")
 def decay_insights(dry_run):
-    """对所有活跃沉淀执行权重衰减"""
+    """Execute weight decay on all active insights"""
     mgr = _load_insight_manager()
 
     if dry_run:
         entries, settings = mgr.get_registry()
         rate = settings["decay_rate"]
         threshold = settings["deactivate_threshold"]
-        click.echo(f"衰减预览 (rate={rate}, threshold={threshold}):\n")
+        click.echo(f"Decay preview (rate={rate}, threshold={threshold}):\n")
         for ins_id, entry in entries.items():
             if not entry.active:
                 continue
@@ -379,17 +379,17 @@ def decay_insights(dry_run):
         return
 
     deactivated = mgr.apply_decay()
-    click.echo("权重衰减已执行。")
+    click.echo("Weight decay executed.")
     if deactivated:
-        click.echo(f"已停用 {len(deactivated)} 条沉淀: {', '.join(deactivated)}")
+        click.echo(f"Deactivated {len(deactivated)} insights: {', '.join(deactivated)}")
     else:
-        click.echo("无沉淀被停用。")
+        click.echo("No insights deactivated.")
 
 
 @insight.command("check")
-@click.option("--json", "as_json", is_flag=True, default=False, help="JSON 格式输出")
+@click.option("--json", "as_json", is_flag=True, default=False, help="JSON output")
 def check_insights(as_json):
-    """沉淀系统一致性校验"""
+    """Insight system consistency check"""
     import json as json_mod
 
     mgr = _load_insight_manager()
@@ -402,97 +402,97 @@ def check_insights(as_json):
         return
 
     if report.ok and not report.warnings:
-        click.echo("一致性校验通过，无错误无警告。")
+        click.echo("Consistency check passed, no errors or warnings.")
         return
 
     if report.errors:
-        click.echo(f"发现 {len(report.errors)} 个错误：")
+        click.echo(f"Found {len(report.errors)} error(s):")
         for err in report.errors:
             click.echo(f"  [ERROR] {err}")
 
     if report.warnings:
-        click.echo(f"发现 {len(report.warnings)} 个警告：")
+        click.echo(f"Found {len(report.warnings)} warning(s):")
         for warn in report.warnings:
             click.echo(f"  [WARN]  {warn}")
 
     if report.ok:
-        click.echo("\n校验结果: 通过（有警告）")
+        click.echo("\nCheck result: Passed (with warnings)")
     else:
-        click.echo(f"\n校验结果: 失败（{len(report.errors)} 个错误）")
+        click.echo(f"\nCheck result: Failed ({len(report.errors)} error(s))")
         raise SystemExit(1)
 
 
 @insight.command("delete")
 @click.argument("insight_id")
-@click.option("--yes", "-y", is_flag=True, default=False, help="跳过确认")
+@click.option("--yes", "-y", is_flag=True, default=False, help="Skip confirmation")
 def delete_insight(insight_id, yes):
-    """删除沉淀条目"""
+    """Delete an insight entry"""
     mgr = _load_insight_manager()
     dm = _load_developer_manager()
 
     ins = mgr.get(insight_id)
     if not ins:
-        click.echo(f"未找到沉淀: {insight_id}", err=True)
+        click.echo(f"Insight not found: {insight_id}", err=True)
         raise SystemExit(1)
 
     if not yes:
-        click.confirm(f"确认删除 {insight_id} ({ins.title})?", abort=True)
+        click.confirm(f"Confirm delete {insight_id} ({ins.title})?", abort=True)
 
     deleted_by = dm.get_current_developer()
     mgr.delete(insight_id, deleted_by=deleted_by)
 
-    # 移除 developer contributed 记录
+    # Remove developer contributed record
     dm.remove_contributed(insight_id, deleted_by)
 
-    click.echo(f"已删除: {insight_id}")
+    click.echo(f"Deleted: {insight_id}")
 
 
 @insight.command("bookmark")
 @click.argument("insight_id")
 def bookmark_insight(insight_id):
-    """收藏沉淀"""
+    """Bookmark an insight"""
     mgr = _load_insight_manager()
     dm = _load_developer_manager()
 
     ins = mgr.get(insight_id)
     if not ins:
-        click.echo(f"未找到沉淀: {insight_id}", err=True)
+        click.echo(f"Insight not found: {insight_id}", err=True)
         raise SystemExit(1)
 
     developer = dm.get_current_developer()
     added = dm.add_bookmark(insight_id, developer)
     if added:
-        click.echo(f"已收藏: {insight_id} ({ins.title})")
+        click.echo(f"Bookmarked: {insight_id} ({ins.title})")
         click.echo(f"  by: {developer}")
     else:
-        click.echo(f"已存在收藏: {insight_id}")
+        click.echo(f"Already bookmarked: {insight_id}")
 
 
 @insight.command("unbookmark")
 @click.argument("insight_id")
 def unbookmark_insight(insight_id):
-    """取消收藏沉淀"""
+    """Remove bookmark from an insight"""
     dm = _load_developer_manager()
 
     developer = dm.get_current_developer()
     removed = dm.remove_bookmark(insight_id, developer)
     if removed:
-        click.echo(f"已取消收藏: {insight_id}")
+        click.echo(f"Bookmark removed: {insight_id}")
     else:
-        click.echo(f"未找到收藏: {insight_id}")
+        click.echo(f"Bookmark not found: {insight_id}")
 
 
 @insight.command("trace")
 @click.argument("insight_id")
-@click.option("--json", "as_json", is_flag=True, default=False, help="JSON 格式输出")
+@click.option("--json", "as_json", is_flag=True, default=False, help="JSON output")
 def trace_insight(insight_id, as_json):
-    """溯源树可视化 — 显示沉淀的派生关系"""
+    """Traceability tree visualization -- show insight derivation relationships"""
     import json as json_mod
 
     mgr = _load_insight_manager()
     ins = mgr.get(insight_id)
     if not ins:
-        click.echo(f"未找到沉淀: {insight_id}", err=True)
+        click.echo(f"Insight not found: {insight_id}", err=True)
         raise SystemExit(1)
 
     trace = mgr.get_full_trace(insight_id)
@@ -501,30 +501,30 @@ def trace_insight(insight_id, as_json):
         click.echo(json_mod.dumps(trace, ensure_ascii=False, indent=2))
         return
 
-    # ASCII 树形可视化
-    click.echo(f"\n溯源树: {insight_id} — {ins.title}\n")
+    # ASCII tree visualization
+    click.echo(f"\nTraceability Tree: {insight_id} -- {ins.title}\n")
 
-    # 上游
+    # Upstream
     if trace["upstream"]:
-        click.echo("  上游 (derived from):")
+        click.echo("  Upstream (derived from):")
         _render_tree(trace["upstream"], prefix="    ", direction="up")
     else:
-        click.echo("  上游: (无)")
+        click.echo("  Upstream: (none)")
 
-    click.echo(f"\n  {EMOJI['circle']} {insight_id} — {ins.title}")
+    click.echo(f"\n  {EMOJI['circle']} {insight_id} -- {ins.title}")
 
-    # 下游
+    # Downstream
     if trace["downstream"]:
-        click.echo("\n  下游 (derived by):")
+        click.echo("\n  Downstream (derived by):")
         _render_tree(trace["downstream"], prefix="    ", direction="down")
     else:
-        click.echo("\n  下游: (无)")
+        click.echo("\n  Downstream: (none)")
 
     click.echo()
 
 
 def _render_tree(nodes, prefix="", direction="down"):
-    """递归渲染 ASCII 树"""
+    """Recursively render ASCII tree"""
     child_key = "downstream" if direction == "down" else "upstream"
     for i, node in enumerate(nodes):
         is_last = i == len(nodes) - 1
@@ -537,15 +537,15 @@ def _render_tree(nodes, prefix="", direction="down"):
 
 @insight.command("who")
 @click.argument("insight_id")
-@click.option("--json", "as_json", is_flag=True, default=False, help="JSON 格式输出")
+@click.option("--json", "as_json", is_flag=True, default=False, help="JSON output")
 def who_insight(insight_id, as_json):
-    """查看谁创建/使用/收藏了某条沉淀"""
+    """View who created/used/bookmarked an insight"""
     import json as json_mod
 
     mgr = _load_insight_manager()
     ins = mgr.get(insight_id)
     if not ins:
-        click.echo(f"未找到沉淀: {insight_id}", err=True)
+        click.echo(f"Insight not found: {insight_id}", err=True)
         raise SystemExit(1)
 
     info = mgr.get_insight_developers(insight_id)
@@ -554,18 +554,18 @@ def who_insight(insight_id, as_json):
         click.echo(json_mod.dumps(info, ensure_ascii=False, indent=2))
         return
 
-    click.echo(f"\n{insight_id} — {ins.title}\n")
-    click.echo(f"  创建者:  {info['created_by'] or '(unknown)'}")
-    click.echo(f"  使用者:  {', '.join(info['used_by']) or '(无)'}")
-    click.echo(f"  收藏者:  {', '.join(info['bookmarked_by']) or '(无)'}")
-    click.echo(f"  贡献者:  {', '.join(info['contributed_by']) or '(无)'}")
+    click.echo(f"\n{insight_id} -- {ins.title}\n")
+    click.echo(f"  Creator:      {info['created_by'] or '(unknown)'}")
+    click.echo(f"  Used by:      {', '.join(info['used_by']) or '(none)'}")
+    click.echo(f"  Bookmarked:   {', '.join(info['bookmarked_by']) or '(none)'}")
+    click.echo(f"  Contributors: {', '.join(info['contributed_by']) or '(none)'}")
     click.echo()
 
 
 @insight.command("stats")
-@click.option("--json", "as_json", is_flag=True, default=False, help="JSON 格式输出")
+@click.option("--json", "as_json", is_flag=True, default=False, help="JSON output")
 def stats_insights(as_json):
-    """跨开发者共享统计"""
+    """Cross-developer sharing statistics"""
     import json as json_mod
 
     mgr = _load_insight_manager()
@@ -576,52 +576,53 @@ def stats_insights(as_json):
         return
 
     summary = stats["summary"]
-    click.echo("\n=== Insight 共享统计 ===\n")
-    click.echo(f"  沉淀总数:    {summary['total_insights']}")
-    click.echo(f"  开发者总数:  {summary['total_developers']}")
-    click.echo(f"  总使用次数:  {summary['total_uses']}")
+    click.echo("\n=== Insight Sharing Statistics ===\n")
+    click.echo(f"  Total insights:    {summary['total_insights']}")
+    click.echo(f"  Total developers:  {summary['total_developers']}")
+    click.echo(f"  Total uses:        {summary['total_uses']}")
     if summary["most_used"]:
-        click.echo(f"  最常使用:    {summary['most_used']}")
+        click.echo(f"  Most used:         {summary['most_used']}")
     if summary["most_shared"]:
-        click.echo(f"  最多共享:    {summary['most_shared']}")
+        click.echo(f"  Most shared:       {summary['most_shared']}")
 
     if stats["developers"]:
-        click.echo("\n--- 开发者 ---")
+        click.echo("\n--- Developers ---")
         for dev, data in stats["developers"].items():
             contributed = len(data["contributed"])
             bookmarks = len(data["bookmarks"])
             used = len(data["used"])
-            click.echo(f"  {dev}: 贡献 {contributed}, 收藏 {bookmarks}, 使用 {used}")
+            click.echo(f"  {dev}: contributed {contributed}, bookmarked {bookmarks}, used {used}")
 
     if stats["insights"]:
-        click.echo("\n--- 沉淀 ---")
+        click.echo("\n--- Insights ---")
         for ins_id, data in stats["insights"].items():
             click.echo(
                 f"  {ins_id}: "
-                f"贡献者 {data['contributors']}, "
-                f"使用者 {data['users']}, "
-                f"收藏 {data['bookmarks']}"
+                f"contributors {data['contributors']}, "
+                f"users {data['users']}, "
+                f"bookmarks {data['bookmarks']}"
             )
 
     click.echo()
 
 
 @insight.command("suggest")
-@click.option("--json", "as_json", is_flag=True, help="JSON 输出")
+@click.option("--json", "as_json", is_flag=True, help="JSON output")
 @click.option("--auto-confirm", is_flag=True,
-              help="自动确认所有候选 (非交互模式)")
+              help="Auto-confirm all candidates (non-interactive mode)")
 def suggest_insights(as_json, auto_confirm):
-    """基于结构化信号推荐候选 Insight
+    """Suggest candidate Insights based on structured signals
 
-    从 git 增量历史、文档变更 diff、Task 变化等信号中提取候选 Insight。
-    用户确认后自动创建 Insight 并更新信号快照。
+    Extract candidate Insights from git incremental history, document change diffs,
+    Task changes, and other signals. Auto-creates Insights after user confirmation
+    and updates signal snapshot.
     """
     from ..insight.signal import InsightSignalCollector
 
     project_root = Path.cwd()
     collector = InsightSignalCollector(project_root)
 
-    # 收集候选
+    # Collect candidates
     candidates = collector.suggest()
 
     if as_json:
@@ -635,21 +636,21 @@ def suggest_insights(as_json, auto_confirm):
         return
 
     if not candidates:
-        click.echo(f"{EMOJI['ok']} 未发现需要沉淀的候选 Insight")
-        click.echo("  提示: 进行更多开发活动后再试")
+        click.echo(f"{EMOJI['ok']} No candidate Insights found to solidify")
+        click.echo(f"  Hint: Try again after more development activity")
         return
 
-    click.echo(f"\n=== Insight 候选推荐 ({len(candidates)} 条) ===\n")
+    click.echo(f"\n=== Insight Candidate Recommendations ({len(candidates)}) ===\n")
 
     snapshot = collector.load_snapshot()
     if snapshot.last_commit:
-        click.echo(f"  上次快照: {snapshot.last_commit[:8]}... "
+        click.echo(f"  Last snapshot: {snapshot.last_commit[:8]}... "
                     f"({snapshot.last_timestamp[:10]})")
     else:
-        click.echo("  首次推荐（无历史快照）")
+        click.echo("  First recommendation (no historical snapshot)")
     click.echo()
 
-    # 展示候选
+    # Display candidates
     for i, c in enumerate(candidates, 1):
         conf_bar = "#" * int(c.confidence * 10)
         click.echo(f"  [{i}] {c.title}")
@@ -661,21 +662,21 @@ def suggest_insights(as_json, auto_confirm):
         click.echo()
 
     if auto_confirm:
-        # 非交互模式：全部创建
+        # Non-interactive mode: create all
         _create_from_candidates(project_root, candidates, collector)
         return
 
-    # 交互模式：让用户选择
-    click.echo("输入要创建的候选编号 (逗号分隔，如 1,3)，"
-               "或 'all' 全部创建，'q' 退出:")
+    # Interactive mode: let user select
+    click.echo("Enter candidate numbers to create (comma separated, e.g. 1,3), "
+               "or 'all' to create all, 'q' to quit:")
     try:
         choice = input("> ").strip()
     except (EOFError, KeyboardInterrupt):
-        click.echo("\n已取消")
+        click.echo("\nCancelled")
         return
 
     if choice.lower() == "q":
-        click.echo("已取消")
+        click.echo("Cancelled")
         return
 
     if choice.lower() == "all":
@@ -691,14 +692,14 @@ def suggest_insights(as_json, auto_confirm):
         selected = [candidates[i] for i in indices]
 
     if not selected:
-        click.echo("未选择任何候选")
+        click.echo("No candidates selected")
         return
 
     _create_from_candidates(project_root, selected, collector)
 
 
 def _create_from_candidates(project_root, candidates, collector):
-    """从候选列表创建 Insight"""
+    """Create Insights from candidate list"""
     mgr = _load_insight_manager()
     dm = None
     try:
@@ -740,14 +741,14 @@ def _create_from_candidates(project_root, candidates, collector):
             except Exception:
                 pass
 
-    # 更新快照
+    # Update snapshot
     last_id = created_ids[-1] if created_ids else ""
     collector.update_snapshot(insight_id=last_id)
     click.echo(f"\nCreated {len(created_ids)} Insight(s), signal snapshot updated")
 
 
 # ------------------------------------------------------------------
-# Graph 命令 (v0.9.4)
+# Graph commands (v0.9.4)
 # ------------------------------------------------------------------
 
 @insight.command("graph")
@@ -755,9 +756,9 @@ def _create_from_candidates(project_root, candidates, collector):
               default="text", help="Output format")
 @click.option("--json", "json_output", is_flag=True, default=False, help="JSON output (alias for --format json)")
 def insight_graph(fmt, json_output):
-    """Insight 关联图谱可视化
+    """Insight association graph visualization
 
-    展示所有 Insight 之间的派生/关联关系。
+    Display derivation/association relationships between all Insights.
 
     Examples:
 
@@ -780,7 +781,7 @@ def insight_graph(fmt, json_output):
         click.echo(mgr.to_mermaid(graph))
         return
 
-    # text format: 人类可读的图谱摘要
+    # text format: human-readable graph summary
     stats = graph["stats"]
     click.echo(f"Insight Graph: {stats['node_count']} nodes, {stats['edge_count']} edges")
     click.echo(f"  Components: {stats['components']}, Isolated: {stats['isolated_count']}")
@@ -806,15 +807,15 @@ def insight_graph(fmt, json_output):
 
 
 # ------------------------------------------------------------------
-# Export / Import 命令 (v0.9.4)
+# Export / Import commands (v0.9.4)
 # ------------------------------------------------------------------
 
 @insight.command("export")
-@click.option("--ids", default=None, help="要导出的 Insight ID，逗号分隔 (默认全部)")
-@click.option("--output", "-o", default=None, help="输出文件路径 (默认 stdout)")
-@click.option("--include-registry", is_flag=True, default=False, help="包含注册表状态")
+@click.option("--ids", default=None, help="Insight IDs to export, comma separated (default all)")
+@click.option("--output", "-o", default=None, help="Output file path (default stdout)")
+@click.option("--include-registry", is_flag=True, default=False, help="Include registry state")
 def export_insights(ids, output, include_registry):
-    """导出 Insight 为可移植的 YAML 格式
+    """Export Insights to portable YAML format
 
     Examples:
 
@@ -845,7 +846,7 @@ def export_insights(ids, output, include_registry):
               default="skip", help="ID conflict strategy: skip/rename/overwrite")
 @click.option("--json", "json_output", is_flag=True, default=False, help="JSON output")
 def import_insights(filepath, strategy, json_output):
-    """从 YAML 文件导入 Insight
+    """Import Insights from YAML file
 
     Examples:
 
@@ -883,7 +884,7 @@ def import_insights(filepath, strategy, json_output):
         click.echo(json_mod.dumps(results, ensure_ascii=False, indent=2))
         return
 
-    # 更新 developer contributed
+    # Update developer contributed
     for ins_id in results["imported"]:
         try:
             dm.add_contributed(ins_id, imported_by)

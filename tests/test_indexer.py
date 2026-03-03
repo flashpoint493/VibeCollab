@@ -1,5 +1,5 @@
 """
-Tests for Indexer — 项目文档与 Insight 索引器
+Tests for Indexer — Project document and Insight indexer
 """
 
 import pytest
@@ -34,13 +34,13 @@ class TestSplitMarkdownByHeading:
     def test_nested_headings(self):
         text = "# Main\n## Sub1\ncontent1\n## Sub2\ncontent2"
         chunks = _split_markdown_by_heading(text, "test.md")
-        # 每个标题都是独立 chunk
+        # Each heading is an independent chunk
         assert len(chunks) >= 2
 
     def test_empty_content_skipped(self):
         text = "# Empty\n\n# Also Empty\n\n# Has Content\nreal content"
         chunks = _split_markdown_by_heading(text, "test.md")
-        # 空内容 chunk 应被跳过
+        # Empty content chunks should be skipped
         assert any("real content" in c["content"] for c in chunks)
 
     def test_no_headings(self):
@@ -75,7 +75,7 @@ class TestInsightToText:
         assert "technique" in text
 
     def test_dict_body(self):
-        """body 为结构化 dict 时应正确展开"""
+        """Structured dict body should be properly expanded"""
         data = {
             "title": "Structured Body",
             "body": {
@@ -108,7 +108,7 @@ class TestInsightToText:
 class TestIndexer:
     @pytest.fixture
     def project_dir(self, tmp_path):
-        """创建带文档和 Insight 的临时项目"""
+        """Create a temp project with docs and Insights"""
         (tmp_path / "CONTRIBUTING_AI.md").write_text(
             "# 一、核心理念\nVibe Development\n# 二、角色\nroles here",
             encoding="utf-8",
@@ -123,20 +123,20 @@ class TestIndexer:
             encoding="utf-8",
         )
 
-        # Insight 文件
+        # Insight files
         ins_dir = tmp_path / ".vibecollab" / "insights"
         ins_dir.mkdir(parents=True)
         ins1 = {
             "id": "INS-001",
-            "title": "GBK 编码兼容",
-            "body": "Windows GBK 终端下 emoji 会崩溃",
+            "title": "GBK encoding compatibility",
+            "body": "Windows GBK terminal emoji crash",
             "tags": ["windows", "encoding"],
             "category": "debug",
         }
         ins2 = {
             "id": "INS-002",
-            "title": "Jinja2 模板引擎",
-            "body": "使用 manifest.yaml 驱动模板渲染",
+            "title": "Jinja2 template engine",
+            "body": "Use manifest.yaml to drive template rendering",
             "tags": ["template", "jinja2"],
             "category": "technique",
         }
@@ -177,23 +177,23 @@ class TestIndexer:
 
     def test_index_creates_searchable_entries(self, indexer):
         indexer.index_all()
-        # 检查 store 有数据
+        # Check store has data
         assert indexer.store.count() > 0
         assert indexer.store.count(source_type="document") > 0
         assert indexer.store.count(source_type="insight") == 2
 
     def test_search_after_index(self, indexer):
         indexer.index_all()
-        results = indexer.search("编码兼容", top_k=10)
+        results = indexer.search("encoding compatibility", top_k=10)
         assert len(results) > 0
-        # 搜索应返回结果，具体排名取决于 embedding 精度
-        # pure_python 后端精度有限，只验证搜索功能正常
+        # Search should return results; exact ranking depends on embedding accuracy
+        # pure_python backend has limited precision, just verify search works
         doc_ids = [r.doc_id for r in results]
         assert len(doc_ids) > 0
 
     def test_search_with_source_type_filter(self, indexer):
         indexer.index_all()
-        results = indexer.search("模板", top_k=5, source_type="insight")
+        results = indexer.search("template", top_k=5, source_type="insight")
         assert all(r.source_type == "insight" for r in results)
 
     def test_index_missing_files_skipped(self, project_dir):
@@ -217,25 +217,25 @@ class TestIndexer:
         assert stats.insights_indexed == 0
 
     def test_reindex_overwrites(self, indexer):
-        """重复索引应更新而不是重复"""
+        """Re-indexing should update, not duplicate"""
         indexer.index_all()
         count1 = indexer.store.count()
         indexer.index_all()
         count2 = indexer.store.count()
-        # upsert 不应增加条目数
+        # upsert should not increase entry count
         assert count1 == count2
 
     def test_default_doc_files(self, project_dir):
-        """默认文档列表应该包含标准文件"""
+        """Default doc file list should include standard files"""
         embedder = Embedder(EmbedderConfig(backend="pure_python", dimensions=64))
         store = VectorStore(db_path=None, dimensions=64)
         indexer = Indexer(project_root=project_dir, embedder=embedder, store=store)
-        # 默认列表中应有这些文件
+        # Default list should contain these files
         assert "CONTRIBUTING_AI.md" in indexer._doc_files
         assert "docs/CONTEXT.md" in indexer._doc_files
 
     def test_store_persistence(self, project_dir, tmp_path):
-        """使用文件存储时应持久化"""
+        """File-based store should persist data"""
         db_path = tmp_path / "test_vectors" / "index.db"
         embedder = Embedder(EmbedderConfig(backend="pure_python", dimensions=64))
         store = VectorStore(db_path=db_path, dimensions=64)
@@ -244,7 +244,7 @@ class TestIndexer:
         count = store.count()
         store.close()
 
-        # 重新打开应保留数据
+        # Reopen should preserve data
         store2 = VectorStore(db_path=db_path, dimensions=64)
         assert store2.count() == count
         store2.close()

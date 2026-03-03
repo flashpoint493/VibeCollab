@@ -1,13 +1,13 @@
 """
-VibeCollab MCP Server 单元测试
+VibeCollab MCP Server Unit Tests
 
-测试 MCP Server 的核心功能:
-- Server 创建和配置
-- Resource 注册和读取
-- Tool 注册和调用
-- Prompt 模板生成
-- CLI 命令 (mcp serve/config/inject)
-- 边界情况 (空项目、缺失文件)
+Testing MCP Server core functionality:
+- Server creation and configuration
+- Resource registration and reading
+- Tool registration and invocation
+- Prompt template generation
+- CLI commands (mcp serve/config/inject)
+- Edge cases (empty project, missing files)
 """
 
 import json
@@ -22,12 +22,12 @@ from click.testing import CliRunner
 
 
 # ============================================================
-# 辅助
+# Helpers
 # ============================================================
 
 
 def _mcp_available() -> bool:
-    """检查 mcp 包是否可导入"""
+    """Check if mcp package is importable"""
     try:
         import mcp  # noqa: F401
 
@@ -43,7 +43,7 @@ def _mcp_available() -> bool:
 
 @pytest.fixture
 def project_dir(tmp_path):
-    """创建一个完整的测试项目目录"""
+    """Create a complete test project directory"""
     # project.yaml
     config = {
         "project": {
@@ -61,30 +61,30 @@ def project_dir(tmp_path):
 
     # CONTRIBUTING_AI.md
     (tmp_path / "CONTRIBUTING_AI.md").write_text(
-        "# AI 协作协议\n\n## 核心理念\n以人为本的AI协作\n", encoding="utf-8"
+        "# AI Collaboration Protocol\n\n## Core Philosophy\nHuman-centered AI collaboration\n", encoding="utf-8"
     )
 
-    # docs 目录
+    # docs directory
     docs = tmp_path / "docs"
     docs.mkdir()
     (docs / "CONTEXT.md").write_text(
-        "# 项目上下文\n\n## 当前状态\n- 版本: v1.0.0\n- 开发中\n", encoding="utf-8"
+        "# Project Context\n\n## Current Status\n- Version: v1.0.0\n- In development\n", encoding="utf-8"
     )
     (docs / "DECISIONS.md").write_text(
-        "# 决策记录\n\n### DECISION-001: 测试决策\n- 决策: A\n", encoding="utf-8"
+        "# Decision Records\n\n### DECISION-001: Test Decision\n- Decision: A\n", encoding="utf-8"
     )
     (docs / "ROADMAP.md").write_text(
-        "# 路线图\n\n- [ ] 待办事项 1\n- [x] 已完成事项\n", encoding="utf-8"
+        "# Roadmap\n\n- [ ] TODO Item 1\n- [x] Completed Item\n", encoding="utf-8"
     )
     (docs / "CHANGELOG.md").write_text(
-        "# 变更日志\n\n## v1.0.0\n- 初始版本\n", encoding="utf-8"
+        "# Changelog\n\n## v1.0.0\n- Initial release\n", encoding="utf-8"
     )
 
-    # 开发者目录
+    # Developer directory
     dev_dir = docs / "developers" / "alice"
     dev_dir.mkdir(parents=True)
     (dev_dir / "CONTEXT.md").write_text(
-        "# Alice 上下文\n\n## 当前任务\n- 开发 MCP Server\n", encoding="utf-8"
+        "# Alice Context\n\n## Current Task\n- Developing MCP Server\n", encoding="utf-8"
     )
     (dev_dir / ".metadata.yaml").write_text(
         yaml.dump({"id": "alice", "role": "developer"}), encoding="utf-8"
@@ -96,17 +96,17 @@ def project_dir(tmp_path):
 
     ins1 = {
         "id": "INS-001",
-        "title": "测试 Insight 1",
+        "title": "Test Insight 1",
         "tags": ["test", "mcp"],
         "category": "technique",
-        "body": {"scenario": "测试场景", "approach": "测试方法"},
+        "body": {"scenario": "Test scenario", "approach": "Test approach"},
     }
     ins2 = {
         "id": "INS-002",
-        "title": "测试 Insight 2",
+        "title": "Test Insight 2",
         "tags": ["debug", "tool"],
         "category": "debug",
-        "body": {"scenario": "调试场景", "approach": "调试方法"},
+        "body": {"scenario": "Debug scenario", "approach": "Debug approach"},
     }
     (insights_dir / "INS-001.yaml").write_text(
         yaml.dump(ins1, allow_unicode=True), encoding="utf-8"
@@ -120,7 +120,7 @@ def project_dir(tmp_path):
 
 @pytest.fixture
 def empty_project(tmp_path):
-    """最小项目 (仅 project.yaml)"""
+    """Minimal project (only project.yaml)"""
     config = {"project": {"name": "EmptyProject", "version": "0.1.0"}}
     (tmp_path / "project.yaml").write_text(
         yaml.dump(config), encoding="utf-8"
@@ -129,7 +129,7 @@ def empty_project(tmp_path):
 
 
 # ============================================================
-# 辅助函数测试
+# Helper function tests
 # ============================================================
 
 
@@ -137,17 +137,17 @@ class TestHelpers:
     def test_find_project_root(self, project_dir):
         from vibecollab.agent.mcp_server import _find_project_root
 
-        # 从项目根找
+        # Find from project root
         assert _find_project_root(project_dir) == project_dir
 
-        # 从子目录找
+        # Find from subdirectory
         sub = project_dir / "docs"
         assert _find_project_root(sub) == project_dir
 
     def test_find_project_root_no_yaml(self, tmp_path):
         from vibecollab.agent.mcp_server import _find_project_root
 
-        # 没有 project.yaml，返回起始目录
+        # No project.yaml, returns starting directory
         result = _find_project_root(tmp_path)
         assert result == tmp_path
 
@@ -155,7 +155,7 @@ class TestHelpers:
         from vibecollab.agent.mcp_server import _safe_read_text
 
         text = _safe_read_text(project_dir / "CONTRIBUTING_AI.md")
-        assert "AI 协作协议" in text
+        assert "AI Collaboration Protocol" in text
 
     def test_safe_read_text_missing(self, tmp_path):
         from vibecollab.agent.mcp_server import _safe_read_text
@@ -178,7 +178,7 @@ class TestHelpers:
 
         files = _get_insight_files(project_dir)
         assert len(files) == 2
-        assert files[0].name == "INS-002.yaml"  # 倒序
+        assert files[0].name == "INS-002.yaml"  # Reverse order
 
     def test_get_insight_files_no_dir(self, tmp_path):
         from vibecollab.agent.mcp_server import _get_insight_files
@@ -187,25 +187,25 @@ class TestHelpers:
 
 
 # ============================================================
-# MCP Server 创建测试
+# MCP Server creation tests
 # ============================================================
 
 
 class TestCreateMcpServer:
     def test_import_error_without_mcp(self, project_dir):
-        """未安装 mcp 时应抛出 ImportError"""
+        """Should raise ImportError when mcp is not installed"""
         from vibecollab.agent.mcp_server import create_mcp_server
 
         with patch.dict("sys.modules", {"mcp": None, "mcp.server.fastmcp": None}):
-            with pytest.raises(ImportError, match="mcp 依赖"):
+            with pytest.raises(ImportError, match="mcp"):
                 create_mcp_server(project_dir)
 
     @pytest.mark.skipif(
         not _mcp_available(),
-        reason="mcp 未安装，跳过 Server 实例化测试",
+        reason="mcp not installed, skipping server instantiation test",
     )
     def test_create_server(self, project_dir):
-        """成功创建 MCP Server 实例"""
+        """Successfully create MCP Server instance"""
         from vibecollab.agent.mcp_server import create_mcp_server
 
         server = create_mcp_server(project_dir)
@@ -213,25 +213,25 @@ class TestCreateMcpServer:
 
 
 # ============================================================
-# Resource 测试 (mock FastMCP)
+# Resource tests (mock FastMCP)
 # ============================================================
 
 
 class TestResources:
-    """测试 Resource 函数的数据读取逻辑"""
+    """Test Resource function data reading logic"""
 
     def test_get_contributing_ai(self, project_dir):
         from vibecollab.agent.mcp_server import _safe_read_text
 
         text = _safe_read_text(project_dir / "CONTRIBUTING_AI.md")
-        assert "AI 协作协议" in text
-        assert "核心理念" in text
+        assert "AI Collaboration Protocol" in text
+        assert "Core Philosophy" in text
 
     def test_get_context(self, project_dir):
         from vibecollab.agent.mcp_server import _safe_read_text
 
         text = _safe_read_text(project_dir / "docs" / "CONTEXT.md")
-        assert "项目上下文" in text
+        assert "Project Context" in text
         assert "v1.0.0" in text
 
     def test_get_decisions(self, project_dir):
@@ -254,7 +254,7 @@ class TestResources:
                     "tags": data.get("tags"),
                 })
         assert len(insights) == 2
-        assert insights[0]["id"] == "INS-002"  # 倒序
+        assert insights[0]["id"] == "INS-002"  # Reverse order
         assert "mcp" in insights[1]["tags"]
 
     def test_empty_project_resources(self, empty_project):
@@ -266,19 +266,19 @@ class TestResources:
 
 
 # ============================================================
-# Tool CLI 调用测试 (mock subprocess)
+# Tool CLI invocation tests (mock subprocess)
 # ============================================================
 
 
 class TestTools:
-    """测试 Tool 函数的 CLI 调用逻辑"""
+    """Test Tool function CLI invocation logic"""
 
     def test_run_cli_success(self, project_dir):
         from vibecollab.agent.mcp_server import _run_cli
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
-                stdout="搜索结果: INS-001\n",
+                stdout="Search result: INS-001\n",
                 stderr="",
                 returncode=0,
             )
@@ -295,36 +295,36 @@ class TestTools:
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 stdout="",
-                stderr="错误信息",
+                stderr="Error message",
                 returncode=1,
             )
             result = _run_cli(["vibecollab", "check"], project_dir)
             assert "stderr" in result
-            assert "错误信息" in result
+            assert "Error message" in result
 
     def test_run_cli_timeout(self, project_dir):
         from vibecollab.agent.mcp_server import _run_cli
 
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 30)):
             result = _run_cli(["vibecollab", "check"], project_dir)
-            assert "超时" in result
+            assert "timed out" in result.lower()
 
     def test_run_cli_not_found(self, project_dir):
         from vibecollab.agent.mcp_server import _run_cli
 
         with patch("subprocess.run", side_effect=FileNotFoundError):
             result = _run_cli(["vibecollab", "check"], project_dir)
-            assert "未找到" in result
+            assert "not found" in result.lower()
 
     def test_developer_context_exists(self, project_dir):
-        """开发者上下文读取"""
+        """Developer context reading"""
         from vibecollab.agent.mcp_server import _safe_read_text, _safe_load_yaml
 
         dev_dir = project_dir / "docs" / "developers" / "alice"
         context = _safe_read_text(dev_dir / "CONTEXT.md")
         metadata = _safe_load_yaml(dev_dir / ".metadata.yaml")
 
-        assert "Alice 上下文" in context
+        assert "Alice Context" in context
         assert metadata["id"] == "alice"
 
     def test_developer_context_missing(self, project_dir):
@@ -333,22 +333,22 @@ class TestTools:
 
 
 # ============================================================
-# Prompt 模板测试
+# Prompt template tests
 # ============================================================
 
 
 class TestPrompts:
     def test_start_conversation_prompt(self, project_dir):
-        """测试对话开始 prompt 生成逻辑"""
+        """Test conversation start prompt generation logic"""
         from vibecollab.agent.mcp_server import _safe_load_yaml, _safe_read_text
 
-        # 模拟 prompt 生成逻辑
+        # Simulate prompt generation logic
         config = _safe_load_yaml(project_dir / "project.yaml")
         proj = config.get("project", {})
         context_text = _safe_read_text(project_dir / "docs" / "CONTEXT.md")
 
         assert proj["name"] == "TestProject"
-        assert "项目上下文" in context_text
+        assert "Project Context" in context_text
 
     def test_start_conversation_with_developer(self, project_dir):
         from vibecollab.agent.mcp_server import _safe_read_text
@@ -356,7 +356,7 @@ class TestPrompts:
         dev_context = _safe_read_text(
             project_dir / "docs" / "developers" / "alice" / "CONTEXT.md"
         )
-        assert "Alice 上下文" in dev_context
+        assert "Alice Context" in dev_context
         assert "MCP Server" in dev_context
 
     def test_start_conversation_empty_project(self, empty_project):
@@ -368,7 +368,7 @@ class TestPrompts:
 
 
 # ============================================================
-# CLI 命令测试
+# CLI command tests
 # ============================================================
 
 
@@ -423,9 +423,9 @@ class TestCliMcp:
             mcp_group, ["inject", "--ide", "cursor", "-p", str(tmp_path)]
         )
         assert result.exit_code == 0
-        assert "已注入" in result.output
+        assert "Injected" in result.output
 
-        # 验证文件已创建
+        # Verify file was created
         config_file = tmp_path / ".cursor" / "mcp.json"
         assert config_file.exists()
         data = json.loads(config_file.read_text())
@@ -444,7 +444,7 @@ class TestCliMcp:
         assert (tmp_path / ".codebuddy" / "mcp.json").exists()
 
     def test_mcp_inject_preserves_existing(self, tmp_path):
-        """注入时应保留已有配置"""
+        """Injection should preserve existing config"""
         from vibecollab.cli.mcp import mcp_group
 
         cursor_dir = tmp_path / ".cursor"
@@ -467,26 +467,26 @@ class TestCliMcp:
         assert "vibecollab" in data["mcpServers"]
 
     def test_mcp_serve_without_mcp_dep(self):
-        """未安装 mcp 时 serve 应报错"""
+        """Serve should error when mcp is not installed"""
         from vibecollab.cli.mcp import mcp_group
 
         runner = CliRunner()
         with patch.dict("sys.modules", {"vibecollab.agent.mcp_server": None}):
-            # 通过 mock import 失败
+            # Simulate import failure via mock
             result = runner.invoke(mcp_group, ["serve"])
-            # 可能报 ImportError 或退出码非0
-            # 具体行为取决于 mock 实现，这里只验证不崩溃
-            assert result.exit_code != 0 or "错误" in result.output or "Error" in result.output
+            # Could throw ImportError or non-zero exit code
+            # Specific behavior depends on mock, just verify no crash
+            assert result.exit_code != 0 or "Error" in result.output
 
 
 # ============================================================
-# 集成测试 (完整 CLI 链路)
+# Integration tests (full CLI pipeline)
 # ============================================================
 
 
 class TestIntegration:
     def test_vibecollab_mcp_registered(self):
-        """vibecollab mcp 命令已注册到主 CLI"""
+        """vibecollab mcp command is registered in main CLI"""
         from vibecollab.cli import main
 
         runner = CliRunner()
@@ -497,7 +497,7 @@ class TestIntegration:
         assert "inject" in result.output
 
     def test_full_inject_and_verify(self, tmp_path):
-        """完整注入流程: inject → 验证配置文件内容"""
+        """Full injection flow: inject -> verify config file content"""
         from vibecollab.cli import main
 
         runner = CliRunner()

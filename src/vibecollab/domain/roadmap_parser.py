@@ -1,9 +1,9 @@
 """
-Roadmap Parser — ROADMAP.md ↔ TaskManager bidirectional integration.
+Roadmap Parser -- ROADMAP.md <-> TaskManager bidirectional integration.
 
 Provides:
 - Parse ROADMAP.md to extract milestone headers and inline Task ID references
-- Sync ROADMAP checkbox state ↔ tasks.json status (bidirectional)
+- Sync ROADMAP checkbox state <-> tasks.json status (bidirectional)
 - Per-milestone progress aggregation
 
 Design:
@@ -28,18 +28,19 @@ from .task_manager import TaskManager, TaskStatus
 # e.g. "### v0.9.3 - Title" or "### v0.9.3 ✅"
 # H2/H4/H5 are NOT accepted — users must use ### to define milestones.
 MILESTONE_HEADER_RE = re.compile(
-    r"^###\s+(v\d+\.\d+(?:\.\d+)?)\s*(?:-\s*(.+?))?(?:\s*[✅❌])?\s*$"
+    r"^###\s+(v\d+\.\d+(?:\.\d+)?)\s*(?:-\s*(.+?))?(?:\s*(?:\[DONE\]|\[CANCEL\]|"
+    r"\u2705|\u274c))?\s*$"
 )
 
 # Human-readable format hint for error messages
 MILESTONE_FORMAT_HINT = """\
-期望的里程碑标题格式:
-  ### v0.1.0 - 标题描述
-  ### v0.1.0 - 标题描述 ✅
+Expected milestone header format:
+  ### v0.1.0 - Title description
+  ### v0.1.0 - Title description [DONE]
 
-Checkbox 行可通过 Task ID 关联任务:
-  - [ ] 功能描述 (TASK-DEV-001)
-  - [x] 已完成功能 TASK-DEV-002"""
+Checkbox lines can link tasks via Task ID:
+  - [ ] Feature description (TASK-DEV-001)
+  - [x] Completed feature TASK-DEV-002"""
 
 # Regex to match Task ID references anywhere in text
 TASK_ID_RE = re.compile(r"TASK-[A-Z]+-\d{3,}")
@@ -191,7 +192,7 @@ class RoadmapParser:
     # -- Sync ---------------------------------------------------------------
 
     def sync(self, direction: str = "both", dry_run: bool = False) -> List[SyncAction]:
-        """Synchronize ROADMAP.md ↔ tasks.json.
+        """Synchronize ROADMAP.md <-> tasks.json.
 
         Direction:
             "roadmap_to_tasks" — Checkbox [x] in ROADMAP → mark task as DONE

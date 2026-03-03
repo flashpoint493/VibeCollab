@@ -1,16 +1,19 @@
 """
-Pattern Engine — 基于 Jinja2 的 CONTRIBUTING_AI.md 模板渲染引擎
+Pattern Engine -- Jinja2-based CONTRIBUTING_AI.md template rendering engine.
 
-将原 generator.py 中 27 个硬编码 _add_*() 方法外化为独立的 .md.j2 模板文件，
-由 manifest.yaml 驱动章节顺序和条件开关。
+Externalizes the original 27 hardcoded _add_*() methods from generator.py
+into independent .md.j2 template files, driven by manifest.yaml for section
+ordering and conditional switches.
 
-向后兼容: LLMContextGenerator.generate() 内部改为调用 PatternEngine，外部 API 不变。
+Backward compatible: LLMContextGenerator.generate() internally calls
+PatternEngine; the external API remains unchanged.
 
-Template Overlay 机制:
-  用户可在项目根目录下创建 .vibecollab/patterns/ 目录，放置自定义模板和 manifest.yaml。
-  - 自定义模板优先于内置模板（同名覆盖）
-  - 自定义 manifest.yaml 可新增/覆盖/排除章节
-  - 合并策略: 按 section id 合并，本地 manifest 条目覆盖内置同 id 条目
+Template Overlay:
+  Users can create a .vibecollab/patterns/ directory at the project root
+  with custom templates and manifest.yaml.
+  - Custom templates take priority over built-in ones (same-name override)
+  - Custom manifest.yaml can add/override/exclude sections
+  - Merge strategy: merge by section id; local entries override built-in
 """
 
 import copy
@@ -21,18 +24,19 @@ from typing import Any, Dict, List, Optional
 import yaml
 from jinja2 import ChoiceLoader, Environment, FileSystemLoader, select_autoescape
 
-# Pattern 目录（包内）
+# Built-in patterns directory (within package)
 PATTERNS_DIR = Path(__file__).parent.parent / "patterns"
 
-# 用户本地自定义模板目录名（相对于 project_root）
+# User local custom template directory (relative to project_root)
 LOCAL_PATTERNS_SUBDIR = Path(".vibecollab") / "patterns"
 
 
 class PatternEngine:
-    """Jinja2 驱动的协议文档渲染引擎
+    """Jinja2-driven protocol document rendering engine.
 
-    支持 template overlay: 用户在 {project_root}/.vibecollab/patterns/ 下
-    放置自定义 .md.j2 模板和/或 manifest.yaml，可覆盖/扩展内置模板。
+    Supports template overlay: users can place custom .md.j2 templates
+    and/or manifest.yaml under {project_root}/.vibecollab/patterns/
+    to override/extend built-in templates.
     """
 
     def __init__(
@@ -45,16 +49,16 @@ class PatternEngine:
         self.project_root = project_root or Path.cwd()
         self.patterns_dir = patterns_dir or PATTERNS_DIR
 
-        # 检测用户本地 patterns 目录
+        # Detect user local patterns directory
         self.local_patterns_dir: Optional[Path] = None
         local_candidate = self.project_root / LOCAL_PATTERNS_SUBDIR
         if local_candidate.is_dir():
             self.local_patterns_dir = local_candidate
 
-        # 加载并合并 manifest
+        # Load and merge manifest
         self.manifest = self._load_manifest()
 
-        # Jinja2 环境 — 使用 ChoiceLoader 实现本地优先
+        # Jinja2 environment -- ChoiceLoader for local-first resolution
         loaders = []
         if self.local_patterns_dir:
             loaders.append(FileSystemLoader(str(self.local_patterns_dir)))
@@ -67,7 +71,7 @@ class PatternEngine:
             trim_blocks=False,
             lstrip_blocks=False,
         )
-        # 注册自定义 filter
+        # Register custom filters
         self.env.filters["join_list"] = _filter_join_list
         self.env.filters["format_review"] = _filter_format_review
         self.env.filters["quote_list"] = _filter_quote_list
@@ -77,14 +81,14 @@ class PatternEngine:
     # ------------------------------------------------------------------
 
     def render(self) -> str:
-        """渲染完整的 CONTRIBUTING_AI.md 文档"""
+        """Render the complete CONTRIBUTING_AI.md document."""
         sections: List[str] = []
 
         for entry in self.manifest.get("sections", []):
             template_file = entry["template"]
             condition = entry.get("condition")
 
-            # 条件检查
+            # Condition check
             if condition and not self._evaluate_condition(condition):
                 continue
 
@@ -98,7 +102,7 @@ class PatternEngine:
         return "\n".join(sections)
 
     def list_patterns(self) -> List[Dict[str, Any]]:
-        """列出所有注册的 Pattern（含 overlay 来源标注）"""
+        """List all registered patterns (with overlay source annotation)."""
         result = []
         for entry in self.manifest.get("sections", []):
             info = {
@@ -107,7 +111,7 @@ class PatternEngine:
                 "description": entry.get("description", ""),
                 "condition": entry.get("condition"),
             }
-            # 标注模板来源
+            # Annotate template source
             if self.local_patterns_dir:
                 local_tmpl = self.local_patterns_dir / entry["template"]
                 info["source"] = "local" if local_tmpl.is_file() else "builtin"
@@ -118,7 +122,7 @@ class PatternEngine:
 
     @property
     def has_local_overlay(self) -> bool:
-        """是否启用了用户本地模板覆盖"""
+        """Whether user local template overlay is enabled."""
         return self.local_patterns_dir is not None
 
     # ------------------------------------------------------------------
@@ -126,16 +130,16 @@ class PatternEngine:
     # ------------------------------------------------------------------
 
     def _load_manifest(self) -> Dict[str, Any]:
-        """加载 manifest，支持本地覆盖合并
+        """Load manifest with local overlay merge support.
 
-        合并策略:
-        1. 加载内置 manifest.yaml 作为基础
-        2. 如果存在本地 manifest.yaml，按 section id 合并:
-           - 同 id: 本地条目覆盖内置条目
-           - 本地新 id: 追加到对应位置（通过 'after' 字段）或末尾
-           - 本地 exclude 列表: 排除指定 id 的章节
+        Merge strategy:
+        1. Load built-in manifest.yaml as the base
+        2. If local manifest.yaml exists, merge by section id:
+           - Same id: local entry overrides built-in entry
+           - New local id: insert at position (via 'after' field) or append
+           - Local exclude list: exclude specified section ids
         """
-        # 加载内置 manifest
+        # Load built-in manifest
         builtin_path = self.patterns_dir / "manifest.yaml"
         with open(builtin_path, "r", encoding="utf-8") as f:
             builtin_manifest = yaml.safe_load(f) or {}
@@ -143,7 +147,7 @@ class PatternEngine:
         if not self.local_patterns_dir:
             return builtin_manifest
 
-        # 检查本地 manifest
+        # Check local manifest
         local_manifest_path = self.local_patterns_dir / "manifest.yaml"
         if not local_manifest_path.is_file():
             return builtin_manifest
@@ -158,48 +162,48 @@ class PatternEngine:
         builtin: Dict[str, Any],
         local: Dict[str, Any],
     ) -> Dict[str, Any]:
-        """合并内置 manifest 和本地 manifest
+        """Merge built-in manifest and local manifest.
 
-        local manifest 支持的字段:
-        - sections: 章节列表，按 id 与内置合并
-        - exclude: 要排除的章节 id 列表
+        Local manifest supported fields:
+        - sections: section list, merged by id with built-in
+        - exclude: list of section ids to exclude
         """
         result = copy.deepcopy(builtin)
         builtin_sections = result.get("sections", [])
 
-        # 排除列表
+        # Exclude list
         exclude_ids = set(local.get("exclude", []))
         if exclude_ids:
             builtin_sections = [
                 s for s in builtin_sections if s.get("id") not in exclude_ids
             ]
 
-        # 建立 id → index 映射
+        # Build id -> index mapping
         id_to_idx = {s.get("id"): i for i, s in enumerate(builtin_sections)}
 
-        # 合并本地 sections
+        # Merge local sections
         local_sections = local.get("sections", [])
         append_sections = []
 
         for local_entry in local_sections:
             sid = local_entry.get("id")
             if sid and sid in id_to_idx:
-                # 覆盖: 用本地条目替换内置条目
+                # Override: replace built-in entry with local entry
                 builtin_sections[id_to_idx[sid]] = local_entry
             else:
-                # 新增: 检查 after 字段确定插入位置
+                # New: check 'after' field for insert position
                 after_id = local_entry.get("after")
                 if after_id and after_id in id_to_idx:
                     insert_idx = id_to_idx[after_id] + 1
                     builtin_sections.insert(insert_idx, local_entry)
-                    # 重建索引
+                    # Rebuild index
                     id_to_idx = {
                         s.get("id"): i for i, s in enumerate(builtin_sections)
                     }
                 else:
                     append_sections.append(local_entry)
 
-        # 追加没有指定位置的新章节（在 footer 之前）
+        # Append sections without specified position (before footer)
         if append_sections:
             footer_idx = id_to_idx.get("footer")
             if footer_idx is not None:
@@ -216,14 +220,14 @@ class PatternEngine:
     # ------------------------------------------------------------------
 
     def _build_context(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        """构建模板渲染上下文"""
+        """Build template rendering context."""
         ctx: Dict[str, Any] = {
             "config": self.config,
             "project": self.config.get("project", {}),
             "now": datetime.now(),
         }
 
-        # 把常用配置节直接展开到顶层方便模板引用
+        # Expand common config sections to top-level for template convenience
         for key in [
             "philosophy", "roles", "decision_levels", "task_unit",
             "dialogue_protocol", "requirement_clarification",
@@ -239,21 +243,21 @@ class PatternEngine:
                 "contributing_ai_changelog",
             ) else [])
 
-        # 扩展处理器上下文
+        # Extension processor context
         ctx["extensions"] = self._get_extensions_context()
 
         return ctx
 
     def _get_extensions_context(self) -> Dict[str, Any]:
-        """获取扩展信息用于模板渲染"""
+        """Get extension info for template rendering."""
         from .extension import ExtensionProcessor
         processor = ExtensionProcessor(self.project_root)
 
-        # 从 domain_extensions 加载
+        # Load from domain_extensions
         if "domain_extensions" in self.config:
             processor.load_from_config(self.config)
 
-        # 从独立扩展文件加载
+        # Load from standalone extension files
         ext_files = self.config.get("extension_files", [])
         for ext_file in ext_files:
             ext_path = self.project_root / ext_file
@@ -268,21 +272,21 @@ class PatternEngine:
         }
 
     def _evaluate_condition(self, condition: str) -> bool:
-        """评估 manifest 中的条件表达式
+        """Evaluate manifest condition expression.
 
-        支持的条件:
-        - "config.multi_developer.enabled" → self.config["multi_developer"]["enabled"]
-        - "config.protocol_check.enabled|true" → 默认 True（key 不存在时）
-        - "config.testing.product_qa.enabled" → ...
-        - "has_extensions" → 是否有扩展加载
-        - "config.symbology" → symbology 非空
+        Supported conditions:
+        - "config.multi_developer.enabled" -> self.config["multi_developer"]["enabled"]
+        - "config.protocol_check.enabled|true" -> default True (when key missing)
+        - "config.testing.product_qa.enabled" -> ...
+        - "has_extensions" -> whether extensions are loaded
+        - "config.symbology" -> symbology is non-empty
         """
         if condition == "has_extensions":
             ctx = self._get_extensions_context()
             return ctx["has_extensions"]
 
         if condition.startswith("config."):
-            # 支持 "|default" 语法: "config.x.enabled|true"
+            # Support "|default" syntax: "config.x.enabled|true"
             default_val = None
             expr = condition[len("config."):]
             if "|" in expr:
@@ -299,7 +303,7 @@ class PatternEngine:
                 if val is None:
                     return default_val if default_val is not None else False
 
-            # 布尔值直接返回; 非空集合/字典返回 True
+            # Bool returns directly; non-empty collection/dict returns True
             if isinstance(val, bool):
                 return val
             if isinstance(val, (dict, list)):
@@ -313,31 +317,31 @@ class PatternEngine:
 # Jinja2 custom filters
 # ------------------------------------------------------------------
 
-def _filter_join_list(value, separator="、"):
-    """将列表用指定分隔符连接"""
+def _filter_join_list(value, separator=", "):
+    """Join a list with the specified separator."""
     if isinstance(value, list):
         return separator.join(str(v) for v in value)
     return str(value)
 
 
-def _filter_quote_list(value, separator="、"):
-    """将列表中每个元素加引号后用分隔符连接"""
+def _filter_quote_list(value, separator=", "):
+    """Quote each element and join with separator."""
     if isinstance(value, list):
         return separator.join(f'"{v}"' for v in value)
     return str(value)
 
 
 def _filter_format_review(review: Dict) -> str:
-    """格式化 Review 要求描述"""
+    """Format review requirement description."""
     if not isinstance(review, dict):
         return str(review)
     if not review.get("required", False):
         if review.get("mode") == "auto":
-            return "AI 提出建议，人工可快速确认或默认通过"
-        return "AI 自主决策，事后可调整"
+            return "AI suggests, human can quickly confirm or auto-approve"
+        return "AI decides autonomously, adjustable afterwards"
 
     if review.get("mode") == "sync":
-        return "必须人工确认，记录决策理由"
+        return "Must be manually confirmed, record decision rationale"
     elif review.get("mode") == "async":
-        return "人工Review，可异步确认"
-    return "需要 Review"
+        return "Human review, async confirmation allowed"
+    return "Review required"

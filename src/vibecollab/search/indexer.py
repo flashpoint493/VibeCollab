@@ -1,13 +1,13 @@
 """
-Indexer — 项目文档与 Insight 索引器
+Indexer - Project document and Insight indexer
 
-将文档拆分为段落级 chunk，通过 Embedder 生成向量，
-存入 VectorStore，供语义搜索使用。
+Splits documents into paragraph-level chunks, generates vectors via Embedder,
+and stores them in VectorStore for semantic search.
 
-索引来源:
-    - 项目文档: CONTRIBUTING_AI.md, CONTEXT.md, DECISIONS.md, ROADMAP.md, PRD.md
-    - Insight YAML: 标题 + body + tags
-    - 代码文件 (可选): docstring / 函数签名
+Index sources:
+    - Project docs: CONTRIBUTING_AI.md, CONTEXT.md, DECISIONS.md, ROADMAP.md, PRD.md
+    - Insight YAML: title + body + tags
+    - Code files (optional): docstring / function signatures
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from .vector_store import VectorDocument, VectorStore
 
 logger = logging.getLogger(__name__)
 
-# 默认索引的文档文件
+# Default document files to index
 DEFAULT_DOC_FILES = [
     "CONTRIBUTING_AI.md",
     "docs/CONTEXT.md",
@@ -38,7 +38,7 @@ DEFAULT_DOC_FILES = [
 
 @dataclass
 class IndexStats:
-    """索引统计"""
+    """Index statistics"""
 
     documents_indexed: int = 0
     insights_indexed: int = 0
@@ -48,9 +48,9 @@ class IndexStats:
 
 
 def _split_markdown_by_heading(text: str, source: str) -> List[Dict[str, str]]:
-    """按 Markdown 标题切分文档为 chunk
+    """Split Markdown document into chunks by heading
 
-    每个 chunk 包含一个标题和其下方内容，直到下一个同级或更高级标题。
+    Each chunk contains a heading and its content until the next same-level or higher-level heading.
     """
     lines = text.splitlines()
     chunks: List[Dict[str, str]] = []
@@ -60,7 +60,7 @@ def _split_markdown_by_heading(text: str, source: str) -> List[Dict[str, str]]:
     for line in lines:
         stripped = line.strip()
         if stripped.startswith("#"):
-            # 保存当前 chunk
+            # Save current chunk
             if current_lines:
                 content = "\n".join(current_lines).strip()
                 if content:
@@ -74,7 +74,7 @@ def _split_markdown_by_heading(text: str, source: str) -> List[Dict[str, str]]:
         else:
             current_lines.append(line)
 
-    # 最后一个 chunk
+    # Last chunk
     if current_lines:
         content = "\n".join(current_lines).strip()
         if content:
@@ -88,7 +88,7 @@ def _split_markdown_by_heading(text: str, source: str) -> List[Dict[str, str]]:
 
 
 def _insight_to_text(insight_data: dict) -> str:
-    """将 Insight YAML 数据转为可索引文本"""
+    """Convert Insight YAML data to indexable text"""
     parts = []
     title = insight_data.get("title", "")
     if title:
@@ -96,7 +96,7 @@ def _insight_to_text(insight_data: dict) -> str:
 
     body = insight_data.get("body", "")
     if isinstance(body, dict):
-        # 结构化 body (scenario/approach/validation/constraints)
+        # Structured body (scenario/approach/validation/constraints)
         for key, val in body.items():
             if isinstance(val, list):
                 parts.append(f"{key}: {'; '.join(str(v) for v in val)}")
@@ -111,17 +111,17 @@ def _insight_to_text(insight_data: dict) -> str:
 
     tags = insight_data.get("tags", [])
     if tags:
-        parts.append(f"标签: {', '.join(str(t) for t in tags)}")
+        parts.append(f"Tags: {', '.join(str(t) for t in tags)}")
 
     category = insight_data.get("category", "")
     if category:
-        parts.append(f"分类: {category}")
+        parts.append(f"Category: {category}")
 
     return "\n".join(parts)
 
 
 class Indexer:
-    """项目索引器
+    """Project indexer
 
     Usage:
         indexer = Indexer(project_root)
@@ -160,17 +160,17 @@ class Indexer:
         return self._embedder
 
     def index_all(self) -> IndexStats:
-        """索引所有文档和 Insight"""
+        """Index all documents and Insights"""
         stats = IndexStats()
 
-        # 索引文档
+        # Index documents
         doc_stats = self.index_documents()
         stats.documents_indexed += doc_stats.documents_indexed
         stats.chunks_total += doc_stats.chunks_total
         stats.skipped += doc_stats.skipped
         stats.errors.extend(doc_stats.errors)
 
-        # 索引 Insight
+        # Index Insights
         ins_stats = self.index_insights()
         stats.insights_indexed += ins_stats.insights_indexed
         stats.chunks_total += ins_stats.chunks_total
@@ -179,7 +179,7 @@ class Indexer:
         return stats
 
     def index_documents(self) -> IndexStats:
-        """索引项目文档文件"""
+        """Index project document files"""
         stats = IndexStats()
 
         for doc_file in self._doc_files:
@@ -199,7 +199,7 @@ class Indexer:
                     stats.skipped += 1
                     continue
 
-                # 批量 embed
+                # Batch embed
                 texts = [c["content"] for c in chunks]
                 vectors = self._embedder.embed_texts(texts)
 
@@ -208,7 +208,7 @@ class Indexer:
                     doc_id = f"doc:{doc_file}:{i}"
                     docs.append(VectorDocument(
                         doc_id=doc_id,
-                        text=chunk["content"][:2000],  # 截断长文本
+                        text=chunk["content"][:2000],  # Truncate long text
                         vector=vector,
                         source=doc_file,
                         source_type="document",
@@ -221,12 +221,12 @@ class Indexer:
 
             except Exception as e:
                 stats.errors.append(f"{doc_file}: {e}")
-                logger.warning("索引文档失败: %s — %s", doc_file, e)
+                logger.warning("Failed to index document: %s -- %s", doc_file, e)
 
         return stats
 
     def index_insights(self) -> IndexStats:
-        """索引 Insight YAML 文件"""
+        """Index Insight YAML files"""
         stats = IndexStats()
         insights_dir = self._project_root / ".vibecollab" / "insights"
 
@@ -265,7 +265,7 @@ class Indexer:
         if not texts:
             return stats
 
-        # 批量 embed
+        # Batch embed
         vectors = self._embedder.embed_texts(texts)
 
         vec_docs = []
@@ -296,7 +296,7 @@ class Indexer:
         source_type: Optional[str] = None,
         min_score: float = 0.0,
     ) -> List:
-        """语义搜索"""
+        """Semantic search"""
         query_vector = self._embedder.embed_text(query)
         return self._store.search(
             query_vector,

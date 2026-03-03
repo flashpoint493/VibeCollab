@@ -1,31 +1,31 @@
 """
-Insight Manager - 沉淀系统核心模块
+Insight Manager - Core module for the insight distillation system
 
-管理从开发实践中提炼的可复用知识单元（Insight），提供：
-- CRUD：创建、读取、更新、删除沉淀条目
-- Registry：项目级使用状态管理（权重、计数、衰减）
-- Tag 匹配：基于标签的沉淀推荐
-- 溯源：追踪沉淀的来源和派生关系
-- 一致性校验：沉淀本体 ↔ 注册表 ↔ Developer 元数据的同步检查
-- 指纹：SHA-256 内容完整性
+Manages reusable knowledge units (Insights) distilled from development practices:
+- CRUD: Create, read, update, delete insight entries
+- Registry: Project-level usage state management (weight, count, decay)
+- Tag matching: Tag-based insight recommendations
+- Traceability: Track insight origin and derivation relationships
+- Consistency check: Insight entity <-> registry <-> Developer metadata sync verification
+- Fingerprint: SHA-256 content integrity
 
-存储结构：
+Storage structure:
     .vibecollab/
     ├── insights/
-    │   ├── registry.yaml       # 项目注册表（权重、使用状态）
-    │   ├── INS-001.yaml        # 沉淀本体
+    │   ├── registry.yaml       # Project registry (weight, usage state)
+    │   ├── INS-001.yaml        # Insight entity
     │   ├── INS-002.yaml
-    │   └── tools/              # 关联工具/脚本（未来）
+    │   └── tools/              # Associated tools/scripts (future)
     │       └── INS-002/
     ├── tasks.json
     └── events.jsonl
 
 Design principles:
-- 沉淀本体与项目注册表严格分离
-- 沉淀本体是可移植的知识包，不含项目特定状态
-- 注册表记录项目对沉淀的使用状态
-- Developer .metadata.yaml 记录个人贡献和收藏
-- 一致性校验覆盖所有关联数据的同步
+- Insight entity and project registry are strictly separated
+- Insight entity is a portable knowledge package without project-specific state
+- Registry records project usage state of insights
+- Developer .metadata.yaml records personal contributions and bookmarks
+- Consistency check covers all associated data synchronization
 """
 
 import hashlib
@@ -73,7 +73,7 @@ DEFAULT_SETTINGS = {
 
 @dataclass
 class Artifact:
-    """沉淀关联的制品（工具/脚本/模板等）"""
+    """Artifact associated with an insight (tool/script/template etc.)"""
     path: str
     type: str
     runtime: Optional[str] = None
@@ -99,14 +99,14 @@ class Artifact:
 
 @dataclass
 class Origin:
-    """沉淀的溯源信息
+    """Traceability info for an insight
 
-    设计原则：溯源信息必须自描述，不依赖任何项目的内部 ID 体系。
-    - context: 一句话描述创建背景（人可读）
-    - source.description: 来源的自然语言描述（必填当 source 存在时）
-    - source.ref: 来源项目内部 ID（可选 hint，跨项目时仅供参考）
-    - source.url: 外部可访问链接（可选，如 GitHub issue/PR）
-    - source.project: 来源项目名（可选）
+    Design principle: Traceability info must be self-describing, not dependent on any project's internal ID system.
+    - context: One-line description of creation background (human-readable)
+    - source.description: Natural language description of the source (required when source exists)
+    - source.ref: Source project internal ID (optional hint, only for reference across projects)
+    - source.url: External accessible link (optional, e.g. GitHub issue/PR)
+    - source.project: Source project name (optional)
     """
     created_by: str
     created_at: str
@@ -160,7 +160,7 @@ class Origin:
 
 @dataclass
 class Insight:
-    """沉淀本体 — 可移植的知识单元"""
+    """Insight entity -- a portable knowledge unit"""
     id: str
     title: str
     tags: List[str]
@@ -184,7 +184,7 @@ class Insight:
             raise ValueError("Insight must have at least one tag")
 
     def compute_fingerprint(self) -> str:
-        """计算 SHA-256 内容指纹"""
+        """Compute SHA-256 content fingerprint"""
         canonical = {
             "kind": self.kind,
             "version": self.version,
@@ -201,7 +201,7 @@ class Insight:
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     def to_dict(self) -> Dict[str, Any]:
-        """序列化为 dict（用于 YAML 输出）"""
+        """Serialize to dict (for YAML output)"""
         if not self.fingerprint:
             self.fingerprint = self.compute_fingerprint()
         d: Dict[str, Any] = {
@@ -225,7 +225,7 @@ class Insight:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Insight":
-        """从 dict 反序列化"""
+        """Deserialize from dict"""
         artifacts = [Artifact.from_dict(a) for a in data.get("artifacts", [])]
         origin = Origin.from_dict(data.get("origin", {}))
         return cls(
@@ -245,7 +245,7 @@ class Insight:
 
 @dataclass
 class RegistryEntry:
-    """注册表条目 — 项目对某条沉淀的使用状态"""
+    """Registry entry -- project usage state of an insight"""
     weight: float = 1.0
     used_count: int = 0
     last_used_at: Optional[str] = None
@@ -285,7 +285,7 @@ class RegistryEntry:
 
 @dataclass
 class ConsistencyReport:
-    """一致性校验报告"""
+    """Consistency check report"""
     ok: bool
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
@@ -299,12 +299,12 @@ class ConsistencyReport:
 # ---------------------------------------------------------------------------
 
 class InsightManager:
-    """沉淀系统管理器
+    """Insight distillation system manager
 
     Usage:
         mgr = InsightManager(project_root=Path("."))
         insight = mgr.create(
-            title="模板替换硬编码",
+            title="Replace hardcoded values with templates",
             tags=["refactor", "jinja2"],
             category="technique",
             body={"scenario": "...", "approach": "..."},
@@ -327,7 +327,7 @@ class InsightManager:
         self.event_log = event_log
 
     # ------------------------------------------------------------------
-    # CRUD — Insight 本体
+    # CRUD -- Insight entity
     # ------------------------------------------------------------------
 
     def create(self, title: str, tags: List[str], category: str,
@@ -341,7 +341,7 @@ class InsightManager:
                source_project: Optional[str] = None,
                derived_from: Optional[List[str]] = None,
                artifacts: Optional[List[Dict[str, Any]]] = None) -> Insight:
-        """创建新的沉淀条目"""
+        """Create a new insight entry"""
         insight_id = self._next_id()
         origin = Origin(
             created_by=created_by,
@@ -376,14 +376,14 @@ class InsightManager:
         return insight
 
     def get(self, insight_id: str) -> Optional[Insight]:
-        """按 ID 获取沉淀"""
+        """Get insight by ID"""
         path = self._insight_path(insight_id)
         if not path.exists():
             return None
         return self._load_insight(path)
 
     def list_all(self) -> List[Insight]:
-        """列出所有沉淀"""
+        """List all insights"""
         if not self.insights_dir.exists():
             return []
         insights = []
@@ -397,9 +397,9 @@ class InsightManager:
         return insights
 
     def update(self, insight_id: str, updated_by: str, **kwargs) -> Optional[Insight]:
-        """更新沉淀字段
+        """Update insight fields
 
-        支持的 kwargs: title, summary, tags, category, body, artifacts
+        Supported kwargs: title, summary, tags, category, body, artifacts
         """
         insight = self.get(insight_id)
         if not insight:
@@ -411,7 +411,7 @@ class InsightManager:
         if "artifacts" in kwargs:
             insight.artifacts = [Artifact.from_dict(a) for a in kwargs["artifacts"]]
 
-        # 重新计算指纹
+        # Recompute fingerprint
         insight.fingerprint = ""
         self._save_insight(insight)
         self._log_event(
@@ -424,7 +424,7 @@ class InsightManager:
         return insight
 
     def delete(self, insight_id: str, deleted_by: str) -> bool:
-        """删除沉淀"""
+        """Delete an insight"""
         path = self._insight_path(insight_id)
         if not path.exists():
             return False
@@ -439,11 +439,11 @@ class InsightManager:
         return True
 
     # ------------------------------------------------------------------
-    # Registry — 项目使用状态
+    # Registry -- project usage state
     # ------------------------------------------------------------------
 
     def get_registry(self) -> Tuple[Dict[str, RegistryEntry], Dict[str, Any]]:
-        """读取注册表，返回 (entries, settings)"""
+        """Read registry, returns (entries, settings)"""
         if not self.registry_path.exists():
             return {}, dict(DEFAULT_SETTINGS)
         data = self._load_yaml(self.registry_path)
@@ -454,7 +454,7 @@ class InsightManager:
         return entries, settings
 
     def record_use(self, insight_id: str, used_by: str) -> Optional[RegistryEntry]:
-        """记录一次沉淀使用，奖励权重"""
+        """Record one insight usage, reward weight"""
         entries, settings = self.get_registry()
         entry = entries.get(insight_id)
         if entry is None:
@@ -466,7 +466,7 @@ class InsightManager:
         if used_by not in entry.used_by:
             entry.used_by.append(used_by)
         if not entry.active:
-            entry.active = True  # 使用时重新激活
+            entry.active = True  # Reactivate on use
         entries[insight_id] = entry
         self._save_registry(entries, settings)
         self._log_event(
@@ -479,10 +479,10 @@ class InsightManager:
         return entry
 
     def apply_decay(self) -> List[str]:
-        """对所有活跃沉淀应用权重衰减
+        """Apply weight decay to all active insights
 
         Returns:
-            被停用的 insight ID 列表
+            List of deactivated insight IDs
         """
         entries, settings = self.get_registry()
         deactivated = []
@@ -501,7 +501,7 @@ class InsightManager:
         return deactivated
 
     def get_active_insights(self) -> List[Tuple[str, float]]:
-        """获取所有活跃沉淀及其权重，按权重降序"""
+        """Get all active insights and their weights, sorted by weight descending"""
         entries, _ = self.get_registry()
         active = [
             (k, e.weight) for k, e in entries.items() if e.active
@@ -509,11 +509,11 @@ class InsightManager:
         return sorted(active, key=lambda x: x[1], reverse=True)
 
     # ------------------------------------------------------------------
-    # Tag 匹配与搜索
+    # Tag matching and search
     # ------------------------------------------------------------------
 
     def search_by_tags(self, tags: List[str], active_only: bool = True) -> List[Insight]:
-        """按标签搜索沉淀，结果按匹配度 * 权重排序"""
+        """Search insights by tags, results sorted by match_score * weight"""
         all_insights = self.list_all()
         entries, _ = self.get_registry()
 
@@ -531,10 +531,10 @@ class InsightManager:
             if not overlap:
                 continue
 
-            # 匹配度 = 交集 / 并集 (Jaccard)
+            # Match score = intersection / union (Jaccard)
             match_score = len(overlap) / len(query_tags | ins_tags)
 
-            # 权重加成
+            # Weight bonus
             weight = 1.0
             entry = entries.get(ins.id)
             if entry:
@@ -546,19 +546,19 @@ class InsightManager:
         return [ins for _, ins in scored]
 
     def search_by_category(self, category: str) -> List[Insight]:
-        """按分类搜索沉淀"""
+        """Search insights by category"""
         return [ins for ins in self.list_all() if ins.category == category]
 
     # ------------------------------------------------------------------
-    # 溯源
+    # Traceability
     # ------------------------------------------------------------------
 
     def get_derived_tree(self, insight_id: str) -> Dict[str, List[str]]:
-        """获取沉淀的派生树：谁引用了它，它引用了谁"""
+        """Get insight derivation tree: who references it, and what it references"""
         all_insights = self.list_all()
         result: Dict[str, List[str]] = {
-            "derived_from": [],   # 该沉淀引用的上游
-            "derived_by": [],     # 引用该沉淀的下游
+            "derived_from": [],   # Upstream references of this insight
+            "derived_by": [],     # Downstream references to this insight
         }
         target = self.get(insight_id)
         if target:
@@ -571,7 +571,7 @@ class InsightManager:
         return result
 
     def get_full_trace(self, insight_id: str) -> Dict[str, Any]:
-        """获取沉淀的完整溯源信息（递归展开派生树）
+        """Get full traceability info for an insight (recursively expand derivation tree)
 
         Returns:
             {
@@ -633,11 +633,11 @@ class InsightManager:
         }
 
     # ------------------------------------------------------------------
-    # 跨开发者共享
+    # Cross-developer sharing
     # ------------------------------------------------------------------
 
     def get_insight_developers(self, insight_id: str) -> Dict[str, Any]:
-        """获取某条沉淀的跨开发者信息
+        """Get cross-developer info for a given insight
 
         Returns:
             {
@@ -654,18 +654,18 @@ class InsightManager:
             "contributed_by": [],
         }
 
-        # 从 insight 本体获取创建者
+        # Get creator from insight entity
         ins = self.get(insight_id)
         if ins:
             result["created_by"] = ins.origin.created_by
 
-        # 从 registry 获取使用者
+        # Get users from registry
         entries, _ = self.get_registry()
         entry = entries.get(insight_id)
         if entry:
             result["used_by"] = list(entry.used_by)
 
-        # 从 developer metadata 反查 contributed 和 bookmarks
+        # Reverse lookup contributed and bookmarks from developer metadata
         developers_dir = self.project_root / "docs" / "developers"
         if developers_dir.exists():
             for dev_dir in sorted(developers_dir.iterdir()):
@@ -686,7 +686,7 @@ class InsightManager:
         return result
 
     def get_cross_developer_stats(self) -> Dict[str, Any]:
-        """汇总跨开发者共享统计
+        """Aggregate cross-developer sharing statistics
 
         Returns:
             {
@@ -709,7 +709,7 @@ class InsightManager:
         all_insights = self.list_all()
         entries, _ = self.get_registry()
 
-        # 收集 developer metadata
+        # Collect developer metadata
         dev_stats: Dict[str, Dict[str, list]] = {}
         developers_dir = self.project_root / "docs" / "developers"
         if developers_dir.exists():
@@ -731,7 +731,7 @@ class InsightManager:
                     except Exception:
                         pass
 
-        # 从 registry used_by 补充使用数据
+        # Supplement usage data from registry used_by
         for ins_id, entry in entries.items():
             for user in entry.used_by:
                 if user not in dev_stats:
@@ -739,7 +739,7 @@ class InsightManager:
                 if ins_id not in dev_stats[user]["used"]:
                     dev_stats[user]["used"].append(ins_id)
 
-        # 构建 insight 级统计
+        # Build insight-level statistics
         insight_stats: Dict[str, Dict[str, int]] = {}
         for ins in all_insights:
             ins_id = ins.id
@@ -781,41 +781,41 @@ class InsightManager:
         }
 
     # ------------------------------------------------------------------
-    # 一致性校验
+    # Consistency check
     # ------------------------------------------------------------------
 
     def check_consistency(self) -> ConsistencyReport:
-        """全量一致性校验
+        """Full consistency check
 
-        检查项：
-        1. 注册表中的 ID 都有对应的 insight 文件
-        2. 所有 insight 文件都在注册表中注册
-        3. derived_from 引用的 ID 都存在
-        4. Developer .metadata.yaml 中的 contributed/bookmarks ID 都存在
-        5. 指纹一致性（文件内容未被篡改）
+        Check items:
+        1. All IDs in registry have corresponding insight files
+        2. All insight files are registered in registry
+        3. derived_from referenced IDs all exist
+        4. Developer .metadata.yaml contributed/bookmarks IDs all exist
+        5. Fingerprint consistency (file content not tampered)
         """
         errors: List[str] = []
         warnings: List[str] = []
 
-        # 收集所有 insight 文件
+        # Collect all insight files
         all_insights = self.list_all()
         file_ids = {ins.id for ins in all_insights}
 
-        # 收集注册表 entries
+        # Collect registry entries
         entries, _ = self.get_registry()
         registry_ids = set(entries.keys())
 
-        # 1. 注册表中有但文件不存在
+        # 1. Registry entry exists but file missing
         orphan_registry = registry_ids - file_ids
         for oid in orphan_registry:
             errors.append(f"Registry entry '{oid}' has no corresponding insight file")
 
-        # 2. 文件存在但未注册
+        # 2. File exists but not registered
         unregistered = file_ids - registry_ids
         for uid in unregistered:
             errors.append(f"Insight file '{uid}' is not registered in registry.yaml")
 
-        # 3. derived_from 引用检查
+        # 3. derived_from reference check
         for ins in all_insights:
             for ref_id in ins.origin.derived_from:
                 if ref_id not in file_ids:
@@ -823,11 +823,11 @@ class InsightManager:
                         f"Insight '{ins.id}' derives from '{ref_id}' which does not exist"
                     )
 
-        # 4. Developer metadata 引用检查
+        # 4. Developer metadata reference check
         dev_meta_errors = self._check_developer_metadata(file_ids)
         errors.extend(dev_meta_errors)
 
-        # 5. 指纹一致性
+        # 5. Fingerprint consistency
         for ins in all_insights:
             if ins.fingerprint:
                 expected = ins.compute_fingerprint()
@@ -837,7 +837,7 @@ class InsightManager:
                         f"(stored={ins.fingerprint[:16]}... expected={expected[:16]}...)"
                     )
 
-        # Warnings: 低权重但仍 active 的
+        # Warnings: low weight but still active
         for ins_id, entry in entries.items():
             if entry.active and entry.weight < 0.3:
                 warnings.append(
@@ -851,7 +851,7 @@ class InsightManager:
         )
 
     def _check_developer_metadata(self, valid_ids: set) -> List[str]:
-        """检查 developer .metadata.yaml 中的 insight 引用"""
+        """Check insight references in developer .metadata.yaml"""
         errors = []
         developers_dir = self.project_root / "docs" / "developers"
         if not developers_dir.exists():
@@ -882,7 +882,7 @@ class InsightManager:
     # ------------------------------------------------------------------
 
     def _next_id(self) -> str:
-        """生成下一个 INS-NNN ID"""
+        """Generate next INS-NNN ID"""
         self.insights_dir.mkdir(parents=True, exist_ok=True)
         existing = [p.stem for p in self.insights_dir.glob("INS-*.yaml")]
         if not existing:
@@ -899,7 +899,7 @@ class InsightManager:
         return self.insights_dir / f"{insight_id}.yaml"
 
     def _save_insight(self, insight: Insight) -> None:
-        """保存 insight 到 YAML 文件"""
+        """Save insight to YAML file"""
         self.insights_dir.mkdir(parents=True, exist_ok=True)
         if not insight.fingerprint:
             insight.fingerprint = insight.compute_fingerprint()
@@ -909,21 +909,21 @@ class InsightManager:
                       default_flow_style=False)
 
     def _load_insight(self, path: Path) -> Optional[Insight]:
-        """从 YAML 文件加载 insight"""
+        """Load insight from YAML file"""
         data = self._load_yaml(path)
         if not data:
             return None
         return Insight.from_dict(data)
 
     def _ensure_registry_entry(self, insight_id: str) -> None:
-        """确保注册表中有该条目"""
+        """Ensure the registry has an entry for this ID"""
         entries, settings = self.get_registry()
         if insight_id not in entries:
             entries[insight_id] = RegistryEntry()
             self._save_registry(entries, settings)
 
     def _remove_registry_entry(self, insight_id: str) -> None:
-        """从注册表中移除条目"""
+        """Remove entry from registry"""
         entries, settings = self.get_registry()
         if insight_id in entries:
             del entries[insight_id]
@@ -931,7 +931,7 @@ class InsightManager:
 
     def _save_registry(self, entries: Dict[str, RegistryEntry],
                        settings: Dict[str, Any]) -> None:
-        """保存注册表"""
+        """Save registry"""
         self.insights_dir.mkdir(parents=True, exist_ok=True)
         data = {
             "schema_version": "1",
@@ -943,7 +943,7 @@ class InsightManager:
                       default_flow_style=False)
 
     def _load_yaml(self, path: Path) -> dict:
-        """安全加载 YAML"""
+        """Safely load YAML"""
         try:
             with open(path, "r", encoding="utf-8") as f:
                 return yaml.safe_load(f) or {}
@@ -951,7 +951,7 @@ class InsightManager:
             return {}
 
     # ------------------------------------------------------------------
-    # 去重检测 (v0.9.4)
+    # Duplicate detection (v0.9.4)
     # ------------------------------------------------------------------
 
     def find_duplicates(
@@ -961,29 +961,29 @@ class InsightManager:
         body: Optional[Dict[str, Any]] = None,
         threshold: float = 0.6,
     ) -> List[Dict[str, Any]]:
-        """检测与已有 Insight 的相似度，返回可能的重复项。
+        """Detect similarity with existing Insights, return possible duplicates.
 
-        三级检测策略:
-        1. 指纹精确匹配 (score=1.0) — 标题+标签+body 完全相同
-        2. 标题相似度 (Jaccard on words)
-        3. 标签重叠度 (Jaccard on tags)
-        综合分数 = 0.5 * title_sim + 0.5 * tag_sim
+        Three-level detection strategy:
+        1. Fingerprint exact match (score=1.0) -- title+tags+body completely identical
+        2. Title similarity (Jaccard on words)
+        3. Tag overlap (Jaccard on tags)
+        Combined score = 0.5 * title_sim + 0.5 * tag_sim
 
         Args:
-            title: 新 Insight 的标题
-            tags: 新 Insight 的标签列表
-            body: 新 Insight 的 body (可选，用于指纹精确匹配)
-            threshold: 相似度阈值 (0~1)，超过此值视为潜在重复
+            title: New Insight title
+            tags: New Insight tag list
+            body: New Insight body (optional, for fingerprint exact match)
+            threshold: Similarity threshold (0~1), above this is considered potential duplicate
 
         Returns:
-            按相似度降序排列的重复候选列表:
+            List of duplicate candidates sorted by similarity descending:
             [{"id": "INS-001", "title": "...", "score": 0.85, "reason": "..."}, ...]
         """
         all_insights = self.list_all()
         if not all_insights:
             return []
 
-        # 1. 内容精确匹配 (title + sorted tags + body)
+        # 1. Exact content match (title + sorted tags + body)
         if body is not None:
             new_content_key = self._content_key(title, tags, body)
             for ins in all_insights:
@@ -992,19 +992,19 @@ class InsightManager:
                     return [{"id": ins.id, "title": ins.title,
                              "score": 1.0, "reason": "exact_content"}]
 
-        # 2+3. 标题 + 标签综合相似度
+        # 2+3. Title + tag combined similarity
         new_title_tokens = set(title.lower().split())
         new_tags_set = set(t.lower() for t in tags)
         candidates: List[Dict[str, Any]] = []
 
         for ins in all_insights:
-            # 标题 Jaccard
+            # Title Jaccard
             ins_title_tokens = set(ins.title.lower().split())
             title_union = new_title_tokens | ins_title_tokens
             title_sim = (len(new_title_tokens & ins_title_tokens) / len(title_union)
                          if title_union else 0.0)
 
-            # 标签 Jaccard
+            # Tag Jaccard
             ins_tags_set = set(t.lower() for t in ins.tags)
             tag_union = new_tags_set | ins_tags_set
             tag_sim = (len(new_tags_set & ins_tags_set) / len(tag_union)
@@ -1029,7 +1029,7 @@ class InsightManager:
 
     def _content_key(self, title: str, tags: List[str],
                      body: Dict[str, Any]) -> str:
-        """计算内容摘要 key，用于精确去重（忽略 id/origin）"""
+        """Compute content digest key for exact deduplication (ignores id/origin)"""
         canonical = {
             "title": title,
             "tags": sorted(t.lower() for t in tags),
@@ -1039,11 +1039,11 @@ class InsightManager:
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     # ------------------------------------------------------------------
-    # 全局关联图谱 (v0.9.4)
+    # Global association graph (v0.9.4)
     # ------------------------------------------------------------------
 
     def build_graph(self) -> Dict[str, Any]:
-        """构建所有 Insight 的全局关联图谱。
+        """Build the global association graph of all Insights.
 
         Returns:
             {
@@ -1084,7 +1084,7 @@ class InsightManager:
         all_ids = {ins.id for ins in all_insights}
         isolated_count = len(all_ids - connected_ids)
 
-        # 计算连通分量数
+        # Count connected components
         components = self._count_components(all_ids, edges)
 
         return {
@@ -1099,7 +1099,7 @@ class InsightManager:
         }
 
     def _count_components(self, all_ids: set, edges: List[Dict[str, str]]) -> int:
-        """Union-Find 算法计算连通分量"""
+        """Union-Find algorithm to count connected components"""
         parent: Dict[str, str] = {i: i for i in all_ids}
 
         def find(x: str) -> str:
@@ -1121,7 +1121,7 @@ class InsightManager:
         return len({find(i) for i in all_ids}) if all_ids else 0
 
     def to_mermaid(self, graph: Optional[Dict[str, Any]] = None) -> str:
-        """将图谱转为 Mermaid flowchart 格式。"""
+        """Convert graph to Mermaid flowchart format."""
         if graph is None:
             graph = self.build_graph()
 
@@ -1136,16 +1136,16 @@ class InsightManager:
         return "\n".join(lines)
 
     # ------------------------------------------------------------------
-    # 导入 / 导出 (v0.9.4)
+    # Import / Export (v0.9.4)
     # ------------------------------------------------------------------
 
     def export_insights(self, insight_ids: Optional[List[str]] = None,
                         include_registry: bool = False) -> Dict[str, Any]:
-        """导出 Insight 为可移植的字典格式。
+        """Export Insights to a portable dictionary format.
 
         Args:
-            insight_ids: 要导出的 ID 列表，None 表示全部
-            include_registry: 是否包含注册表状态（权重/计数）
+            insight_ids: List of IDs to export, None means all
+            include_registry: Whether to include registry state (weight/count)
 
         Returns:
             {
@@ -1154,7 +1154,7 @@ class InsightManager:
                 "exported_at": "...",
                 "source_project": "...",
                 "insights": [{...}, ...],
-                "registry": {...}  # 仅当 include_registry=True
+                "registry": {...}  # Only when include_registry=True
             }
         """
         all_insights = self.list_all()
@@ -1165,7 +1165,7 @@ class InsightManager:
         else:
             selected = all_insights
 
-        # 读取项目名
+        # Read project name
         project_name = ""
         project_yaml_path = self.project_root / "project.yaml"
         if project_yaml_path.exists():
@@ -1194,15 +1194,15 @@ class InsightManager:
     def import_insights(self, bundle: Dict[str, Any],
                         imported_by: str,
                         strategy: str = "skip") -> Dict[str, Any]:
-        """从导出包导入 Insight。
+        """Import Insights from an export bundle.
 
         Args:
-            bundle: export_insights() 产出的字典
-            imported_by: 导入操作者
-            strategy: ID 冲突策略
-                - "skip": 跳过已存在的 ID
-                - "rename": 自动分配新 ID
-                - "overwrite": 覆盖已有 Insight
+            bundle: Dictionary produced by export_insights()
+            imported_by: Operator performing the import
+            strategy: ID conflict strategy
+                - "skip": Skip already existing IDs
+                - "rename": Automatically assign new IDs
+                - "overwrite": Overwrite existing Insights
 
         Returns:
             {"imported": [...ids], "skipped": [...ids],
@@ -1235,11 +1235,11 @@ class InsightManager:
                     ins_data["id"] = new_id
                     results["renamed"][old_id] = new_id
                 elif existing and strategy == "overwrite":
-                    pass  # 直接覆盖
+                    pass  # Overwrite directly
                 elif not existing:
-                    pass  # 新 ID，直接写入
+                    pass  # New ID, write directly
 
-                # 标记来源项目（如果原始没有）
+                # Mark source project (if original doesn't have one)
                 if "origin" not in ins_data:
                     ins_data["origin"] = {}
                 origin = ins_data["origin"]
@@ -1268,14 +1268,14 @@ class InsightManager:
             except Exception as e:
                 results["errors"].append(f"{old_id}: {e}")
 
-        # 导入注册表状态（可选）
+        # Import registry state (optional)
         if "registry" in bundle:
             entries, settings = self.get_registry()
             for ins_id, reg_data in bundle["registry"].items():
-                # 如果 ID 被 rename，映射到新 ID
+                # If ID was renamed, map to new ID
                 mapped_id = results["renamed"].get(ins_id, ins_id)
                 if mapped_id in entries:
-                    # 保留本地权重，但合并使用次数
+                    # Keep local weight, but merge usage count
                     entries[mapped_id].used_count += reg_data.get("used_count", 0)
             self._save_registry(entries, settings)
 
@@ -1283,7 +1283,7 @@ class InsightManager:
 
     def _log_event(self, event_type: str, actor: str, summary: str,
                    payload: Dict[str, Any]) -> None:
-        """记录审计事件"""
+        """Record audit event"""
         if self.event_log:
             self.event_log.append(Event(
                 event_type=event_type,

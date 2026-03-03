@@ -35,12 +35,12 @@ class TestGetStageInfo:
     def test_current_stage(self):
         mgr = LifecycleManager.create_default()
         info = mgr.get_stage_info()
-        assert info["name"] == "原型验证"
+        assert info["name"] == "Prototype Validation"
 
     def test_specific_stage(self):
         mgr = LifecycleManager.create_default()
         info = mgr.get_stage_info("production")
-        assert info["name"] == "量产"
+        assert info["name"] == "Production"
 
     def test_unknown_stage_returns_empty(self):
         mgr = LifecycleManager({"lifecycle": {"current_stage": "unknown"}})
@@ -61,13 +61,13 @@ class TestCanUpgrade:
         can, next_stage, reason = mgr.can_upgrade()
         assert can is False
         assert next_stage is None
-        assert "最后阶段" in reason
+        assert "last stage" in reason.lower()
 
     def test_unknown_stage(self):
         mgr = LifecycleManager({"lifecycle": {"current_stage": "alien"}})
         can, next_stage, reason = mgr.can_upgrade()
         assert can is False
-        assert "未知" in reason
+        assert "Unknown" in reason or "unknown" in reason
 
     def test_incomplete_milestones_block_upgrade(self):
         config = {
@@ -75,7 +75,7 @@ class TestCanUpgrade:
                 "current_stage": "demo",
                 "stages": {
                     "demo": {
-                        "name": "原型验证",
+                        "name": "Prototype Validation",
                         "milestones": [
                             {"name": "M1", "completed": True},
                             {"name": "M2", "completed": False},
@@ -87,7 +87,7 @@ class TestCanUpgrade:
         mgr = LifecycleManager(config)
         can, next_stage, reason = mgr.can_upgrade()
         assert can is False
-        assert "1 个里程碑未完成" in reason
+        assert "1 milestones incomplete" in reason
 
     def test_all_milestones_complete(self):
         config = {
@@ -95,7 +95,7 @@ class TestCanUpgrade:
                 "current_stage": "demo",
                 "stages": {
                     "demo": {
-                        "name": "原型验证",
+                        "name": "Prototype Validation",
                         "milestones": [
                             {"name": "M1", "completed": True},
                         ],
@@ -120,7 +120,7 @@ class TestUpgradeToStage:
         mgr = LifecycleManager.create_default("demo")
         success, error = mgr.upgrade_to_stage("alien")
         assert success is False
-        assert "无效" in error
+        assert "Invalid" in error
 
     def test_cannot_downgrade(self):
         mgr = LifecycleManager({"lifecycle": {"current_stage": "production"}})
@@ -131,7 +131,7 @@ class TestUpgradeToStage:
         mgr = LifecycleManager.create_default("demo")
         success, error = mgr.upgrade_to_stage("commercial")
         assert success is False
-        assert "跳过" in error
+        assert "skip" in error.lower() or "Cannot skip" in error
 
     def test_upgrade_records_history(self):
         mgr = LifecycleManager.create_default("demo")
@@ -187,7 +187,7 @@ class TestGetUpgradeSuggestions:
         assert len(suggestions) > 0
         # Should mention new principles or focus areas
         combined = " ".join(suggestions)
-        assert "新增" in combined
+        assert "New" in combined
 
     def test_suggestions_no_target(self):
         mgr = LifecycleManager.create_default("demo")

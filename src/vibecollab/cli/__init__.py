@@ -1,5 +1,5 @@
 """CLI subpackage — all Click commands."""
-# 在导入任何 CLI 模块之前，确保 stdout/stderr 编码安全
+# Ensure stdout/stderr encoding safety before importing any CLI module
 from vibecollab._compat import ensure_safe_stdout as _ensure_safe_stdout
 _ensure_safe_stdout()
 

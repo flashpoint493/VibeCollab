@@ -1,11 +1,11 @@
 """
-Embedder — 轻量 embedding 抽象层
+Embedder -- Lightweight embedding abstraction layer
 
-支持两种后端:
-    - "openai": OpenAI text-embedding-3-small API (需要 httpx + API key)
-    - "local": sentence-transformers 本地模型 (需要 pip install vibe-collab[embedding])
+Supports two backends:
+    - "openai": OpenAI text-embedding-3-small API (requires httpx + API key)
+    - "local": sentence-transformers local model (requires pip install vibe-collab[embedding])
 
-默认后端按可用性自动选择: local > openai > 失败
+Default backend auto-selects by availability: local > openai > fail
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class EmbeddingResult:
-    """单条 embedding 结果"""
+    """Single embedding result"""
 
     text: str
     vector: List[float]
@@ -32,29 +32,29 @@ class EmbeddingResult:
 
 
 class EmbedderBackend(ABC):
-    """Embedding 后端抽象基类"""
+    """Embedding backend abstract base class"""
 
     @abstractmethod
     def embed_texts(self, texts: List[str]) -> List[List[float]]:
-        """批量计算文本 embedding 向量"""
+        """Batch compute text embedding vectors"""
 
     @abstractmethod
     def embed_text(self, text: str) -> List[float]:
-        """单条文本 embedding"""
+        """Single text embedding"""
 
     @property
     @abstractmethod
     def dimensions(self) -> int:
-        """向量维度"""
+        """Vector dimensions"""
 
     @property
     @abstractmethod
     def model_name(self) -> str:
-        """模型名称"""
+        """Model name"""
 
 
 class OpenAIEmbedder(EmbedderBackend):
-    """OpenAI text-embedding API 后端"""
+    """OpenAI text-embedding API backend"""
 
     def __init__(
         self,
@@ -67,7 +67,7 @@ class OpenAIEmbedder(EmbedderBackend):
             import httpx  # noqa: F401
         except ImportError:
             raise ImportError(
-                "OpenAI embedding 需要 httpx。请安装: pip install vibe-collab[llm]"
+                "OpenAI embedding requires httpx. Install: pip install vibe-collab[llm]"
             )
         self._api_key = api_key
         self._model = model
@@ -93,7 +93,7 @@ class OpenAIEmbedder(EmbedderBackend):
         )
         resp.raise_for_status()
         data = resp.json()
-        # 按 index 排序确保顺序一致
+        # Sort by index to ensure consistent order
         embeddings = sorted(data["data"], key=lambda x: x["index"])
         return [e["embedding"] for e in embeddings]
 
@@ -110,15 +110,15 @@ class OpenAIEmbedder(EmbedderBackend):
 
 
 class LocalEmbedder(EmbedderBackend):
-    """sentence-transformers 本地模型后端"""
+    """sentence-transformers local model backend"""
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         try:
             from sentence_transformers import SentenceTransformer
         except ImportError:
             raise ImportError(
-                "本地 embedding 需要 sentence-transformers。"
-                "请安装: pip install vibe-collab[embedding]"
+                "Local embedding requires sentence-transformers. "
+                "Install: pip install vibe-collab[embedding]"
             )
         self._model_name = model_name
         self._model = SentenceTransformer(model_name)
@@ -142,12 +142,12 @@ class LocalEmbedder(EmbedderBackend):
 
 
 class PurePythonEmbedder(EmbedderBackend):
-    """纯 Python 轻量 embedding (基于字符 n-gram 哈希)
+    """Pure Python lightweight embedding (based on character n-gram hashing)
 
-    零外部依赖方案。精度远低于真正的 embedding 模型，
-    但足以提供比纯标签匹配更好的文本相似度搜索。
+    Zero external dependency solution. Accuracy is far lower than real embedding models,
+    but sufficient to provide better text similarity search than pure tag matching.
 
-    算法: 字符 trigram → 哈希 → 归一化为固定维度向量
+    Algorithm: character trigram -> hash -> normalize to fixed-dimension vector
     """
 
     def __init__(self, dimensions: int = 256):
@@ -160,14 +160,14 @@ class PurePythonEmbedder(EmbedderBackend):
         if not text:
             return vector
 
-        # 字符 trigram 哈希
+        # Character trigram hashing
         for i in range(max(1, len(text) - 2)):
             trigram = text[i : i + 3]
             h = int(hashlib.md5(trigram.encode("utf-8")).hexdigest(), 16)
             idx = h % self._dims
             vector[idx] += 1.0
 
-        # L2 归一化
+        # L2 normalization
         norm = sum(v * v for v in vector) ** 0.5
         if norm > 0:
             vector = [v / norm for v in vector]
@@ -191,23 +191,23 @@ class PurePythonEmbedder(EmbedderBackend):
 
 @dataclass
 class EmbedderConfig:
-    """Embedder 配置"""
+    """Embedder configuration"""
 
     backend: str = "auto"  # "auto" | "openai" | "local" | "pure_python"
-    model: str = ""  # 后端特定的模型名
+    model: str = ""  # Backend-specific model name
     api_key: str = ""
     base_url: str = "https://api.openai.com/v1"
-    dimensions: int = 0  # 0 = 后端默认值
+    dimensions: int = 0  # 0 = backend default
     cache_dir: Optional[str] = None
 
 
 class Embedder:
-    """Embedder 统一入口
+    """Embedder unified entry point
 
-    自动按可用性选择后端:
-        1. 如果 sentence-transformers 可用 → local
-        2. 如果有 API key + httpx → openai
-        3. 否则 → pure_python (零依赖降级)
+    Auto-selects backend by availability:
+        1. If sentence-transformers available -> local
+        2. If API key + httpx available -> openai
+        3. Otherwise -> pure_python (zero-dependency fallback)
     """
 
     def __init__(self, config: Optional[EmbedderConfig] = None):
@@ -228,30 +228,30 @@ class Embedder:
             dims = self._config.dimensions or 256
             return PurePythonEmbedder(dimensions=dims)
         else:
-            raise ValueError(f"未知的 embedding 后端: {backend}")
+            raise ValueError(f"Unknown embedding backend: {backend}")
 
     def _auto_select(self) -> EmbedderBackend:
-        # 优先本地模型
+        # Prefer local model
         try:
             return self._create_local()
         except ImportError:
             pass
 
-        # 尝试 OpenAI
+        # Try OpenAI
         if self._config.api_key:
             try:
                 return self._create_openai()
             except ImportError:
                 pass
 
-        # 降级到纯 Python
-        logger.info("未找到 embedding 依赖，使用 pure_python 降级方案")
+        # Fallback to pure Python
+        logger.info("No embedding dependencies found, using pure_python fallback")
         dims = self._config.dimensions or 256
         return PurePythonEmbedder(dimensions=dims)
 
     def _create_openai(self) -> OpenAIEmbedder:
         if not self._config.api_key:
-            raise ValueError("OpenAI embedding 需要 api_key")
+            raise ValueError("OpenAI embedding requires api_key")
         return OpenAIEmbedder(
             api_key=self._config.api_key,
             model=self._config.model or "text-embedding-3-small",
@@ -293,7 +293,7 @@ class Embedder:
             if cache_key in self._cache:
                 results.append(self._cache[cache_key])
             else:
-                results.append([])  # 占位
+                results.append([])  # Placeholder
                 uncached_indices.append(i)
                 uncached_texts.append(text)
 

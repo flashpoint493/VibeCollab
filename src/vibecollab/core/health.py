@@ -1,15 +1,15 @@
 """
 Project Health Signal Extractor
 
-从 EventLog、TaskManager、ProtocolChecker 提取项目健康信号，
-生成结构化的健康报告，用于项目演进决策和自动化监控。
+Extract project health signals from EventLog, TaskManager, ProtocolChecker,
+generate structured health reports for project evolution decisions and automated monitoring.
 
 DECISION-009 Iteration 4: Auto-evolution — Signal extraction pattern.
 
-信号分级:
-  - CRITICAL: 必须立即处理 (完整性破坏、协议严重违规)
-  - WARNING:  需要关注 (积压、瓶颈、过期文档)
-  - INFO:     参考信息 (活跃度、进度、趋势)
+Signal levels:
+  - CRITICAL: Must be handled immediately (integrity breach, severe protocol violation)
+  - WARNING:  Needs attention (backlog, bottleneck, outdated docs)
+  - INFO:     Reference information (activity, progress, trends)
 """
 
 from dataclasses import asdict, dataclass, field
@@ -24,7 +24,7 @@ from ..domain.task_manager import TaskManager
 
 
 class SignalLevel(str, Enum):
-    """信号严重等级"""
+    """Signal severity level"""
     CRITICAL = "critical"
     WARNING = "warning"
     INFO = "info"
@@ -32,7 +32,7 @@ class SignalLevel(str, Enum):
 
 @dataclass
 class Signal:
-    """单个健康信号"""
+    """Single health signal"""
     name: str
     level: SignalLevel
     category: str
@@ -48,7 +48,7 @@ class Signal:
 
 @dataclass
 class HealthReport:
-    """项目健康报告"""
+    """Project health report"""
     timestamp: str = ""
     signals: List[Signal] = field(default_factory=list)
     score: float = 0.0
@@ -83,12 +83,12 @@ class HealthReport:
 
 
 class HealthExtractor:
-    """项目健康信号提取器
+    """Project health signal extractor
 
-    从三大数据源提取信号:
-      1. ProtocolChecker — 协议遵循检查
-      2. EventLog — 审计日志分析 (活跃度、完整性、冲突)
-      3. TaskManager — 任务进度与质量
+    Extracts signals from three data sources:
+      1. ProtocolChecker — Protocol compliance check
+      2. EventLog — Audit log analysis (activity, integrity, conflicts)
+      3. TaskManager — Task progress and quality
     """
 
     def __init__(self, project_root: Path, config: Dict[str, Any]):
@@ -96,7 +96,7 @@ class HealthExtractor:
         self.config = config
 
     def extract(self) -> HealthReport:
-        """执行全量信号提取，返回健康报告"""
+        """Execute full signal extraction and return health report"""
         report = HealthReport()
 
         self._extract_protocol_signals(report)
@@ -117,7 +117,7 @@ class HealthExtractor:
     # ── Protocol Checker Signals ──────────────────────────────
 
     def _extract_protocol_signals(self, report: HealthReport):
-        """从 ProtocolChecker 提取协议合规信号"""
+        """Extract protocol compliance signals from ProtocolChecker"""
         try:
             checker = ProtocolChecker(self.project_root, self.config)
             results = checker.check_all()
@@ -128,8 +128,8 @@ class HealthExtractor:
                 level=SignalLevel.WARNING,
                 category="protocol",
                 value=None,
-                message="协议检查器初始化失败",
-                suggestion="检查项目配置是否完整",
+                message="Protocol checker initialization failed",
+                suggestion="Check if project configuration is complete",
             ))
             return
 
@@ -142,8 +142,8 @@ class HealthExtractor:
                 level=SignalLevel.CRITICAL,
                 category="protocol",
                 value=errors,
-                message=f"发现 {errors} 个协议违规错误",
-                suggestion="运行 `vibecollab check` 查看详情并修复",
+                message=f"Found {errors} protocol violation error(s)",
+                suggestion="Run `vibecollab check` for details and fix",
             ))
 
         if warnings > 0:
@@ -152,8 +152,8 @@ class HealthExtractor:
                 level=SignalLevel.WARNING,
                 category="protocol",
                 value=warnings,
-                message=f"发现 {warnings} 个协议警告",
-                suggestion="检查文档是否需要更新",
+                message=f"Found {warnings} protocol warning(s)",
+                suggestion="Check if documents need updating",
             ))
 
         if summary.get("all_passed", False):
@@ -162,19 +162,19 @@ class HealthExtractor:
                 level=SignalLevel.INFO,
                 category="protocol",
                 value=True,
-                message="所有协议检查通过",
+                message="All protocol checks passed",
             ))
 
     # ── EventLog Signals ──────────────────────────────────────
 
     def _extract_eventlog_signals(self, report: HealthReport):
-        """从 EventLog 提取审计日志信号"""
+        """Extract audit log signals from EventLog"""
         try:
             log = EventLog(self.project_root)
         except Exception:
             return
 
-        # 信号1: 日志完整性
+        # Signal 1: Log integrity
         try:
             violations = log.verify_integrity()
             if violations:
@@ -183,8 +183,8 @@ class HealthExtractor:
                     level=SignalLevel.CRITICAL,
                     category="integrity",
                     value=len(violations),
-                    message=f"事件日志存在 {len(violations)} 处完整性问题",
-                    suggestion="检查 .vibecollab/events.jsonl 是否被非法修改",
+                    message=f"Event log has {len(violations)} integrity issue(s)",
+                    suggestion="Check if .vibecollab/events.jsonl was tampered with",
                 ))
             else:
                 report.signals.append(Signal(
@@ -192,12 +192,12 @@ class HealthExtractor:
                     level=SignalLevel.INFO,
                     category="integrity",
                     value=0,
-                    message="事件日志完整性验证通过",
+                    message="Event log integrity verification passed",
                 ))
         except Exception:
             pass
 
-        # 信号2: 项目活跃度
+        # Signal 2: Project activity
         try:
             total_events = log.count()
             report.signals.append(Signal(
@@ -205,7 +205,7 @@ class HealthExtractor:
                 level=SignalLevel.INFO,
                 category="activity",
                 value=total_events,
-                message=f"累计 {total_events} 个事件记录",
+                message=f"Total {total_events} event records",
             ))
 
             seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
@@ -216,13 +216,13 @@ class HealthExtractor:
                     level=SignalLevel.WARNING,
                     category="activity",
                     value=0,
-                    message="过去 7 天无项目活动",
-                    suggestion="检查项目是否处于停滞状态",
+                    message="No project activity in the past 7 days",
+                    suggestion="Check if the project is stalled",
                 ))
         except Exception:
             pass
 
-        # 信号3: 未解决冲突
+        # Signal 3: Unresolved conflicts
         try:
             conflicts_detected = log.query(event_type=EventType.CONFLICT_DETECTED.value)
             conflicts_resolved = log.query(event_type=EventType.CONFLICT_RESOLVED.value)
@@ -233,13 +233,13 @@ class HealthExtractor:
                     level=SignalLevel.WARNING,
                     category="collaboration",
                     value=unresolved,
-                    message=f"{unresolved} 个冲突尚未解决",
-                    suggestion="运行 `vibecollab dev conflicts` 查看冲突详情",
+                    message=f"{unresolved} unresolved conflict(s)",
+                    suggestion="Run `vibecollab dev conflicts` for conflict details",
                 ))
         except Exception:
             pass
 
-        # 信号4: 验证失败率
+        # Signal 4: Validation failure rate
         try:
             failures = log.query(event_type=EventType.VALIDATION_FAILED.value)
             passes = log.query(event_type=EventType.VALIDATION_PASSED.value)
@@ -253,8 +253,8 @@ class HealthExtractor:
                     level=level,
                     category="quality",
                     value=round(fail_rate, 2),
-                    message=f"验证失败率 {fail_rate:.0%} ({len(failures)}/{total_validations})",
-                    suggestion="检查任务质量和固化流程" if fail_rate > 0.3 else None,
+                    message=f"Validation failure rate {fail_rate:.0%} ({len(failures)}/{total_validations})",
+                    suggestion="Check task quality and solidification process" if fail_rate > 0.3 else None,
                 ))
         except Exception:
             pass
@@ -262,7 +262,7 @@ class HealthExtractor:
     # ── Task Manager Signals ──────────────────────────────────
 
     def _extract_task_signals(self, report: HealthReport):
-        """从 TaskManager 提取任务进度信号"""
+        """Extract task progress signals from TaskManager"""
         try:
             mgr = TaskManager(self.project_root)
         except Exception:
@@ -275,7 +275,7 @@ class HealthExtractor:
                 level=SignalLevel.INFO,
                 category="tasks",
                 value=0,
-                message="暂无任务记录",
+                message="No task records",
             ))
             return
 
@@ -284,28 +284,28 @@ class HealthExtractor:
         in_progress = mgr.count(status="IN_PROGRESS")
         in_review = mgr.count(status="REVIEW")
 
-        # 信号1: 任务完成率
+        # Signal 1: Task completion rate
         completion_rate = done / total
         report.signals.append(Signal(
             name="task_completion_rate",
             level=SignalLevel.INFO,
             category="tasks",
             value=round(completion_rate, 2),
-            message=f"任务完成率 {completion_rate:.0%} ({done}/{total})",
+            message=f"Task completion rate {completion_rate:.0%} ({done}/{total})",
         ))
 
-        # 信号2: 积压检测
+        # Signal 2: Backlog detection
         if todo > 5:
             report.signals.append(Signal(
                 name="task_backlog",
                 level=SignalLevel.WARNING,
                 category="tasks",
                 value=todo,
-                message=f"{todo} 个待办任务积压",
-                suggestion="考虑优先级排序或拆分任务",
+                message=f"{todo} backlog TODO tasks",
+                suggestion="Consider prioritizing or splitting tasks",
             ))
 
-        # 信号3: 审核瓶颈
+        # Signal 3: Review bottleneck
         active = in_progress + in_review + todo
         if active > 0 and in_review / active > 0.5:
             report.signals.append(Signal(
@@ -313,20 +313,20 @@ class HealthExtractor:
                 level=SignalLevel.WARNING,
                 category="tasks",
                 value=in_review,
-                message=f"{in_review} 个任务等待审核 (占活跃任务 {in_review/active:.0%})",
-                suggestion="加速审核流程，避免阻塞",
+                message=f"{in_review} tasks awaiting review ({in_review/active:.0%} of active tasks)",
+                suggestion="Speed up review process to avoid blocking",
             ))
 
-        # 信号4: 任务分布
+        # Signal 4: Task distribution
         report.signals.append(Signal(
             name="task_distribution",
             level=SignalLevel.INFO,
             category="tasks",
             value={"todo": todo, "in_progress": in_progress, "review": in_review, "done": done},
-            message=f"任务分布: TODO={todo} IN_PROGRESS={in_progress} REVIEW={in_review} DONE={done}",
+            message=f"Task distribution: TODO={todo} IN_PROGRESS={in_progress} REVIEW={in_review} DONE={done}",
         ))
 
-        # 信号5: 依赖阻塞
+        # Signal 5: Dependency blocking
         try:
             all_tasks = mgr.list_tasks()
             blocked = []
@@ -345,13 +345,13 @@ class HealthExtractor:
                     level=SignalLevel.WARNING,
                     category="tasks",
                     value=len(blocked),
-                    message=f"{len(blocked)} 个任务被依赖阻塞: {', '.join(blocked[:5])}",
-                    suggestion="优先完成阻塞链上的前置任务",
+                    message=f"{len(blocked)} task(s) blocked by dependencies: {', '.join(blocked[:5])}",
+                    suggestion="Prioritize completing prerequisite tasks in the blocking chain",
                 ))
         except Exception:
             pass
 
-        # 信号6: 负载均衡
+        # Signal 6: Load balancing
         try:
             from collections import Counter
             active_tasks = [t for t in mgr.list_tasks() if t.status != "DONE" and t.assignee]
@@ -368,8 +368,8 @@ class HealthExtractor:
                             level=SignalLevel.WARNING,
                             category="collaboration",
                             value=dict(load),
-                            message=f"负载不均衡: {dict(load)}",
-                            suggestion="考虑重新分配任务",
+                            message=f"Load imbalance: {dict(load)}",
+                            suggestion="Consider reassigning tasks",
                         ))
         except Exception:
             pass
@@ -378,13 +378,13 @@ class HealthExtractor:
 
     @staticmethod
     def _calculate_score(report: HealthReport) -> float:
-        """根据信号计算健康评分 (0-100)
+        """Calculate health score based on signals (0-100)
 
-        评分规则:
-          - 基础分 100
-          - 每个 CRITICAL: -25
-          - 每个 WARNING: -10
-          - 最低 0 分
+        Scoring rules:
+          - Base score 100
+          - Each CRITICAL: -25
+          - Each WARNING: -10
+          - Minimum 0
         """
         score = 100.0
         score -= report.critical_count * 25
@@ -393,7 +393,7 @@ class HealthExtractor:
 
     @staticmethod
     def _score_to_grade(score: float) -> str:
-        """分数转等级"""
+        """Convert score to grade"""
         if score >= 90:
             return "A"
         elif score >= 70:

@@ -1,5 +1,5 @@
 """
-Tests for VectorStore — 本地持久化向量存储
+Tests for VectorStore — Local persistent vector storage
 """
 
 import json
@@ -42,7 +42,7 @@ class TestCosineSimilarity:
         assert cosine_similarity(a, b) == 0.0
 
     def test_dimension_mismatch_raises(self):
-        with pytest.raises(ValueError, match="维度不匹配"):
+        with pytest.raises(ValueError, match="[Dd]imension"):
             cosine_similarity([1.0, 2.0], [1.0])
 
 
@@ -72,7 +72,7 @@ class TestPackUnpack:
 class TestVectorStore:
     @pytest.fixture
     def store(self):
-        """内存模式 VectorStore"""
+        """In-memory VectorStore"""
         return VectorStore(db_path=None, dimensions=4)
 
     @pytest.fixture
@@ -95,7 +95,7 @@ class TestVectorStore:
         assert result.source == "test.md"
         assert result.source_type == "document"
         assert result.metadata == {"tags": ["test"]}
-        # 向量应一致（浮点精度）
+        # Vectors should match (float precision)
         for a, b in zip(result.vector, sample_doc.vector):
             assert abs(a - b) < 1e-5
 
@@ -153,8 +153,8 @@ class TestVectorStore:
         assert store.count() == 1
 
     def test_dimension_mismatch_raises(self, store):
-        bad_doc = VectorDocument("bad", "text", [1.0, 0.0])  # 2 dims, 期望 4
-        with pytest.raises(ValueError, match="维度不匹配"):
+        bad_doc = VectorDocument("bad", "text", [1.0, 0.0])  # 2 dims, expected 4
+        with pytest.raises(ValueError, match="[Dd]imension"):
             store.upsert(bad_doc)
 
     def test_upsert_batch(self, store):
@@ -169,10 +169,10 @@ class TestVectorStore:
     def test_upsert_batch_skips_bad_dimensions(self, store):
         docs = [
             VectorDocument("good", "ok", [1, 0, 0, 0]),
-            VectorDocument("bad", "wrong dims", [1, 0]),  # 维度错误
+            VectorDocument("bad", "wrong dims", [1, 0]),  # wrong dimensions
         ]
         count = store.upsert_batch(docs)
-        assert count == 1  # 只有 good 成功
+        assert count == 1  # only good succeeded
 
     def test_context_manager(self):
         with VectorStore(db_path=None, dimensions=4) as store:
@@ -188,7 +188,7 @@ class TestVectorStoreSearch:
     @pytest.fixture
     def store_with_data(self):
         store = VectorStore(db_path=None, dimensions=4)
-        # 4 个正交方向的文档
+        # 4 orthogonal direction documents
         store.upsert(VectorDocument("d1", "python programming", [1, 0, 0, 0], source_type="doc"))
         store.upsert(VectorDocument("d2", "java development", [0, 1, 0, 0], source_type="doc"))
         store.upsert(VectorDocument("i1", "debug tips", [0, 0, 1, 0], source_type="insight"))
@@ -211,13 +211,13 @@ class TestVectorStoreSearch:
         assert len(results) == 2
 
     def test_min_score_filter(self, store_with_data):
-        # 查询 [1,0,0,0]，只有 d1 分数为 1.0，其余为 0
+        # Query [1,0,0,0], only d1 score=1.0, rest are 0
         results = store_with_data.search([1, 0, 0, 0], min_score=0.5)
         assert len(results) == 1
         assert results[0].doc_id == "d1"
 
     def test_results_sorted_by_score(self, store_with_data):
-        # 查询偏向 d1 和 i1
+        # Query biased toward d1 and i1
         results = store_with_data.search([0.9, 0.0, 0.5, 0.0], top_k=4)
         scores = [r.score for r in results]
         assert scores == sorted(scores, reverse=True)
@@ -228,8 +228,8 @@ class TestVectorStoreSearch:
         assert results == []
 
     def test_search_dimension_mismatch_raises(self, store_with_data):
-        with pytest.raises(ValueError, match="维度不匹配"):
-            store_with_data.search([1, 0])  # 2 dims, 期望 4
+        with pytest.raises(ValueError, match="[Dd]imension"):
+            store_with_data.search([1, 0])  # 2 dims, expected 4
 
     def test_search_result_has_metadata(self):
         store = VectorStore(db_path=None, dimensions=2)
@@ -248,12 +248,12 @@ class TestVectorStoreSearch:
 class TestVectorStorePersistence:
     def test_persist_and_reload(self, tmp_path):
         db_file = tmp_path / "vectors" / "index.db"
-        # 写入
+        # Write
         with VectorStore(db_path=db_file, dimensions=4) as store:
             store.upsert(VectorDocument("p1", "persistent", [1, 0, 0, 0]))
             assert store.count() == 1
 
-        # 重新加载
+        # Reload
         with VectorStore(db_path=db_file, dimensions=4) as store2:
             assert store2.count() == 1
             doc = store2.get("p1")

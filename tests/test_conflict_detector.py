@@ -1,7 +1,7 @@
 """
-ConflictDetector 模块单元测试
+ConflictDetector module unit tests
 
-测试跨开发者冲突检测功能。
+Tests for cross-developer conflict detection functionality.
 """
 
 # Import built-in modules
@@ -26,16 +26,16 @@ from vibecollab.domain.conflict_detector import (
 # ============================================================================
 
 class TestIsWindowsGBK:
-    """测试 Windows GBK 检测"""
+    """Test Windows GBK detection"""
 
     def test_non_windows_returns_false(self):
-        """非 Windows 系统返回 False"""
+        """Non-Windows system returns False"""
         with patch("vibecollab._compat.platform.system", return_value="Linux"):
             result = is_windows_gbk()
             assert result is False
 
     def test_windows_with_utf8_returns_false(self):
-        """Windows + UTF-8 编码返回 False"""
+        """Windows + UTF-8 encoding returns False"""
         with patch("vibecollab._compat.platform.system", return_value="Windows"):
             with patch("vibecollab._compat.sys.stdout") as mock_stdout:
                 mock_stdout.encoding = "utf-8"
@@ -43,7 +43,7 @@ class TestIsWindowsGBK:
                 assert result is False
 
     def test_windows_with_gbk_returns_true(self):
-        """Windows + GBK 编码返回 True"""
+        """Windows + GBK encoding returns True"""
         with patch("vibecollab._compat.platform.system", return_value="Windows"):
             with patch("vibecollab._compat.sys.stdout") as mock_stdout:
                 mock_stdout.encoding = "gbk"
@@ -56,10 +56,10 @@ class TestIsWindowsGBK:
 # ============================================================================
 
 class TestConflictType:
-    """测试 ConflictType 枚举"""
+    """Test ConflictType enum"""
 
     def test_conflict_types(self):
-        """验证冲突类型定义"""
+        """Verify conflict type definitions"""
         assert ConflictType.FILE == "file"
         assert ConflictType.TASK == "task"
         assert ConflictType.DEPENDENCY == "dependency"
@@ -71,10 +71,10 @@ class TestConflictType:
 # ============================================================================
 
 class TestConflict:
-    """测试 Conflict 类"""
+    """Test Conflict class"""
 
     def test_init_defaults(self):
-        """测试默认初始化"""
+        """Test default initialization"""
         conflict = Conflict(
             conflict_type=ConflictType.FILE,
             severity="high",
@@ -90,7 +90,7 @@ class TestConflict:
         assert isinstance(conflict.detected_at, datetime)
 
     def test_init_with_details(self):
-        """测试带详情的初始化"""
+        """Test initialization with details"""
         details = {"files": ["test.py", "main.py"]}
         conflict = Conflict(
             conflict_type=ConflictType.FILE,
@@ -103,7 +103,7 @@ class TestConflict:
         assert conflict.details == details
 
     def test_to_dict(self):
-        """测试转字典"""
+        """Test conversion to dict"""
         conflict = Conflict(
             conflict_type=ConflictType.TASK,
             severity="high",
@@ -122,7 +122,7 @@ class TestConflict:
         assert "detected_at" in result
 
     def test_str_representation(self):
-        """测试字符串表示"""
+        """Test string representation"""
         conflict = Conflict(
             conflict_type=ConflictType.DEPENDENCY,
             severity="medium",
@@ -144,11 +144,11 @@ class TestConflict:
 # ============================================================================
 
 class TestConflictDetector:
-    """测试 ConflictDetector 类"""
+    """Test ConflictDetector class"""
 
     @pytest.fixture
     def temp_project(self):
-        """创建临时项目目录"""
+        """Create temporary project directory"""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             developers_dir = project_root / "docs" / "developers"
@@ -157,7 +157,7 @@ class TestConflictDetector:
 
     @pytest.fixture
     def basic_config(self):
-        """基础配置"""
+        """Basic config"""
         return {
             "multi_developer": {
                 "enabled": True,
@@ -171,7 +171,7 @@ class TestConflictDetector:
         }
 
     def test_init(self, temp_project, basic_config):
-        """测试初始化"""
+        """Test initialization"""
         detector = ConflictDetector(temp_project, basic_config)
 
         assert detector.project_root == temp_project
@@ -179,56 +179,56 @@ class TestConflictDetector:
         assert detector.developers_dir == temp_project / "docs" / "developers"
 
     def test_detect_all_conflicts_empty_project(self, temp_project, basic_config):
-        """空项目不应有冲突"""
+        """Empty project should have no conflicts"""
         detector = ConflictDetector(temp_project, basic_config)
         conflicts = detector.detect_all_conflicts()
 
         assert conflicts == []
 
     def test_detect_all_conflicts_with_target_developer(self, temp_project, basic_config):
-        """测试针对特定开发者的冲突检测"""
-        # 创建开发者目录和上下文
+        """Test conflict detection for a specific developer"""
+        # Create developer directory and context
         alice_dir = temp_project / "docs" / "developers" / "alice"
         alice_dir.mkdir(parents=True)
-        (alice_dir / "CONTEXT.md").write_text("## 当前任务\n- Task 1", encoding="utf-8")
+        (alice_dir / "CONTEXT.md").write_text("## Current Tasks\n- Task 1", encoding="utf-8")
 
         detector = ConflictDetector(temp_project, basic_config)
         conflicts = detector.detect_all_conflicts(target_developer="alice")
 
-        # 只有一个开发者，不应有冲突
+        # Only one developer, should have no conflicts
         assert conflicts == []
 
     def test_detect_all_conflicts_nonexistent_developer(self, temp_project, basic_config):
-        """测试不存在的开发者"""
+        """Test non-existent developer"""
         detector = ConflictDetector(temp_project, basic_config)
         conflicts = detector.detect_all_conflicts(target_developer="nonexistent")
 
         assert conflicts == []
 
     def test_detect_all_conflicts_between_developers(self, temp_project, basic_config):
-        """测试两个开发者之间的冲突检测"""
-        # 创建两个开发者目录
+        """Test conflict detection between two developers"""
+        # Create two developer directories
         for dev in ["alice", "bob"]:
             dev_dir = temp_project / "docs" / "developers" / dev
             dev_dir.mkdir(parents=True)
             (dev_dir / "CONTEXT.md").write_text(
-                f"## 当前任务\n- {dev} task",
+                f"## Current Tasks\n- {dev} task",
                 encoding="utf-8"
             )
 
         detector = ConflictDetector(temp_project, basic_config)
         conflicts = detector.detect_all_conflicts(between_developers=("alice", "bob"))
 
-        # 任务不相似，不应有任务冲突
+        # Tasks are not similar, should have no task conflicts
         assert isinstance(conflicts, list)
 
 
 class TestConflictDetectorFileConflicts:
-    """测试文件冲突检测"""
+    """Test file conflict detection"""
 
     @pytest.fixture
     def temp_project_with_devs(self):
-        """创建带开发者的临时项目"""
+        """Create temporary project with developers"""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             developers_dir = project_root / "docs" / "developers"
@@ -250,17 +250,17 @@ class TestConflictDetectorFileConflicts:
         }
 
     def test_detect_file_conflicts_common_files(self, temp_project_with_devs, basic_config):
-        """测试检测共同修改的文件"""
+        """Test detecting commonly modified files"""
         project = temp_project_with_devs
 
-        # Alice 修改了 main.py
-        alice_ctx = "## 最近完成\n- 修改了 `main.py` 和 `utils.py`"
+        # Alice modified main.py
+        alice_ctx = "## Recently Completed\n- Modified `main.py` and `utils.py`"
         (project / "docs" / "developers" / "alice" / "CONTEXT.md").write_text(
             alice_ctx, encoding="utf-8"
         )
 
-        # Bob 也修改了 main.py
-        bob_ctx = "## 最近完成\n- 更新了 `main.py` 和 `config.py`"
+        # Bob also modified main.py
+        bob_ctx = "## Recently Completed\n- Updated `main.py` and `config.py`"
         (project / "docs" / "developers" / "bob" / "CONTEXT.md").write_text(
             bob_ctx, encoding="utf-8"
         )
@@ -268,20 +268,20 @@ class TestConflictDetectorFileConflicts:
         detector = ConflictDetector(project, basic_config)
         conflicts = detector.detect_all_conflicts()
 
-        # 应该检测到 main.py 的文件冲突
+        # Should detect file conflict on main.py
         file_conflicts = [c for c in conflicts if c.type == ConflictType.FILE]
         assert len(file_conflicts) == 1
         assert "main.py" in file_conflicts[0].details.get("files", [])
 
     def test_detect_file_conflicts_no_common_files(self, temp_project_with_devs, basic_config):
-        """测试无共同修改文件时不应有冲突"""
+        """Test no conflict when no common files modified"""
         project = temp_project_with_devs
 
         (project / "docs" / "developers" / "alice" / "CONTEXT.md").write_text(
-            "## 最近完成\n- 修改了 `alice.py`", encoding="utf-8"
+            "## Recently Completed\n- Modified `alice.py`", encoding="utf-8"
         )
         (project / "docs" / "developers" / "bob" / "CONTEXT.md").write_text(
-            "## 最近完成\n- 修改了 `bob.py`", encoding="utf-8"
+            "## Recently Completed\n- Modified `bob.py`", encoding="utf-8"
         )
 
         detector = ConflictDetector(project, basic_config)
@@ -292,7 +292,7 @@ class TestConflictDetectorFileConflicts:
 
 
 class TestConflictDetectorTaskConflicts:
-    """测试任务冲突检测"""
+    """Test task conflict detection"""
 
     @pytest.fixture
     def temp_project_with_devs(self):
@@ -314,16 +314,16 @@ class TestConflictDetectorTaskConflicts:
         }
 
     def test_detect_similar_tasks(self, temp_project_with_devs, basic_config):
-        """测试检测相似任务"""
+        """Test detecting similar tasks"""
         project = temp_project_with_devs
 
-        # 两人的任务非常相似 (使用英文确保 \w+ 分词正常，超过 60% 阈值)
+        # Two people have very similar tasks (using English for \w+ tokenization, exceeds 60% threshold)
         # Jaccard: {user, login, auth, module} / {implement, user, login, auth, module, develop} = 4/6 = 0.67
         (project / "docs" / "developers" / "alice" / "CONTEXT.md").write_text(
-            "## 当前任务\n- implement user login auth module", encoding="utf-8"
+            "## Current Tasks\n- implement user login auth module", encoding="utf-8"
         )
         (project / "docs" / "developers" / "bob" / "CONTEXT.md").write_text(
-            "## 当前任务\n- develop user login auth module", encoding="utf-8"
+            "## Current Tasks\n- develop user login auth module", encoding="utf-8"
         )
 
         detector = ConflictDetector(project, basic_config)
@@ -334,15 +334,15 @@ class TestConflictDetectorTaskConflicts:
         assert task_conflicts[0].severity == "high"
 
     def test_detect_different_tasks(self, temp_project_with_devs, basic_config):
-        """测试不同任务不应有冲突"""
+        """Test different tasks should not have conflicts"""
         project = temp_project_with_devs
 
-        # 使用英文，确保分词正常
+        # Using English for proper tokenization
         (project / "docs" / "developers" / "alice" / "CONTEXT.md").write_text(
-            "## 当前任务\n- implement user authentication", encoding="utf-8"
+            "## Current Tasks\n- implement user authentication", encoding="utf-8"
         )
         (project / "docs" / "developers" / "bob" / "CONTEXT.md").write_text(
-            "## 当前任务\n- optimize database query performance", encoding="utf-8"
+            "## Current Tasks\n- optimize database query performance", encoding="utf-8"
         )
 
         detector = ConflictDetector(project, basic_config)
@@ -353,7 +353,7 @@ class TestConflictDetectorTaskConflicts:
 
 
 class TestConflictDetectorDependencyConflicts:
-    """测试依赖冲突检测"""
+    """Test dependency conflict detection"""
 
     @pytest.fixture
     def temp_project(self):
@@ -373,13 +373,13 @@ class TestConflictDetectorDependencyConflicts:
         }
 
     def test_detect_circular_dependency(self, temp_project, basic_config):
-        """测试检测循环依赖"""
-        collab_content = """## 任务分配矩阵
+        """Test detecting circular dependency"""
+        collab_content = """## Task Assignment Matrix
 
-| 任务 | 负责人 | 协作者 | 状态 | 依赖 |
-|------|--------|--------|------|------|
-| TASK-DEV-001: 功能A | alice | - | IN_PROGRESS | TASK-DEV-002 |
-| TASK-DEV-002: 功能B | bob | - | IN_PROGRESS | TASK-DEV-001 |
+| Task | Owner | Collaborators | Status | Dependencies |
+|------|-------|---------------|--------|--------------|
+| TASK-DEV-001: Feature A | alice | - | IN_PROGRESS | TASK-DEV-002 |
+| TASK-DEV-002: Feature B | bob | - | IN_PROGRESS | TASK-DEV-001 |
 """
         collab_file = temp_project / "docs" / "developers" / "COLLABORATION.md"
         collab_file.write_text(collab_content, encoding="utf-8")
@@ -390,16 +390,16 @@ class TestConflictDetectorDependencyConflicts:
         dep_conflicts = [c for c in conflicts if c.type == ConflictType.DEPENDENCY]
         assert len(dep_conflicts) == 1
         assert dep_conflicts[0].severity == "high"
-        assert "循环依赖" in dep_conflicts[0].description
+        assert "Circular dependency" in dep_conflicts[0].description
 
     def test_no_circular_dependency(self, temp_project, basic_config):
-        """测试无循环依赖时不应有冲突"""
-        collab_content = """## 任务分配矩阵
+        """Test no conflict when no circular dependency"""
+        collab_content = """## Task Assignment Matrix
 
-| 任务 | 负责人 | 协作者 | 状态 | 依赖 |
-|------|--------|--------|------|------|
-| TASK-DEV-001: 功能A | alice | - | IN_PROGRESS | - |
-| TASK-DEV-002: 功能B | bob | - | IN_PROGRESS | TASK-DEV-001 |
+| Task | Owner | Collaborators | Status | Dependencies |
+|------|-------|---------------|--------|--------------|
+| TASK-DEV-001: Feature A | alice | - | IN_PROGRESS | - |
+| TASK-DEV-002: Feature B | bob | - | IN_PROGRESS | TASK-DEV-001 |
 """
         collab_file = temp_project / "docs" / "developers" / "COLLABORATION.md"
         collab_file.write_text(collab_content, encoding="utf-8")
@@ -412,7 +412,7 @@ class TestConflictDetectorDependencyConflicts:
 
 
 class TestConflictDetectorNamingConflicts:
-    """测试命名冲突检测"""
+    """Test naming conflict detection"""
 
     @pytest.fixture
     def temp_project_with_devs(self):
@@ -434,16 +434,16 @@ class TestConflictDetectorNamingConflicts:
         }
 
     def test_detect_naming_conflict_class(self, temp_project_with_devs, basic_config):
-        """测试检测类名冲突"""
+        """Test detecting class name conflicts"""
         project = temp_project_with_devs
 
-        alice_ctx = """## 最近完成
+        alice_ctx = """## Recently Completed
 ```python
 class UserManager:
     pass
 ```
 """
-        bob_ctx = """## 最近完成
+        bob_ctx = """## Recently Completed
 ```python
 class UserManager:
     def login(self):
@@ -465,16 +465,16 @@ class UserManager:
         assert "UserManager" in naming_conflicts[0].details.get("names", [])
 
     def test_detect_naming_conflict_function(self, temp_project_with_devs, basic_config):
-        """测试检测函数名冲突"""
+        """Test detecting function name conflicts"""
         project = temp_project_with_devs
 
-        alice_ctx = """## 最近完成
+        alice_ctx = """## Recently Completed
 ```python
 def process_data():
     pass
 ```
 """
-        bob_ctx = """## 最近完成
+        bob_ctx = """## Recently Completed
 ```python
 def process_data(data):
     return data
@@ -496,7 +496,7 @@ def process_data(data):
 
 
 class TestConflictDetectorHelpers:
-    """测试辅助方法"""
+    """Test helper methods"""
 
     @pytest.fixture
     def temp_project(self):
@@ -508,48 +508,48 @@ class TestConflictDetectorHelpers:
         return {"multi_developer": {"enabled": True}}
 
     def test_extract_section_content(self, temp_project, basic_config):
-        """测试章节内容提取"""
+        """Test section content extraction"""
         detector = ConflictDetector(temp_project, basic_config)
 
-        content = """## 当前任务
+        content = """## Current Tasks
 - Task 1
 - Task 2
 
-## 最近完成
+## Recently Completed
 - Done 1
 """
-        result = detector._extract_section_content(content, "当前任务")
+        result = detector._extract_section_content(content, "Current Tasks")
         assert "Task 1" in result
         assert "Task 2" in result
         assert "Done 1" not in result
 
     def test_extract_section_content_not_found(self, temp_project, basic_config):
-        """测试章节不存在时返回空"""
+        """Test empty return when section not found"""
         detector = ConflictDetector(temp_project, basic_config)
 
-        content = "## 其他章节\n内容"
-        result = detector._extract_section_content(content, "不存在的章节")
+        content = "## Other Section\nContent"
+        result = detector._extract_section_content(content, "Non-existent Section")
         assert result == ""
 
     def test_extract_current_tasks(self, temp_project, basic_config):
-        """测试当前任务提取"""
+        """Test current task extraction"""
         detector = ConflictDetector(temp_project, basic_config)
 
-        content = """## 当前任务
-- 实现功能A
-- 修复Bug B
-* 优化性能
+        content = """## Current Tasks
+- Implement Feature A
+- Fix Bug B
+* Optimize Performance
 """
         result = detector._extract_current_tasks(content)
-        assert "实现功能A" in result
-        assert "修复Bug B" in result
-        assert "优化性能" in result
+        assert "Implement Feature A" in result
+        assert "Fix Bug B" in result
+        assert "Optimize Performance" in result
 
     def test_extract_code_names(self, temp_project, basic_config):
-        """测试代码命名提取"""
+        """Test code name extraction"""
         detector = ConflictDetector(temp_project, basic_config)
 
-        content = """## 代码
+        content = """## Code
 ```python
 class MyClass:
     def my_method(self):
@@ -565,21 +565,21 @@ def helper_function():
         assert "helper_function" in result
 
     def test_calculate_similarity_identical(self, temp_project, basic_config):
-        """测试相同字符串相似度"""
+        """Test identical string similarity"""
         detector = ConflictDetector(temp_project, basic_config)
 
         result = detector._calculate_similarity("hello world", "hello world")
         assert result == 1.0
 
     def test_calculate_similarity_different(self, temp_project, basic_config):
-        """测试不同字符串相似度"""
+        """Test different string similarity"""
         detector = ConflictDetector(temp_project, basic_config)
 
         result = detector._calculate_similarity("hello world", "goodbye moon")
         assert result < 0.5
 
     def test_calculate_similarity_similar(self, temp_project, basic_config):
-        """测试相似字符串"""
+        """Test similar strings"""
         detector = ConflictDetector(temp_project, basic_config)
 
         result = detector._calculate_similarity(
@@ -590,7 +590,7 @@ def helper_function():
         assert result >= 0.4
 
     def test_calculate_similarity_empty(self, temp_project, basic_config):
-        """测试空字符串相似度"""
+        """Test empty string similarity"""
         detector = ConflictDetector(temp_project, basic_config)
 
         assert detector._calculate_similarity("", "test") == 0.0
@@ -599,7 +599,7 @@ def helper_function():
 
 
 class TestConflictDetectorReport:
-    """测试冲突报告生成"""
+    """Test conflict report generation"""
 
     @pytest.fixture
     def temp_project(self):
@@ -611,14 +611,14 @@ class TestConflictDetectorReport:
         return {"multi_developer": {"enabled": True}}
 
     def test_generate_report_no_conflicts(self, temp_project, basic_config):
-        """测试无冲突时的报告"""
+        """Test report when no conflicts"""
         detector = ConflictDetector(temp_project, basic_config)
         report = detector.generate_conflict_report([])
 
-        assert "未检测到冲突" in report
+        assert "No conflicts detected" in report
 
     def test_generate_report_with_conflicts(self, temp_project, basic_config):
-        """测试有冲突时的报告"""
+        """Test report with conflicts"""
         detector = ConflictDetector(temp_project, basic_config)
 
         conflicts = [
@@ -638,14 +638,14 @@ class TestConflictDetectorReport:
 
         report = detector.generate_conflict_report(conflicts)
 
-        assert "2 个潜在冲突" in report
+        assert "2 potential conflicts" in report
         assert "HIGH" in report
         assert "MEDIUM" in report
         assert "alice" in report
         assert "bob" in report
 
     def test_generate_report_verbose(self, temp_project, basic_config):
-        """测试详细报告"""
+        """Test verbose report"""
         detector = ConflictDetector(temp_project, basic_config)
 
         conflicts = [
@@ -664,7 +664,7 @@ class TestConflictDetectorReport:
         assert "main.py" in report
 
     def test_generate_report_suggestions(self, temp_project, basic_config):
-        """测试报告包含建议"""
+        """Test report includes suggestions"""
         detector = ConflictDetector(temp_project, basic_config)
 
         conflicts = [
@@ -678,12 +678,12 @@ class TestConflictDetectorReport:
 
         report = detector.generate_conflict_report(conflicts)
 
-        assert "建议" in report
+        assert "Suggestions" in report
         assert "COLLABORATION.md" in report
 
 
 class TestConflictDetectorMetadata:
-    """测试元数据处理"""
+    """Test metadata handling"""
 
     @pytest.fixture
     def temp_project(self):
@@ -703,16 +703,16 @@ class TestConflictDetectorMetadata:
         }
 
     def test_load_context_with_metadata(self, temp_project, basic_config):
-        """测试加载带元数据的上下文"""
+        """Test loading context with metadata"""
         dev_dir = temp_project / "docs" / "developers" / "alice"
 
-        # 创建 CONTEXT.md
+        # Create CONTEXT.md
         (dev_dir / "CONTEXT.md").write_text(
-            "## 当前任务\n- Test task",
+            "## Current Tasks\n- Test task",
             encoding="utf-8"
         )
 
-        # 创建 .metadata.yaml
+        # Create .metadata.yaml
         metadata_content = "last_update: '2026-02-24'\nstatus: active\n"
         (dev_dir / ".metadata.yaml").write_text(metadata_content, encoding="utf-8")
 
@@ -723,10 +723,10 @@ class TestConflictDetectorMetadata:
         assert detector._developer_contexts["alice"]["metadata"].get("status") == "active"
 
     def test_skip_hidden_directories(self, temp_project, basic_config):
-        """测试跳过隐藏目录"""
+        """Test skipping hidden directories"""
         devs_dir = temp_project / "docs" / "developers"
 
-        # 创建隐藏目录
+        # Create hidden directory
         hidden_dir = devs_dir / ".hidden"
         hidden_dir.mkdir(parents=True)
         (hidden_dir / "CONTEXT.md").write_text("Hidden", encoding="utf-8")
@@ -738,7 +738,7 @@ class TestConflictDetectorMetadata:
 
 
 class TestCollaborationDataParsing:
-    """测试协作文档解析"""
+    """Test collaboration document parsing"""
 
     @pytest.fixture
     def temp_project(self):
@@ -757,14 +757,14 @@ class TestCollaborationDataParsing:
         }
 
     def test_parse_collaboration_file(self, temp_project, basic_config):
-        """测试解析协作文档"""
-        collab_content = """## 任务分配矩阵
+        """Test parsing collaboration document"""
+        collab_content = """## Task Assignment Matrix
 
-| 任务 | 负责人 | 协作者 | 状态 | 依赖 |
-|------|--------|--------|------|------|
-| TASK-DEV-001: 用户认证 | alice | bob | IN_PROGRESS | - |
-| TASK-DEV-002: 数据库设计 | bob | - | DONE | - |
-| TASK-DEV-003: API开发 | alice | charlie | TODO | TASK-DEV-002 |
+| Task | Owner | Collaborators | Status | Dependencies |
+|------|-------|---------------|--------|--------------|
+| TASK-DEV-001: User Auth | alice | bob | IN_PROGRESS | - |
+| TASK-DEV-002: DB Design | bob | - | DONE | - |
+| TASK-DEV-003: API Dev | alice | charlie | TODO | TASK-DEV-002 |
 """
         collab_file = temp_project / "docs" / "developers" / "COLLABORATION.md"
         collab_file.write_text(collab_content, encoding="utf-8")
@@ -779,20 +779,20 @@ class TestCollaborationDataParsing:
         assert "TASK-DEV-002" in tasks["TASK-DEV-003"]["dependencies"]
 
     def test_collaboration_file_not_exists(self, temp_project, basic_config):
-        """测试协作文档不存在"""
+        """Test collaboration document does not exist"""
         detector = ConflictDetector(temp_project, basic_config)
         detector._load_collaboration_data()
 
         assert detector._collaboration_data == {"tasks": {}, "dependencies": {}}
 
     def test_get_developers_for_tasks(self, temp_project, basic_config):
-        """测试获取任务对应的开发者"""
-        collab_content = """## 任务分配矩阵
+        """Test getting developers for tasks"""
+        collab_content = """## Task Assignment Matrix
 
-| 任务 | 负责人 | 协作者 | 状态 | 依赖 |
-|------|--------|--------|------|------|
-| TASK-DEV-001: 任务A | alice | - | IN_PROGRESS | - |
-| TASK-DEV-002: 任务B | bob | - | DONE | - |
+| Task | Owner | Collaborators | Status | Dependencies |
+|------|-------|---------------|--------|--------------|
+| TASK-DEV-001: Task A | alice | - | IN_PROGRESS | - |
+| TASK-DEV-002: Task B | bob | - | DONE | - |
 """
         collab_file = temp_project / "docs" / "developers" / "COLLABORATION.md"
         collab_file.write_text(collab_content, encoding="utf-8")

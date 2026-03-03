@@ -1,90 +1,90 @@
-## 4.2.3 需求澄清协议（重要）
+## 4.2.3 Requirement Clarification Protocol (important)
 
-> **用户提出需求时可能是自然无意识的，AI 必须将模糊描述转化为结构化需求**
+> **User requirements may be stated casually and unconsciously. The AI must transform vague descriptions into structured requirements.**
 
-**触发条件**: 用户提出的需求存在以下情况
-- 描述模糊或不完整
-- 缺少具体的验收标准
-- 可能有多种理解方式
-- 涉及 S/A 级决策
+**Trigger Conditions**: The user's requirement has any of the following issues:
+- Description is vague or incomplete
+- Missing specific acceptance criteria
+- Open to multiple interpretations
+- Involves S/A-level decisions
 
-**澄清流程**:
+**Clarification Flow**:
 ```
-1. [AI] 识别用户意图，提取关键信息
-2. [AI] 转化为结构化需求描述
-3. [AI] 列出假设和待确认项
-4. [人] 确认/修正/补充
-5. [AI] 形成最终需求文档
+1. [AI] Identify user intent, extract key information
+2. [AI] Transform into structured requirement description
+3. [AI] List assumptions and items to confirm
+4. [Human] Confirm / correct / supplement
+5. [AI] Finalize the requirement document
 ```
 
-**结构化需求模板**:
+**Structured Requirement Template**:
 
 ```markdown
-## 需求: {需求标题}
+## Requirement: {title}
 
-**原始描述**: 
-> {用户原话}
+**Original Description**: 
+> {user's original words}
 
-**需求分析**:
-- 目标: {要达成什么}
-- 场景: {在什么情况下使用}
-- 用户: {谁会使用}
+**Requirement Analysis**:
+- Goal: {what to achieve}
+- Scenario: {under what circumstances}
+- User: {who will use it}
 
-**功能要求**:
-1. {具体功能点1}
-2. {具体功能点2}
+**Functional Requirements**:
+1. {specific feature 1}
+2. {specific feature 2}
 
-**验收标准**:
-- [ ] {可验证的标准1}
-- [ ] {可验证的标准2}
+**Acceptance Criteria**:
+- [ ] {verifiable criterion 1}
+- [ ] {verifiable criterion 2}
 
-**待确认项**:
-- [ ] {需要用户确认的假设1}
-- [ ] {需要用户确认的假设2}
+**Items to Confirm**:
+- [ ] {assumption needing user confirmation 1}
+- [ ] {assumption needing user confirmation 2}
 
-**决策等级**: {S/A/B/C}
-**预估复杂度**: {高/中/低}
+**Decision Level**: {S/A/B/C}
+**Estimated Complexity**: {high/medium/low}
 ```
 
-**快速澄清问句**:
-- "你希望达到什么效果？"
-- "有没有参考案例？"
-- "这个功能谁会用？在什么场景下用？"
-- "如何验证这个功能是否完成？"
-- "有时间或资源约束吗？"
+**Quick Clarification Questions**:
+- "What outcome are you hoping for?"
+- "Do you have any reference examples?"
+- "Who will use this feature? In what scenario?"
+- "How do we verify this feature is complete?"
+- "Are there any time or resource constraints?"
 
-**示例**:
+**Example**:
 
-用户说: "加个导出功能"
+User says: "Add an export feature"
 
-AI 澄清后:
+AI after clarification:
 ```markdown
-## 需求: 数据导出功能
+## Requirement: Data Export Feature
 
-**原始描述**: 
-> 加个导出功能
+**Original Description**: 
+> Add an export feature
 
-**需求分析**:
-- 目标: 将系统数据导出为文件，便于备份或分享
-- 场景: 用户需要离线查看或迁移数据时
-- 用户: 所有用户
+**Requirement Analysis**:
+- Goal: Export system data to files for backup or sharing
+- Scenario: When users need to view data offline or migrate data
+- User: All users
 
-**功能要求**:
-1. 支持导出为 JSON 格式
-2. 支持导出为 CSV 格式（如有表格数据）
-3. 导出文件包含时间戳命名
+**Functional Requirements**:
+1. Support export to JSON format
+2. Support export to CSV format (if tabular data exists)
+3. Exported files named with timestamps
 
-**验收标准**:
-- [ ] 点击导出按钮后生成文件
-- [ ] 文件可被其他工具正常打开
-- [ ] 导出内容完整无丢失
+**Acceptance Criteria**:
+- [ ] File is generated after clicking the export button
+- [ ] File can be opened normally by other tools
+- [ ] Exported content is complete with no data loss
 
-**待确认项**:
-- [ ] 需要导出哪些数据？全部还是部分？
-- [ ] 是否需要导出格式选择？
-- [ ] 文件大小有限制吗？
+**Items to Confirm**:
+- [ ] Which data needs to be exported? All or partial?
+- [ ] Is export format selection needed?
+- [ ] Are there file size limits?
 
-**决策等级**: B
-**预估复杂度**: 中
+**Decision Level**: B
+**Estimated Complexity**: Medium
 ```
 

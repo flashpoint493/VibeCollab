@@ -9,338 +9,338 @@
 {%- set agg_file = context_cfg.get('aggregation_file', 'docs/CONTEXT.md') -%}
 {%- set auto_sync = context_cfg.get('auto_sync', True) -%}
 {%- set collab_file = collab_cfg.get('file', 'docs/developers/COLLABORATION.md') -%}
-# 十、多开发者/Agent 协作协议
+# X. Multi-Developer/Agent Collaboration Protocol
 
-> **v0.5.0+ 支持多个开发者或多个 AI Agent 在同一项目中协同开发**
+> **v0.5.0+ supports multiple developers or AI Agents collaborating on the same project**
 
-## 10.1 协作模式概述
+## 10.1 Collaboration Mode Overview
 
-VibeCollab 支持以下协作场景：
-- 👥 **多人协作**: 多个开发者在同一项目上工作
-- 🤖 **多 Agent 协作**: 多个 AI Agent 分工完成不同任务
-- 🔀 **混合协作**: 人类开发者 + AI Agent 混合团队
+VibeCollab supports the following collaboration scenarios:
+- **Multi-person**: Multiple developers working on the same project
+- **Multi-Agent**: Multiple AI Agents dividing different tasks
+- **Hybrid**: Human developers + AI Agents in mixed teams
 
-### 核心原则
+### Core Principles
 
-1. **独立工作空间**: 每个开发者维护自己的 `CONTEXT.md`，互不干扰
-2. **智能聚合**: 系统自动聚合生成全局视图，提供整体状态
-3. **明确协作关系**: 通过 `COLLABORATION.md` 记录任务依赖和交接
-4. **自动身份识别**: 基于 Git 配置自动识别当前开发者
-5. **冲突预防**: 提前检测潜在的跨开发者工作冲突
+1. **Independent Workspace**: Each developer maintains their own `CONTEXT.md`, no interference
+2. **Smart Aggregation**: System automatically aggregates a global view, providing overall status
+3. **Clear Collaboration**: Track task dependencies and handoffs via `COLLABORATION.md`
+4. **Auto Identity Detection**: Automatically identifies the current developer based on Git config
+5. **Conflict Prevention**: Proactively detects potential cross-developer work conflicts
 
-## 10.2 目录结构
+## 10.2 Directory Structure
 
-多开发者模式下的项目结构：
+Project structure in multi-developer mode:
 
 ```
 project/
-├── CONTRIBUTING_AI.md
-├── project.yaml
-└── docs/
-    ├── CONTEXT.md            # 全局聚合视图（自动生成，只读）
-    ├── CHANGELOG.md          # 全局变更日志
-    ├── DECISIONS.md          # 全局决策记录
-    └── developers/           # 开发者工作空间
-        ├── COLLABORATION.md  # 协作关系文档
-        ├── alice/            # 开发者 alice 的目录
-        │   ├── CONTEXT.md    # alice 的工作上下文
-        │   └── .metadata.yaml # 元数据（更新时间等）
-        └── bob/              # 开发者 bob 的目录
-            ├── CONTEXT.md
-            └── .metadata.yaml
++-- CONTRIBUTING_AI.md
++-- project.yaml
++-- docs/
+    +-- CONTEXT.md            # Global aggregated view (auto-generated, read-only)
+    +-- CHANGELOG.md          # Global changelog
+    +-- DECISIONS.md          # Global decision records
+    +-- developers/           # Developer workspaces
+        +-- COLLABORATION.md  # Collaboration document
+        +-- alice/            # Developer alice's directory
+        |   +-- CONTEXT.md    # alice's work context
+        |   +-- .metadata.yaml # Metadata (update time, etc.)
+        +-- bob/              # Developer bob's directory
+            +-- CONTEXT.md
+            +-- .metadata.yaml
 ```
 
-## 10.3 开发者身份识别
+## 10.3 Developer Identity Detection
 
-系统通过以下策略自动识别开发者身份：
+The system automatically identifies developer identity through the following strategies:
 
-**识别策略**:
-- **主策略**: `{{ primary }}` 
-  - `git_username`: 使用 `git config user.name`
-  - `system_user`: 使用系统用户名（$USER / $USERNAME）
-  - `manual`: 手动指定（通过环境变量 `VIBECOLLAB_DEVELOPER`）
-- **降级策略**: `{{ fallback }}` (主策略失败时使用)
-- **名称标准化**: {{ '开启' if normalize else '关闭' }} (小写、空格转下划线、移除特殊字符)
+**Detection Strategy**:
+- **Primary**: `{{ primary }}` 
+  - `git_username`: Uses `git config user.name`
+  - `system_user`: Uses system username ($USER / $USERNAME)
+  - `manual`: Manually specified (via env var `VIBECOLLAB_DEVELOPER`)
+- **Fallback**: `{{ fallback }}` (used when primary fails)
+- **Name Normalization**: {{ 'enabled' if normalize else 'disabled' }} (lowercase, spaces to underscores, remove special chars)
 
-**使用 CLI 命令查看当前身份**:
+**Use CLI to check current identity**:
 ```bash
 vibecollab dev whoami
 ```
 
-## 10.4 上下文管理
+## 10.4 Context Management
 
-### 10.4.1 独立上下文
+### 10.4.1 Independent Context
 
-每个开发者维护自己的 `CONTEXT.md`，记录：
-- 当前正在进行的任务
-- 最近完成的工作
-- 待解决的问题
-- 技术债务
+Each developer maintains their own `CONTEXT.md`, recording:
+- Currently active tasks
+- Recently completed work
+- Pending issues
+- Technical debt
 
-**更新命令**:
+**Update command**:
 ```bash
-# 手动更新时间戳（通常在对话结束时自动执行）
+# Manually update timestamp (usually auto-executed at dialogue end)
 vibecollab dev sync
 ```
 
-### 10.4.2 全局上下文聚合
+### 10.4.2 Global Context Aggregation
 
-系统自动聚合所有开发者的上下文，生成全局视图（`{{ agg_file }}`）：
+The system automatically aggregates all developer contexts into a global view (`{{ agg_file }}`):
 
-- ⚠️ **只读文件**: 不要手动编辑全局 CONTEXT.md
-- 📊 **聚合内容**: 
-  - 项目整体状态
-  - 各开发者工作进展
-  - 跨开发者依赖关系
-  - 全局技术债务
-- 🔄 **更新时机**: {{ '对话结束时自动更新' if auto_sync else '手动执行 `vibecollab dev sync`' }}
+- [!] **Read-only file**: Do not manually edit the global CONTEXT.md
+- **Aggregated content**: 
+  - Overall project status
+  - Each developer's work progress
+  - Cross-developer dependencies
+  - Global technical debt
+- **Update timing**: {{ 'Auto-updated at dialogue end' if auto_sync else 'Manual via `vibecollab dev sync`' }}
 
-**手动触发聚合**:
+**Manually trigger aggregation**:
 ```bash
 vibecollab dev sync --aggregate
 ```
 
-## 10.5 协作文档管理
+## 10.5 Collaboration Document Management
 
 ### 10.5.1 COLLABORATION.md
 
-`{{ collab_file }}` 记录跨开发者的协作关系：
+`{{ collab_file }}` records cross-developer collaboration:
 
-**包含内容**:
-1. **任务分配矩阵**: 谁负责什么任务，谁是协作者
-2. **依赖关系**: 任务之间的依赖关系
-3. **交接记录**: 任务从一个开发者移交给另一个开发者
-4. **协作约定**: 团队的协作惯例和规则
+**Contents**:
+1. **Task Assignment Matrix**: Who is responsible for what, who are collaborators
+2. **Dependencies**: Task dependency relationships
+3. **Handoff Records**: Task transfers from one developer to another
+4. **Collaboration Conventions**: Team collaboration conventions and rules
 
-**示例格式**:
+**Example Format**:
 ```markdown
-## 任务分配矩阵
+## Task Assignment Matrix
 
-| 任务 | 负责人 | 协作者 | 状态 | 依赖 |
-|------|--------|--------|------|------|
-| TASK-DEV-001: 用户认证 | alice | bob | IN_PROGRESS | - |
-| TASK-DEV-002: 数据库设计 | bob | - | DONE | - |
-| TASK-DEV-003: API 开发 | alice | - | TODO | TASK-DEV-002 |
+| Task | Owner | Collaborator | Status | Dependencies |
+|------|-------|-------------|--------|--------------|
+| TASK-DEV-001: User Auth | alice | bob | IN_PROGRESS | - |
+| TASK-DEV-002: DB Design | bob | - | DONE | - |
+| TASK-DEV-003: API Dev | alice | - | TODO | TASK-DEV-002 |
 
-## 交接记录
+## Handoff Records
 
-### TASK-DEV-001: 用户认证
-- **交接时间**: 2026-02-10 14:30
-- **交接人**: bob
-- **接收人**: alice
-- **交接原因**: bob 完成数据库设计，alice 接手前端集成
-- **交接说明**: API 接口已完成，文档见 docs/api.md
+### TASK-DEV-001: User Auth
+- **Handoff Time**: 2026-02-10 14:30
+- **From**: bob
+- **To**: alice
+- **Reason**: bob completed DB design, alice takes over frontend integration
+- **Notes**: API endpoints are complete, docs at docs/api.md
 ```
 
-### 10.5.2 查看协作状态
+### 10.5.2 View Collaboration Status
 
 ```bash
-# 查看所有开发者状态
+# List all developers
 vibecollab dev list
 
-# 查看特定开发者状态
+# View specific developer status
 vibecollab dev status alice
 
-# 初始化新开发者上下文
+# Initialize new developer context
 vibecollab dev init --developer bob
 ```
 
-## 10.6 对话流程适配
+## 10.6 Dialogue Flow Adaptation
 
-### 10.6.1 对话开始时
+### 10.6.1 On Dialogue Start
 
-多开发者模式下，AI 在对话开始时应：
-
-```
-1. 读取全局聚合 CONTEXT.md（了解整体状态）
-2. 读取当前开发者的 CONTEXT.md（了解自己的进度）
-3. 读取 COLLABORATION.md（了解协作关系）
-4. 识别当前开发者身份（vibecollab dev whoami）
-5. 确认本次对话目标
-```
-
-### 10.6.2 对话结束时
+In multi-developer mode, the AI should at dialogue start:
 
 ```
-1. 更新当前开发者的 CONTEXT.md
-2. 更新全局 CHANGELOG.md
-3. 如有跨开发者协作，更新 COLLABORATION.md
-4. 自动触发上下文聚合（生成新的全局 CONTEXT.md）
-5. Git commit（记录当前开发者的提交）
+1. Read global aggregated CONTEXT.md (understand overall status)
+2. Read current developer's CONTEXT.md (understand own progress)
+3. Read COLLABORATION.md (understand collaboration relationships)
+4. Identify current developer identity (vibecollab dev whoami)
+5. Confirm this dialogue's goal
 ```
 
-### 10.6.3 多开发者场景的特殊考虑
+### 10.6.2 On Dialogue End
 
-**场景一：任务依赖**
-- Alice 的任务依赖 Bob 的任务完成
-- AI 应在 COLLABORATION.md 中标注依赖关系
-- Alice 开始工作前检查依赖任务状态
+```
+1. Update current developer's CONTEXT.md
+2. Update global CHANGELOG.md
+3. If cross-developer collaboration occurred, update COLLABORATION.md
+4. Auto-trigger context aggregation (generate new global CONTEXT.md)
+5. Git commit (record current developer's commit)
+```
 
-**场景二：任务交接**
-- Bob 完成阶段性工作，交接给 Alice
-- 在 COLLABORATION.md 记录交接信息
-- Alice 接手时读取交接说明
+### 10.6.3 Special Considerations for Multi-Developer Scenarios
 
-**场景三：并行开发**
-- Alice 和 Bob 同时开发不同模块
-- 各自维护独立的 CONTEXT.md
-- 通过全局聚合了解对方进展
+**Scenario 1: Task Dependencies**
+- Alice's task depends on Bob's task completion
+- AI should annotate dependencies in COLLABORATION.md
+- Alice should check dependent task status before starting
 
-## 10.7 冲突检测与预防 (v0.5.1+)
+**Scenario 2: Task Handoff**
+- Bob completes phase work, hands off to Alice
+- Record handoff info in COLLABORATION.md
+- Alice reads handoff notes when taking over
 
-> **新特性：自动检测跨开发者的潜在工作冲突**
+**Scenario 3: Parallel Development**
+- Alice and Bob develop different modules simultaneously
+- Each maintains independent CONTEXT.md
+- Use global aggregation to track each other's progress
 
-### 10.7.1 冲突类型
+## 10.7 Conflict Detection & Prevention (v0.5.1+)
 
-系统会检测以下类型的冲突：
+> **Feature: Automatically detect potential cross-developer work conflicts**
 
-1. **文件冲突**: 多个开发者同时修改同一文件
-2. **任务冲突**: 多个开发者负责相同或重叠的任务
-3. **依赖冲突**: 任务依赖关系不一致或循环依赖
-4. **命名冲突**: 多个开发者创建同名的函数/类/模块
+### 10.7.1 Conflict Types
 
-### 10.7.2 冲突检测命令
+The system detects the following conflict types:
+
+1. **File Conflicts**: Multiple developers modifying the same file
+2. **Task Conflicts**: Multiple developers responsible for the same or overlapping tasks
+3. **Dependency Conflicts**: Inconsistent or circular task dependencies
+4. **Naming Conflicts**: Multiple developers creating identically named functions/classes/modules
+
+### 10.7.2 Conflict Detection Commands
 
 ```bash
-# 检测当前开发者与其他开发者的冲突
+# Detect conflicts between current developer and others
 vibecollab dev conflicts
 
-# 详细模式（显示冲突详情）
+# Verbose mode (show conflict details)
 vibecollab dev conflicts --verbose
 
-# 检测特定开发者之间的冲突
+# Detect conflicts between specific developers
 vibecollab dev conflicts --between alice bob
 ```
 
-### 10.7.3 冲突处理流程
+### 10.7.3 Conflict Resolution Flow
 
 ```
-1. [AI] 检测到潜在冲突
-2. [AI] 在 CONTEXT.md 中标注冲突提醒
-3. [AI] 提示用户检查冲突详情
-4. [人] 决定处理方式：
-   - 协调分工
-   - 合并工作
-   - 重新分配任务
-5. [AI] 更新 COLLABORATION.md 记录解决方案
+1. [AI] Detect potential conflict
+2. [AI] Annotate conflict warning in CONTEXT.md
+3. [AI] Prompt user to check conflict details
+4. [Human] Decide resolution:
+   - Coordinate division of work
+   - Merge work
+   - Reassign tasks
+5. [AI] Update COLLABORATION.md with resolution
 ```
 
-### 10.7.4 冲突预防建议
+### 10.7.4 Conflict Prevention Tips
 
-- ✅ 明确任务边界，避免职责重叠
-- ✅ 及时更新 COLLABORATION.md 的任务分配
-- ✅ 使用任务依赖标注避免循环依赖
-- ✅ 定期执行 `vibecollab dev conflicts` 检查
-- ✅ 重要修改前查看全局 CONTEXT.md 了解他人进展
+- [x] Define clear task boundaries, avoid overlapping responsibilities
+- [x] Keep COLLABORATION.md task assignments up to date
+- [x] Use task dependency annotations to avoid circular dependencies
+- [x] Regularly run `vibecollab dev conflicts` checks
+- [x] Check global CONTEXT.md before major changes to understand others' progress
 
-## 10.8 CLI 命令参考
+## 10.8 CLI Command Reference
 
 ```bash
-# 开发者身份
-vibecollab dev whoami                    # 查看当前开发者身份
-vibecollab dev switch <developer>        # 切换到指定开发者 (v0.5.4+)
-vibecollab dev switch                    # 交互式选择开发者 (v0.5.4+)
-vibecollab dev switch --clear            # 清除切换，恢复默认识别 (v0.5.4+)
+# Developer Identity
+vibecollab dev whoami                    # View current developer identity
+vibecollab dev switch <developer>        # Switch to specified developer (v0.5.4+)
+vibecollab dev switch                    # Interactive developer selection (v0.5.4+)
+vibecollab dev switch --clear            # Clear switch, restore default detection (v0.5.4+)
 
-# 开发者管理
-vibecollab dev list                      # 列出所有开发者
-vibecollab dev status <developer>        # 查看开发者状态
-vibecollab dev init --developer <name>   # 初始化新开发者
+# Developer Management
+vibecollab dev list                      # List all developers
+vibecollab dev status <developer>        # View developer status
+vibecollab dev init --developer <name>   # Initialize new developer
 
-# 上下文同步
-vibecollab dev sync                      # 更新元数据时间戳
-vibecollab dev sync --aggregate          # 重新生成全局聚合
+# Context Sync
+vibecollab dev sync                      # Update metadata timestamp
+vibecollab dev sync --aggregate          # Regenerate global aggregation
 
-# 冲突检测 (v0.5.1+)
-vibecollab dev conflicts                 # 检测冲突
-vibecollab dev conflicts --verbose       # 详细冲突报告
+# Conflict Detection (v0.5.1+)
+vibecollab dev conflicts                 # Detect conflicts
+vibecollab dev conflicts --verbose       # Detailed conflict report
 
-# AI 人机交互 (v0.5.8+)
-vibecollab ai ask "问题"                 # 单轮 AI 提问 (自动注入项目上下文)
-vibecollab ai ask "问题" --no-context    # 不注入项目上下文
-vibecollab ai ask "问题" -v              # 显示详细信息
-vibecollab ai chat                       # 多轮对话模式 (exit/quit/bye 退出)
+# AI Human-Machine Interaction (v0.5.8+)
+vibecollab ai ask "question"             # Single-turn AI question (auto-inject project context)
+vibecollab ai ask "question" --no-context # Without project context injection
+vibecollab ai ask "question" -v          # Show detailed info
+vibecollab ai chat                       # Multi-turn dialogue mode (exit/quit/bye to quit)
 
-# Agent 自主模式 (v0.5.8+)
-vibecollab ai agent plan                 # 只读分析，生成行动计划
-vibecollab ai agent run                  # 单次 Plan→Execute→Solidify 周期
-vibecollab ai agent run --dry-run        # 干运行，只输出计划不执行
-vibecollab ai agent serve                # 长运行 Agent 服务 (默认 50 周期)
-vibecollab ai agent serve -n 10          # 指定最大周期数
-vibecollab ai agent status               # 查看 Agent 运行状态
+# Agent Autonomous Mode (v0.5.8+)
+vibecollab ai agent plan                 # Read-only analysis, generate action plan
+vibecollab ai agent run                  # Single Plan->Execute->Solidify cycle
+vibecollab ai agent run --dry-run        # Dry run, output plan only without execution
+vibecollab ai agent serve                # Long-running Agent service (default 50 cycles)
+vibecollab ai agent serve -n 10          # Specify max cycles
+vibecollab ai agent status               # View Agent running status
 
-# Agent 引导 (v0.7.0+)
-vibecollab onboard                       # AI 接入引导 (项目概况/进度/待办)
-vibecollab onboard -d <developer>        # 指定开发者视角
-vibecollab onboard --json                # JSON 输出 (便于 Agent 消费)
-vibecollab next                          # 行动建议 (优先级化的下一步)
-vibecollab next --json                   # JSON 输出
+# Agent Onboarding (v0.7.0+)
+vibecollab onboard                       # AI onboarding guide (project overview/progress/todos)
+vibecollab onboard -d <developer>        # From specific developer perspective
+vibecollab onboard --json                # JSON output (for Agent consumption)
+vibecollab next                          # Action suggestions (prioritized next steps)
+vibecollab next --json                   # JSON output
 
-# Insight 沉淀 (v0.7.0+)
-vibecollab insight list [--active-only]  # 列出所有沉淀
-vibecollab insight show <id>             # 查看沉淀详情
-vibecollab insight add --title ...       # 创建沉淀
-vibecollab insight search --tags t1,t2   # 按标签搜索
-vibecollab insight use <id>              # 记录使用，奖励权重
-vibecollab insight decay [--dry-run]     # 执行权重衰减
-vibecollab insight check [--json]        # 一致性校验
-vibecollab insight delete <id> [-y]      # 删除沉淀
-vibecollab insight bookmark <id>         # 收藏沉淀
-vibecollab insight trace <id>            # 溯源树可视化
-vibecollab insight who <id>              # 跨开发者使用信息
-vibecollab insight stats                 # 跨开发者共享统计
+# Insight Accumulation (v0.7.0+)
+vibecollab insight list [--active-only]  # List all insights
+vibecollab insight show <id>             # View insight details
+vibecollab insight add --title ...       # Create insight
+vibecollab insight search --tags t1,t2   # Search by tags
+vibecollab insight use <id>              # Record usage, reward weight
+vibecollab insight decay [--dry-run]     # Execute weight decay
+vibecollab insight check [--json]        # Consistency check
+vibecollab insight delete <id> [-y]      # Delete insight
+vibecollab insight bookmark <id>         # Bookmark insight
+vibecollab insight trace <id>            # Trace tree visualization
+vibecollab insight who <id>              # Cross-developer usage info
+vibecollab insight stats                 # Cross-developer sharing stats
 
-# Task 管理 + Insight 自动关联 (v0.7.1+)
-vibecollab task create --id TASK-DEV-001 --role DEV --feature "..."  # 创建任务(自动关联 Insight)
-vibecollab task list [--status TODO] [--assignee x]                  # 列出任务
-vibecollab task show <id>                # 查看任务详情(含关联 Insight)
-vibecollab task suggest <id> [-n 5]      # 为已有任务推荐 Insight
+# Task Management + Insight Auto-Association (v0.7.1+)
+vibecollab task create --id TASK-DEV-001 --role DEV --feature "..."  # Create task (auto-associate Insight)
+vibecollab task list [--status TODO] [--assignee x]                  # List tasks
+vibecollab task show <id>                # View task details (with associated Insights)
+vibecollab task suggest <id> [-n 5]      # Recommend Insights for existing task
 
-# 协议自检 + 健康
-vibecollab check                         # 协议遵循检查
-vibecollab check --strict                # 严格模式
-vibecollab check --insights              # 含 Insight 一致性校验
-vibecollab health [--json]               # 项目健康信号 (v0.5.9+)
+# Protocol Check + Health
+vibecollab check                         # Protocol compliance check
+vibecollab check --strict                # Strict mode
+vibecollab check --insights              # Include Insight consistency check
+vibecollab health [--json]               # Project health signals (v0.5.9+)
 ```
 
-## 10.9 最佳实践
+## 10.9 Best Practices
 
-### 对于 AI Agent
+### For AI Agents
 
-1. **对话开始时**: 运行 `vibecollab onboard -d <name>` 全面了解项目状态
-2. **上下文恢复**: 同时读取全局和个人 CONTEXT.md
-3. **协作意识**: 修改共享资源前检查 COLLABORATION.md
-4. **及时同步**: 对话结束时更新上下文并触发聚合
-5. **冲突敏感**: 发现潜在冲突立即提醒用户
-6. **三步闭环**: `onboard`（我在哪）→ 做事 → `next`（下一步）→ `check`（自检）
+1. **On dialogue start**: Run `vibecollab onboard -d <name>` for full project awareness
+2. **Context restoration**: Read both global and personal CONTEXT.md
+3. **Collaboration awareness**: Check COLLABORATION.md before modifying shared resources
+4. **Timely sync**: Update context and trigger aggregation at dialogue end
+5. **Conflict sensitivity**: Alert users immediately when potential conflicts are found
+6. **Three-step loop**: `onboard` (where am I) -> work -> `next` (what's next) -> `check` (self-check)
 
-### 对于人类开发者
+### For Human Developers
 
-1. **明确分工**: 在 COLLABORATION.md 中清晰记录任务分配
-2. **定期同步**: 经常查看全局 CONTEXT.md 了解团队进展
-3. **交接规范**: 任务交接时详细记录背景和状态
-4. **冲突检查**: 重大变更前执行冲突检测
-5. **文档及时性**: 完成阶段性工作及时更新个人 CONTEXT.md
+1. **Clear division**: Clearly record task assignments in COLLABORATION.md
+2. **Regular sync**: Frequently check global CONTEXT.md for team progress
+3. **Handoff standards**: Record background and status in detail during task handoffs
+4. **Conflict checks**: Run conflict detection before major changes
+5. **Doc timeliness**: Update personal CONTEXT.md promptly after completing phase work
 
-### 迁移单开发者项目
+### Migrating Single-Developer Projects
 
-如果项目原本是单开发者模式，可以平滑迁移：
+If the project was originally single-developer, you can migrate smoothly:
 
 ```bash
-# 方式一：使用 CLI 命令
+# Method 1: Use CLI command
 vibecollab dev migrate
 
-# 方式二：在 project.yaml 中启用
+# Method 2: Enable in project.yaml
 multi_developer:
   enabled: true
 
-# 然后重新生成协议文档
+# Then regenerate protocol docs
 vibecollab generate
 ```
 
-迁移后：
-- 原 `docs/CONTEXT.md` 会备份为 `docs/CONTEXT.md.backup`
-- 创建 `docs/developers/{developer}/CONTEXT.md`
-- 自动生成新的全局聚合 `docs/CONTEXT.md`
+After migration:
+- Original `docs/CONTEXT.md` is backed up as `docs/CONTEXT.md.backup`
+- Creates `docs/developers/{developer}/CONTEXT.md`
+- Auto-generates new global aggregated `docs/CONTEXT.md`
 
 ---

@@ -2,42 +2,42 @@
 {%- set lifecycle = ms.get('lifecycle', []) -%}
 {%- set priorities = ms.get('bug_priority', []) -%}
 {%- set tag_pattern = ms.get('tag_pattern', 'v{major}.{minor}.{patch}') -%}
-# 六、里程碑定义
+# VI. Milestone Definition
 
-## 6.1 里程碑规范
+## 6.1 Milestone Standards
 
-> **里程碑 = 多个特性 + Bug修复期 + 全量验收**
+> **Milestone = multiple features + bug fix period + full acceptance**
 
-### 里程碑生命周期
+### Milestone Lifecycle
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   里程碑生命周期                          │
-├─────────────────────────────────────────────────────────┤
++-----------------------------------------------------------+
+|                   Milestone Lifecycle                       |
++-----------------------------------------------------------+
 {% for phase in lifecycle -%}
-│  {{ loop.index }}. {{ phase.get('phase', '') }} - {{ phase.get('description', '') }}
+|  {{ loop.index }}. {{ phase.get('phase', '') }} - {{ phase.get('description', '') }}
 {% for criteria in phase.get('exit_criteria', []) -%}
-│     └── {{ criteria }}
+|     +-- {{ criteria }}
 {% endfor -%}
 {% if not loop.last -%}
-├─────────────────────────────────────────────────────────┤
++-----------------------------------------------------------+
 {% endif -%}
 {% endfor -%}
-└─────────────────────────────────────────────────────────┘
++-----------------------------------------------------------+
 ```
 {% if priorities %}
-### Bug 优先级
+### Bug Priority
 
-| 优先级 | 描述 |
-|-------|------|
+| Priority | Description |
+|----------|-------------|
 {% for p in priorities -%}
 | {{ p.get('level', '') }} | {{ p.get('description', '') }} |
 {% endfor -%}
 {% endif %}
-### 里程碑 Tag
+### Milestone Tag
 
 ```bash
-git tag -a {{ tag_pattern }} -m "描述"
+git tag -a {{ tag_pattern }} -m "description"
 ```
 
 ---

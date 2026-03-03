@@ -1,7 +1,7 @@
 """
-多开发者支持模块
+Multi-developer support module
 
-提供开发者身份识别、上下文管理、协作文档生成等功能。
+Provides developer identity recognition, context management, collaboration document generation, etc.
 """
 
 import os
@@ -20,39 +20,39 @@ LOCAL_CONFIG_FILE = ".vibecollab.local.yaml"
 
 
 class DeveloperManager:
-    """开发者管理器，负责身份识别和目录管理"""
+    """Developer manager, responsible for identity recognition and directory management"""
 
     def __init__(self, project_root: Path, config: dict):
         """
-        初始化开发者管理器
+        Initialize developer manager
 
         Args:
-            project_root: 项目根目录
-            config: 项目配置（project.yaml）
+            project_root: Project root directory
+            config: Project configuration (project.yaml)
         """
         self.project_root = project_root
         self.config = config
         self.multi_dev_config = config.get('multi_developer', {})
         self.enabled = self.multi_dev_config.get('enabled', False)
 
-        # 开发者目录
+        # Developer directory
         self.developers_dir = project_root / self.multi_dev_config.get('context', {}).get(
             'per_developer_dir', 'docs/developers'
         )
 
     def get_current_developer(self) -> str:
         """
-        获取当前开发者身份
+        Get current developer identity
 
-        优先级顺序:
-        1. 本地配置文件 (.vibecollab.local.yaml)
-        2. 环境变量 (VIBECOLLAB_DEVELOPER)
-        3. 主策略 (git_username / system_user)
-        4. 降级策略
-        5. 默认值
+        Priority order:
+        1. Local config file (.vibecollab.local.yaml)
+        2. Environment variable (VIBECOLLAB_DEVELOPER)
+        3. Primary strategy (git_username / system_user)
+        4. Fallback strategy
+        5. Default value
 
         Returns:
-            开发者标识符（标准化后的字符串）
+            Developer identifier (normalized string)
         """
         identity_config = self.multi_dev_config.get('identity', {})
         primary = identity_config.get('primary', 'git_username')
@@ -61,44 +61,44 @@ class DeveloperManager:
 
         developer = None
 
-        # 1. 首先检查本地配置文件（CLI switch 设置的）
+        # 1. First check local config file (set by CLI switch)
         local_developer = self._get_local_developer()
         if local_developer:
             developer = local_developer
 
-        # 2. 检查环境变量
+        # 2. Check environment variable
         if not developer:
             developer = os.environ.get('VIBECOLLAB_DEVELOPER')
 
-        # 3. 尝试主策略
+        # 3. Try primary strategy
         if not developer:
             if primary == 'git_username':
                 developer = self._get_git_username()
             elif primary == 'system_user':
                 developer = self._get_system_user()
             elif primary == 'manual':
-                # 手动模式已在上面处理
+                # Manual mode already handled above
                 pass
 
-        # 4. 降级到备用策略
+        # 4. Fall back to backup strategy
         if not developer:
             if fallback == 'git_username':
                 developer = self._get_git_username()
             elif fallback == 'system_user':
                 developer = self._get_system_user()
 
-        # 5. 最终降级：使用默认值
+        # 5. Final fallback: use default value
         if not developer:
             developer = 'unknown_developer'
 
-        # 标准化
+        # Normalize
         if normalize:
             developer = self._normalize_developer_name(developer)
 
         return developer
 
     def _get_local_developer(self) -> Optional[str]:
-        """从本地配置文件获取开发者身份"""
+        """Get developer identity from local config file"""
         local_config_path = self.project_root / LOCAL_CONFIG_FILE
         if local_config_path.exists():
             try:
@@ -111,24 +111,24 @@ class DeveloperManager:
 
     def switch_developer(self, developer: str) -> bool:
         """
-        切换当前开发者身份（持久化到本地配置文件）
+        Switch current developer identity (persisted to local config file)
 
         Args:
-            developer: 目标开发者标识符
+            developer: Target developer identifier
 
         Returns:
-            切换是否成功
+            Whether the switch was successful
         """
         identity_config = self.multi_dev_config.get('identity', {})
         normalize = identity_config.get('normalize', True)
 
-        # 标准化开发者名称
+        # Normalize developer name
         if normalize:
             developer = self._normalize_developer_name(developer)
 
         local_config_path = self.project_root / LOCAL_CONFIG_FILE
 
-        # 读取现有配置
+        # Read existing config
         local_config = {}
         if local_config_path.exists():
             try:
@@ -137,11 +137,11 @@ class DeveloperManager:
             except Exception:
                 pass
 
-        # 更新开发者
+        # Update developer
         local_config['current_developer'] = developer
         local_config['switched_at'] = datetime.now().isoformat()
 
-        # 写入配置
+        # Write config
         try:
             with open(local_config_path, 'w', encoding='utf-8') as f:
                 yaml.dump(local_config, f, allow_unicode=True, sort_keys=False)
@@ -151,10 +151,10 @@ class DeveloperManager:
 
     def clear_switch(self) -> bool:
         """
-        清除开发者切换设置，恢复使用默认识别策略
+        Clear developer switch setting, restore default identification strategy
 
         Returns:
-            是否成功清除
+            Whether the clear was successful
         """
         local_config_path = self.project_root / LOCAL_CONFIG_FILE
 
@@ -165,13 +165,13 @@ class DeveloperManager:
             with open(local_config_path, 'r', encoding='utf-8') as f:
                 local_config = yaml.safe_load(f) or {}
 
-            # 移除开发者设置
+            # Remove developer settings
             if 'current_developer' in local_config:
                 del local_config['current_developer']
             if 'switched_at' in local_config:
                 del local_config['switched_at']
 
-            # 如果配置为空，删除文件
+            # If config is empty, delete the file
             if not local_config:
                 local_config_path.unlink()
             else:
@@ -184,25 +184,25 @@ class DeveloperManager:
 
     def get_identity_source(self) -> str:
         """
-        获取当前开发者身份的来源
+        Get the source of the current developer identity
 
         Returns:
-            身份来源描述
+            Identity source description
         """
-        # 检查本地配置
+        # Check local config
         if self._get_local_developer():
             return "local_switch"
 
-        # 检查环境变量
+        # Check environment variable
         if os.environ.get('VIBECOLLAB_DEVELOPER'):
             return "env_var"
 
-        # 返回主策略
+        # Return primary strategy
         identity_config = self.multi_dev_config.get('identity', {})
         return identity_config.get('primary', 'git_username')
 
     def _get_git_username(self) -> Optional[str]:
-        """从 Git 配置获取用户名"""
+        """Get username from Git config"""
         try:
             result = subprocess.run(
                 ['git', 'config', 'user.name'],
@@ -218,41 +218,41 @@ class DeveloperManager:
         return None
 
     def _get_system_user(self) -> Optional[str]:
-        """获取系统用户名"""
+        """Get system username"""
         return os.environ.get('USER') or os.environ.get('USERNAME')
 
     def _normalize_developer_name(self, name: str) -> str:
         """
-        标准化开发者名称
+        Normalize developer name
 
-        规则：
-        - 转为小写
-        - 替换空格为下划线
-        - 移除特殊字符，只保留字母、数字、下划线
+        Rules:
+        - Convert to lowercase
+        - Replace spaces with underscores
+        - Remove special characters, keep only letters, digits, underscores
 
         Args:
-            name: 原始名称
+            name: Original name
 
         Returns:
-            标准化后的名称
+            Normalized name
         """
-        # 转小写
+        # Convert to lowercase
         name = name.lower()
-        # 替换空格为下划线
+        # Replace spaces with underscores
         name = name.replace(' ', '_')
-        # 移除特殊字符
+        # Remove special characters
         name = re.sub(r'[^a-z0-9_]', '', name)
         return name
 
     def get_developer_dir(self, developer: Optional[str] = None) -> Path:
         """
-        获取开发者的工作目录
+        Get developer's working directory
 
         Args:
-            developer: 开发者标识符，None 则使用当前开发者
+            developer: Developer identifier, None uses current developer
 
         Returns:
-            开发者工作目录路径
+            Developer working directory path
         """
         if developer is None:
             developer = self.get_current_developer()
@@ -260,25 +260,25 @@ class DeveloperManager:
 
     def get_developer_context_file(self, developer: Optional[str] = None) -> Path:
         """
-        获取开发者的 CONTEXT.md 文件路径
+        Get developer's CONTEXT.md file path
 
         Args:
-            developer: 开发者标识符，None 则使用当前开发者
+            developer: Developer identifier, None uses current developer
 
         Returns:
-            CONTEXT.md 文件路径
+            CONTEXT.md file path
         """
         return self.get_developer_dir(developer) / "CONTEXT.md"
 
     def get_developer_metadata_file(self, developer: Optional[str] = None) -> Path:
         """
-        获取开发者的元数据文件路径
+        Get developer's metadata file path
 
         Args:
-            developer: 开发者标识符，None 则使用当前开发者
+            developer: Developer identifier, None uses current developer
 
         Returns:
-            元数据文件路径
+            Metadata file path
         """
         metadata_filename = self.multi_dev_config.get('context', {}).get(
             'metadata_file', '.metadata.yaml'
@@ -287,10 +287,10 @@ class DeveloperManager:
 
     def list_developers(self) -> List[str]:
         """
-        列出所有开发者
+        List all developers
 
         Returns:
-            开发者标识符列表
+            List of developer identifiers
         """
         if not self.developers_dir.exists():
             return []
@@ -304,13 +304,13 @@ class DeveloperManager:
 
     def ensure_developer_dir(self, developer: Optional[str] = None) -> Path:
         """
-        确保开发者目录存在，不存在则创建
+        Ensure developer directory exists, create if not
 
         Args:
-            developer: 开发者标识符，None 则使用当前开发者
+            developer: Developer identifier, None uses current developer
 
         Returns:
-            开发者工作目录路径
+            Developer working directory path
         """
         dev_dir = self.get_developer_dir(developer)
         dev_dir.mkdir(parents=True, exist_ok=True)
@@ -318,11 +318,11 @@ class DeveloperManager:
 
     def init_developer_context(self, developer: Optional[str] = None, force: bool = False):
         """
-        初始化开发者的上下文文件
+        Initialize developer's context files
 
         Args:
-            developer: 开发者标识符，None 则使用当前开发者
-            force: 是否强制重新初始化（覆盖已有文件）
+            developer: Developer identifier, None uses current developer
+            force: Whether to force re-initialization (overwrite existing files)
         """
         if developer is None:
             developer = self.get_current_developer()
@@ -331,36 +331,36 @@ class DeveloperManager:
         context_file = self.get_developer_context_file(developer)
         metadata_file = self.get_developer_metadata_file(developer)
 
-        # 初始化 CONTEXT.md
+        # Initialize CONTEXT.md
         if not context_file.exists() or force:
             project_name = self.config.get('project', {}).get('name', 'MyProject')
             project_version = self.config.get('project', {}).get('version', 'v1.0')
 
-            context_content = f"""# {project_name} - {developer} 的工作上下文
+            context_content = f"""# {project_name} - {developer}'s Working Context
 
-## 当前状态
-- **版本**: {project_version}
-- **开发者**: {developer}
-- **上次更新**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+## Current Status
+- **Version**: {project_version}
+- **Developer**: {developer}
+- **Last Updated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-## 当前任务
-(暂无任务)
+## Current Tasks
+(No tasks yet)
 
-## 最近完成
-(暂无记录)
+## Recently Completed
+(No records yet)
 
-## 待解决问题
-(暂无问题)
+## Pending Issues
+(No issues yet)
 
-## 技术债务
-(暂无债务)
+## Technical Debt
+(No debt yet)
 
 ---
-*此文件由 {developer} 维护*
+*This file is maintained by {developer}*
 """
             context_file.write_text(context_content, encoding='utf-8')
 
-        # 初始化元数据
+        # Initialize metadata
         if not metadata_file.exists() or force:
             metadata = {
                 'developer': developer,
@@ -373,10 +373,10 @@ class DeveloperManager:
 
     def update_metadata(self, developer: Optional[str] = None):
         """
-        更新开发者的元数据
+        Update developer's metadata
 
         Args:
-            developer: 开发者标识符，None 则使用当前开发者
+            developer: Developer identifier, None uses current developer
         """
         if developer is None:
             developer = self.get_current_developer()
@@ -401,13 +401,13 @@ class DeveloperManager:
 
     def get_developer_status(self, developer: str) -> Dict:
         """
-        获取开发者的状态信息
+        Get developer's status information
 
         Args:
-            developer: 开发者标识符
+            developer: Developer identifier
 
         Returns:
-            包含状态信息的字典
+            Dictionary containing status information
         """
         context_file = self.get_developer_context_file(developer)
         metadata_file = self.get_developer_metadata_file(developer)
@@ -429,11 +429,11 @@ class DeveloperManager:
         return status
 
     # ------------------------------------------------------------------
-    # Tag 体系扩展
+    # Tag system extension
     # ------------------------------------------------------------------
 
     def _read_metadata(self, developer: Optional[str] = None) -> Dict:
-        """读取 developer 的 metadata，返回 dict（不存在则返回空 dict）"""
+        """Read developer's metadata, returns dict (returns empty dict if not exists)"""
         if developer is None:
             developer = self.get_current_developer()
         metadata_file = self.get_developer_metadata_file(developer)
@@ -443,7 +443,7 @@ class DeveloperManager:
             return yaml.safe_load(f) or {}
 
     def _write_metadata(self, metadata: Dict, developer: Optional[str] = None) -> None:
-        """写入 developer 的 metadata"""
+        """Write developer's metadata"""
         if developer is None:
             developer = self.get_current_developer()
         metadata_file = self.get_developer_metadata_file(developer)
@@ -452,18 +452,18 @@ class DeveloperManager:
             yaml.dump(metadata, f, allow_unicode=True, sort_keys=False)
 
     def get_tags(self, developer: Optional[str] = None) -> List[str]:
-        """获取开发者的标签列表"""
+        """Get developer's tag list"""
         meta = self._read_metadata(developer)
         return meta.get('tags', [])
 
     def set_tags(self, tags: List[str], developer: Optional[str] = None) -> None:
-        """设置开发者的标签列表（完全覆盖）"""
+        """Set developer's tag list (full overwrite)"""
         meta = self._read_metadata(developer)
         meta['tags'] = tags
         self._write_metadata(meta, developer)
 
     def add_tag(self, tag: str, developer: Optional[str] = None) -> bool:
-        """添加一个标签（不重复则添加，返回是否新增）"""
+        """Add a tag (add if not duplicate, returns whether added)"""
         meta = self._read_metadata(developer)
         tags = meta.get('tags', [])
         if tag in tags:
@@ -474,7 +474,7 @@ class DeveloperManager:
         return True
 
     def remove_tag(self, tag: str, developer: Optional[str] = None) -> bool:
-        """移除一个标签（存在则移除，返回是否移除）"""
+        """Remove a tag (remove if exists, returns whether removed)"""
         meta = self._read_metadata(developer)
         tags = meta.get('tags', [])
         if tag not in tags:
@@ -485,12 +485,12 @@ class DeveloperManager:
         return True
 
     def get_contributed(self, developer: Optional[str] = None) -> List[str]:
-        """获取开发者贡献的 insight ID 列表"""
+        """Get list of insight IDs contributed by developer"""
         meta = self._read_metadata(developer)
         return meta.get('contributed', [])
 
     def add_contributed(self, insight_id: str, developer: Optional[str] = None) -> bool:
-        """记录开发者贡献了一个 insight（不重复则添加）"""
+        """Record developer contributed an insight (add if not duplicate)"""
         meta = self._read_metadata(developer)
         contributed = meta.get('contributed', [])
         if insight_id in contributed:
@@ -501,7 +501,7 @@ class DeveloperManager:
         return True
 
     def remove_contributed(self, insight_id: str, developer: Optional[str] = None) -> bool:
-        """移除一条 contributed 记录"""
+        """Remove a contributed record"""
         meta = self._read_metadata(developer)
         contributed = meta.get('contributed', [])
         if insight_id not in contributed:
@@ -512,12 +512,12 @@ class DeveloperManager:
         return True
 
     def get_bookmarks(self, developer: Optional[str] = None) -> List[str]:
-        """获取开发者收藏的 insight ID 列表"""
+        """Get list of insight IDs bookmarked by developer"""
         meta = self._read_metadata(developer)
         return meta.get('bookmarks', [])
 
     def add_bookmark(self, insight_id: str, developer: Optional[str] = None) -> bool:
-        """收藏一个 insight（不重复则添加）"""
+        """Bookmark an insight (add if not duplicate)"""
         meta = self._read_metadata(developer)
         bookmarks = meta.get('bookmarks', [])
         if insight_id in bookmarks:
@@ -528,7 +528,7 @@ class DeveloperManager:
         return True
 
     def remove_bookmark(self, insight_id: str, developer: Optional[str] = None) -> bool:
-        """取消收藏一个 insight"""
+        """Remove a bookmarked insight"""
         meta = self._read_metadata(developer)
         bookmarks = meta.get('bookmarks', [])
         if insight_id not in bookmarks:
@@ -540,15 +540,15 @@ class DeveloperManager:
 
 
 class ContextAggregator:
-    """上下文聚合器，负责生成全局 CONTEXT.md"""
+    """Context aggregator, responsible for generating global CONTEXT.md"""
 
     def __init__(self, project_root: Path, config: dict):
         """
-        初始化上下文聚合器
+        Initialize context aggregator
 
         Args:
-            project_root: 项目根目录
-            config: 项目配置（project.yaml）
+            project_root: Project root directory
+            config: Project configuration (project.yaml)
         """
         self.project_root = project_root
         self.config = config
@@ -557,90 +557,90 @@ class ContextAggregator:
 
     def aggregate(self) -> str:
         """
-        聚合所有开发者的上下文，生成全局 CONTEXT.md
+        Aggregate all developers' contexts, generate global CONTEXT.md
 
         Returns:
-            聚合后的全局 CONTEXT 内容
+            Aggregated global CONTEXT content
         """
         project_name = self.config.get('project', {}).get('name', 'MyProject')
         project_version = self.config.get('project', {}).get('version', 'v1.0')
 
         developers = self.developer_manager.list_developers()
 
-        # 构建全局 CONTEXT
+        # Build global CONTEXT
         sections = []
 
-        # 标题和警告
-        sections.append(f"# {project_name} 全局上下文")
+        # Title and warning
+        sections.append(f"# {project_name} Global Context")
         sections.append("")
-        sections.append(f"> {_EMOJI['warning']} **此文件自动生成，请勿手动编辑**")
-        sections.append(f"> 上次更新: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        sections.append(f"> 聚合自: {', '.join(developers) if developers else '(无开发者)'}")
-        sections.append("")
-
-        # 项目整体状态
-        sections.append("## 项目整体状态")
-        sections.append(f"- **版本**: {project_version}")
-        sections.append(f"- **活跃开发者**: {len(developers)} ({', '.join(developers)})")
+        sections.append(f"> {_EMOJI['warning']} **This file is auto-generated, do not edit manually**")
+        sections.append(f"> Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        sections.append(f"> Aggregated from: {', '.join(developers) if developers else '(no developers)'}")
         sections.append("")
 
-        # 各开发者工作状态
+        # Project overall status
+        sections.append("## Project Overall Status")
+        sections.append(f"- **Version**: {project_version}")
+        sections.append(f"- **Active developers**: {len(developers)} ({', '.join(developers)})")
+        sections.append("")
+
+        # Each developer's work status
         if developers:
-            sections.append("## 各开发者工作状态")
+            sections.append("## Developer Work Status")
             sections.append("")
 
             for dev in developers:
                 dev_status = self._extract_developer_summary(dev)
                 sections.append(f"### {dev}")
-                sections.append(f"- **上次更新**: {dev_status['last_updated']}")
-                sections.append(f"- **当前任务**: {dev_status['current_task']}")
-                sections.append(f"- **进度**: {dev_status['progress']}")
-                sections.append(f"- **待解决问题**: {dev_status['issues']}")
-                sections.append(f"- **下一步**: {dev_status['next_steps']}")
+                sections.append(f"- **Last updated**: {dev_status['last_updated']}")
+                sections.append(f"- **Current task**: {dev_status['current_task']}")
+                sections.append(f"- **Progress**: {dev_status['progress']}")
+                sections.append(f"- **Pending issues**: {dev_status['issues']}")
+                sections.append(f"- **Next steps**: {dev_status['next_steps']}")
                 sections.append("")
         else:
-            sections.append("## 开发者状态")
-            sections.append("(暂无开发者)")
+            sections.append("## Developer Status")
+            sections.append("(No developers yet)")
             sections.append("")
 
-        # 跨开发者依赖（从 COLLABORATION.md 提取）
+        # Cross-developer dependencies (extracted from COLLABORATION.md)
         collaboration_info = self._extract_collaboration_info()
         if collaboration_info:
-            sections.append("## 跨开发者协作")
+            sections.append("## Cross-developer Collaboration")
             sections.append(collaboration_info)
             sections.append("")
 
-        # 全局技术债务（合并所有开发者）
+        # Global technical debt (merged from all developers)
         global_debts = self._merge_technical_debts(developers)
         if global_debts:
-            sections.append("## 全局技术债务")
+            sections.append("## Global Technical Debt")
             for debt in global_debts:
                 sections.append(f"- {debt}")
             sections.append("")
 
         sections.append("---")
-        sections.append("*此文件由多开发者上下文自动聚合生成*")
+        sections.append("*This file is auto-aggregated from multi-developer contexts*")
 
         return "\n".join(sections)
 
     def _extract_developer_summary(self, developer: str) -> Dict:
         """
-        从开发者的 CONTEXT.md 提取摘要信息
+        Extract summary info from developer's CONTEXT.md
 
         Args:
-            developer: 开发者标识符
+            developer: Developer identifier
 
         Returns:
-            摘要信息字典
+            Summary info dictionary
         """
         context_file = self.developer_manager.get_developer_context_file(developer)
 
         summary = {
-            'last_updated': '未知',
-            'current_task': '(暂无任务)',
-            'progress': '(无)',
-            'issues': '(无)',
-            'next_steps': '(无)'
+            'last_updated': 'Unknown',
+            'current_task': '(No tasks)',
+            'progress': '(None)',
+            'issues': '(None)',
+            'next_steps': '(None)'
         }
 
         if not context_file.exists():
@@ -649,22 +649,28 @@ class ContextAggregator:
         try:
             content = context_file.read_text(encoding='utf-8')
 
-            # 提取上次更新时间
+            # Extract last updated time
             if '上次更新' in content:
                 match = re.search(r'上次更新.*?(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})', content)
                 if match:
                     summary['last_updated'] = match.group(1)
+            elif 'Last Updated' in content:
+                match = re.search(r'Last Updated.*?(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})', content)
+                if match:
+                    summary['last_updated'] = match.group(1)
 
-            # 提取当前任务（简单提取第一行非空内容）
-            if '## 当前任务' in content:
-                task_section = re.search(r'## 当前任务\n(.*?)(?=\n##|\Z)', content, re.DOTALL)
-                if task_section:
-                    lines = [ln.strip() for ln in task_section.group(1).split('\n') if ln.strip() and not ln.strip().startswith('(')]
-                    if lines:
-                        summary['current_task'] = lines[0][:100]  # 限制长度
+            # Extract current tasks (simple extraction of first non-empty line)
+            for header in ('## Current Tasks', '## 当前任务'):
+                if header in content:
+                    task_section = re.search(rf'{re.escape(header)}\n(.*?)(?=\n##|\Z)', content, re.DOTALL)
+                    if task_section:
+                        lines = [ln.strip() for ln in task_section.group(1).split('\n') if ln.strip() and not ln.strip().startswith('(')]
+                        if lines:
+                            summary['current_task'] = lines[0][:100]  # Limit length
+                    break
 
-            # 提取其他信息（简化版）
-            # 可以根据需要进一步细化提取逻辑
+            # Extract other info (simplified)
+            # Can further refine extraction logic as needed
 
         except Exception:
             pass
@@ -673,10 +679,10 @@ class ContextAggregator:
 
     def _extract_collaboration_info(self) -> Optional[str]:
         """
-        从 COLLABORATION.md 提取协作信息
+        Extract collaboration info from COLLABORATION.md
 
         Returns:
-            协作信息字符串，无则返回 None
+            Collaboration info string, or None if not available
         """
         collab_config = self.multi_dev_config.get('collaboration', {})
         collab_file_path = self.project_root / collab_config.get('file', 'docs/developers/COLLABORATION.md')
@@ -686,21 +692,21 @@ class ContextAggregator:
 
         try:
             collab_file_path.read_text(encoding='utf-8')
-            # 提取关键协作信息（简化版）
-            # 实际可以解析任务依赖矩阵等
-            return "(详见 docs/developers/COLLABORATION.md)"
+            # Extract key collaboration info (simplified)
+            # Can parse task dependency matrices, etc.
+            return "(See docs/developers/COLLABORATION.md for details)"
         except Exception:
             return None
 
     def _merge_technical_debts(self, developers: List[str]) -> List[str]:
         """
-        合并所有开发者的技术债务
+        Merge technical debts from all developers
 
         Args:
-            developers: 开发者列表
+            developers: List of developers
 
         Returns:
-            技术债务列表
+            Technical debt list
         """
         debts = []
 
@@ -711,12 +717,14 @@ class ContextAggregator:
 
             try:
                 content = context_file.read_text(encoding='utf-8')
-                if '## 技术债务' in content:
-                    debt_section = re.search(r'## 技术债务\n(.*?)(?=\n##|\Z)', content, re.DOTALL)
-                    if debt_section:
-                        lines = [ln.strip() for ln in debt_section.group(1).split('\n') if ln.strip() and ln.strip().startswith('-')]
-                        for line in lines:
-                            debts.append(f"[{dev}] {line}")
+                for header in ('## Technical Debt', '## 技术债务'):
+                    if header in content:
+                        debt_section = re.search(rf'{re.escape(header)}\n(.*?)(?=\n##|\Z)', content, re.DOTALL)
+                        if debt_section:
+                            lines = [ln.strip() for ln in debt_section.group(1).split('\n') if ln.strip() and ln.strip().startswith('-')]
+                            for line in lines:
+                                debts.append(f"[{dev}] {line}")
+                        break
             except Exception:
                 pass
 
@@ -724,10 +732,10 @@ class ContextAggregator:
 
     def generate_and_save(self) -> Path:
         """
-        生成并保存全局 CONTEXT.md
+        Generate and save global CONTEXT.md
 
         Returns:
-            保存的文件路径
+            Saved file path
         """
         context_config = self.multi_dev_config.get('context', {})
         output_file = self.project_root / context_config.get('aggregation_file', 'docs/CONTEXT.md')
@@ -741,67 +749,67 @@ class ContextAggregator:
 
 def migrate_to_multi_developer(project_root: Path, config: dict, developer_name: Optional[str] = None):
     """
-    将单开发者项目迁移到多开发者模式
+    Migrate a single-developer project to multi-developer mode
 
     Args:
-        project_root: 项目根目录
-        config: 项目配置
-        developer_name: 初始开发者名称，None 则自动识别
+        project_root: Project root directory
+        config: Project configuration
+        developer_name: Initial developer name, None for auto-detection
     """
     dm = DeveloperManager(project_root, config)
 
     if developer_name is None:
         developer_name = dm.get_current_developer()
 
-    # 1. 创建开发者目录
+    # 1. Create developer directory
     dev_dir = dm.ensure_developer_dir(developer_name)
 
-    # 2. 移动现有的 CONTEXT.md
+    # 2. Move existing CONTEXT.md
     old_context = project_root / "docs" / "CONTEXT.md"
     new_context = dm.get_developer_context_file(developer_name)
 
     if old_context.exists() and not new_context.exists():
-        # 移动文件
+        # Move file
         new_context.write_text(old_context.read_text(encoding='utf-8'), encoding='utf-8')
 
-        # 备份原文件
+        # Backup original file
         backup = project_root / "docs" / "CONTEXT.md.backup"
         old_context.rename(backup)
 
-    # 3. 初始化元数据
+    # 3. Initialize metadata
     dm.init_developer_context(developer_name)
 
-    # 4. 生成 COLLABORATION.md
+    # 4. Generate COLLABORATION.md
     collab_config = config.get('multi_developer', {}).get('collaboration', {})
     collab_file = project_root / collab_config.get('file', 'docs/developers/COLLABORATION.md')
 
     if not collab_file.exists():
-        collab_content = f"""# 开发者协作记录
+        collab_content = f"""# Developer Collaboration Record
 
-## 当前协作关系
+## Current Collaboration
 
-(暂无协作记录)
+(No collaboration records yet)
 
-## 任务分配矩阵
+## Task Assignment Matrix
 
-| 任务 | 负责人 | 协作者 | 状态 | 依赖 |
-|------|--------|--------|------|------|
+| Task | Owner | Collaborator | Status | Dependency |
+|------|-------|--------------|--------|------------|
 | - | {developer_name} | - | - | - |
 
-## 交接记录
+## Handover Records
 
-(暂无交接记录)
+(No handover records yet)
 
 ---
-*最后更新: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+*Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
 """
         collab_file.parent.mkdir(parents=True, exist_ok=True)
         collab_file.write_text(collab_content, encoding='utf-8')
 
-    # 5. 生成新的全局聚合 CONTEXT.md
+    # 5. Generate new global aggregated CONTEXT.md
     aggregator = ContextAggregator(project_root, config)
     aggregator.generate_and_save()
 
-    print(f"{_EMOJI['success']} 成功迁移到多开发者模式")
-    print(f"   开发者: {developer_name}")
-    print(f"   上下文目录: {dev_dir}")
+    print(f"{_EMOJI['success']} Successfully migrated to multi-developer mode")
+    print(f"   Developer: {developer_name}")
+    print(f"   Context directory: {dev_dir}")

@@ -31,15 +31,15 @@ def _get_parser(config: str) -> RoadmapParser:
 
 @click.group("roadmap")
 def roadmap_group():
-    """ROADMAP / Task 集成管理"""
+    """ROADMAP / Task integration management"""
     pass
 
 
 @roadmap_group.command("status")
-@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
-@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+@click.option("--config", "-c", default="project.yaml", help="Config file path")
+@click.option("--json-output", "--json", is_flag=True, help="JSON output")
 def roadmap_status(config, json_output):
-    """查看各里程碑进度概览"""
+    """View per-milestone progress overview"""
     parser = _get_parser(config)
     report = parser.status()
 
@@ -48,12 +48,12 @@ def roadmap_status(config, json_output):
         return
 
     if not report.milestones:
-        click.echo("(未在 ROADMAP.md 中发现里程碑)")
+        click.echo("(No milestones found in ROADMAP.md)")
         click.echo()
         click.echo(MILESTONE_FORMAT_HINT)
         return
 
-    click.echo("ROADMAP 进度概览")
+    click.echo("ROADMAP Progress Overview")
     click.echo("=" * 60)
 
     for ms in report.milestones:
@@ -77,7 +77,7 @@ def roadmap_status(config, json_output):
         click.echo(f"    [{bar}] {pct:.0f}%  ({done}/{total} items)")
 
         if linked > 0:
-            click.echo(f"    关联 Task: {linked} 个", nl=False)
+            click.echo(f"    Linked Tasks: {linked}", nl=False)
             if breakdown:
                 parts = [f"{s}: {c}" for s, c in sorted(breakdown.items())]
                 click.echo(f"  ({', '.join(parts)})")
@@ -85,11 +85,11 @@ def roadmap_status(config, json_output):
                 click.echo()
 
     click.echo(f"\n{'=' * 60}")
-    click.echo(f"  总计: {report.total_done}/{report.total_items} items 完成")
-    click.echo(f"  关联 Task: {report.total_tasks_linked} 个")
+    click.echo(f"  Total: {report.total_done}/{report.total_items} items completed")
+    click.echo(f"  Linked Tasks: {report.total_tasks_linked}")
 
     if report.unlinked_task_ids:
-        click.echo(f"\n  未关联里程碑的 Task ({len(report.unlinked_task_ids)}):")
+        click.echo(f"\n  Tasks not linked to milestones ({len(report.unlinked_task_ids)}):")
         for tid in report.unlinked_task_ids:
             click.echo(f"    - {tid}")
 
@@ -97,31 +97,31 @@ def roadmap_status(config, json_output):
 @roadmap_group.command("sync")
 @click.option("--direction", "-d",
               type=click.Choice(["both", "roadmap_to_tasks", "tasks_to_roadmap"]),
-              default="both", help="同步方向")
-@click.option("--dry-run", is_flag=True, help="仅预览，不实际修改")
-@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
-@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+              default="both", help="Sync direction")
+@click.option("--dry-run", is_flag=True, help="Preview only, no actual changes")
+@click.option("--config", "-c", default="project.yaml", help="Config file path")
+@click.option("--json-output", "--json", is_flag=True, help="JSON output")
 def roadmap_sync(direction, dry_run, config, json_output):
-    """同步 ROADMAP.md / tasks.json
+    """Sync ROADMAP.md / tasks.json
 
-    ROADMAP.md 里程碑格式:
-      ### v0.1.0 - 标题描述
+    ROADMAP.md milestone format:
+      ### v0.1.0 - Title description
 
-    Checkbox 关联 Task ID:
-      - [ ] 功能描述 (TASK-DEV-001)
+    Checkbox linked to Task ID:
+      - [ ] Feature description (TASK-DEV-001)
 
-    同步方向:
-      both              — 双向同步 (冲突时 tasks.json 优先)
-      roadmap_to_tasks  — ROADMAP [x] -> 任务 DONE
-      tasks_to_roadmap  — 任务 DONE -> ROADMAP [x]
+    Sync directions:
+      both              -- Bidirectional sync (tasks.json takes priority on conflict)
+      roadmap_to_tasks  -- ROADMAP [x] -> task DONE
+      tasks_to_roadmap  -- task DONE -> ROADMAP [x]
 
     Examples:
 
-        vibecollab roadmap sync                    # 双向同步
+        vibecollab roadmap sync                    # Bidirectional sync
 
-        vibecollab roadmap sync --dry-run          # 预览同步动作
+        vibecollab roadmap sync --dry-run          # Preview sync actions
 
-        vibecollab roadmap sync -d tasks_to_roadmap  # 仅从 tasks 同步到 ROADMAP
+        vibecollab roadmap sync -d tasks_to_roadmap  # Only sync from tasks to ROADMAP
     """
     parser = _get_parser(config)
     milestones = parser.parse()
@@ -129,7 +129,7 @@ def roadmap_sync(direction, dry_run, config, json_output):
         if json_output:
             click.echo(json.dumps([], ensure_ascii=False))
         else:
-            click.echo("(未在 ROADMAP.md 中发现里程碑，无法同步)")
+            click.echo("(No milestones found in ROADMAP.md, cannot sync)")
             click.echo()
             click.echo(MILESTONE_FORMAT_HINT)
         return
@@ -145,11 +145,11 @@ def roadmap_sync(direction, dry_run, config, json_output):
         return
 
     if not actions:
-        click.echo("已同步，无需变更。")
+        click.echo("Already synced, no changes needed.")
         return
 
     prefix = "[DRY-RUN] " if dry_run else ""
-    click.echo(f"{prefix}同步动作 ({len(actions)} 项):")
+    click.echo(f"{prefix}Sync actions ({len(actions)}):")
     for a in actions:
         icon = {
             "task_to_done": "->",
@@ -160,16 +160,16 @@ def roadmap_sync(direction, dry_run, config, json_output):
         click.echo(f"  {icon} {a.detail}")
 
     if dry_run:
-        click.echo(f"\n(预览模式，未实际修改。移除 --dry-run 执行同步)")
+        click.echo(f"\n(Preview mode, no changes applied. Remove --dry-run to execute sync)")
 
 
 @roadmap_group.command("parse")
-@click.option("--config", "-c", default="project.yaml", help="配置文件路径")
-@click.option("--json-output", "--json", is_flag=True, help="JSON 输出")
+@click.option("--config", "-c", default="project.yaml", help="Config file path")
+@click.option("--json-output", "--json", is_flag=True, help="JSON output")
 def roadmap_parse(config, json_output):
-    """解析 ROADMAP.md 结构
+    """Parse ROADMAP.md structure
 
-    期望的里程碑格式: ### vX.Y.Z - 标题
+    Expected milestone format: ### vX.Y.Z - Title
     """
     parser = _get_parser(config)
     milestones = parser.parse()
@@ -197,7 +197,7 @@ def roadmap_parse(config, json_output):
         return
 
     if not milestones:
-        click.echo("(未在 ROADMAP.md 中发现里程碑)")
+        click.echo("(No milestones found in ROADMAP.md)")
         click.echo()
         click.echo(MILESTONE_FORMAT_HINT)
         return

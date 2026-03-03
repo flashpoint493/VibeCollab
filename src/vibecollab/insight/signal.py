@@ -1,19 +1,19 @@
 """
-Insight Signal — 结构化信号收集与候选 Insight 推荐
+Insight Signal -- structured signal collection and candidate Insight recommendation.
 
-从 git 增量历史 + 文档变更 diff + Task 变化等结构化信号中提取候选 Insight，
-替代纯 LLM 推理的沉淀方式。
+Extracts candidate Insights from git incremental history, document change diffs,
+and Task state changes, replacing pure LLM-based reasoning for insight distillation.
 
-存储结构：
+Storage structure:
     .vibecollab/
-    └── insight_signal.json    # 信号快照（上次沉淀时间点 + commit hash）
+    └── insight_signal.json    # Signal snapshot (last distillation timestamp + commit hash)
 
-核心流程：
-    1. 读取 insight_signal.json 获取上次快照
-    2. 从快照到 HEAD 收集增量信号（git log、文档 diff、Task 变化）
-    3. 分析信号生成候选 Insight 列表
-    4. 用户 confirm 后调用 InsightManager.create() 入库
-    5. 更新快照到当前 HEAD
+Core flow:
+    1. Read insight_signal.json for the last snapshot
+    2. Collect incremental signals from snapshot to HEAD (git log, doc diff, Task changes)
+    3. Analyze signals to generate candidate Insight list
+    4. After user confirmation, call InsightManager.create() to persist
+    5. Update snapshot to current HEAD
 """
 
 import json
@@ -32,7 +32,7 @@ from typing import Any, Dict, List, Optional
 
 @dataclass
 class SignalSnapshot:
-    """信号快照 — 记录上次 insight 沉淀的状态"""
+    """Signal snapshot -- records the state of last insight distillation"""
 
     last_commit: str = ""
     last_timestamp: str = ""
@@ -54,7 +54,7 @@ class SignalSnapshot:
 
 @dataclass
 class CommitSignal:
-    """单条 commit 信号"""
+    """Single commit signal"""
 
     hash: str
     subject: str
@@ -65,7 +65,7 @@ class CommitSignal:
 
 @dataclass
 class InsightCandidate:
-    """候选 Insight — suggest 输出的推荐条目"""
+    """Candidate Insight -- recommended item from suggest output"""
 
     title: str
     tags: List[str] = field(default_factory=list)
@@ -84,12 +84,12 @@ class InsightCandidate:
 
 
 class InsightSignalCollector:
-    """从结构化信号中收集候选 Insight
+    """Collect candidate Insights from structured signals
 
     Usage:
         collector = InsightSignalCollector(project_root=Path("."))
         candidates = collector.suggest()
-        # 用户选择后...
+        # After user selection...
         collector.update_snapshot(commit_hash="abc123", insight_id="INS-016")
     """
 
@@ -105,7 +105,7 @@ class InsightSignalCollector:
     # ------------------------------------------------------------------
 
     def load_snapshot(self) -> SignalSnapshot:
-        """加载信号快照"""
+        """Load signal snapshot"""
         if not self.signal_path.exists():
             return SignalSnapshot()
         try:
@@ -116,7 +116,7 @@ class InsightSignalCollector:
             return SignalSnapshot()
 
     def save_snapshot(self, snapshot: SignalSnapshot) -> None:
-        """保存信号快照"""
+        """Save signal snapshot"""
         self.data_dir.mkdir(parents=True, exist_ok=True)
         with open(self.signal_path, "w", encoding="utf-8") as f:
             json.dump(snapshot.to_dict(), f, indent=2, ensure_ascii=False)
@@ -126,7 +126,7 @@ class InsightSignalCollector:
         commit_hash: str = "",
         insight_id: str = "",
     ) -> SignalSnapshot:
-        """更新快照到当前状态"""
+        """Update snapshot to current state"""
         snapshot = self.load_snapshot()
         if commit_hash:
             snapshot.last_commit = commit_hash
@@ -146,12 +146,12 @@ class InsightSignalCollector:
     def collect_git_signals(
         self, since_commit: str = ""
     ) -> List[CommitSignal]:
-        """收集 git 增量 commit 信号"""
+        """Collect incremental git commit signals"""
         cmd = ["git", "log", "--pretty=format:%H|%s|%an|%aI", "--no-merges"]
         if since_commit:
             cmd.append(f"{since_commit}..HEAD")
         else:
-            cmd.extend(["-20"])  # 没有快照时取最近 20 条
+            cmd.extend(["-20"])  # No snapshot, get latest 20 entries
 
         try:
             result = subprocess.run(
@@ -190,10 +190,10 @@ class InsightSignalCollector:
     def collect_doc_changes(
         self, since_commit: str = ""
     ) -> Dict[str, List[str]]:
-        """检测关键文档的变更
+        """Detect changes in key documents
 
         Returns:
-            {doc_name: [变更摘要行]} 字典
+            {doc_name: [change summary lines]} dict
         """
         key_docs = [
             "docs/CONTEXT.md",
@@ -210,7 +210,7 @@ class InsightSignalCollector:
         return changes
 
     def collect_task_changes(self) -> Dict[str, Any]:
-        """检测 Task 变化"""
+        """Detect Task changes"""
         tasks_file = self.data_dir / "tasks.json"
         if not tasks_file.exists():
             return {"new": [], "completed": [], "total": 0}
@@ -235,63 +235,63 @@ class InsightSignalCollector:
             return {"new": [], "completed": [], "total": 0}
 
     # ------------------------------------------------------------------
-    # Suggest — 候选 Insight 生成
+    # Suggest -- candidate Insight generation
     # ------------------------------------------------------------------
 
     def suggest(self) -> List[InsightCandidate]:
-        """基于结构化信号推荐候选 Insight
+        """Recommend candidate Insights based on structured signals
 
-        分析流程：
-        1. 加载快照获取上次沉淀时间点
-        2. 收集 git 增量 commit
-        3. 收集文档变更 diff
-        4. 收集 Task 变化
-        5. 从信号中提取候选 Insight
+        Analysis flow:
+        1. Load snapshot for last distillation point
+        2. Collect incremental git commits
+        3. Collect document change diffs
+        4. Collect Task changes
+        5. Extract candidate Insights from signals
         """
         snapshot = self.load_snapshot()
         since = snapshot.last_commit
 
-        # 收集三类信号
+        # Collect three types of signals
         git_signals = self.collect_git_signals(since)
         doc_changes = self.collect_doc_changes(since)
         task_changes = self.collect_task_changes()
 
         candidates: List[InsightCandidate] = []
 
-        # 1. 从 git commit 中提取
+        # 1. Extract from git commits
         candidates.extend(self._analyze_git_signals(git_signals))
 
-        # 2. 从文档变更中提取
+        # 2. Extract from document changes
         candidates.extend(self._analyze_doc_changes(doc_changes))
 
-        # 3. 从 Task 完成中提取
+        # 3. Extract from Task completions
         candidates.extend(self._analyze_task_changes(task_changes))
 
-        # 去重：按 title 相似度去重
+        # Deduplicate by title similarity
         candidates = self._deduplicate(candidates)
 
-        # 按 confidence 排序
+        # Sort by confidence
         candidates.sort(key=lambda c: c.confidence, reverse=True)
 
         return candidates
 
     # ------------------------------------------------------------------
-    # Signal analysis — 从信号中提取候选
+    # Signal analysis -- extract candidates from signals
     # ------------------------------------------------------------------
 
     def _analyze_git_signals(
         self, signals: List[CommitSignal]
     ) -> List[InsightCandidate]:
-        """从 git commit 历史中提取候选 Insight"""
+        """Extract candidate Insights from git commit history"""
         candidates: List[InsightCandidate] = []
         if not signals:
             return candidates
 
-        # 策略1: 识别新功能/重大变更 (feat/fix/refactor)
+        # Strategy 1: Identify new features / major changes (feat/fix/refactor)
         feature_commits = [
             s for s in signals
             if any(p in s.subject.lower() for p in
-                   ("feat", "feature", "新增", "实现", "add", "implement"))
+                   ("feat", "feature", "add", "implement"))
         ]
         if feature_commits:
             subjects = [c.subject for c in feature_commits[:5]]
@@ -299,32 +299,32 @@ class InsightSignalCollector:
                 title=self._summarize_commits(feature_commits, "feature"),
                 tags=self._extract_tags_from_commits(feature_commits),
                 category="workflow",
-                reason=f"检测到 {len(feature_commits)} 个新功能 commit",
+                reason=f"Detected {len(feature_commits)} new feature commits",
                 source_signal="git_feature",
                 confidence=0.7,
             ))
 
-        # 策略2: 识别 bug 修复模式
+        # Strategy 2: Identify bug fix patterns
         fix_commits = [
             s for s in signals
             if any(p in s.subject.lower() for p in
-                   ("fix", "bug", "修复", "hotfix", "patch"))
+                   ("fix", "bug", "hotfix", "patch"))
         ]
         if fix_commits:
             candidates.append(InsightCandidate(
                 title=self._summarize_commits(fix_commits, "debug"),
                 tags=self._extract_tags_from_commits(fix_commits) + ["debug"],
                 category="debug",
-                reason=f"检测到 {len(fix_commits)} 个 bug 修复 commit",
+                reason=f"Detected {len(fix_commits)} bug fix commits",
                 source_signal="git_bugfix",
                 confidence=0.6,
             ))
 
-        # 策略3: 识别重构模式
+        # Strategy 3: Identify refactoring patterns
         refactor_commits = [
             s for s in signals
             if any(p in s.subject.lower() for p in
-                   ("refactor", "重构", "cleanup", "清理", "optimize", "优化"))
+                   ("refactor", "cleanup", "optimize"))
         ]
         if refactor_commits:
             candidates.append(InsightCandidate(
@@ -332,21 +332,21 @@ class InsightSignalCollector:
                 tags=self._extract_tags_from_commits(refactor_commits)
                 + ["refactor"],
                 category="technique",
-                reason=f"检测到 {len(refactor_commits)} 个重构 commit",
+                reason=f"Detected {len(refactor_commits)} refactoring commits",
                 source_signal="git_refactor",
                 confidence=0.6,
             ))
 
-        # 策略4: 大量文件变更 (可能是重大决策)
+        # Strategy 4: Large file changes (possible major decision)
         large_commits = [s for s in signals if len(s.files_changed) >= 10]
         if large_commits:
             candidates.append(InsightCandidate(
-                title=f"大规模变更: {large_commits[0].subject}",
+                title=f"Large-scale change: {large_commits[0].subject}",
                 tags=["architecture", "large-change"],
                 category="decision",
                 reason=(
-                    f"检测到 {len(large_commits)} 个大规模变更 commit"
-                    f" (≥10 文件)"
+                    f"Detected {len(large_commits)} large-scale commits"
+                    f" (>=10 files)"
                 ),
                 source_signal="git_large_change",
                 confidence=0.5,
@@ -357,12 +357,12 @@ class InsightSignalCollector:
     def _analyze_doc_changes(
         self, changes: Dict[str, List[str]]
     ) -> List[InsightCandidate]:
-        """从文档变更中提取候选 Insight"""
+        """Extract candidate Insights from document changes"""
         candidates: List[InsightCandidate] = []
         if not changes:
             return candidates
 
-        # DECISIONS.md 变更 → 决策类 Insight
+        # DECISIONS.md changes -> decision-type Insight
         if "docs/DECISIONS.md" in changes:
             decision_lines = changes["docs/DECISIONS.md"]
             new_decisions = [
@@ -371,46 +371,46 @@ class InsightSignalCollector:
             ]
             if new_decisions:
                 candidates.append(InsightCandidate(
-                    title="新决策记录: " + self._extract_decision_title(
+                    title="New decision record: " + self._extract_decision_title(
                         new_decisions
                     ),
                     tags=["decision", "architecture"],
                     category="decision",
-                    reason=f"DECISIONS.md 中新增 {len(new_decisions)} 条决策",
+                    reason=f"Added {len(new_decisions)} decisions in DECISIONS.md",
                     source_signal="doc_decisions",
                     confidence=0.8,
                 ))
 
-        # ROADMAP.md 变更 → 规划类 Insight
+        # ROADMAP.md changes -> planning-type Insight
         if "docs/ROADMAP.md" in changes:
             roadmap_lines = changes["docs/ROADMAP.md"]
             completed = [
                 line for line in roadmap_lines
-                if line.startswith("+") and ("✅" in line or "[x]" in line)
+                if line.startswith("+") and ("[DONE]" in line or "\u2705" in line or "[x]" in line)
             ]
             if completed:
                 candidates.append(InsightCandidate(
-                    title="里程碑完成经验",
+                    title="Milestone completion experience",
                     tags=["milestone", "planning"],
                     category="workflow",
                     reason=(
-                        f"ROADMAP.md 中新增 {len(completed)} 个已完成项"
+                        f"Added {len(completed)} completed items in ROADMAP.md"
                     ),
                     source_signal="doc_roadmap",
                     confidence=0.6,
                 ))
 
-        # CONTEXT.md 大幅变更 → 上下文切换信号
+        # CONTEXT.md major changes -> context switch signal
         if "docs/CONTEXT.md" in changes:
             context_lines = changes["docs/CONTEXT.md"]
             added = [l for l in context_lines if l.startswith("+")]
             if len(added) > 10:
                 candidates.append(InsightCandidate(
-                    title="开发方向切换经验",
+                    title="Development direction switch experience",
                     tags=["context-switch", "workflow"],
                     category="workflow",
                     reason=(
-                        f"CONTEXT.md 大幅变更 ({len(added)} 行新增)"
+                        f"CONTEXT.md major change ({len(added)} lines added)"
                     ),
                     source_signal="doc_context",
                     confidence=0.4,
@@ -421,15 +421,15 @@ class InsightSignalCollector:
     def _analyze_task_changes(
         self, task_changes: Dict[str, Any]
     ) -> List[InsightCandidate]:
-        """从 Task 完成中提取候选 Insight"""
+        """Extract candidate Insights from Task completions"""
         candidates: List[InsightCandidate] = []
         completed = task_changes.get("completed", [])
         if len(completed) >= 3:
             candidates.append(InsightCandidate(
-                title=f"批量任务完成: {len(completed)} 个 Task 关闭",
+                title=f"Batch task completion: {len(completed)} Tasks closed",
                 tags=["task-management", "productivity"],
                 category="workflow",
-                reason=f"{len(completed)} 个 Task 已完成",
+                reason=f"{len(completed)} Tasks completed",
                 source_signal="task_completed",
                 confidence=0.5,
             ))
@@ -440,7 +440,7 @@ class InsightSignalCollector:
     # ------------------------------------------------------------------
 
     def _get_head_commit(self) -> str:
-        """获取 HEAD commit hash"""
+        """Get HEAD commit hash"""
         try:
             result = subprocess.run(
                 ["git", "rev-parse", "HEAD"],
@@ -456,7 +456,7 @@ class InsightSignalCollector:
             return ""
 
     def _get_commit_files(self, commit_hash: str) -> List[str]:
-        """获取某个 commit 变更的文件列表"""
+        """Get list of files changed in a commit"""
         try:
             result = subprocess.run(
                 ["git", "diff-tree", "--no-commit-id", "--name-only", "-r",
@@ -479,7 +479,7 @@ class InsightSignalCollector:
     def _get_doc_diff(
         self, doc_path: str, since_commit: str = ""
     ) -> List[str]:
-        """获取文档的增量 diff"""
+        """Get incremental diff of a document"""
         full_path = self.project_root / doc_path
         if not full_path.exists():
             return []
@@ -513,18 +513,18 @@ class InsightSignalCollector:
     def _summarize_commits(
         self, commits: List[CommitSignal], kind: str
     ) -> str:
-        """从多个 commit 中生成候选标题"""
+        """Generate candidate title from multiple commits"""
         if not commits:
-            return f"未命名 {kind}"
+            return f"Unnamed {kind}"
         if len(commits) == 1:
             return commits[0].subject
-        # 取最新 commit 的 subject 作为主标题
-        return f"{commits[0].subject} 等 {len(commits)} 项变更"
+        # Use the latest commit's subject as the main title
+        return f"{commits[0].subject} and {len(commits)} other changes"
 
     def _extract_tags_from_commits(
         self, commits: List[CommitSignal]
     ) -> List[str]:
-        """从 commit 变更文件中提取标签"""
+        """Extract tags from commit changed files"""
         tags = set()
         for commit in commits:
             for f in commit.files_changed:
@@ -538,25 +538,25 @@ class InsightSignalCollector:
                     tags.add("testing")
                 if f.startswith("docs/"):
                     tags.add("docs")
-                # 从路径提取模块名
+                # Extract module name from path
                 if "/" in f:
                     module = f.split("/")[-1].replace(".py", "")
                     if module and not module.startswith("_"):
                         tags.add(module)
-        return list(tags)[:8]  # 最多 8 个 tag
+        return list(tags)[:8]  # Max 8 tags
 
     def _extract_decision_title(self, lines: List[str]) -> str:
-        """从 DECISIONS.md 新增行中提取决策标题"""
+        """Extract decision title from new lines in DECISIONS.md"""
         for line in lines:
             match = re.search(r"DECISION-\d+[:\s]+(.+)", line)
             if match:
                 return match.group(1).strip().strip("#").strip()
-        return "新的架构/技术决策"
+        return "New architecture/technical decision"
 
     def _deduplicate(
         self, candidates: List[InsightCandidate]
     ) -> List[InsightCandidate]:
-        """按 title 相似度去重"""
+        """Deduplicate by title similarity"""
         if len(candidates) <= 1:
             return candidates
 
@@ -575,7 +575,7 @@ class InsightSignalCollector:
 
     @staticmethod
     def _title_similarity(a: str, b: str) -> float:
-        """简单的标题相似度（Jaccard）"""
+        """Simple title similarity (Jaccard)"""
         words_a = set(a.lower().split())
         words_b = set(b.lower().split())
         if not words_a or not words_b:

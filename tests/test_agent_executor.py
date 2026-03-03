@@ -122,14 +122,14 @@ class TestValidateChanges:
             exe = self._exe(tmpdir)
             changes = [FileChange(f"f{i}.py", "create", "x") for i in range(MAX_FILES_PER_CYCLE + 1)]
             errors = exe.validate_changes(changes)
-            assert any("超过" in e for e in errors)
+            assert any("exceeds" in e for e in errors)
 
     def test_path_traversal(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = self._exe(tmpdir)
             changes = [FileChange("../../etc/passwd", "create", "bad")]
             errors = exe.validate_changes(changes)
-            assert any("穿越" in e for e in errors)
+            assert any("traversal" in e for e in errors)
 
     def test_protected_files(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -137,14 +137,14 @@ class TestValidateChanges:
             for protected in [".git/config", ".env", "project.yaml", "pyproject.toml"]:
                 changes = [FileChange(protected, "modify", "x")]
                 errors = exe.validate_changes(changes)
-                assert any("受保护" in e for e in errors), f"{protected} should be protected"
+                assert any("Protected" in e for e in errors), f"{protected} should be protected"
 
     def test_file_too_large(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = self._exe(tmpdir)
             changes = [FileChange("big.py", "create", "x" * 600_000)]
             errors = exe.validate_changes(changes)
-            assert any("过大" in e for e in errors)
+            assert any("too large" in e for e in errors)
 
 
 class TestApplyChanges:
@@ -216,7 +216,7 @@ class TestApplyChanges:
             exe = self._exe(tmpdir)
             result = exe.apply_changes([])
             assert not result.success
-            assert any("没有" in e for e in result.errors)
+            assert any("No applicable" in e for e in result.errors)
 
     def test_validation_failure(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -298,7 +298,7 @@ class TestFullCycle:
             exe = AgentExecutor(Path(tmpdir))
             result = exe.execute_full_cycle("no json here")
             assert not result.success
-            assert any("未找到" in e for e in result.errors)
+            assert any("No parsable" in e for e in result.errors)
 
     def test_validation_error_blocks_apply(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -340,14 +340,14 @@ class TestFullCycle:
 
 
 # ---------------------------------------------------------------------------
-# Test: git_commit — 真实 git repo 场景
+# Test: git_commit — real git repo scenarios
 # ---------------------------------------------------------------------------
 
 class TestGitCommitReal:
-    """测试在真实 git repo 中的 git_commit 行为."""
+    """Test git_commit behavior in a real git repo."""
 
     def _init_git_repo(self, path):
-        """初始化一个临时 git repo."""
+        """Initialize a temporary git repo."""
         subprocess.run(["git", "init"], cwd=path, capture_output=True)
         subprocess.run(["git", "config", "user.email", "test@test.com"],
                        cwd=path, capture_output=True)
@@ -355,23 +355,23 @@ class TestGitCommitReal:
                        cwd=path, capture_output=True)
 
     def test_git_commit_success(self):
-        """创建文件后 git commit 成功返回 hash."""
+        """Git commit returns hash after creating file."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_git_repo(tmpdir)
-            # 创建初始 commit
+            # Create initial commit
             (Path(tmpdir) / "init.txt").write_text("init")
             subprocess.run(["git", "add", "."], cwd=tmpdir, capture_output=True)
             subprocess.run(["git", "commit", "-m", "init"], cwd=tmpdir, capture_output=True)
 
-            # 创建新文件
+            # Create new file
             (Path(tmpdir) / "new.txt").write_text("hello")
             exe = AgentExecutor(Path(tmpdir))
             success, hash_or_err = exe.git_commit("[TEST] add new.txt")
             assert success
-            assert len(hash_or_err) > 0  # 短 hash
+            assert len(hash_or_err) > 0  # Short hash
 
     def test_git_commit_nothing_to_commit(self):
-        """没有变更时 git commit 返回 (True, '(no changes)')."""
+        """Git commit returns (True, '(no changes)') when nothing to commit."""
         with tempfile.TemporaryDirectory() as tmpdir:
             self._init_git_repo(tmpdir)
             (Path(tmpdir) / "init.txt").write_text("init")
@@ -384,42 +384,42 @@ class TestGitCommitReal:
             assert msg == "(no changes)"
 
     def test_git_commit_no_repo(self):
-        """在非 git 目录中 commit 失败."""
+        """Commit fails in a non-git directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             (Path(tmpdir) / "file.txt").write_text("data")
             exe = AgentExecutor(Path(tmpdir))
             success, err = exe.git_commit("[TEST] should fail")
             assert not success
-            assert len(err) > 0  # 错误信息
+            assert len(err) > 0  # Error message
 
 
 # ---------------------------------------------------------------------------
-# Test: run_tests — 超时和异常
+# Test: run_tests — timeout and exceptions
 # ---------------------------------------------------------------------------
 
 class TestRunTestsEdgeCases:
     def test_run_tests_timeout(self):
-        """测试超时处理."""
+        """Test timeout handling."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
             with mock.patch("vibecollab.agent.executor.subprocess.run",
                             side_effect=subprocess.TimeoutExpired(cmd="test", timeout=300)):
                 passed, output = exe.run_tests("dummy_cmd")
                 assert not passed
-                assert "超时" in output
+                assert "timeout" in output.lower()
 
     def test_run_tests_exception(self):
-        """测试执行异常处理."""
+        """Test execution exception handling."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
             with mock.patch("vibecollab.agent.executor.subprocess.run",
                             side_effect=OSError("command not found")):
                 passed, output = exe.run_tests("nonexistent_cmd")
                 assert not passed
-                assert "失败" in output
+                assert "failed" in output.lower()
 
     def test_run_tests_custom_command(self):
-        """自定义测试命令."""
+        """Custom test command."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
             passed, output = exe.run_tests("python -c \"print('custom test ok')\"")
@@ -428,12 +428,12 @@ class TestRunTestsEdgeCases:
 
 
 # ---------------------------------------------------------------------------
-# Test: apply_changes — 异常路径
+# Test: apply_changes — edge cases
 # ---------------------------------------------------------------------------
 
 class TestApplyChangesEdgeCases:
     def test_apply_write_failure(self):
-        """写入失败时错误被捕获到 result.errors."""
+        """Write failure errors are captured in result.errors."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
             changes = [FileChange(file="test.txt", action="create", content="data")]
@@ -441,10 +441,10 @@ class TestApplyChangesEdgeCases:
             with mock.patch("pathlib.Path.write_text", side_effect=PermissionError("denied")):
                 result = exe.apply_changes(changes)
                 assert len(result.errors) > 0
-                assert "写入失败" in result.errors[0]
+                assert "Write failed" in result.errors[0]
 
     def test_apply_delete_nonexistent(self):
-        """删除不存在的文件跳过而非报错."""
+        """Deleting non-existent file skips instead of erroring."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
             changes = [FileChange(file="ghost.txt", action="delete")]
@@ -453,12 +453,12 @@ class TestApplyChangesEdgeCases:
 
 
 # ---------------------------------------------------------------------------
-# Test: validate_changes — 边界情况
+# Test: validate_changes — edge cases
 # ---------------------------------------------------------------------------
 
 class TestValidateChangesEdgeCases:
     def test_validate_invalid_path(self):
-        """无效路径（NUL 字符）触发错误."""
+        """Invalid path (NUL character) triggers error."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
             changes = [FileChange(file="file\x00bad", action="create", content="x")]
@@ -467,36 +467,36 @@ class TestValidateChangesEdgeCases:
 
 
 # ---------------------------------------------------------------------------
-# Test: rollback — 边界情况
+# Test: rollback — edge cases
 # ---------------------------------------------------------------------------
 
 class TestRollbackEdgeCases:
     def test_rollback_locked_file(self):
-        """回滚中如果写入失败，不抛异常（except Exception: pass）."""
+        """Rollback does not throw if write fails (except Exception: pass)."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
-            # 模拟已有备份
+            # Simulate existing backups
             exe._backups = {"test.txt": "original content"}
-            # 文件不可写（模拟异常）
+            # Simulate unwritable file
             with mock.patch("pathlib.Path.write_text", side_effect=PermissionError):
                 rolled = exe.rollback()
-                # 不抛异常，但也不标记为成功回滚
+                # No exception, but also not marked as successful rollback
                 assert "test.txt" not in str(rolled) or len(rolled) == 0
 
     def test_rollback_empty(self):
-        """无备份时回滚返回空列表."""
+        """Empty backups returns empty list on rollback."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
             assert exe.rollback() == []
 
 
 # ---------------------------------------------------------------------------
-# Test: execute_full_cycle — git commit 失败路径
+# Test: execute_full_cycle — git commit failure path
 # ---------------------------------------------------------------------------
 
 class TestFullCycleGitFailure:
     def test_test_pass_but_git_fail(self):
-        """测试通过但 git commit 失败."""
+        """Tests pass but git commit fails."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
             output = '```json\n{"file": "ok.txt", "action": "create", "content": "data"}\n```'
@@ -509,17 +509,17 @@ class TestFullCycleGitFailure:
                 assert not result.success
                 assert result.test_passed
                 assert not result.git_committed
-                assert any("Git commit 失败" in e for e in result.errors)
+                assert any("Git commit failed" in e for e in result.errors)
 
     def test_full_cycle_with_real_git(self):
-        """完整周期: apply → test → git commit 全部成功."""
+        """Full cycle: apply -> test -> git commit all succeed."""
         with tempfile.TemporaryDirectory() as tmpdir:
             subprocess.run(["git", "init"], cwd=tmpdir, capture_output=True)
             subprocess.run(["git", "config", "user.email", "t@t.com"],
                            cwd=tmpdir, capture_output=True)
             subprocess.run(["git", "config", "user.name", "T"],
                            cwd=tmpdir, capture_output=True)
-            # 需要初始 commit
+            # Need initial commit
             (Path(tmpdir) / "init.txt").write_text("init")
             subprocess.run(["git", "add", "."], cwd=tmpdir, capture_output=True)
             subprocess.run(["git", "commit", "-m", "init"], cwd=tmpdir, capture_output=True)
@@ -537,7 +537,7 @@ class TestFullCycleGitFailure:
 
 
 # ---------------------------------------------------------------------------
-# Test: _parse_single_change — 边界输入
+# Test: _parse_single_change — edge inputs
 # ---------------------------------------------------------------------------
 
 class TestParseSingleChangeEdge:
@@ -556,14 +556,14 @@ class TestParseSingleChangeEdge:
 
 
 # ---------------------------------------------------------------------------
-# Test: Agent serve 长运行压力模拟
+# Test: Agent serve long-running stress simulation
 # ---------------------------------------------------------------------------
 
 class TestServeStressSimulation:
-    """模拟 agent serve 100+ 周期的状态管理."""
+    """Simulate agent serve 100+ cycles state management."""
 
     def test_100_cycles_success(self):
-        """100 个成功周期: 连续 apply → test → 状态正确."""
+        """100 successful cycles: sequential apply -> test -> state correct."""
         with tempfile.TemporaryDirectory() as tmpdir:
             for i in range(100):
                 exe = AgentExecutor(Path(tmpdir))
@@ -571,12 +571,12 @@ class TestServeStressSimulation:
                 result = exe.apply_changes(exe.parse_changes(output))
                 assert result.success
                 assert (Path(tmpdir) / f"f{i}.txt").exists()
-            # 验证所有 100 个文件都存在
+            # Verify all 100 files exist
             files = list(Path(tmpdir).glob("f*.txt"))
             assert len(files) == 100
 
     def test_mixed_success_failure_cycles(self):
-        """交替成功/失败周期模拟."""
+        """Alternating success/failure cycle simulation."""
         with tempfile.TemporaryDirectory() as tmpdir:
             success_count = 0
             rollback_count = 0
@@ -584,7 +584,7 @@ class TestServeStressSimulation:
                 exe = AgentExecutor(Path(tmpdir))
                 output = f'```json\n{{"file": "mix{i}.txt", "action": "create", "content": "data"}}\n```'
                 if i % 3 == 0:
-                    # 模拟测试失败 → 回滚
+                    # Simulate test failure -> rollback
                     result = exe.execute_full_cycle(
                         output,
                         test_command="python -c \"raise SystemExit(1)\"",
@@ -602,17 +602,17 @@ class TestServeStressSimulation:
             assert rollback_count > 0
 
     def test_concurrent_file_operations(self):
-        """多个 AgentExecutor 实例操作同一目录（非真正并发但验证隔离性）."""
+        """Multiple AgentExecutor instances operating on same directory (not truly concurrent but verifies isolation)."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe1 = AgentExecutor(Path(tmpdir))
             exe2 = AgentExecutor(Path(tmpdir))
 
-            # exe1 创建文件
+            # exe1 creates file
             out1 = '```json\n{"file": "shared.txt", "action": "create", "content": "v1"}\n```'
             result1 = exe1.apply_changes(exe1.parse_changes(out1))
             assert result1.success
 
-            # exe2 修改同一文件
+            # exe2 modifies same file
             out2 = '```json\n{"file": "shared.txt", "action": "modify", "content": "v2"}\n```'
             result2 = exe2.apply_changes(exe2.parse_changes(out2))
             assert result2.success
@@ -622,14 +622,14 @@ class TestServeStressSimulation:
 
 
 # ---------------------------------------------------------------------------
-# Test: PID 锁并发安全
+# Test: PID lock concurrency safety
 # ---------------------------------------------------------------------------
 
 class TestPIDLockConcurrency:
-    """测试 PID 锁的并发安全性."""
+    """Test PID lock concurrency safety."""
 
     def test_acquire_release_cycle(self):
-        """获取 → 释放 → 再获取 正常工作."""
+        """Acquire -> release -> re-acquire works correctly."""
         from vibecollab.cli.ai import _acquire_lock, _release_lock
         with tempfile.TemporaryDirectory() as tmpdir:
             lock_path = Path(tmpdir) / "agent.pid"
@@ -643,34 +643,34 @@ class TestPIDLockConcurrency:
             assert _acquire_lock(lock_path) is True
 
     def test_stale_lock_takeover(self):
-        """陈旧锁被接管."""
+        """Stale lock is taken over."""
         from vibecollab.cli.ai import _acquire_lock
         with tempfile.TemporaryDirectory() as tmpdir:
             lock_path = Path(tmpdir) / "agent.pid"
-            lock_path.write_text("999999999")  # 不存在的 PID
+            lock_path.write_text("999999999")  # Non-existent PID
 
             assert _acquire_lock(lock_path) is True
             assert lock_path.read_text().strip() == str(os.getpid())
 
     def test_active_lock_rejected(self):
-        """活跃锁被拒绝."""
+        """Active lock is rejected."""
         from vibecollab.cli.ai import _acquire_lock
         with tempfile.TemporaryDirectory() as tmpdir:
             lock_path = Path(tmpdir) / "agent.pid"
-            lock_path.write_text(str(os.getpid()))  # 当前进程
+            lock_path.write_text(str(os.getpid()))  # Current process
 
             assert _acquire_lock(lock_path) is False
 
 
 # ---------------------------------------------------------------------------
-# Test: 自适应退避算法边界条件
+# Test: Adaptive backoff algorithm edge conditions
 # ---------------------------------------------------------------------------
 
 class TestAdaptiveBackoffEdge:
-    """测试退避算法的边界条件."""
+    """Test adaptive backoff algorithm edge conditions."""
 
     def test_backoff_respects_max(self):
-        """退避时间不超过 max_sleep."""
+        """Backoff time does not exceed max_sleep."""
         from vibecollab.cli.ai import DEFAULT_MAX_SLEEP_S, DEFAULT_MIN_SLEEP_S
         current = DEFAULT_MIN_SLEEP_S
         for _ in range(20):
@@ -678,26 +678,26 @@ class TestAdaptiveBackoffEdge:
         assert current <= DEFAULT_MAX_SLEEP_S
 
     def test_backoff_resets_on_success(self):
-        """成功后退避重置为 min_sleep."""
+        """Backoff resets to min_sleep on success."""
         from vibecollab.cli.ai import DEFAULT_MIN_SLEEP_S
-        # 模拟：5 次失败后 1 次成功
+        # Simulate: 5 failures then 1 success
         current = DEFAULT_MIN_SLEEP_S
         for _ in range(5):
             current = min(300, max(2, current * 2))
-        # 成功
+        # Success
         current = DEFAULT_MIN_SLEEP_S
         assert current == DEFAULT_MIN_SLEEP_S
 
 
 # ---------------------------------------------------------------------------
-# Test: Agent run 失败恢复场景
+# Test: Agent run failure recovery scenarios
 # ---------------------------------------------------------------------------
 
 class TestAgentRunFailureRecovery:
-    """测试 agent run 的各种失败和恢复场景."""
+    """Test various failure and recovery scenarios for agent run."""
 
     def test_rollback_restores_original(self):
-        """测试失败后回滚恢复原始文件内容."""
+        """Rollback restores original file content after failure."""
         with tempfile.TemporaryDirectory() as tmpdir:
             original = Path(tmpdir) / "existing.txt"
             original.write_text("original content")
@@ -712,7 +712,7 @@ class TestAgentRunFailureRecovery:
             assert original.read_text() == "original content"
 
     def test_rollback_removes_new_files(self):
-        """回滚移除新创建的文件."""
+        """Rollback removes newly created files."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
             output = '```json\n{"file": "new.txt", "action": "create", "content": "data"}\n```'
@@ -724,7 +724,7 @@ class TestAgentRunFailureRecovery:
             assert not (Path(tmpdir) / "new.txt").exists()
 
     def test_multiple_files_rollback(self):
-        """多文件变更全部回滚."""
+        """Multiple file changes all rolled back."""
         with tempfile.TemporaryDirectory() as tmpdir:
             (Path(tmpdir) / "a.txt").write_text("a_original")
             exe = AgentExecutor(Path(tmpdir))
@@ -741,18 +741,18 @@ class TestAgentRunFailureRecovery:
             assert not (Path(tmpdir) / "b.txt").exists()
 
     def test_invalid_llm_output_graceful(self):
-        """完全无法解析的 LLM 输出不崩溃."""
+        """Completely unparseable LLM output does not crash."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
             result = exe.execute_full_cycle("Just some random text without JSON")
             assert not result.success
-            assert "未找到" in result.errors[0] or "LLM" in result.errors[0]
+            assert "No parsable" in result.errors[0] or "LLM" in result.errors[0]
 
     def test_protected_file_rejected(self):
-        """尝试修改受保护文件被拒绝."""
+        """Attempting to modify protected file is rejected."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
             output = '```json\n{"file": ".env", "action": "create", "content": "SECRET=bad"}\n```'
             result = exe.execute_full_cycle(output)
             assert not result.success
-            assert any("受保护" in e for e in result.errors)
+            assert any("Protected" in e for e in result.errors)

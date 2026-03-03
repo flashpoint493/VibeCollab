@@ -1,84 +1,83 @@
-# 十二、协议自检机制
+# XII. Protocol Self-Check Mechanism
 
-## 12.1 协议自检的重要性
+## 12.1 Importance of Protocol Self-Check
 
-> **使用协议时常常发现，有时候对话时会漏掉一些东西，比如没有记得提交 git，没有记得及时同步某个对应文档.md。**
+> **When using the protocol, we often find that things get missed during dialogue -- such as forgetting to commit to git, or failing to update a corresponding document.**
 
-协议自检机制帮助 AI 和用户确保遵循了协作协议中的各项要求。
+The protocol self-check mechanism helps the AI and users ensure compliance with all collaboration protocol requirements.
 
-## 12.2 自检触发方式
+## 12.2 Self-Check Trigger Methods
 
-### 方式一：命令行检查
+### Method 1: Command Line Check
 
 ```bash
-# 检查协议遵循情况
+# Check protocol compliance
 vibecollab check
 
-# 严格模式（警告也视为失败）
+# Strict mode (warnings treated as failures)
 vibecollab check --strict
 
-# 含 Insight 一致性校验 (v0.7.0+)
+# Include Insight consistency check (v0.7.0+)
 vibecollab check --insights
 ```
 
-### 方式二：对话中触发
+### Method 2: Dialogue Trigger
 
-在对话中使用以下触发词，AI 应主动执行协议自检：
+Use the following trigger phrases in dialogue, and the AI should proactively execute a protocol self-check:
 
-- "检查协议"
-- "协议自检"
-- "检查是否遵循协议"
+- "check protocol"
 - "protocol check"
-- "自检"
+- "self-check"
+- "verify compliance"
 
-## 12.3 检查项说明
+## 12.3 Check Items
 
-协议检查器会检查以下内容：
+The protocol checker verifies the following:
 
-### Git 协议检查
-- ✅ 项目是否已初始化 Git 仓库
-- ✅ 是否有未提交的更改
-- ⚠️  Git 提交频率（提醒长时间未提交）
+### Git Protocol Check
+- [x] Whether the project has initialized a Git repository
+- [x] Whether there are uncommitted changes
+- [!] Git commit frequency (reminder for long periods without commits)
 
-### 文档更新检查
-- ✅ 必需文档是否存在（CONTEXT.md, CHANGELOG.md 等）
-- ⚠️  文档是否及时更新（24小时内）
-- ✅ PRD.md 是否存在（如果启用）
+### Documentation Update Check
+- [x] Whether required documents exist (CONTEXT.md, CHANGELOG.md, etc.)
+- [!] Whether documents are recently updated (within 24 hours)
+- [x] Whether PRD.md exists (if enabled)
 
-### 对话流程检查
-- ✅ 对话开始时应该读取的文件是否存在
-- ✅ 对话结束时应该更新的文件是否存在
+### Dialogue Flow Check
+- [x] Whether files that should be read at dialogue start exist
+- [x] Whether files that should be updated at dialogue end exist
 
-## 12.4 检查结果说明
+## 12.4 Check Results
 
-检查结果分为三个级别：
+Check results are classified into three levels:
 
-| 级别 | 符号 | 说明 | 处理方式 |
-|------|------|------|---------|
-| **错误** | ❌ | 违反协议要求 | 必须修复 |
-| **警告** | ⚠️  | 可能遗漏的协议步骤 | 建议处理 |
-| **信息** | ℹ️  | 提醒信息 | 可选择性处理 |
+| Level | Symbol | Description | Action Required |
+|-------|--------|-------------|-----------------|
+| **Error** | [FAIL] | Protocol violation | Must fix |
+| **Warning** | [WARN] | Potentially missed protocol step | Recommended to address |
+| **Info** | [INFO] | Informational notice | Optional |
 
-## 12.5 AI 自检行为规范
+## 12.5 AI Self-Check Behavior Guidelines
 
-当用户触发协议自检时，AI 应：
+When the user triggers a protocol self-check, the AI should:
 
-1. **执行检查**: 运行协议检查器，获取检查结果
-2. **展示结果**: 清晰展示所有检查项的状态
-3. **提供建议**: 对于未通过的检查项，提供具体的修复建议
-4. **主动修复**: 对于可以自动修复的问题（如更新文档），主动执行修复
-5. **记录提醒**: 对于需要人工处理的问题，明确提醒用户
+1. **Execute check**: Run the protocol checker, obtain results
+2. **Display results**: Clearly show the status of all check items
+3. **Provide suggestions**: For failed items, provide specific fix suggestions
+4. **Auto-fix**: For auto-fixable issues (e.g., updating docs), proactively execute fixes
+5. **Record reminders**: For issues requiring manual handling, clearly remind the user
 
-## 12.6 自检最佳实践
+## 12.6 Self-Check Best Practices
 
-### 对话开始时
-- 在恢复上下文后，可以执行一次快速自检，确保环境正常
+### At Dialogue Start
+- After restoring context, run a quick self-check to ensure the environment is normal
 
-### 对话结束时
-- 在执行 git commit 前，执行自检确保所有协议要求都已满足
+### At Dialogue End
+- Before executing git commit, run self-check to ensure all protocol requirements are met
 
-### 定期检查
-- 如果长时间未对话，重新开始对话时执行完整自检
+### Periodic Check
+- If there has been a long gap since the last dialogue, run a full self-check when resuming
 
 ---
 

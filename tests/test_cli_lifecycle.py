@@ -33,13 +33,13 @@ class TestCheck:
     def test_check_basic(self, runner, config_file):
         result = runner.invoke(lifecycle, ["check", "-c", str(config_file)])
         assert result.exit_code == 0
-        assert "原型验证" in result.output
+        assert "Prototype Validation" in result.output
         assert "demo" in result.output
 
     def test_check_shows_upgrade_option(self, runner, config_file):
         result = runner.invoke(lifecycle, ["check", "-c", str(config_file)])
         assert result.exit_code == 0
-        assert "升级" in result.output
+        assert "upgrade" in result.output.lower()
 
     def test_check_shows_history(self, runner, config_file):
         result = runner.invoke(lifecycle, ["check", "-c", str(config_file)])
@@ -56,10 +56,10 @@ class TestCheck:
                 "current_stage": "demo",
                 "stages": {
                     "demo": {
-                        "name": "原型验证",
-                        "description": "验证概念",
-                        "focus": ["核心"],
-                        "principles": ["快速"],
+                        "name": "Prototype Validation",
+                        "description": "Quickly validate core concepts and feasibility",
+                        "focus": ["Core features"],
+                        "principles": ["Rapid iteration"],
                         "milestones": [
                             {"name": "M1", "completed": True},
                             {"name": "M2", "completed": False},
@@ -73,7 +73,7 @@ class TestCheck:
         path.write_text(yaml.dump(config, allow_unicode=True), encoding="utf-8")
         result = runner.invoke(lifecycle, ["check", "-c", str(path)])
         assert result.exit_code == 0
-        assert "1/2" in result.output or "里程碑" in result.output
+        assert "1/2" in result.output or "milestone" in result.output.lower()
 
     def test_check_cannot_upgrade(self, runner, tmp_path):
         config = {
@@ -86,14 +86,14 @@ class TestCheck:
         path.write_text(yaml.dump(config, allow_unicode=True), encoding="utf-8")
         result = runner.invoke(lifecycle, ["check", "-c", str(path)])
         assert result.exit_code == 0
-        assert "暂不能" in result.output or "最后阶段" in result.output
+        assert "last stage" in result.output.lower() or "cannot upgrade" in result.output.lower()
 
 
 class TestUpgrade:
     def test_upgrade_default(self, runner, config_file):
         result = runner.invoke(lifecycle, ["upgrade", "-c", str(config_file)])
         assert result.exit_code == 0
-        assert "升级成功" in result.output or "量产" in result.output
+        assert "Upgrade Successful" in result.output or "Production" in result.output
 
         # Verify config was updated
         updated = yaml.safe_load(config_file.read_text(encoding="utf-8"))
@@ -118,4 +118,4 @@ class TestUpgrade:
         result = runner.invoke(lifecycle, ["upgrade", "-c", str(config_file)])
         assert result.exit_code == 0
         # Should show next steps
-        assert "下一步" in result.output or "vibecollab" in result.output
+        assert "Next steps" in result.output or "vibecollab" in result.output

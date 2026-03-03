@@ -305,7 +305,7 @@ class TestCLIConfig:
         runner = CliRunner()
         result = runner.invoke(config_group, ["show"])
         assert result.exit_code == 0
-        assert "未创建" in result.output or "config.yaml" in result.output
+        assert "Not created" in result.output or "config.yaml" in result.output
 
     def test_config_show_with_config(self, fake_home):
         save_config({"llm": {"provider": "openai", "api_key": "sk-testkey123456"}})
@@ -365,7 +365,7 @@ class TestCLIConfig:
         result = runner.invoke(config_group, ["setup"],
                                input="1\nsk-test-key-12345678\n1\n\n")
         assert result.exit_code == 0
-        assert "已保存" in result.output
+        assert "saved" in result.output.lower() or "Saved" in result.output
 
         config = load_config()
         assert config["llm"]["provider"] == "openai"

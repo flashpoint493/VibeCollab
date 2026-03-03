@@ -180,7 +180,7 @@ class TestSuggestRichText:
             "-c", str(project_dir / "project.yaml"),
         ])
         assert result.exit_code == 0
-        # Either shows results or "未找到关联" message
+        # Either shows results or "no related insights" message
         assert "TASK-DEV-003" in result.output
 
     def test_suggest_nonexistent_task(self, runner, project_dir):

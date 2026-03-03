@@ -1,0 +1,16 @@
+........................................................................ [  5%]
+........................................................................ [ 10%]
+........................................................................ [ 16%]
+............................................F
+================================== FAILURES ===================================
+__________________ TestSearchInsights.test_search_no_results __________________
+d:\Github\VibeCollab\tests\test_cli_insight.py:240: in test_search_no_results
+    assert "not found" in result.output.lower()
+E   AssertionError: assert 'not found' in 'no matching insights found.\n'
+E    +  where 'no matching insights found.\n' = <built-in method lower of str object at 0x000001A1407117A0>()
+E    +    where <built-in method lower of str object at 0x000001A1407117A0> = 'No matching insights found.\n'.lower
+E    +      where 'No matching insights found.\n' = <Result okay>.output
+=========================== short test summary info ===========================
+FAILED tests/test_cli_insight.py::TestSearchInsights::test_search_no_results
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 260 passed in 45.45s

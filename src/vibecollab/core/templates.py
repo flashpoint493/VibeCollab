@@ -1,5 +1,5 @@
 """
-LLMContext Templates - 模板管理
+LLMContext Templates - Template management
 """
 
 from pathlib import Path
@@ -9,18 +9,18 @@ import yaml
 
 
 class TemplateManager:
-    """模板管理器"""
+    """Template manager"""
 
     def __init__(self, templates_dir: Optional[Path] = None):
         if templates_dir:
             self.templates_dir = templates_dir
         else:
-            # 默认使用包内模板目录
+            # Default to package templates directory
             self.templates_dir = self._get_package_templates_dir()
 
     def _get_package_templates_dir(self) -> Path:
-        """获取包内模板目录"""
-        # 尝试从包资源获取
+        """Get package templates directory"""
+        # Try to get from package resources
         try:
             # Python 3.9+
             import importlib.resources as pkg_resources
@@ -29,25 +29,25 @@ class TemplateManager:
         except (ImportError, TypeError, AttributeError):
             pass
 
-        # 回退到相对路径
+        # Fallback to relative path
         package_dir = Path(__file__).parent.parent  # core/ -> vibecollab/
         templates_dir = package_dir / "templates"
 
         if templates_dir.exists():
             return templates_dir
 
-        # 尝试项目根目录
+        # Try project root directory
         root_templates = package_dir.parent.parent / "templates"
         if root_templates.exists():
             return root_templates
 
-        raise FileNotFoundError("无法找到模板目录")
+        raise FileNotFoundError("Cannot find templates directory")
 
     def list_templates(self) -> List[Dict[str, Any]]:
-        """列出所有可用模板"""
+        """List all available templates"""
         templates = []
 
-        # 主模板
+        # Main templates
         for yaml_file in self.templates_dir.glob("*.yaml"):
             templates.append({
                 "name": yaml_file.stem.replace(".project", ""),
@@ -55,7 +55,7 @@ class TemplateManager:
                 "path": yaml_file
             })
 
-        # 领域扩展
+        # Domain extensions
         domains_dir = self.templates_dir / "domains"
         if domains_dir.exists():
             for yaml_file in domains_dir.glob("*.yaml"):
@@ -68,31 +68,31 @@ class TemplateManager:
         return templates
 
     def get_template(self, name: str) -> str:
-        """获取模板内容"""
-        # 尝试主模板
+        """Get template content"""
+        # Try main template
         template_path = self.templates_dir / f"{name}.project.yaml"
         if template_path.exists():
             return template_path.read_text(encoding="utf-8")
 
-        # 尝试领域扩展
+        # Try domain extension
         template_path = self.templates_dir / "domains" / f"{name}.extension.yaml"
         if template_path.exists():
             return template_path.read_text(encoding="utf-8")
 
-        # 尝试无后缀
+        # Try without suffix
         template_path = self.templates_dir / f"{name}.yaml"
         if template_path.exists():
             return template_path.read_text(encoding="utf-8")
 
-        raise FileNotFoundError(f"模板不存在: {name}")
+        raise FileNotFoundError(f"Template not found: {name}")
 
     def load_config(self, name: str) -> Dict[str, Any]:
-        """加载并解析模板配置"""
+        """Load and parse template config"""
         content = self.get_template(name)
         return yaml.safe_load(content)
 
     def save_template(self, name: str, config: Dict[str, Any], template_type: str = "project"):
-        """保存自定义模板"""
+        """Save custom template"""
         if template_type == "extension":
             template_path = self.templates_dir / "domains" / f"{name}.extension.yaml"
             template_path.parent.mkdir(parents=True, exist_ok=True)

@@ -1,5 +1,5 @@
 """
-LLMContext Generator - 文档生成器
+LLMContext Generator -- Document generator.
 """
 
 from pathlib import Path
@@ -11,26 +11,26 @@ from .extension import ExtensionProcessor
 
 
 class LLMContextGenerator:
-    """AI 协作协议文档生成器
+    """AI collaboration protocol document generator.
 
-    使用 PatternEngine (Jinja2 模板) 生成 CONTRIBUTING_AI.md 文档。
+    Uses PatternEngine (Jinja2 templates) to generate CONTRIBUTING_AI.md.
     """
 
     def __init__(self, config: Dict[str, Any], project_root: Optional[Path] = None):
         self.config = config
         self.project_root = project_root or Path.cwd()
 
-        # 初始化扩展处理器
+        # Initialize extension processor
         self.extension_processor = ExtensionProcessor(self.project_root)
         self._load_extensions()
 
     def _load_extensions(self):
-        """加载扩展配置"""
-        # 从 domain_extensions 加载
+        """Load extension configurations."""
+        # Load from domain_extensions
         if "domain_extensions" in self.config:
             self.extension_processor.load_from_config(self.config)
 
-        # 从独立扩展文件加载（如果指定）
+        # Load from standalone extension files (if specified)
         ext_files = self.config.get("extension_files", [])
         for ext_file in ext_files:
             ext_path = self.project_root / ext_file
@@ -42,43 +42,43 @@ class LLMContextGenerator:
 
     @classmethod
     def from_file(cls, path: Path, project_root: Optional[Path] = None) -> "LLMContextGenerator":
-        """从文件加载配置"""
+        """Load config from file."""
         with open(path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
         root = project_root or path.parent
         return cls(config, root)
 
     def validate(self) -> List[str]:
-        """验证配置，返回错误列表"""
+        """Validate config, return list of errors."""
         errors = []
 
-        # 检查必需字段
+        # Check required fields
         if "project" not in self.config:
-            errors.append("缺少 'project' 配置")
+            errors.append("Missing 'project' config")
         else:
             project = self.config["project"]
             if "name" not in project:
-                errors.append("缺少 'project.name'")
+                errors.append("Missing 'project.name'")
 
-        # 检查角色定义
+        # Check role definitions
         roles = self.config.get("roles", [])
         for i, role in enumerate(roles):
             if "code" not in role:
-                errors.append(f"角色 {i} 缺少 'code'")
+                errors.append(f"Role {i} missing 'code'")
             if "name" not in role:
-                errors.append(f"角色 {i} 缺少 'name'")
+                errors.append(f"Role {i} missing 'name'")
 
-        # 检查决策级别
+        # Check decision levels
         levels = self.config.get("decision_levels", [])
         valid_levels = {"S", "A", "B", "C"}
         for level in levels:
             if level.get("level") not in valid_levels:
-                errors.append(f"无效的决策级别: {level.get('level')}")
+                errors.append(f"Invalid decision level: {level.get('level')}")
 
         return errors
 
     def generate(self) -> str:
-        """生成完整的 CONTRIBUTING_AI.md 文档"""
+        """Generate the complete CONTRIBUTING_AI.md document."""
         from .pattern_engine import PatternEngine
         engine = PatternEngine(self.config, self.project_root)
         return engine.render()

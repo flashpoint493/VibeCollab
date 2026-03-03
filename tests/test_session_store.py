@@ -1,8 +1,8 @@
 """
-Tests for session_store.py — 对话 session 持久化
+Tests for session_store.py — session persistence
 
-覆盖：
-- Session: 数据结构, 自动字段, 序列化
+Covers:
+- Session: data structure, auto fields, serialization
 - SessionStore: save, get, list_all, list_recent, list_since, delete, count, get_summaries_text
 """
 
@@ -23,8 +23,8 @@ from vibecollab.domain.session_store import Session, SessionStore
 class TestSession:
     def test_defaults(self):
         s = Session()
-        assert s.session_id != ""  # 自动生成
-        assert s.created_at != ""  # 自动生成
+        assert s.session_id != ""  # auto-generated
+        assert s.created_at != ""  # auto-generated
         assert s.summary == ""
         assert s.key_decisions == []
 
@@ -32,7 +32,7 @@ class TestSession:
         s = Session(
             session_id="test-001",
             developer="ocarina",
-            summary="MCP Server 实现",
+            summary="MCP Server implementation",
             key_decisions=["DECISION-015"],
             files_changed=["mcp_server.py"],
             created_at="2026-02-27T10:00:00",
@@ -94,7 +94,7 @@ class TestSessionStore:
         store.save(Session(session_id="c-003", summary="third"))
         all_sessions = store.list_all()
         assert len(all_sessions) == 3
-        # 倒序（c > b > a）
+        # Reverse order (c > b > a)
         assert all_sessions[0].session_id == "c-003"
 
     def test_list_recent(self, tmp_path):

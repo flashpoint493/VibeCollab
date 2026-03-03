@@ -1,16 +1,16 @@
 {%- set exts = extensions.get('extensions', {}) -%}
-# 附录：领域扩展
+# Appendix: Domain Extensions
 
 {% for ext_domain, ext in exts.items() -%}
-## {{ ext_domain.upper() }} 领域扩展
+## {{ ext_domain.upper() }} Domain Extension
 
 {% if ext.hooks -%}
-### 流程钩子
+### Workflow Hooks
 
-以下钩子在特定流程节点自动触发：
+The following hooks are automatically triggered at specific workflow points:
 
-| 触发点 | 动作 | 条件 | 说明 |
-|-------|------|------|------|
+| Trigger Point | Action | Condition | Description |
+|--------------|--------|-----------|-------------|
 {% for hook in ext.hooks -%}
 {%- set condition = ('`' ~ hook.condition ~ '`') if hook.condition else '-' -%}
 {%- set ctx = ext.contexts.get(hook.context_id, None) -%}
@@ -20,7 +20,7 @@
 {% endif -%}
 
 {% if ext.contexts -%}
-### 可注入上下文
+### Injectable Contexts
 
 {% for ctx_id, ctx in ext.contexts.items() -%}
 **{{ ctx_id }}** ({{ ctx.type }})
@@ -28,19 +28,19 @@
 : {{ ctx.description }}
 {% endif -%}
 {% if ctx.source -%}
-- 来源: `{{ ctx.source }}`
+- Source: `{{ ctx.source }}`
 {% endif -%}
 {% if ctx.pattern -%}
-- 匹配: `{{ ctx.pattern }}`
+- Pattern: `{{ ctx.pattern }}`
 {% endif %}
 {% endfor -%}
 {% endif -%}
 
 {% if ext.additional_files -%}
-### 领域文件
+### Domain Files
 
-| 文件 | 用途 |
-|------|------|
+| File | Purpose |
+|------|---------|
 {% for af in ext.additional_files -%}
 | `{{ af.get('path', '') }}` | {{ af.get('purpose', '') }} |
 {% endfor %}

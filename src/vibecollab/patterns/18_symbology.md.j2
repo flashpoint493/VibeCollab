@@ -1,13 +1,13 @@
 {%- set sym = symbology if symbology else {} -%}
-# 十一、符号学标注系统
+# XI. Symbology Annotation System
 
-本协议使用统一的符号体系确保沟通一致性：
+This protocol uses a unified symbol system to ensure communication consistency:
 
 {% for category, symbols in sym.items() -%}
 ## {{ category.replace('_', ' ').title() }}
 
-| 符号 | 含义 |
-|------|------|
+| Symbol | Meaning |
+|--------|---------|
 {% for s in symbols -%}
 | `{{ s.get('symbol', '') }}` | {{ s.get('meaning', '') }} |
 {% endfor %}

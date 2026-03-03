@@ -40,7 +40,7 @@ class TestInitGitRepo:
         with patch("vibecollab.utils.git.check_git_installed", return_value=False):
             success, error = init_git_repo(tmp_path)
             assert success is False
-            assert "未安装" in error
+            assert "not installed" in error
 
     def test_already_git_repo(self, tmp_path):
         (tmp_path / ".git").mkdir()
@@ -83,7 +83,7 @@ class TestInitGitRepo:
                    side_effect=subprocess.CalledProcessError(1, "git", stderr="fail")):
             success, error = init_git_repo(tmp_path)
             assert success is False
-            assert "失败" in error
+            assert "failed" in error
 
     def test_init_generic_exception(self, tmp_path):
         with patch("vibecollab.utils.git.check_git_installed", return_value=True), \
@@ -91,7 +91,7 @@ class TestInitGitRepo:
                    side_effect=OSError("boom")):
             success, error = init_git_repo(tmp_path)
             assert success is False
-            assert "出错" in error
+            assert "error" in error
 
 
 class TestEnsureGitRepo:
@@ -99,14 +99,14 @@ class TestEnsureGitRepo:
         with patch("vibecollab.utils.git.check_git_installed", return_value=False):
             ok, err, is_new = ensure_git_repo(tmp_path, auto_init=False)
             assert ok is False
-            assert "未安装" in err
+            assert "not installed" in err
             assert is_new is False
 
     def test_git_not_installed_auto(self, tmp_path):
         with patch("vibecollab.utils.git.check_git_installed", return_value=False):
             ok, err, is_new = ensure_git_repo(tmp_path, auto_init=True)
             assert ok is False
-            assert "安装" in err
+            assert "install" in err.lower()
             assert is_new is False
 
     def test_already_repo(self, tmp_path):
@@ -135,7 +135,7 @@ class TestEnsureGitRepo:
         with patch("vibecollab.utils.git.check_git_installed", return_value=True):
             ok, err, is_new = ensure_git_repo(tmp_path, auto_init=False)
             assert ok is False
-            assert "不是 Git 仓库" in err
+            assert "not a Git repository" in err
 
 
 class TestGetGitStatus:

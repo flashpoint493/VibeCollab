@@ -1,11 +1,11 @@
 """
-CLI Config 命令 — LLM 配置管理
+CLI Config commands -- LLM configuration management
 
-提供交互式配置向导和配置查看/修改功能:
-- vibecollab config setup    — 交互式配置向导
-- vibecollab config show     — 查看当前配置
-- vibecollab config set K V  — 设置单个配置项
-- vibecollab config path     — 显示配置文件路径
+Provides interactive setup wizard and config view/modify features:
+- vibecollab config setup    -- Interactive setup wizard
+- vibecollab config show     -- View current configuration
+- vibecollab config set K V  -- Set a single config item
+- vibecollab config path     -- Show config file path
 """
 
 
@@ -15,43 +15,43 @@ from rich.table import Table
 
 from .._compat import EMOJI, safe_console
 
-# 短别名（兼容此模块原有 _E 变量名）
+# Short alias (compatible with this module's original _E variable name)
 _E = EMOJI
 
 console = safe_console()
 
-# Provider 选项
+# Provider options
 PROVIDERS = {
     "1": ("openai", "OpenAI / OpenAI-compatible (OpenRouter, DeepSeek, etc.)"),
     "2": ("anthropic", "Anthropic Claude"),
 }
 
-# 常用 base_url 预设
+# Common base_url presets
 BASE_URL_PRESETS = {
-    "1": ("", "OpenAI 官方 (api.openai.com)"),
+    "1": ("", "OpenAI Official (api.openai.com)"),
     "2": ("https://openrouter.ai/api/v1", "OpenRouter (openrouter.ai)"),
     "3": ("https://api.deepseek.com/v1", "DeepSeek (api.deepseek.com)"),
     "4": ("https://dashscope.aliyuncs.com/compatible-mode/v1",
-          "阿里云百炼 (dashscope)"),
-    "5": ("custom", "自定义 URL"),
+          "Alibaba Cloud Bailian (dashscope)"),
+    "5": ("custom", "Custom URL"),
 }
 
 
 @click.group("config")
 def config_group():
-    """LLM 配置管理
+    """LLM Configuration Management
 
-    管理 VibeCollab 的 LLM API 配置，存储在 ~/.vibecollab/config.yaml。
+    Manage VibeCollab's LLM API configuration, stored in ~/.vibecollab/config.yaml.
     """
     pass
 
 
 @config_group.command("setup")
 def config_setup():
-    """交互式配置向导
+    """Interactive setup wizard
 
-    引导你完成 LLM API 配置，包括 Provider、API Key、Model 等。
-    配置保存到 ~/.vibecollab/config.yaml（不会进入 git）。
+    Guide you through LLM API configuration, including Provider, API Key, Model, etc.
+    Configuration is saved to ~/.vibecollab/config.yaml (not tracked by git).
 
     Examples:
 
@@ -61,29 +61,29 @@ def config_setup():
 
     console.print()
     console.print(Panel.fit(
-        f"[bold cyan]{_E['gear']} VibeCollab LLM 配置向导[/bold cyan]\n\n"
-        "[dim]配置将保存到 ~/.vibecollab/config.yaml（不会进入 git）[/dim]",
+        f"[bold cyan]{_E['gear']} VibeCollab LLM Setup Wizard[/bold cyan]\n\n"
+        "[dim]Configuration will be saved to ~/.vibecollab/config.yaml (not tracked by git)[/dim]",
         border_style="cyan",
     ))
     console.print()
 
-    # 加载已有配置
+    # Load existing config
     existing = load_config()
     llm = existing.get("llm", {})
     if not isinstance(llm, dict):
         llm = {}
 
     # Step 1: Provider
-    console.print("[bold]1. 选择 Provider:[/bold]")
+    console.print("[bold]1. Select Provider:[/bold]")
     for key, (_, desc) in PROVIDERS.items():
-        marker = " [green](当前)[/green]" if llm.get("provider") == PROVIDERS[key][0] else ""
+        marker = " [green](current)[/green]" if llm.get("provider") == PROVIDERS[key][0] else ""
         console.print(f"   {key}. {desc}{marker}")
     console.print()
 
     default_choice = "1"
     if llm.get("provider") == "anthropic":
         default_choice = "2"
-    choice = click.prompt("  选择", default=default_choice, show_default=True)
+    choice = click.prompt("  Select", default=default_choice, show_default=True)
     provider_info = PROVIDERS.get(choice, PROVIDERS["1"])
     provider = provider_info[0]
     console.print(f"  -> [cyan]{provider}[/cyan]")
@@ -94,9 +94,9 @@ def config_setup():
     current_key = llm.get("api_key", "")
     if current_key:
         masked = current_key[:8] + "..." + current_key[-4:] if len(current_key) > 12 else "***"
-        console.print(f"   [dim]当前: {masked}[/dim]")
+        console.print(f"   [dim]Current: {masked}[/dim]")
     api_key = click.prompt(
-        "  输入 API Key (留空保持不变)" if current_key else "  输入 API Key",
+        "  Enter API Key (leave empty to keep current)" if current_key else "  Enter API Key",
         default="" if current_key else None,
         show_default=False,
         hide_input=True,
@@ -104,7 +104,7 @@ def config_setup():
     if not api_key and current_key:
         api_key = current_key
     if not api_key:
-        console.print(f"  [red]{_E['err']} API Key 不能为空[/red]")
+        console.print(f"  [red]{_E['err']} API Key cannot be empty[/red]")
         raise SystemExit(1)
     console.print(f"  -> [cyan]{api_key[:8]}...{api_key[-4:]}[/cyan]" if len(api_key) > 12 else "  -> [cyan]***[/cyan]")
     console.print()
@@ -112,26 +112,26 @@ def config_setup():
     # Step 3: Base URL (for OpenAI provider)
     base_url = ""
     if provider == "openai":
-        console.print("[bold]3. API 端点:[/bold]")
+        console.print("[bold]3. API Endpoint:[/bold]")
         for key, (_, desc) in BASE_URL_PRESETS.items():
             marker = ""
             if llm.get("base_url") and llm["base_url"] == BASE_URL_PRESETS[key][0]:
-                marker = " [green](当前)[/green]"
+                marker = " [green](current)[/green]"
             console.print(f"   {key}. {desc}{marker}")
         console.print()
 
         default_url_choice = "1"
-        # 检测已有 base_url 匹配
+        # Detect existing base_url match
         for k, (url, _) in BASE_URL_PRESETS.items():
             if llm.get("base_url") == url:
                 default_url_choice = k
                 break
 
-        url_choice = click.prompt("  选择", default=default_url_choice,
+        url_choice = click.prompt("  Select", default=default_url_choice,
                                   show_default=True)
         preset = BASE_URL_PRESETS.get(url_choice, BASE_URL_PRESETS["1"])
         if preset[0] == "custom":
-            base_url = click.prompt("  输入自定义 URL",
+            base_url = click.prompt("  Enter custom URL",
                                     default=llm.get("base_url", ""))
         else:
             base_url = preset[0]
@@ -139,19 +139,19 @@ def config_setup():
         if base_url:
             console.print(f"  -> [cyan]{base_url}[/cyan]")
         else:
-            console.print("  -> [cyan]OpenAI 官方默认[/cyan]")
+            console.print("  -> [cyan]OpenAI official default[/cyan]")
         console.print()
 
     # Step 4: Model (optional)
-    console.print(f"[bold]{'4' if provider == 'openai' else '3'}. 模型 (可选):[/bold]")
+    console.print(f"[bold]{'4' if provider == 'openai' else '3'}. Model (optional):[/bold]")
     default_model = llm.get("model", "")
     if provider == "openai":
-        console.print("   [dim]常用: gpt-4o, gpt-4o-mini, deepseek-chat, "
+        console.print("   [dim]Common: gpt-4o, gpt-4o-mini, deepseek-chat, "
                        "deepseek/deepseek-chat-v3-0324[/dim]")
     else:
-        console.print("   [dim]常用: claude-sonnet-4-20250514, "
+        console.print("   [dim]Common: claude-sonnet-4-20250514, "
                        "claude-opus-4-20250514[/dim]")
-    model = click.prompt("  模型名称 (留空使用默认)",
+    model = click.prompt("  Model name (leave empty for default)",
                          default=default_model, show_default=False)
     if model:
         console.print(f"  -> [cyan]{model}[/cyan]")
@@ -159,7 +159,7 @@ def config_setup():
         from ..agent.llm_client import DEFAULT_MODEL_ANTHROPIC, DEFAULT_MODEL_OPENAI
         default = (DEFAULT_MODEL_ANTHROPIC if provider == "anthropic"
                    else DEFAULT_MODEL_OPENAI)
-        console.print(f"  -> [cyan]{default}[/cyan] (默认)")
+        console.print(f"  -> [cyan]{default}[/cyan] (default)")
     console.print()
 
     # Save
@@ -174,10 +174,10 @@ def config_setup():
     path = save_config(config)
 
     console.print(Panel.fit(
-        f"[green]{_E['ok']} 配置已保存![/green]\n\n"
-        f"文件: [cyan]{path}[/cyan]\n\n"
-        f"现在可以使用:\n"
-        f"  vibecollab ai ask \"你好\"\n"
+        f"[green]{_E['ok']} Configuration saved![/green]\n\n"
+        f"File: [cyan]{path}[/cyan]\n\n"
+        f"You can now use:\n"
+        f"  vibecollab ai ask \"Hello\"\n"
         f"  vibecollab ai chat\n"
         f"  vibecollab config show",
         border_style="green",
@@ -187,9 +187,9 @@ def config_setup():
 
 @config_group.command("show")
 def config_show():
-    """查看当前 LLM 配置
+    """View current LLM configuration
 
-    显示所有配置来源（环境变量、配置文件、默认值）的合并结果。
+    Shows the merged result from all configuration sources (environment variables, config file, defaults).
 
     Examples:
 
@@ -199,34 +199,34 @@ def config_show():
 
     console.print()
 
-    # 显示配置文件状态
+    # Show config file status
     config_path = get_config_path()
     if config_path.exists():
-        console.print(f"配置文件: [cyan]{config_path}[/cyan]")
+        console.print(f"Config file: [cyan]{config_path}[/cyan]")
     else:
-        console.print(f"配置文件: [yellow]未创建[/yellow] ({config_path})")
-        console.print("[dim]运行 'vibecollab config setup' 创建配置[/dim]")
+        console.print(f"Config file: [yellow]Not created[/yellow] ({config_path})")
+        console.print("[dim]Run 'vibecollab config setup' to create configuration[/dim]")
     console.print()
 
-    # 解析合并后的配置
+    # Parse merged config
     resolved = resolve_llm_config()
 
-    # 从配置文件读取原始值
+    # Read raw values from config file
     file_config = load_config().get("llm", {})
     if not isinstance(file_config, dict):
         file_config = {}
 
     import os
-    table = Table(title="LLM 配置", show_header=True)
-    table.add_column("配置项", style="cyan", min_width=12)
-    table.add_column("当前值", min_width=20)
-    table.add_column("来源", style="dim", min_width=12)
+    table = Table(title="LLM Configuration", show_header=True)
+    table.add_column("Config Item", style="cyan", min_width=12)
+    table.add_column("Current Value", min_width=20)
+    table.add_column("Source", style="dim", min_width=12)
 
     fields = [
         ("provider", "VIBECOLLAB_LLM_PROVIDER", "openai"),
-        ("api_key", "VIBECOLLAB_LLM_API_KEY", "(未设置)"),
-        ("model", "VIBECOLLAB_LLM_MODEL", "(自动)"),
-        ("base_url", "VIBECOLLAB_LLM_BASE_URL", "(默认)"),
+        ("api_key", "VIBECOLLAB_LLM_API_KEY", "(not set)"),
+        ("model", "VIBECOLLAB_LLM_MODEL", "(auto)"),
+        ("base_url", "VIBECOLLAB_LLM_BASE_URL", "(default)"),
         ("max_tokens", "VIBECOLLAB_LLM_MAX_TOKENS", "4096"),
     ]
 
@@ -237,20 +237,20 @@ def config_show():
 
         # Determine display value and source
         if env_val:
-            source = f"环境变量 ({env_key})"
+            source = f"Env var ({env_key})"
             display_val = env_val
         elif file_val is not None and str(file_val).strip():
-            source = "配置文件"
+            source = "Config file"
             display_val = str(file_val)
         elif resolved_val:
-            source = "默认值"
+            source = "Default"
             display_val = resolved_val
         else:
             source = "-"
             display_val = default_display
 
         # Mask API key
-        if config_key == "api_key" and display_val and display_val != "(未设置)":
+        if config_key == "api_key" and display_val and display_val != "(not set)":
             if len(display_val) > 12:
                 display_val = display_val[:8] + "..." + display_val[-4:]
             else:
@@ -259,7 +259,7 @@ def config_show():
         # Color coding
         if source == "-" and config_key == "api_key":
             display_val = f"[red]{display_val}[/red]"
-        elif display_val not in ("(未设置)", "(默认)", "(自动)"):
+        elif display_val not in ("(not set)", "(default)", "(auto)"):
             display_val = f"[green]{display_val}[/green]"
 
         table.add_row(config_key, display_val, source)
@@ -269,9 +269,9 @@ def config_show():
 
     # Status check
     if resolved.get("api_key"):
-        console.print(f"{_E['ok']} LLM 已配置，可以使用 `vibecollab ai ask` 命令")
+        console.print(f"{_E['ok']} LLM configured, you can use `vibecollab ai ask` command")
     else:
-        console.print(f"{_E['warn']} LLM 未配置，运行 `vibecollab config setup` 开始配置")
+        console.print(f"{_E['warn']} LLM not configured, run `vibecollab config setup` to start")
     console.print()
 
 
@@ -279,9 +279,9 @@ def config_show():
 @click.argument("key")
 @click.argument("value")
 def config_set(key: str, value: str):
-    """设置单个配置项
+    """Set a single configuration item
 
-    支持 dot 路径: llm.provider, llm.api_key, llm.model, llm.base_url
+    Supports dot path: llm.provider, llm.api_key, llm.model, llm.base_url
 
     Examples:
 
@@ -299,10 +299,10 @@ def config_set(key: str, value: str):
         "llm.base_url", "llm.max_tokens",
     }
     if key not in known_keys:
-        console.print(f"[yellow]{_E['warn']} 未知配置项: {key}[/yellow]")
-        console.print(f"[dim]已知配置项: {', '.join(sorted(known_keys))}[/dim]")
+        console.print(f"[yellow]{_E['warn']} Unknown config item: {key}[/yellow]")
+        console.print(f"[dim]Known config items: {', '.join(sorted(known_keys))}[/dim]")
         # Still allow setting it
-        if not click.confirm("仍然设置?", default=False):
+        if not click.confirm("Set anyway?", default=False):
             raise SystemExit(0)
 
     path = set_config_value(key, value)
@@ -313,12 +313,12 @@ def config_set(key: str, value: str):
         display_val = value[:8] + "..." + value[-4:]
 
     console.print(f"{_E['ok']} {key} = [cyan]{display_val}[/cyan]")
-    console.print(f"[dim]已保存到 {path}[/dim]")
+    console.print(f"[dim]Saved to {path}[/dim]")
 
 
 @config_group.command("path")
 def config_path():
-    """显示配置文件路径
+    """Show config file path
 
     Examples:
 
@@ -329,6 +329,6 @@ def config_path():
     path = get_config_path()
     console.print(str(path))
     if path.exists():
-        console.print(f"[dim]文件存在 ({path.stat().st_size} bytes)[/dim]")
+        console.print(f"[dim]File exists ({path.stat().st_size} bytes)[/dim]")
     else:
-        console.print("[dim]文件不存在，运行 'vibecollab config setup' 创建[/dim]")
+        console.print("[dim]File does not exist, run 'vibecollab config setup' to create[/dim]")

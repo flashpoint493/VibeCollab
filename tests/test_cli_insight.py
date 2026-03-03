@@ -1,5 +1,5 @@
 """
-Tests for cli_insight.py — Insight 沉淀系统 CLI 命令
+Tests for cli_insight.py — Insight solidification system CLI commands
 """
 
 import json
@@ -22,7 +22,7 @@ def runner():
 
 @pytest.fixture
 def project_dir(tmp_path):
-    """创建带有 project.yaml 和基础目录的临时项目"""
+    """Create a temp project with project.yaml and basic directories"""
     config = {
         "project": {"name": "TestProject", "version": "v1.0"},
         "multi_developer": {
@@ -36,7 +36,7 @@ def project_dir(tmp_path):
     )
     (tmp_path / ".vibecollab").mkdir()
     (tmp_path / "docs" / "developers" / "testdev").mkdir(parents=True)
-    # 初始化 developer metadata
+    # Initialize developer metadata
     meta = {"developer": "testdev", "created_at": "2026-01-01", "total_updates": 0}
     meta_path = tmp_path / "docs" / "developers" / "testdev" / ".metadata.yaml"
     meta_path.write_text(yaml.dump(meta), encoding="utf-8")
@@ -45,7 +45,7 @@ def project_dir(tmp_path):
 
 @pytest.fixture
 def chdir_project(project_dir, monkeypatch):
-    """切换工作目录到临时项目"""
+    """Switch working directory to temp project"""
     monkeypatch.chdir(project_dir)
     return project_dir
 
@@ -58,7 +58,7 @@ class TestListInsights:
     def test_list_empty(self, runner, chdir_project):
         result = runner.invoke(insight, ["list"])
         assert result.exit_code == 0
-        assert "暂无沉淀" in result.output
+        assert "No insight entries yet" in result.output
 
     @patch("vibecollab.cli.insight._load_developer_manager")
     def test_list_with_items(self, mock_dm, runner, chdir_project):
@@ -110,7 +110,7 @@ class TestListInsights:
             body={"scenario": "s", "approach": "a"},
             created_by="testdev",
         )
-        # 手动停用 INS-002
+        # Manually deactivate INS-002
         entries, settings = mgr.get_registry()
         entries["INS-002"].active = False
         mgr._save_registry(entries, settings)
@@ -147,7 +147,7 @@ class TestShowInsight:
     def test_show_not_found(self, runner, chdir_project):
         result = runner.invoke(insight, ["show", "INS-999"])
         assert result.exit_code != 0
-        assert "未找到" in result.output
+        assert "not found" in result.output.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -158,7 +158,7 @@ class TestAddInsight:
     @patch("vibecollab.cli.insight._load_developer_manager")
     def test_add_basic(self, mock_dm_factory, runner, chdir_project, project_dir):
         from vibecollab.domain.developer import DeveloperManager
-        # 模拟 developer manager 使用固定身份
+        # Mock developer manager with fixed identity
         dm = DeveloperManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
@@ -237,7 +237,7 @@ class TestSearchInsights:
     def test_search_no_results(self, runner, chdir_project):
         result = runner.invoke(insight, ["search", "--tags", "nonexistent"])
         assert result.exit_code == 0
-        assert "未找到" in result.output
+        assert "not found" in result.output.lower() or "no matching" in result.output.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -262,7 +262,7 @@ class TestUseInsight:
             result = runner.invoke(insight, ["use", "INS-001"])
 
         assert result.exit_code == 0
-        assert "已记录使用" in result.output
+        assert "Usage recorded" in result.output
         assert "INS-001" in result.output
 
     @patch("vibecollab.cli.insight._load_developer_manager")
@@ -290,7 +290,7 @@ class TestDecayInsights:
 
         result = runner.invoke(insight, ["decay", "--dry-run"])
         assert result.exit_code == 0
-        assert "衰减预览" in result.output
+        assert "Decay preview" in result.output
         assert "INS-001" in result.output
 
     def test_decay_execute(self, runner, chdir_project):
@@ -301,7 +301,7 @@ class TestDecayInsights:
 
         result = runner.invoke(insight, ["decay"])
         assert result.exit_code == 0
-        assert "权重衰减已执行" in result.output
+        assert "Weight decay executed" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -317,14 +317,14 @@ class TestCheckInsights:
 
         result = runner.invoke(insight, ["check"])
         assert result.exit_code == 0
-        assert "通过" in result.output or "无错误" in result.output
+        assert "passed" in result.output.lower() or "no errors" in result.output.lower()
 
     def test_check_with_orphan(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
         mgr.create(title="OK", tags=["test"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
-        # 手动在注册表中添加不存在的条目
+        # Manually add a nonexistent entry to the registry
         entries, settings = mgr.get_registry()
         from vibecollab.insight.manager import RegistryEntry
         entries["INS-999"] = RegistryEntry()
@@ -363,13 +363,13 @@ class TestDeleteInsight:
             result = runner.invoke(insight, ["delete", "INS-001", "-y"])
 
         assert result.exit_code == 0
-        assert "已删除" in result.output
+        assert "Deleted" in result.output
         assert mgr.get("INS-001") is None
 
     def test_delete_not_found(self, runner, chdir_project):
         result = runner.invoke(insight, ["delete", "INS-999", "-y"])
         assert result.exit_code != 0
-        assert "未找到" in result.output
+        assert "not found" in result.output.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -394,7 +394,7 @@ class TestBookmarkInsight:
             result = runner.invoke(insight, ["bookmark", "INS-001"])
 
         assert result.exit_code == 0
-        assert "已收藏" in result.output
+        assert "Bookmarked" in result.output
 
     @patch("vibecollab.cli.insight._load_developer_manager")
     def test_bookmark_duplicate(self, mock_dm_factory, runner, chdir_project, project_dir):
@@ -414,12 +414,12 @@ class TestBookmarkInsight:
             result = runner.invoke(insight, ["bookmark", "INS-001"])
 
         assert result.exit_code == 0
-        assert "已存在" in result.output
+        assert "Already bookmarked" in result.output
 
     def test_bookmark_not_found(self, runner, chdir_project):
         result = runner.invoke(insight, ["bookmark", "INS-999"])
         assert result.exit_code != 0
-        assert "未找到" in result.output
+        assert "not found" in result.output.lower()
 
 
 class TestUnbookmarkInsight:
@@ -442,7 +442,7 @@ class TestUnbookmarkInsight:
             result = runner.invoke(insight, ["unbookmark", "INS-001"])
 
         assert result.exit_code == 0
-        assert "已取消收藏" in result.output
+        assert "Bookmark removed" in result.output
 
     @patch("vibecollab.cli.insight._load_developer_manager")
     def test_unbookmark_nonexistent(self, mock_dm_factory, runner, chdir_project, project_dir):
@@ -456,7 +456,7 @@ class TestUnbookmarkInsight:
             result = runner.invoke(insight, ["unbookmark", "INS-999"])
 
         assert result.exit_code == 0
-        assert "未找到收藏" in result.output
+        assert "Bookmark not found" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -475,7 +475,7 @@ class TestTraceInsight:
 
         result = runner.invoke(insight, ["trace", "INS-001"])
         assert result.exit_code == 0
-        assert "溯源树" in result.output
+        assert "Traceability Tree" in result.output
         assert "INS-001" in result.output
         assert "INS-002" in result.output
 
@@ -487,7 +487,7 @@ class TestTraceInsight:
 
         result = runner.invoke(insight, ["trace", "INS-001"])
         assert result.exit_code == 0
-        assert "(无)" in result.output
+        assert "(none)" in result.output.lower()
 
     def test_trace_json(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
@@ -503,7 +503,7 @@ class TestTraceInsight:
     def test_trace_not_found(self, runner, chdir_project):
         result = runner.invoke(insight, ["trace", "INS-999"])
         assert result.exit_code != 0
-        assert "未找到" in result.output
+        assert "not found" in result.output.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -537,7 +537,7 @@ class TestWhoInsight:
     def test_who_not_found(self, runner, chdir_project):
         result = runner.invoke(insight, ["who", "INS-999"])
         assert result.exit_code != 0
-        assert "未找到" in result.output
+        assert "not found" in result.output.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -548,7 +548,7 @@ class TestStatsInsight:
     def test_stats_empty(self, runner, chdir_project):
         result = runner.invoke(insight, ["stats"])
         assert result.exit_code == 0
-        assert "共享统计" in result.output
+        assert "Sharing Statistics" in result.output
         assert "0" in result.output
 
     def test_stats_with_data(self, runner, chdir_project):
