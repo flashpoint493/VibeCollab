@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vibe-collab"
-version = "0.9.7"
+dynamic = ["version"]
 description = "AI-powered project collaboration framework with three-mode CLI (IDE/interactive/agent)"
 readme = {file = "README.pypi.md", content-type = "text/markdown"}
 license = "MIT"
@@ -69,6 +69,9 @@ Documentation = "https://github.com/flashpoint493/VibeCollab#readme"
 
 [project.scripts]
 vibecollab = "vibecollab.cli:main"
+
+[tool.hatch.version]
+path = "src/vibecollab/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/vibecollab"]

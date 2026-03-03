@@ -29,6 +29,19 @@ console = safe_console()
 DOMAINS = ["generic", "game", "web", "data", "mobile", "infra"]
 
 
+def _get_protocol_version() -> str:
+    """Read protocol version from project.yaml, fallback to '1.0'."""
+    try:
+        config_path = Path("project.yaml")
+        if config_path.exists():
+            with open(config_path, encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+            return config.get("project", {}).get("version", "v1.0")
+    except Exception:
+        pass
+    return "v1.0"
+
+
 def _safe_load_yaml(path: Path, label: str = "config file") -> dict:
     """Safely load a YAML file with friendly error messages.
 
@@ -583,10 +596,10 @@ def upgrade(config: str, dry_run: bool, force: bool):
 def version_info():
     """Show version and protocol information"""
     console.print(Panel.fit(
-        f"[bold]LLMContext[/bold] v{__version__}\n\n"
-        f"[dim]{_('Protocol version:')}[/dim] 1.0\n"
+        f"[bold]VibeCollab[/bold] v{__version__}\n\n"
+        f"[dim]{_('Protocol version:')}[/dim] {_get_protocol_version()}\n"
         f"[dim]{_('Supported domains:')}[/dim] {', '.join(DOMAINS)}\n"
-        f"[dim]Python:[/dim] 3.8+",
+        f"[dim]Python:[/dim] 3.9+",
         title=_("Version Info")
     ))
 
@@ -626,6 +639,18 @@ def check(config: str, strict: bool, insights: bool):
     results = checker.check_all()
     summary = checker.get_summary(results)
 
+    # Schema validation
+    schema_errors_list = []
+    schema_warnings_list = []
+    try:
+        from ..core.pipeline import Pipeline
+        pipeline = Pipeline(project_root, config_path=config)
+        schema_report = pipeline.validate_config()
+        schema_errors_list = schema_report.errors
+        schema_warnings_list = schema_report.warnings
+    except Exception:
+        pass
+
     # Display results
     console.print()
     console.print(Panel.fit(
@@ -663,6 +688,24 @@ def check(config: str, strict: bool, insights: bool):
                 console.print(f"    [dim]{_('Suggestion:')} {result.suggestion}[/dim]")
         console.print()
 
+    # Schema validation results
+    if schema_errors_list or schema_warnings_list:
+        console.print(Panel.fit(
+            f"[bold]{_('Schema Validation')}[/bold]",
+            title=_("Schema Check")
+        ))
+        console.print()
+        if schema_errors_list:
+            console.print(f"[bold red]{EMOJI_MAP['error']} {_('Schema Errors:')}[/bold red]")
+            for err in schema_errors_list:
+                console.print(f"  {BULLET} {err}")
+            console.print()
+        if schema_warnings_list:
+            console.print(f"[bold yellow]{EMOJI_MAP['warning']} {_('Schema Warnings:')}[/bold yellow]")
+            for warn in schema_warnings_list:
+                console.print(f"  {BULLET} {warn}")
+            console.print()
+
     # Insight consistency check
     insight_errors = 0
     insight_warnings = 0
@@ -699,9 +742,9 @@ def check(config: str, strict: bool, insights: bool):
             console.print()
 
     # Merge statistics
-    total_errors = len(errors) + insight_errors
-    total_warnings = len(warnings) + insight_warnings
-    total_checks = summary["total"] + (1 if insights else 0)
+    total_errors = len(errors) + insight_errors + len(schema_errors_list)
+    total_warnings = len(warnings) + insight_warnings + len(schema_warnings_list)
+    total_checks = summary["total"] + (1 if insights else 0) + (1 if schema_errors_list or schema_warnings_list else 0)
 
     # Display summary
     if total_errors == 0 and not (strict and total_warnings > 0):
@@ -821,6 +864,140 @@ main.add_command(mcp_group)
 from .roadmap import roadmap_group  # noqa: E402
 
 main.add_command(roadmap_group)
+
+
+# ============================================
+# Pipeline commands (v0.10.2+)
+# ============================================
+
+@main.group("pipeline")
+def pipeline_group():
+    """Pipeline: schema validation, doc sync, action registry
+
+    Structured chain-of-actions for document consistency and automation.
+    """
+    pass
+
+
+@pipeline_group.command("validate")
+@click.option("--config", "-c", default="project.yaml", help=_("Config file path"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
+def pipeline_validate(config, json_output):
+    """Validate project.yaml against schema rules"""
+    import json as json_mod
+    from ..core.pipeline import Pipeline
+
+    project_root = Path(config).parent or Path(".")
+    pipe = Pipeline(project_root, config_path=config)
+    report = pipe.validate_config()
+
+    if json_output:
+        click.echo(json_mod.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+        return
+
+    if report.ok and not report.warnings:
+        console.print(f"[green]{EMOJI_MAP['success']} Schema validation passed[/green]")
+    else:
+        if report.errors:
+            console.print(f"[bold red]{EMOJI_MAP['error']} Schema errors:[/bold red]")
+            for err in report.errors:
+                console.print(f"  {BULLET} {err}")
+        if report.warnings:
+            console.print(f"[bold yellow]{EMOJI_MAP['warning']} Schema warnings:[/bold yellow]")
+            for warn in report.warnings:
+                console.print(f"  {BULLET} {warn}")
+
+    if not report.ok:
+        raise SystemExit(1)
+
+
+@pipeline_group.command("status")
+@click.option("--config", "-c", default="project.yaml", help=_("Config file path"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
+def pipeline_status(config, json_output):
+    """Show pipeline status: pending actions, doc freshness, versions"""
+    import json as json_mod
+    from ..core.pipeline import Pipeline
+
+    project_root = Path(config).parent or Path(".")
+    pipe = Pipeline(project_root, config_path=config)
+
+    versions = pipe.get_version()
+    stale_docs = pipe.check_docs()
+    pending = pipe.get_pending_actions()
+
+    if json_output:
+        click.echo(json_mod.dumps({
+            "versions": versions,
+            "stale_docs": stale_docs,
+            "pending_actions": pending,
+        }, ensure_ascii=False, indent=2))
+        return
+
+    console.print(Panel.fit(
+        f"[bold]Pipeline Status[/bold]\n\n"
+        f"Package version: {versions['package_version']}\n"
+        f"Protocol version: {versions['protocol_version']}",
+        title="VibeCollab Pipeline"
+    ))
+
+    if stale_docs:
+        console.print(f"\n[yellow]{EMOJI_MAP['warning']} Stale documents:[/yellow]")
+        for doc in stale_docs:
+            status = doc['status']
+            console.print(
+                f"  {BULLET} {doc['downstream']} is {status} "
+                f"(upstream: {doc['upstream']})"
+            )
+
+    if pending:
+        console.print(f"\n[bold]Pending actions ({len(pending)}):[/bold]")
+        for action in pending:
+            pri = action['priority']
+            color = "red" if pri == 1 else "yellow" if pri == 2 else "dim"
+            cmd = action.get('command', '')
+            console.print(
+                f"  [{color}]P{pri}[/{color}] {action['message']}"
+            )
+            if cmd:
+                console.print(f"      [dim]$ {cmd}[/dim]")
+    else:
+        console.print(f"\n[green]{EMOJI_MAP['success']} No pending actions[/green]")
+
+
+@pipeline_group.command("actions")
+@click.argument("event", required=False)
+def pipeline_actions(event):
+    """Show recommended CLI actions for a lifecycle event
+
+    Events: task_completed, task_created, insight_added,
+            milestone_completed, config_changed, docs_stale
+
+    Examples:
+
+        vibecollab pipeline actions                 # List all events
+
+        vibecollab pipeline actions task_completed  # Show actions for event
+    """
+    from ..core.pipeline import ActionRegistry
+
+    if event:
+        actions = ActionRegistry.get_actions(event)
+        if not actions:
+            click.echo(f"No actions registered for event '{event}'")
+            return
+        click.echo(f"Actions for '{event}':")
+        for cmd, desc, pri in actions:
+            click.echo(f"  P{pri}: {cmd}")
+            click.echo(f"       {desc}")
+    else:
+        events = ActionRegistry.get_all_events()
+        click.echo("Registered lifecycle events:")
+        for evt in events:
+            actions = ActionRegistry.get_actions(evt)
+            click.echo(f"\n  {evt} ({len(actions)} actions):")
+            for cmd, desc, pri in actions:
+                click.echo(f"    P{pri}: {cmd}")
 
 
 # ============================================

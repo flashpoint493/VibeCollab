@@ -196,6 +196,20 @@ def suggest_insights(task_id, limit, config, json_output):
 VALID_STATUS_VALUES = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"]
 
 
+def _show_completion_hints():
+    """Show recommended follow-up actions after task completion."""
+    try:
+        from ..core.pipeline import ActionRegistry
+        actions = ActionRegistry.get_actions("task_completed")
+        if actions:
+            click.echo("\n  Recommended follow-up actions:")
+            for cmd, desc, pri in actions:
+                click.echo(f"    P{pri}: {cmd}")
+                click.echo(f"         {desc}")
+    except Exception:
+        pass
+
+
 @task_group.command("transition")
 @click.argument("task_id")
 @click.argument("new_status", type=click.Choice(VALID_STATUS_VALUES, case_sensitive=False))
@@ -229,6 +243,8 @@ def transition_task(task_id, new_status, reason, config, json_output):
         click.echo(f"Transitioned: {task_id} -> {new_status.upper()}")
         if task:
             click.echo(f"  Feature: {task.feature}")
+        if new_status.upper() == "DONE":
+            _show_completion_hints()
     else:
         for v in result.violations:
             click.echo(f"Error: {v}", err=True)
@@ -263,6 +279,7 @@ def solidify_task(task_id, config, json_output):
         if result.warnings:
             for w in result.warnings:
                 click.echo(f"  Warning: {w}")
+        _show_completion_hints()
     else:
         click.echo(f"Solidify failed: {task_id}", err=True)
         for v in result.violations:

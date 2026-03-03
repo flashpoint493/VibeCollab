@@ -24,7 +24,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from .event_log import Event, EventLog, EventType
 
@@ -174,7 +174,44 @@ class TaskManager:
         self.max_files = max_files
         self.max_lines = max_lines
         self._tasks: Dict[str, Task] = {}
+        self._on_complete_hooks: List[Callable[["Task"], None]] = []
+        self._on_transition_hooks: List[Callable[["Task", str, str], None]] = []
         self._load()
+
+    # -- Lifecycle hooks -----------------------------------------------------
+
+    def on_complete(self, callback: Callable[["Task"], None]) -> None:
+        """Register a hook called when a task transitions to DONE.
+
+        The callback receives the completed Task instance.
+        Multiple hooks can be registered; they execute in registration order.
+        Exceptions in hooks are caught and logged but do not block completion.
+        """
+        self._on_complete_hooks.append(callback)
+
+    def on_transition(self, callback: Callable[["Task", str, str], None]) -> None:
+        """Register a hook called on any status transition.
+
+        The callback receives (task, old_status, new_status).
+        """
+        self._on_transition_hooks.append(callback)
+
+    def _fire_transition_hooks(self, task: "Task", old_status: str,
+                                new_status: str) -> None:
+        """Fire all registered transition hooks, catching exceptions."""
+        for hook in self._on_transition_hooks:
+            try:
+                hook(task, old_status, new_status)
+            except Exception:
+                pass  # hooks must not break core flow
+
+    def _fire_complete_hooks(self, task: "Task") -> None:
+        """Fire all registered completion hooks, catching exceptions."""
+        for hook in self._on_complete_hooks:
+            try:
+                hook(task)
+            except Exception:
+                pass  # hooks must not break core flow
 
     # -- Persistence --------------------------------------------------------
 
@@ -331,6 +368,9 @@ class TaskManager:
             payload={"task_id": task_id, "old_status": old_status,
                      "new_status": target.value, "reason": reason},
         ))
+        self._fire_transition_hooks(task, old_status, target.value)
+        if target == TaskStatus.DONE:
+            self._fire_complete_hooks(task)
         return ValidationResult(ok=True)
 
     # -- Solidify gate -------------------------------------------------------
@@ -444,6 +484,8 @@ class TaskManager:
                 payload={"task_id": task_id, "old_status": "REVIEW",
                          "new_status": "DONE"},
             ))
+            self._fire_transition_hooks(task, "REVIEW", "DONE")
+            self._fire_complete_hooks(task)
             return ValidationResult(
                 ok=True,
                 warnings=validation.warnings,
