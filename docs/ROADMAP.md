@@ -1,497 +1,497 @@
-# VibeCollab 路线图
+# VibeCollab Roadmap
 
-## 当前项目生涯阶段
+## Current Project Lifecycle Stage
 
-**阶段**: 原型验证 (demo)
-**开始时间**: 2026-01-20
-**阶段描述**: 快速验证核心概念和可行性
+**Stage**: Prototype Validation (demo)
+**Start Date**: 2026-01-20
+**Stage Description**: Rapidly validate core concepts and feasibility
 
-### 阶段重点
-- 快速迭代
-- 概念验证
-- 核心功能
+### Stage Focus
+- Rapid iteration
+- Concept validation
+- Core features
 
-### 阶段原则
-- 快速试错，快速调整
-- 优先核心功能，暂缓优化
-- 技术债务可接受，但需记录
-- 详细的Git开发迭代记录
-- 记录重要决定DECISIONS.md
-- 建立 CI/CD
+### Stage Principles
+- Fail fast, adjust fast
+- Prioritize core features, defer optimization
+- Technical debt acceptable, but must be documented
+- Detailed Git development iteration records
+- Record important decisions in DECISIONS.md
+- Establish CI/CD
 
-### 当前阶段里程碑
-- v0.4.3 (已完成)
-- v0.5.0 (已完成) - 多开发者支持
-- v0.5.1 (已完成) - 冲突检测
-- v0.5.4 (已完成) - CLI 开发者切换
-- v0.5.5 (已完成) - EventLog 审计日志
-- v0.5.6 (已完成) - TaskManager 验证-固化-回滚
-- v0.5.7 (已完成) - LLM Client (CLI + API Key)
-- v0.5.8 (已完成) - AI CLI 三模式架构 (ask/chat/agent)
-- v0.5.9 (已完成) - Pattern Engine + Template Overlay
-- v0.6.0 (已完成) - 协议成熟度提升 + 测试覆盖率增强
+### Current Stage Milestones
+- v0.4.3 (completed)
+- v0.5.0 (completed) - Multi-developer support
+- v0.5.1 (completed) - Conflict detection
+- v0.5.4 (completed) - CLI developer switch
+- v0.5.5 (completed) - EventLog audit trail
+- v0.5.6 (completed) - TaskManager validate-solidify-rollback
+- v0.5.7 (completed) - LLM Client (CLI + API Key)
+- v0.5.8 (completed) - AI CLI three-mode architecture (ask/chat/agent)
+- v0.5.9 (completed) - Pattern Engine + Template Overlay
+- v0.6.0 (completed) - Protocol maturity + test coverage enhancement
 
 ---
 
-## 已完成里程碑
+## Completed Milestones
 
-### Phase 2 - 多开发者支持 (v0.5.0 - v0.5.1)
+### Phase 2 - Multi-Developer Support (v0.5.0 - v0.5.1)
 
 #### v0.5.9 - Pattern Engine + Template Overlay (2026-02-24)
-- [x] PatternEngine: Jinja2 模板 + manifest.yaml 声明式引擎
-- [x] 27 个 .md.j2 模板替代硬编码 _add_*() 方法
-- [x] Template Overlay: .vibecollab/patterns/ 本地覆盖机制
-- [x] Legacy 移除: generator.py 1713→83 行
-- [x] DECISION-011: Pattern Engine 架构
-- [x] 40 PatternEngine tests (含 8 Overlay tests), 全量 215 tests 零回归
+- [x] PatternEngine: Jinja2 templates + manifest.yaml declarative engine
+- [x] 27 .md.j2 templates replace hardcoded _add_*() methods
+- [x] Template Overlay: .vibecollab/patterns/ local override mechanism
+- [x] Legacy removal: generator.py 1713→83 lines
+- [x] DECISION-011: Pattern Engine architecture
+- [x] 40 PatternEngine tests (including 8 Overlay tests), full 215 tests zero regression
 
-#### v0.5.8 - AI CLI 三模式架构 (2026-02-24)
-- [x] vibecollab ai ask / chat — 人机交互 CLI
-- [x] vibecollab ai agent plan / run / serve — Agent 自主模式
-- [x] 安全门控: PID锁, pending-solidify, 最大周期, 自适应退避, 断路器, 内存阈值
-- [x] DECISION-010: 三模式架构
-- [x] 32 unit tests, 全量 174 tests 零回归
+#### v0.5.8 - AI CLI Three-Mode Architecture (2026-02-24)
+- [x] vibecollab ai ask / chat — Human-machine interaction CLI
+- [x] vibecollab ai agent plan / run / serve — Agent autonomous mode
+- [x] Safety gates: PID lock, pending-solidify, max cycles, adaptive backoff, circuit breaker, memory threshold
+- [x] DECISION-010: Three-mode architecture
+- [x] 32 unit tests, full 174 tests zero regression
 
 #### v0.5.7 - LLM Client (2026-02-24)
-- [x] LLMClient: OpenAI + Anthropic 双 provider 支持
-- [x] 环境变量配置 (VIBECOLLAB_LLM_*)
-- [x] build_project_context() 自动上下文组装
-- [x] httpx 可选依赖 (pip install vibe-collab[llm])
-- [x] 30 unit tests, 全量 142 tests 零回归
+- [x] LLMClient: OpenAI + Anthropic dual provider support
+- [x] Environment variable config (VIBECOLLAB_LLM_*)
+- [x] build_project_context() auto context assembly
+- [x] httpx optional dependency (pip install vibe-collab[llm])
+- [x] 30 unit tests, full 142 tests zero regression
 
-#### v0.5.6 - TaskManager 验证-固化-回滚 (2026-02-24)
-- [x] Task dataclass + TaskStatus 状态机
+#### v0.5.6 - TaskManager Validate-Solidify-Rollback (2026-02-24)
+- [x] Task dataclass + TaskStatus state machine
 - [x] TaskManager: CRUD + transition + validate + solidify + rollback
-- [x] EventLog 集成: 每次操作自动记录事件
-- [x] 原子 JSON 持久化 (.vibecollab/tasks.json)
-- [x] 53 unit tests, 全量 112 tests 零回归
-- [x] 跨模块集成验证 (TaskManager + EventLog)
+- [x] EventLog integration: every operation auto-logs events
+- [x] Atomic JSON persistence (.vibecollab/tasks.json)
+- [x] 53 unit tests, full 112 tests zero regression
+- [x] Cross-module integration verification (TaskManager + EventLog)
 
-#### v0.5.5 - EventLog 审计日志 (2026-02-24)
-- [x] Append-only JSONL 事件日志 (event_log.py)
-- [x] 17 种事件类型, SHA-256 content fingerprint
-- [x] 原子追加, 查询 API, 完整性验证
-- [x] 24 unit tests, 全量 59 tests 零回归
-- [x] DECISION-009 架构模式借鉴确认 (Direction B)
+#### v0.5.5 - EventLog Audit Trail (2026-02-24)
+- [x] Append-only JSONL event log (event_log.py)
+- [x] 17 event types, SHA-256 content fingerprint
+- [x] Atomic append, query API, integrity verification
+- [x] 24 unit tests, full 59 tests zero regression
+- [x] DECISION-009 architectural pattern borrowing confirmed (Direction B)
 
-#### v0.5.4 - CLI 开发者切换 (2026-02-24)
-- [x] `vibecollab dev switch` 命令
-- [x] 持久化切换状态 (.vibecollab.local.yaml)
-- [x] `vibecollab dev whoami` 显示身份来源
+#### v0.5.4 - CLI Developer Switch (2026-02-24)
+- [x] `vibecollab dev switch` command
+- [x] Persistent switch state (.vibecollab.local.yaml)
+- [x] `vibecollab dev whoami` shows identity source
 
-#### v0.5.1 - 冲突检测 (2026-02-10)
-- [x] 跨开发者冲突检测算法
-- [x] CLI 命令 `vibecollab dev conflicts`
-- [x] CONTRIBUTING_AI.md 多开发者协作协议章节
-- [x] 文档完善和使用示例
+#### v0.5.1 - Conflict Detection (2026-02-10)
+- [x] Cross-developer conflict detection algorithm
+- [x] CLI command `vibecollab dev conflicts`
+- [x] CONTRIBUTING_AI.md multi-developer collaboration protocol section
+- [x] Documentation and usage examples
 
-#### v0.5.0 - 多开发者支持 (2026-02-10)
-- [x] 架构设计和决策确认 (DECISION-008)
-- [x] 开发者身份自动识别（Git 用户名）
-- [x] 开发者独立 CONTEXT.md 管理
-- [x] 全局 CONTEXT.md 自动聚合
-- [x] 开发者协作文档 (COLLABORATION.md)
-- [x] CLI 命令扩展 (`vibecollab dev *`)
-- [x] 项目配置扩展 (multi_developer)
-- [x] 单开发者项目迁移支持
-- [x] 完整单元测试验证
+#### v0.5.0 - Multi-Developer Support (2026-02-10)
+- [x] Architecture design and decision confirmed (DECISION-008)
+- [x] Automatic developer identity recognition (Git username)
+- [x] Independent developer CONTEXT.md management
+- [x] Global CONTEXT.md auto-aggregation
+- [x] Developer collaboration document (COLLABORATION.md)
+- [x] CLI command extension (`vibecollab dev *`)
+- [x] Project config extension (multi_developer)
+- [x] Single-developer project migration support
+- [x] Complete unit test verification
 
-### Phase 1 - 核心功能完善 (v0.1.0 - v0.4.3)
+### Phase 1 - Core Feature Completion (v0.1.0 - v0.4.3)
 
-#### 目标
-- [x] 项目初始化和 CLI 实现
-- [x] YAML 配置驱动生成
-- [x] 领域扩展机制
-- [x] 决策分级制度
-- [x] 需求澄清协议
-- [x] Git 检查和初始化
-- [x] 项目生涯管理
-- [x] 协议自检机制
-- [x] PRD 文档管理
-- [x] Windows 编码兼容
+#### Objectives
+- [x] Project initialization and CLI implementation
+- [x] YAML config-driven generation
+- [x] Domain extension mechanism
+- [x] Decision level system
+- [x] Requirement clarification protocol
+- [x] Git check and initialization
+- [x] Project lifecycle management
+- [x] Protocol self-check mechanism
+- [x] PRD document management
+- [x] Windows encoding compatibility
 
-#### 完成时间
-2026-01-20 至 2026-02-10
+#### Completion Date
+2026-01-20 to 2026-02-10
 
 ---
 
-## 已完成里程碑: v0.6.0 - 协议成熟度提升 + CI/CD ✅
+## Completed Milestone: v0.6.0 - Protocol Maturity + CI/CD ✅
 
-### 目标
-借鉴成熟架构模式提升协议健壮性，完善开发流程 (DECISION-009)
+### Objective
+Borrow mature architectural patterns to enhance protocol robustness, improve development processes (DECISION-009)
 
-### 核心功能
-- [x] EventLog append-only 审计日志 (Iteration 1 ✅)
-- [x] TaskManager 验证-固化-回滚 (Iteration 2 ✅)
-- [x] Pattern Engine — Jinja2 模板驱动 + Template Overlay (Iteration 3 ✅)
-- [x] Legacy 代码移除 — generator.py 1713→83 行 (Iteration 3 ✅)
-- [x] 建立 CI/CD 流程（GitHub Actions）✅
-- [x] Health Signal Extractor — 项目健康信号提取 (Iteration 4 ✅)
-- [x] Agent Executor — LLM 计划实际执行 (文件写入/测试/git commit) ✅
-- [x] Ruff lint 全量修复 ✅
-- [x] 自动化测试覆盖率报告 ✅
-- [x] 测试覆盖率提升 (58%→68%, +74 tests) ✅
+### Core Features
+- [x] EventLog append-only audit trail (Iteration 1 ✅)
+- [x] TaskManager validate-solidify-rollback (Iteration 2 ✅)
+- [x] Pattern Engine — Jinja2 template-driven + Template Overlay (Iteration 3 ✅)
+- [x] Legacy code removal — generator.py 1713→83 lines (Iteration 3 ✅)
+- [x] Establish CI/CD pipeline (GitHub Actions) ✅
+- [x] Health Signal Extractor — Project health signal extraction (Iteration 4 ✅)
+- [x] Agent Executor — LLM plan actual execution (file write/test/git commit) ✅
+- [x] Ruff lint full fix ✅
+- [x] Automated test coverage reporting ✅
+- [x] Test coverage increase (58%→68%, +74 tests) ✅
 
-### 完成时间
+### Completion Date
 2026-02-24
 
 ---
 
-## 未来里程碑
+## Future Milestones
 
-### ~~v0.7.0 - Web UI~~ ❌ 已砍掉 (DECISION-012)
-> 决策：Web UI 不是核心竞争力，不投入资源。资源转向经验系统。
+### ~~v0.7.0 - Web UI~~ ❌ Cut (DECISION-012)
+> Decision: Web UI is not a core competency, no resources invested. Resources redirected to experience system.
 
-### v0.7.0 - Insight 沉淀系统（已完成 ✅）
-- [x] Insight Schema 设计（本体 + Registry + Developer Tag 三部分）✅
-- [x] InsightManager 核心模块（CRUD / Registry / 搜索 / 溯源 / 一致性校验）✅
-- [x] InsightManager 单元测试 (62 tests) ✅
-- [x] developer.py 单元测试补齐 (67 tests) ✅
-- [x] Developer metadata 扩展（tags / contributed / bookmarks + 21 tests）✅
-- [x] CLI 命令封装（`vibecollab insight list/show/add/search/use/decay/check/delete` + 21 tests）✅
-- [x] 跨 Developer 共享 + 溯源 CLI 可视化（bookmark/unbookmark/trace/who/stats + 24 tests）✅
-- [x] 一致性校验集成到 `vibecollab check --insights` ✅
-- [x] 文档一致性检查增强（linked_groups 三级检查 + 可配置阈值）✅
-- [x] Agent 引导命令 `vibecollab onboard` + `vibecollab next` ✅
-- [x] 技术债务清理（版本号统一 v0.7.0-dev、项目名 VibeCollab、REQ-010→completed）✅
-- [x] protocol_checker 多开发者动态发现（从文件系统扫描替代静态配置）✅
+### v0.7.0 - Insight Solidification System (Completed ✅)
+- [x] Insight Schema design (body + Registry + Developer Tag three parts) ✅
+- [x] InsightManager core module (CRUD / Registry / search / provenance / consistency check) ✅
+- [x] InsightManager unit tests (62 tests) ✅
+- [x] developer.py unit test completion (67 tests) ✅
+- [x] Developer metadata extension (tags / contributed / bookmarks + 21 tests) ✅
+- [x] CLI command encapsulation (`vibecollab insight list/show/add/search/use/decay/check/delete` + 21 tests) ✅
+- [x] Cross-developer sharing + provenance CLI visualization (bookmark/unbookmark/trace/who/stats + 24 tests) ✅
+- [x] Consistency check integrated into `vibecollab check --insights` ✅
+- [x] Document consistency check enhancement (linked_groups three-level check + configurable threshold) ✅
+- [x] Agent guidance commands `vibecollab onboard` + `vibecollab next` ✅
+- [x] Technical debt cleanup (version number unification v0.7.0-dev, project name VibeCollab, REQ-010→completed) ✅
+- [x] protocol_checker multi-developer dynamic discovery (filesystem scan replaces static config) ✅
 
-### v0.7.1 - Task-Insight 自动关联（已完成 ✅）
-- [x] TaskManager.create_task() 自动搜索关联 Insight ✅
-- [x] _extract_search_tags(): 从 feature/description/role 提取关键词 ✅
-- [x] _find_related_insights(): Jaccard × weight 匹配 + metadata 存储 ✅
-- [x] suggest_insights(): 已有任务的 Insight 推荐 ✅
+### v0.7.1 - Task-Insight Auto-Link (Completed ✅)
+- [x] TaskManager.create_task() auto-searches related Insights ✅
+- [x] _extract_search_tags(): Extract keywords from feature/description/role ✅
+- [x] _find_related_insights(): Jaccard × weight matching + metadata storage ✅
+- [x] suggest_insights(): Insight recommendations for existing tasks ✅
 - [x] CLI `vibecollab task create/list/show/suggest` ✅
-- [x] EventLog 记录关联 Insight ✅
-- [x] 向后兼容（无 InsightManager 时自动跳过）✅
-- [x] 28 个单元测试（含 CLI + 集成 + 向后兼容）✅
+- [x] EventLog records linked Insights ✅
+- [x] Backward compatible (auto-skips when no InsightManager) ✅
+- [x] 28 unit tests (including CLI + integration + backward compatibility) ✅
 
-### v0.8.0 - 稳定性验证 + 泛用性压力测试（开发中）
-> 目标：在正式 v1.0 之前，对高级特性进行广泛的真实场景测试和质量加固
+### v0.8.0 - Stability Verification + Generality Stress Testing (In Development)
+> Objective: Before v1.0, broadly test and harden advanced features in real-world scenarios
 
-#### Config 配置管理系统 ✅
-- [x] 三层配置架构 (env > ~/.vibecollab/config.yaml > defaults) ✅
-- [x] `vibecollab config setup` 交互式向导 ✅
-- [x] `vibecollab config show/set/path` 命令 ✅
-- [x] `resolve_llm_config()` 统一解析 + LLMConfig 三层集成 ✅
-- [x] 轻量 .env 解析 (VIBECOLLAB_* 前缀) ✅
-- [x] 38 个单元测试 ✅
+#### Config Management System ✅
+- [x] Three-layer config architecture (env > ~/.vibecollab/config.yaml > defaults) ✅
+- [x] `vibecollab config setup` interactive wizard ✅
+- [x] `vibecollab config show/set/path` commands ✅
+- [x] `resolve_llm_config()` unified resolution + LLMConfig three-layer integration ✅
+- [x] Lightweight .env parsing (VIBECOLLAB_* prefix) ✅
+- [x] 38 unit tests ✅
 
-#### 测试覆盖率提升
-- [x] 全量测试覆盖率 ≥ 80%（81% ✅）
-- [x] Agent 模式 E2E 测试（35 tests: executor + cli_ai 全链路 ✅）
-- [x] LLM Client mock 集成测试（26 tests: OpenAI + Anthropic 双 provider ✅）
-- [x] CLI 命令全量 E2E 测试（48/48 子命令 CliRunner 覆盖 ✅）
+#### Test Coverage Increase
+- [x] Full test coverage ≥ 80% (81% ✅)
+- [x] Agent mode E2E tests (35 tests: executor + cli_ai full chain ✅)
+- [x] LLM Client mock integration tests (26 tests: OpenAI + Anthropic dual provider ✅)
+- [x] CLI command full E2E tests (48/48 subcommands CliRunner coverage ✅)
 
-#### Agent 模式稳定性 ✅
-- [x] agent serve 长运行压力测试（100+ 周期、退避/断路器/内存阈值）✅
-- [x] 并发安全验证（PID 锁、文件锁竞争）✅
-- [x] agent run 失败恢复场景（测试回滚、网络超时、LLM 拒绝）✅
-- [x] 自适应退避算法的边界条件测试 ✅
+#### Agent Mode Stability ✅
+- [x] agent serve long-running stress test (100+ cycles, backoff/circuit breaker/memory threshold) ✅
+- [x] Concurrency safety verification (PID lock, file lock contention) ✅
+- [x] agent run failure recovery scenarios (test rollback, network timeout, LLM rejection) ✅
+- [x] Adaptive backoff algorithm boundary condition tests ✅
 
-#### Insight 系统泛用性 ✅
-- [x] 大规模 Insight 压力测试（100+ 条沉淀的搜索/衰减性能）✅
-- [ ] 跨项目 Insight 可移植性验证（导出→导入→保持完整性）— 延后，需 export/import API
-- [x] Task-Insight 关联精度评估（中英文混合场景、长文本、边界输入）✅
-- [x] 衰减/奖励长期运行模拟（多轮 decay 后的权重分布合理性）✅
+#### Insight System Generality ✅
+- [x] Large-scale Insight stress test (100+ insights search/decay performance) ✅
+- [ ] Cross-project Insight portability verification (export→import→maintain integrity) — Deferred, needs export/import API
+- [x] Task-Insight link accuracy assessment (Chinese/English mixed, long text, boundary input) ✅
+- [x] Decay/reward long-running simulation (weight distribution reasonableness after multiple decay rounds) ✅
 
-#### Insight 融入 IDE 对话模式 ✅
-- [x] `27_insight_workflow.md.j2` 经验沉淀工作流模板章节 ✅
-- [x] 对话结束流程增加"经验沉淀检查"步骤 ✅
-- [x] `vibecollab next` 命令增加 Insight 沉淀提示（5 种信号检测）✅
-- [x] manifest.yaml 注册 + 条件开关 (`insight.enabled|true`) ✅
-- [x] 16 个单元测试（沉淀提示逻辑 11 + 模板渲染 5）✅
+#### Insight Integration into IDE Dialogue Mode ✅
+- [x] `27_insight_workflow.md.j2` experience solidification workflow template section ✅
+- [x] Dialogue end flow adds "experience solidification check" step ✅
+- [x] `vibecollab next` command adds Insight solidification hints (5 signal types) ✅
+- [x] manifest.yaml registration + condition switch (`insight.enabled|true`) ✅
+- [x] 16 unit tests (solidification hint logic 11 + template rendering 5) ✅
 
-#### 人机交互质量
-- [x] vibecollab ai ask/chat 在不同 terminal 环境下的 Unicode 兼容 ✅ `_compat.py` 统一兼容层
-- [x] **`vibecollab prompt` 命令** ✅ — LLM 上下文 prompt 生成器，替代手动复制 CONTRIBUTING_AI.md
-  - `_collect_project_context()` 共享函数 + `_extract_md_sections()` + `_build_prompt_text()`
-  - `--compact` / `--copy` / `--sections` / `-d` 四种模式
-  - 23 个单元测试，956/956 passed
-- [x] **Protocol Checker watch_files 机制** ✅ — DECISIONS.md/PRD.md 跟随检查 + max_inactive_hours 可配置
-- [ ] Rich 面板在 Windows PowerShell/CMD/WSL 的渲染验证 — 需手动验证
-- [ ] onboard/next 在大型项目（多开发者、多文件）上的输出质量 — 需手动验证
-- [x] 错误信息友好度审查（所有 CLI 命令的异常路径）✅ 审计完成 + insight 错误处理增强
+#### Human-Machine Interaction Quality
+- [x] vibecollab ai ask/chat Unicode compatibility across terminal environments ✅ `_compat.py` unified compatibility layer
+- [x] **`vibecollab prompt` command** ✅ — LLM context prompt generator, replaces manually copying CONTRIBUTING_AI.md
+  - `_collect_project_context()` shared function + `_extract_md_sections()` + `_build_prompt_text()`
+  - `--compact` / `--copy` / `--sections` / `-d` four modes
+  - 23 unit tests, 956/956 passed
+- [x] **Protocol Checker watch_files mechanism** ✅ — DECISIONS.md/PRD.md follow-up check + max_inactive_hours configurable
+- [ ] Rich panel rendering verification on Windows PowerShell/CMD/WSL — Needs manual testing
+- [ ] onboard/next output quality on large projects (multi-developer, many files) — Needs manual testing
+- [x] Error message friendliness audit (all CLI command exception paths) ✅ Audit complete + insight error handling enhanced
 
-#### 泛用性验证
-- [ ] 在 3+ 个真实外部项目上运行 `vibecollab init` + `generate` + `check`
-- [ ] 不同 Python 版本兼容性（3.9 / 3.10 / 3.11 / 3.12 / 3.13）— CI 已配置，待 push 验证
-- [ ] 不同 OS 兼容性（Windows / macOS / Linux）
-- [x] 极简项目（空 project.yaml）和复杂项目（全量配置）的边界测试 ✅ 15 tests
+#### Generality Verification
+- [ ] Run `vibecollab init` + `generate` + `check` on 3+ real external projects
+- [ ] Different Python version compatibility (3.9 / 3.10 / 3.11 / 3.12 / 3.13) — CI configured, pending push verification
+- [ ] Different OS compatibility (Windows / macOS / Linux)
+- [x] Minimal project (empty project.yaml) and complex project (full config) boundary tests ✅ 15 tests
 
-#### 文档与质量
-- [ ] QA_TEST_CASES.md 全量更新（覆盖 v0.7.x 新功能）
-- [x] README.md 更新（安装/快速开始/功能列表同步）✅ 项目结构/测试数/版本历史同步
-- [x] 已知问题清零或标记延后 ✅
+#### Documentation & Quality
+- [ ] QA_TEST_CASES.md full update (covering v0.7.x new features)
+- [x] README.md update (install/quickstart/feature list sync) ✅ Project structure/test counts/version history synced
+- [x] Known issues zeroed or marked deferred ✅
 
-#### 定位决策
-- [x] **`vibecollab ai` 标记 experimental** ✅ — VibeCollab 定位为协议管理工具，不自建 LLM 运行时。Tool Use 交给 Cline/Cursor/Aider。`ai ask/chat/agent` 保留但冻结，不继续投入
-- [x] **Insight 读取路径规划** ✅ — 不在 `build_project_context()` 中注入，而是通过协议指引（CONTRIBUTING_AI.md）让 Cline/Cursor 在正确时机调用 `vibecollab insight search`
+#### Positioning Decisions
+- [x] **`vibecollab ai` marked experimental** ✅ — VibeCollab positioned as protocol management tool, not building LLM runtime. Tool Use delegated to Cline/Cursor/Aider. `ai ask/chat/agent` retained but frozen, no further investment
+- [x] **Insight read path planning** ✅ — Not injected in `build_project_context()`, instead guided via protocol (CONTRIBUTING_AI.md) for Cline/Cursor to call `vibecollab insight search` at the right time
 
-## v0.8.x+ 后续开发规划
+## v0.8.x+ Subsequent Development Plan
 
-> **核心方向**: VibeCollab 定位为**协议管理工具 + 结构化知识引擎**，不自建 LLM 运行时。
-> 后续版本围绕**MCP/IDE 集成、文档完善与发布**两条主线推进。
+> **Core direction**: VibeCollab positioned as **protocol management tool + structured knowledge engine**, not building LLM runtime.
+> Subsequent versions focus on two main lines: **MCP/IDE integration** and **documentation & release**.
 
-### v0.9.0 - 语义检索引擎（Insight/文档向量化）
+### v0.9.0 - Semantic Search Engine (Insight/Document Vectorization)
 
-> 目标：让 Insight 和项目文档可被语义搜索，替代纯标签 Jaccard 匹配
+> Objective: Enable semantic search for Insights and project documents, replacing pure tag Jaccard matching
 
-#### 文档/代码向量化
-- [x] `Embedder` 模块 — 轻量 embedding 抽象层 ✅
-  - 支持 OpenAI `text-embedding-3-small` / 本地 `sentence-transformers` 双后端
-  - 纯 Python trigram 哈希降级方案（零外部依赖）
-  - 可选依赖 `pip install vibe-collab[embedding]`
-- [x] `VectorStore` 模块 — 本地持久化向量存储 ✅
-  - SQLite + 纯 Python 余弦相似度（零外部依赖方案）
-  - struct pack/unpack 向量 blob 存储
-  - 存储路径 `.vibecollab/vectors/`
-- [x] `vibecollab index` 命令 — 索引项目文档 ✅
-  - 增量索引 `CONTRIBUTING_AI.md`、`CONTEXT.md`、`DECISIONS.md`、`ROADMAP.md`、`PRD.md`、`CHANGELOG.md`
-  - Insight YAML 全量索引（标题 + body + tags，支持结构化 dict body）
-  - `--rebuild` 模式: 清除旧索引后重建
-  - `--backend` 选择 embedding 后端
-  - 代码文件可选索引（docstring / 函数签名）— 延后
-  - `--watch` 模式: 文件变更自动重建索引 — 延后
+#### Document/Code Vectorization
+- [x] `Embedder` module — Lightweight embedding abstraction layer ✅
+  - Supports OpenAI `text-embedding-3-small` / local `sentence-transformers` dual backend
+  - Pure Python trigram hash fallback (zero external dependencies)
+  - Optional dependency `pip install vibe-collab[embedding]`
+- [x] `VectorStore` module — Local persistent vector storage ✅
+  - SQLite + pure Python cosine similarity (zero external dependency approach)
+  - struct pack/unpack vector blob storage
+  - Storage path `.vibecollab/vectors/`
+- [x] `vibecollab index` command — Index project documents ✅
+  - Incremental indexing of `CONTRIBUTING_AI.md`, `CONTEXT.md`, `DECISIONS.md`, `ROADMAP.md`, `PRD.md`, `CHANGELOG.md`
+  - Insight YAML full indexing (title + body + tags, supports structured dict body)
+  - `--rebuild` mode: Clear old index then rebuild
+  - `--backend` select embedding backend
+  - Code file optional indexing (docstring / function signatures) — Deferred
+  - `--watch` mode: Auto-rebuild on file changes — Deferred
 
-#### 语义搜索集成
-- [x] `vibecollab insight search --semantic` 增强 ✅
-  - 基于向量余弦相似度的 Insight 语义搜索
-  - 保持纯标签搜索为默认（零依赖兼容）
-  - 混合检索 (标签 Jaccard + 向量余弦 → 加权融合排序) — 延后
-- [x] `vibecollab search` 新命令 — 全局语义搜索 ✅
-  - 跨 Insight / 文档统一搜索
-  - 输出附带来源和相关度评分
-  - `--type` 过滤来源类型，`--min-score` 阈值过滤
-- [x] `onboard` 增强 — 语义匹配当前任务相关 Insight ✅
-  - 从 CONTEXT.md / 开发者上下文提取当前任务描述 → 向量检索 Top-N 相关 Insight
-  - Rich 面板 + JSON 输出双格式支持
-  - 11 个单元测试
+#### Semantic Search Integration
+- [x] `vibecollab insight search --semantic` enhancement ✅
+  - Vector cosine similarity based Insight semantic search
+  - Pure tag search remains default (zero dependency compatible)
+  - Hybrid retrieval (tag Jaccard + vector cosine → weighted fusion ranking) — Deferred
+- [x] `vibecollab search` new command — Global semantic search ✅
+  - Cross Insight / document unified search
+  - Output includes source and relevance score
+  - `--type` filter source type, `--min-score` threshold filter
+- [x] `onboard` enhancement — Semantically match current task related Insights ✅
+  - Extract current task description from CONTEXT.md / developer context → vector search Top-N related Insights
+  - Rich panel + JSON output dual format support
+  - 11 unit tests
 
-### v0.9.1 - MCP Server + AI IDE 集成
+### v0.9.1 - MCP Server + AI IDE Integration
 
-> 目标：让 VibeCollab 成为 Cline/Cursor/CodeBuddy 等 AI IDE 的"协议后端"，
-> 从"手动复制粘贴"变成"IDE 自动读取协议"
+> Objective: Make VibeCollab the "protocol backend" for Cline/Cursor/CodeBuddy etc.,
+> from "manual copy-paste" to "IDE auto-reads protocol"
 
-#### MCP Server（Model Context Protocol）✅
-- [x] `vibecollab mcp serve` — 标准 MCP Server 实现 ✅
-  - Tool 暴露: `insight_search`, `insight_add`, `task_list`, `check`, `next`, `onboard`, `search_docs`, `project_prompt`, `developer_context`
-  - Resource 暴露: `CONTRIBUTING_AI.md`, `CONTEXT.md`, `DECISIONS.md`, `ROADMAP.md`, `CHANGELOG.md`, Insight 列表
-  - Prompt 暴露: `start_conversation` 对话开始时上下文注入模板
-- [x] MCP CLI 命令组 ✅
-  - `vibecollab mcp config --ide cursor/cline/codebuddy` 输出配置
-  - `vibecollab mcp inject --ide all` 自动注入 IDE 配置文件
-  - 支持 `stdio` 和 `sse` 两种传输模式
-- [x] PyPI v0.9.1 发布 ✅ — `pip install vibe-collab[mcp]`
-- [x] CodeBuddy Rule 集成 ✅ — `.codebuddy/rules/vibecollab-protocol.mdc`
-- [x] 35 个单元测试，1074 全量 passed ✅
+#### MCP Server (Model Context Protocol) ✅
+- [x] `vibecollab mcp serve` — Standard MCP Server implementation ✅
+  - Tool exposure: `insight_search`, `insight_add`, `task_list`, `check`, `next`, `onboard`, `search_docs`, `project_prompt`, `developer_context`
+  - Resource exposure: `CONTRIBUTING_AI.md`, `CONTEXT.md`, `DECISIONS.md`, `ROADMAP.md`, `CHANGELOG.md`, Insight list
+  - Prompt exposure: `start_conversation` dialogue start context injection template
+- [x] MCP CLI command group ✅
+  - `vibecollab mcp config --ide cursor/cline/codebuddy` output config
+  - `vibecollab mcp inject --ide all` auto-inject IDE config files
+  - Supports `stdio` and `sse` two transport modes
+- [x] PyPI v0.9.1 release ✅ — `pip install vibe-collab[mcp]`
+- [x] CodeBuddy Rule integration ✅ — `.codebuddy/rules/vibecollab-protocol.mdc`
+- [x] 35 unit tests, 1074 full passed ✅
 
-#### IDE 适配（待完善）
-- [ ] Cursor Skill 自动生成 — `vibecollab export cursor-skill`
-  - 从 `project.yaml` + `CONTRIBUTING_AI.md` 自动生成 `.cursor/skills/vibecollab/SKILL.md`
-  - 项目配置变更时自动重新生成
-- [ ] Cline Custom Instructions 适配 — `vibecollab export cline`
-  - 生成 `.cline/custom_instructions.md`
-- [ ] CodeBuddy Rule 适配 — `vibecollab export codebuddy`
-  - 生成 `.codebuddy/rules/vibecollab.md`
+#### IDE Adaptation (To Be Completed)
+- [ ] Cursor Skill auto-generation — `vibecollab export cursor-skill`
+  - Auto-generate `.cursor/skills/vibecollab/SKILL.md` from `project.yaml` + `CONTRIBUTING_AI.md`
+  - Auto-regenerate on project config changes
+- [ ] Cline Custom Instructions adaptation — `vibecollab export cline`
+  - Generate `.cline/custom_instructions.md`
+- [ ] CodeBuddy Rule adaptation — `vibecollab export codebuddy`
+  - Generate `.codebuddy/rules/vibecollab.md`
 
-### v0.9.2 - Insight 沉淀信号增强
+### v0.9.2 - Insight Solidification Signal Enhancement
 
-> 目标：让 Insight 沉淀从"纯 LLM 推理"变成"结构化信号驱动"，提供可靠的沉淀上下文
+> Objective: Transform Insight solidification from "pure LLM reasoning" to "structured signal-driven", providing reliable solidification context
 
-#### 沉淀信号收集
-- [x] `vibecollab insight suggest` — 基于结构化信号推荐候选 Insight ✅
-  - 距上次 `insight add` 以来的 git commit 历史分析
-  - CONTEXT.md / DECISIONS.md 变更 diff 检测
-  - 新增/关闭的 Task 提取
-  - 输出候选 Insight 列表，人工 confirm 后入库
-- [x] 信号快照 — `.vibecollab/insight_signal.json` ✅
-  - 记录上次 insight 沉淀的时间点和 commit hash
-  - `insight add` 自动更新快照
-  - `insight suggest` 从快照到 HEAD 提取增量信号
+#### Solidification Signal Collection
+- [x] `vibecollab insight suggest` — Structured signal-based Insight candidate recommendation ✅
+  - Git commit history analysis since last `insight add`
+  - CONTEXT.md / DECISIONS.md change diff detection
+  - New/closed Task extraction
+  - Output candidate Insight list, manually confirm before creation
+- [x] Signal snapshot — `.vibecollab/insight_signal.json` ✅
+  - Record last insight solidification timestamp and commit hash
+  - `insight add` auto-updates snapshot
+  - `insight suggest` extracts incremental signals from snapshot to HEAD
 
-#### 对话持久化（一级缓存）
-- [x] 对话 summary 存储 — `.vibecollab/sessions/` ✅
-  - AI IDE 对话结束时的 summary 持久化（手动或 MCP 自动触发）
-  - 作为 `insight suggest` 的输入信号之一
-  - MCP `session_save` tool 暴露写入接口
-- [x] MCP Server 增强 ✅
-  - `insight_suggest` tool: 基于信号推荐候选 Insight
-  - `session_save` tool: 保存对话 session summary
-- [x] 60 个单元测试（insight_signal + session_store）✅
-  - 全量 1134 passed, 1 skipped, 零回归
+#### Conversation Persistence (L1 Cache)
+- [x] Conversation summary storage — `.vibecollab/sessions/` ✅
+  - AI IDE conversation end summary persistence (manual or MCP auto-trigger)
+  - Serves as input signal for `insight suggest`
+  - MCP `session_save` tool exposes write interface
+- [x] MCP Server enhancement ✅
+  - `insight_suggest` tool: Signal-based Insight candidate recommendation
+  - `session_save` tool: Save conversation session summary
+- [x] 60 unit tests (insight_signal + session_store) ✅
+  - Full 1134 passed, 1 skipped, zero regression
 
-### v0.9.3 - Task/EventLog 核心工作流接通
+### v0.9.3 - Task/EventLog Core Workflow Integration
 
-> 目标：让 TaskManager 和 EventLog 从"底层 API"变成用户日常可感知的功能 (DECISION-016)
+> Objective: Transform TaskManager and EventLog from "low-level API" to user-perceivable daily features (DECISION-016)
 
-#### Task CLI 补齐
-- [x] `vibecollab task transition` — 手动推进任务状态 (TODO→IN_PROGRESS→REVIEW→DONE) ✅
-- [x] `vibecollab task solidify` — 固化任务 (REVIEW→DONE，通过验证门控) ✅
-- [x] `vibecollab task rollback` — 回滚任务状态 ✅
+#### Task CLI Completion
+- [x] `vibecollab task transition` — Manually advance task state (TODO→IN_PROGRESS→REVIEW→DONE) ✅
+- [x] `vibecollab task solidify` — Solidify task (REVIEW→DONE, through validation gates) ✅
+- [x] `vibecollab task rollback` — Roll back task state ✅
 
-#### 核心命令注入
-- [x] `onboard` 注入活跃 Task 概览 — 显示当前 TODO/IN_PROGRESS/REVIEW 任务 ✅
-- [x] `onboard` 注入最近 EventLog 事件摘要 ✅
-- [x] `next` 基于 Task 状态推荐行动 — 超时/阻塞/待 solidify 任务优先提示 ✅
+#### Core Command Injection
+- [x] `onboard` injects active Task overview — Shows current TODO/IN_PROGRESS/REVIEW tasks ✅
+- [x] `onboard` injects recent EventLog event summary ✅
+- [x] `next` recommends actions based on Task status — Priority hints for timeout/blocked/pending solidify tasks ✅
 
-#### MCP Server 增强
-- [x] `task_create` tool — AI IDE 可直接创建任务 ✅
-- [x] `task_transition` tool — AI IDE 可推进任务状态 ✅
+#### MCP Server Enhancement
+- [x] `task_create` tool — AI IDE can directly create tasks ✅
+- [x] `task_transition` tool — AI IDE can advance task state ✅
 
-#### 测试 & 决策
-- [x] 30 个单元测试，全量 1164 passed, 零回归 ✅
-- [x] DECISION-016: v0.9.3 方向决策 (S 级) ✅
+#### Test & Decision
+- [x] 30 unit tests, full 1164 passed, zero regression ✅
+- [x] DECISION-016: v0.9.3 direction decision (S-level) ✅
 
-### v0.9.4 - Insight 质量与生命周期（已完成 ✅）
+### v0.9.4 - Insight Quality & Lifecycle (Completed ✅)
 
-> 目标：提升沉淀质量，建立 Insight 从产生到淘汰的完整生命周期
+> Objective: Improve solidification quality, establish complete Insight lifecycle from creation to retirement
 
-- [x] Insight 自动去重 — 新增 Insight 时指纹+标题+标签相似度检查，防止重复沉淀 ✅
-- [x] Insight 关联图谱 — `vibecollab insight graph` 可视化派生/关联关系 (text/json/mermaid) ✅
-- [x] 跨项目 Insight 可移植性 — `insight export` / `insight import`（YAML 格式，三种冲突策略）✅
-- [x] MCP Server 新增 `insight_graph` / `insight_export` 两个 Tool ✅
-- [x] 36 个单元测试，全量 1201 passed, 零回归 ✅
+- [x] Insight auto-deduplication — Fingerprint+title+tag similarity check on creation, prevent duplicates ✅
+- [x] Insight relationship graph — `vibecollab insight graph` visualize derivation/association (text/json/mermaid) ✅
+- [x] Cross-project Insight portability — `insight export` / `insight import` (YAML format, three conflict strategies) ✅
+- [x] MCP Server added `insight_graph` / `insight_export` two Tools ✅
+- [x] 36 unit tests, full 1201 passed, zero regression ✅
 
-### v0.9.5 - ROADMAP ↔ Task 集成（已完成 ✅）
+### v0.9.5 - ROADMAP ↔ Task Integration (Completed ✅)
 
-> 目标：让 ROADMAP.md 与 TaskManager 双向联动，结构化追踪里程碑进度
+> Objective: Bidirectional linkage between ROADMAP.md and TaskManager, structured milestone progress tracking
 
-- [x] RoadmapParser 模块 — 解析 ROADMAP.md 里程碑 + checklist + inline Task ID 引用 ✅
-- [x] 双向同步 — ROADMAP `[x]` ↔ Task DONE 状态，三种方向（both/roadmap_to_tasks/tasks_to_roadmap）✅
-- [x] Task `milestone` 字段 — Task dataclass 新增里程碑关联，`list_tasks(milestone=)` 过滤 ✅
-- [x] CLI `vibecollab roadmap status/sync/parse` 命令组 ✅
-- [x] CLI `vibecollab task create --milestone` / `task list --milestone` 增强 ✅
-- [x] MCP Server 新增 `roadmap_status` / `roadmap_sync` 两个 Tool ✅
-- [x] README 双语重构（英文主 README + 中文 README.zh-CN.md）✅
-- [x] 40 个单元测试，全量 1331 passed, 89% 覆盖率, 零回归 ✅
+- [x] RoadmapParser module — Parse ROADMAP.md milestones + checklist + inline Task ID references ✅
+- [x] Bidirectional sync — ROADMAP `[x]` ↔ Task DONE status, three directions (both/roadmap_to_tasks/tasks_to_roadmap) ✅
+- [x] Task `milestone` field — Task dataclass new milestone association, `list_tasks(milestone=)` filter ✅
+- [x] CLI `vibecollab roadmap status/sync/parse` command group ✅
+- [x] CLI `vibecollab task create --milestone` / `task list --milestone` enhancement ✅
+- [x] MCP Server added `roadmap_status` / `roadmap_sync` two Tools ✅
+- [x] README bilingual restructure (English main README + Chinese README.zh-CN.md) ✅
+- [x] 40 unit tests, full 1331 passed, 89% coverage, zero regression ✅
 
-### v0.9.7 - Roadmap 解析器格式引导（开发中）
+### v0.9.7 - Roadmap Parser Format Guidance (In Development)
 
-> 目标：解决用户 ROADMAP 格式不匹配时无提示的问题，严格 ### 格式约束 + 清晰错误引导
+> Objective: Resolve lack of hints when user ROADMAP format doesn't match, strict ### format constraint + clear error guidance
 
-- [x] 严格 ### 里程碑格式 — 只接受 `### vX.Y.Z`，拒绝 `####` 等其他层级 TASK-DEV-008
-- [x] 零里程碑格式提示 — CLI 输出期望格式 + Task ID 关联语法 TASK-DEV-008
-- [x] sync 零里程碑区分 — 不再误报"已同步" TASK-DEV-008
-- [x] MCP Tool 描述增强 — AI IDE 可据此指导用户修改 ROADMAP TASK-DEV-008
-- [x] init 模板兼容 — 生成的 ROADMAP 开箱可解析 TASK-DEV-008
-- [x] v0.9.7 PyPI 发布
+- [x] Strict ### milestone format — Only accepts `### vX.Y.Z`, rejects `####` and other levels TASK-DEV-008
+- [x] Zero milestone format hint — CLI outputs expected format + Task ID association syntax TASK-DEV-008
+- [x] sync zero milestone distinction — No longer false-reports "synced" TASK-DEV-008
+- [x] MCP Tool description enhancement — AI IDE can guide users to modify ROADMAP based on this TASK-DEV-008
+- [x] init template compatibility — Generated ROADMAP is parseable out-of-box TASK-DEV-008
+- [x] v0.9.7 PyPI release
 
-### v0.9.6 - PyPI 适配 + 文档质量（已完成 ✅）
+### v0.9.6 - PyPI Adaptation + Documentation Quality (Completed ✅)
 
-> 目标：PyPI 发布页面可用性优化，项目文档时效性维护
+> Objective: PyPI release page usability optimization, project documentation timeliness maintenance
 
-- [x] README.pypi.md — PyPI 专用 README（去 Mermaid + 绝对 URL）TASK-DEV-006
-- [x] pyproject.toml readme 字段指向 README.pypi.md TASK-DEV-006
-- [x] CONTEXT.md 过期任务清理（TASK-DEV-005 已完成标记）TASK-DEV-007
-- [x] v0.9.6 PyPI 发布
+- [x] README.pypi.md — PyPI-specific README (remove Mermaid + absolute URLs) TASK-DEV-006
+- [x] pyproject.toml readme field points to README.pypi.md TASK-DEV-006
+- [x] CONTEXT.md stale task cleanup (TASK-DEV-005 marked completed) TASK-DEV-007
+- [x] v0.9.6 PyPI release
 
-### v0.10.0 - 功能冻结 + 稳定性门槛 (DECISION-017)
+### v0.10.0 - Feature Freeze + Stability Gate (DECISION-017)
 
-> 目标：确保功能冻结前所有业务逻辑闭环，建立发布质量门槛。此版本后不再新增业务功能。
+> Objective: Ensure all business logic is closed-loop before feature freeze, establish release quality gate. No new business features after this version.
 
-#### 外部项目 QA 验证
-- [ ] 在 3+ 个真实外部项目上运行 Phase 11 TC-E2E-001~010
-- [ ] 修复 QA 过程中发现的所有 bug
+#### External Project QA Validation
+- [ ] Run Phase 11 TC-E2E-001~010 on 3+ real external projects
+- [ ] Fix all bugs found during QA
 
-#### 质量门槛
-- [ ] 测试覆盖率 ≥ 85%
-- [ ] `vibecollab check` 全绿
-- [ ] MCP Server 在 Cursor/CodeBuddy 中实际验证
-- [ ] 功能冻结声明
+#### Quality Gate
+- [ ] Test coverage ≥ 85%
+- [ ] `vibecollab check` all green
+- [ ] MCP Server validated in Cursor/CodeBuddy
+- [ ] Feature freeze declaration
 
-### v0.10.1 - 代码国际化 (Code i18n)
+### v0.10.1 - Code Internationalization (Code i18n)
 
-> 目标：代码层面全英文化，确保非中文母语开发者可读
+> Objective: Code-level full English translation, ensure non-Chinese native developers can read
 
-- [ ] 36 个 .py 文件的中文 docstring/comment 翻译为英文 (~2055 行)
-- [ ] 62+ 处 CLI `help=` 参数翻译为英文
-- [ ] 运行时输出文本 (`click.echo` / `console.print`) 英文化
-- [ ] 错误消息英文化
-- [ ] 全量 1201+ tests passed, 覆盖率不降
+- [ ] Translate Chinese docstring/comment in 36 .py files to English (~2055 lines)
+- [ ] Translate 62+ CLI `help=` parameters to English
+- [ ] Runtime output text (`click.echo` / `console.print`) English translation
+- [ ] Error message English translation
+- [ ] Full 1201+ tests passed, coverage must not decrease
 
-### v0.10.2 - 文档双语化 (Doc Bilingual)
+### v0.10.2 - Documentation Bilingualization (Doc Bilingual)
 
-> 目标：README 和核心文档提供英文版本
+> Objective: README and core docs provide English versions
 
-- [ ] README.md 重写为英文（作为主 README）
-- [ ] README_CN.md 保留中文版
-- [ ] CHANGELOG.md 整理为英文
-- [ ] pyproject.toml description 英文化
+- [ ] README.md rewritten in English (as primary README)
+- [ ] README_CN.md preserves Chinese version
+- [ ] CHANGELOG.md organized in English
+- [ ] pyproject.toml description in English
 
-### v0.10.3 - Git 历史重写 + 仓库门面
+### v0.10.3 - Git History Rewrite + Repository Facade
 
-> 目标：一次性重写全部 commit message 为标准英文 + GitHub 门面专业化
+> Objective: One-time rewrite of all commit messages to standard English + GitHub facade professionalization
 
-- [ ] `git-filter-repo` 重写 97+ commit message 为 Conventional Commits 英文格式
-- [ ] force push（不可逆，确保是最后的 history-breaking 操作）
-- [ ] GitHub About 描述 + Topics 标签
+- [ ] `git-filter-repo` rewrite 97+ commit messages to Conventional Commits English format
+- [ ] force push (irreversible, ensure this is the last history-breaking operation)
+- [ ] GitHub About description + Topics tags
 - [ ] Issue / PR template
-- [ ] CONTRIBUTING.md (英文，面向外部贡献者)
+- [ ] CONTRIBUTING.md (English, for external contributors)
 - [ ] CODE_OF_CONDUCT.md
 - [ ] GitHub Release (v0.10.3+)
 - [ ] Badge: PyPI / CI / Coverage / License / Python Version
 
-### v1.0.0 - 正式发布
+### v1.0.0 - Official Release
 
-> 目标：标记稳定版本，PyPI + GitHub Release
+> Objective: Mark stable version, PyPI + GitHub Release
 
-- [ ] 清理所有 .dev0 标记
-- [ ] PyPI v1.0.0 发布
+- [ ] Clean up all .dev0 markers
+- [ ] PyPI v1.0.0 release
 - [ ] GitHub Release v1.0.0
 
-### ~~v0.9.2(旧) - 自举能力~~ ❌ 已砍掉 (DECISION-015)
-> 决策：`bootstrap` 价值不足（已有手写 CONTRIBUTING_AI.md），`ContextBuilder` 重构可在 MCP 开发中按需进行，不单列版本。
+### ~~v0.9.2(old) - Bootstrap~~ ❌ Cut (DECISION-015)
+> Decision: `bootstrap` insufficient value (already have handwritten CONTRIBUTING_AI.md), `ContextBuilder` refactoring can happen on-demand during MCP development, no separate version needed.
 
-### ~~v0.10.1(旧) - Agent 稳定性增强~~ ❌ 已砍掉 (DECISION-015)
-> 决策：MCP + 外部 IDE (Cline/Cursor/CodeBuddy) 已覆盖 Agent 场景，不再投入自建 Agent 能力。`vibecollab ai` 保持 experimental 冻结。
-
----
-
-## 阶段历史
-
-- **demo**: 2026-01-20 (进行中 → v1.0.0 后升级为 production)
+### ~~v0.10.1(old) - Agent Stability Enhancement~~ ❌ Cut (DECISION-015)
+> Decision: MCP + external IDE (Cline/Cursor/CodeBuddy) already covers Agent scenarios, no further investment in self-built Agent capabilities. `vibecollab ai` remains experimental frozen.
 
 ---
 
-## 未来规划
+## Stage History
 
-### 无监督运行能力（待定）
-> 从 v0.10.0 降入未来规划 (DECISION-015)
+- **demo**: 2026-01-20 (in progress → upgrade to production after v1.0.0)
 
-- Git Hook 集成 (`vibecollab hook install`)
-- CI/CD 无监督模式 (`vibecollab ci check/report/gate`)
+---
+
+## Future Planning
+
+### Unsupervised Operation (TBD)
+> Demoted from v0.10.0 to future planning (DECISION-015)
+
+- Git Hook integration (`vibecollab hook install`)
+- CI/CD unsupervised mode (`vibecollab ci check/report/gate`)
 - GitHub Action (`vibecollab-action`)
-- 定时任务 (`vibecollab cron`)
+- Scheduled tasks (`vibecollab cron`)
 
-### Production 阶段（量产）
-**预计时间**: v1.0.0 发布后
-**前置条件**: 
-- v0.10.x 全部完成
-- 测试覆盖率 85%+
-- 代码/文档全英文化
-- GitHub 门面专业化
+### Production Stage
+**Estimated timeline**: After v1.0.0 release
+**Prerequisites**: 
+- v0.10.x all completed
+- Test coverage 85%+
+- Code/docs fully English
+- GitHub facade professionalized
 
-**重点任务**:
-- 社区运营 + 外部贡献者引入
-- 插件生态（自定义 Pattern / 领域扩展）
-- 性能优化（大规模项目）
-- i18n 框架（多语言 CLI 输出）
+**Key tasks**:
+- Community operations + external contributor onboarding
+- Plugin ecosystem (custom Patterns / domain extensions)
+- Performance optimization (large-scale projects)
+- i18n framework (multi-language CLI output)
 
-### Commercial 阶段（商业化）
-**预计时间**: 待定
-**重点**:
-- 用户体验优化
-- 市场适配
-- 扩展性提升
+### Commercial Stage
+**Estimated timeline**: TBD
+**Focus**:
+- User experience optimization
+- Market adaptation
+- Extensibility improvement
 
-### Stable 阶段（稳定运营）
-**预计时间**: 待定
-**重点**:
-- 稳定性维护
-- 降低维护成本
-- 长期规划
+### Stable Stage
+**Estimated timeline**: TBD
+**Focus**:
+- Stability maintenance
+- Maintenance cost reduction
+- Long-term planning
 
 ---
 
-*最后更新: 2026-02-28 (v0.9.7 开发中)*
+*Last updated: 2026-03-03 (v0.10.1-dev)*

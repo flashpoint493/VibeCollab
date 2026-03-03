@@ -1,111 +1,111 @@
-# 项目生涯管理系统设计方案
+# Project Lifecycle Management System Design
 
-## 1. Git 检查和初始化
+## 1. Git Check and Initialization
 
-### 功能需求
-- 在项目初始化或升级时检查 Git 是否安装
-- 检查项目目录是否已初始化 Git 仓库
-- 如果未初始化，提示或自动初始化
-- 在生成的文档中强调 Git 同步的重要性
+### Functional Requirements
+- Check if Git is installed during project initialization or upgrade
+- Check if project directory is already a Git repository
+- Prompt or auto-initialize if not initialized
+- Emphasize Git sync importance in generated documents
 
-### 实现方案
-- 创建 `src/vibecollab/git_utils.py` 模块
-- 提供函数：
-  - `check_git_installed()`: 检查 git 是否安装
-  - `is_git_repo(path)`: 检查路径是否是 git 仓库
-  - `init_git_repo(path)`: 初始化 git 仓库
-  - `ensure_git_repo(path, auto_init=False)`: 确保 git 仓库存在
+### Implementation
+- Create `src/vibecollab/git_utils.py` module
+- Provide functions:
+  - `check_git_installed()`: Check if git is installed
+  - `is_git_repo(path)`: Check if path is a git repository
+  - `init_git_repo(path)`: Initialize git repository
+  - `ensure_git_repo(path, auto_init=False)`: Ensure git repository exists
 
-## 2. 项目生涯管理系统
+## 2. Project Lifecycle Management System
 
-### 生涯阶段定义
+### Lifecycle Stage Definitions
 
 ```yaml
 lifecycle:
   current_stage: "demo"  # demo / production / commercial / stable
   stages:
     demo:
-      name: "原型验证"
-      description: "快速验证核心概念和可行性"
-      focus: ["快速迭代", "概念验证", "核心功能"]
+      name: "Prototype Validation"
+      description: "Rapidly validate core concepts and feasibility"
+      focus: ["Rapid iteration", "Concept validation", "Core features"]
       principles:
-        - "快速试错，快速调整"
-        - "优先核心功能，暂缓优化"
-        - "技术债务可接受，但需记录"
-        - "详细的Git开发迭代记录"
-        - "记录重要决定DECISIONS.md"
-        - "建立 CI/CD"
-      milestones: []  # 里程碑列表
+        - "Fail fast, adjust fast"
+        - "Prioritize core features, defer optimization"
+        - "Technical debt acceptable, but must be documented"
+        - "Detailed Git development iteration records"
+        - "Record important decisions in DECISIONS.md"
+        - "Establish CI/CD"
+      milestones: []  # Milestone list
       
     production:
-      name: "量产"
-      description: "产品化开发，准备规模化"
-      focus: ["稳定性", "性能优化", "可维护性"]
+      name: "Production"
+      description: "Product development, preparing for scale"
+      focus: ["Stability", "Performance optimization", "Maintainability"]
       principles:
-        - "代码质量优先"
-        - "建立发布和宣发预备, 指定和完善目标平台支持"
-        - "启动前review全量代码，建立更稳定稳健的代码结构"
-        - "完善QA产品测试覆盖"
-        - "定义性能标准"
-        - "Unitest单元测试、检查规范"
+        - "Code quality first"
+        - "Establish release and publicity preparation, define and improve target platform support"
+        - "Full code review before launch, establish more stable and robust code structure"
+        - "Improve QA product test coverage"
+        - "Define performance standards"
+        - "Unit testing, spec compliance checks"
       milestones: []
       
     commercial:
-      name: "商业化"
-      description: "面向市场，追求增长"
-      focus: ["用户体验", "市场适配", "扩展性"]
+      name: "Commercialization"
+      description: "Market-facing, pursuing growth"
+      focus: ["User experience", "Market adaptation", "Extensibility"]
       principles:
-        - "用户反馈驱动"
-        - "数据驱动决策"
-        - "快速响应市场"
+        - "User feedback driven"
+        - "Data-driven decisions"
+        - "Rapid market response"
       milestones: []
       
     stable:
-      name: "稳定运营"
-      description: "成熟产品，稳定维护"
-      focus: ["稳定性", "维护成本", "长期规划"]
+      name: "Stable Operations"
+      description: "Mature product, stable maintenance"
+      focus: ["Stability", "Maintenance cost", "Long-term planning"]
       principles:
-        - "变更需谨慎"
-        - "向后兼容优先"
-        - "文档完善"
+        - "Changes require caution"
+        - "Backward compatibility first"
+        - "Complete documentation"
       milestones: []
 ```
 
-### 设计选项对比
+### Design Options Comparison
 
-#### 选项 A: 单一 CONTRIBUTING_AI.md + 阶段字段
-**优点**:
-- 简单，单一文档
-- 易于维护
-- AI 读取方便
+#### Option A: Single CONTRIBUTING_AI.md + Stage Field
+**Pros**:
+- Simple, single document
+- Easy to maintain
+- Convenient for AI to read
 
-**缺点**:
-- 文档可能过长
-- 不同阶段规则混在一起
-- 升级时需要重新生成整个文档
+**Cons**:
+- Document may become too long
+- Different stage rules mixed together
+- Need to regenerate entire document on upgrade
 
-#### 选项 B: 多个 CONTRIBUTING_AI 文件（按阶段）
-**优点**:
-- 职责清晰，每个阶段独立
-- 可以保留历史版本
-- 升级时只需切换文件
+#### Option B: Multiple CONTRIBUTING_AI Files (Per Stage)
+**Pros**:
+- Clear responsibilities, each stage independent
+- Can preserve historical versions
+- Only need to switch files on upgrade
 
-**缺点**:
-- 文件管理复杂
-- 需要维护多个文件
-- AI 需要知道当前阶段才能读取正确文件
+**Cons**:
+- Complex file management
+- Need to maintain multiple files
+- AI needs to know current stage to read correct file
 
-#### 选项 C: 单一文件 + 阶段化章节（推荐）
-**优点**:
-- 平衡了简单性和清晰度
-- 单一文档，但结构清晰
-- 可以同时看到所有阶段的规则
-- 升级时只需更新当前阶段标记
+#### Option C: Single File + Stage-Based Sections (Recommended)
+**Pros**:
+- Balances simplicity and clarity
+- Single document with clear structure
+- Can view all stage rules simultaneously
+- Only need to update current stage marker on upgrade
 
-**缺点**:
-- 文档可能较长（但可以通过折叠/索引优化）
+**Cons**:
+- Document may be long (but can be optimized with collapsing/indexing)
 
-### 推荐方案：选项 C + 配置驱动
+### Recommended: Option C + Config-Driven
 
 ```yaml
 # project.yaml
@@ -116,65 +116,65 @@ lifecycle:
       started_at: "2026-01-20"
       milestones_completed: []
   
-  # 每个阶段的特定配置
+  # Stage-specific configuration
   stage_configs:
     demo:
-      # 可以覆盖全局配置
+      # Can override global config
       roles_override: []
       decision_levels_override: {}
       workflow_override: {}
 ```
 
-在 `CONTRIBUTING_AI.md` 中：
+In `CONTRIBUTING_AI.md`:
 ```markdown
-# AI 协作规则
+# AI Collaboration Rules
 
-## 当前项目生涯阶段
-**阶段**: 原型验证 (demo)
-**开始时间**: 2026-01-20
-**阶段重点**: 快速迭代、概念验证、核心功能
+## Current Project Lifecycle Stage
+**Stage**: Prototype Validation (demo)
+**Start Date**: 2026-01-20
+**Stage Focus**: Rapid iteration, concept validation, core features
 
-## 阶段化协作规则
+## Stage-Based Collaboration Rules
 
-### 通用规则
-（所有阶段都适用的规则）
+### Common Rules
+(Rules applicable to all stages)
 
-### 原型验证阶段规则
-（demo 阶段特定的规则和原则）
+### Prototype Validation Stage Rules
+(demo stage specific rules and principles)
 
-### 量产阶段规则
-（production 阶段的规则，当前未激活）
+### Production Stage Rules
+(production stage rules, currently inactive)
 
-### 商业化阶段规则
-（commercial 阶段的规则，当前未激活）
+### Commercialization Stage Rules
+(commercial stage rules, currently inactive)
 
-### 稳定运营阶段规则
-（stable 阶段的规则，当前未激活）
+### Stable Operations Stage Rules
+(stable stage rules, currently inactive)
 ```
 
-### 生涯升级流程
+### Lifecycle Upgrade Process
 
-1. **触发时机**: 里程碑完成后自动检查，或手动触发
-2. **检查条件**: 
-   - 当前阶段里程碑是否全部完成
-   - 是否满足下一阶段的前置条件
-3. **升级流程**:
-   - 生成升级建议
-   - 更新 `project.yaml` 中的 `lifecycle.current_stage`
-   - 重新生成 `CONTRIBUTING_AI.md`（更新当前阶段标记）
-   - 记录升级历史
-   - 提示需要关注的变更点
+1. **Trigger timing**: Auto-check after milestone completion, or manual trigger
+2. **Check conditions**: 
+   - Whether all milestones for current stage are completed
+   - Whether prerequisites for next stage are met
+3. **Upgrade flow**:
+   - Generate upgrade suggestions
+   - Update `project.yaml` `lifecycle.current_stage`
+   - Regenerate `CONTRIBUTING_AI.md` (update current stage marker)
+   - Record upgrade history
+   - Prompt areas needing attention
 
-### 实现模块
+### Implementation Modules
 
-1. `src/vibecollab/lifecycle.py`: 生涯管理核心逻辑
-2. `src/vibecollab/git_utils.py`: Git 工具函数
-3. 更新 `generator.py`: 支持阶段化规则生成
-4. 更新 `cli.py`: 添加生涯检查命令
+1. `src/vibecollab/lifecycle.py`: Lifecycle management core logic
+2. `src/vibecollab/git_utils.py`: Git utility functions
+3. Update `generator.py`: Support stage-based rule generation
+4. Update `cli.py`: Add lifecycle check commands
 
-## 3. 集成点
+## 3. Integration Points
 
-- `Project.generate_all()`: 检查 Git，初始化生涯配置
-- `Project.regenerate()`: 检查生涯状态，更新文档
-- 新增命令: `vibecollab lifecycle check`: 检查当前生涯状态
-- 新增命令: `vibecollab lifecycle upgrade`: 升级到下一阶段
+- `Project.generate_all()`: Check Git, initialize lifecycle config
+- `Project.regenerate()`: Check lifecycle status, update documents
+- New command: `vibecollab lifecycle check`: Check current lifecycle status
+- New command: `vibecollab lifecycle upgrade`: Upgrade to next stage

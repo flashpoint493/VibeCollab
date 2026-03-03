@@ -1,230 +1,230 @@
-# VibeCollab 决策记录
+# VibeCollab Decision Records
 
-## 待确认决策
+## Pending Decisions
 
-(暂无)
+(None)
 
-## 已确认决策
+## Confirmed Decisions
 
-### DECISION-017: v0.10.x 发布工程 — 从"能用"到"专业开源项目"
-- **等级**: S
-- **角色**: [PM] [ARCH]
-- **问题**: 项目功能已基本完成 (v0.9.4, 1201 tests, 36 .py files, ~15K LOC)，但存在三大硬伤阻碍开源采纳：(1) 代码/CLI/文档全中文，国际受众无法使用 (2) 97 条 git commit 中英混杂，不专业 (3) README/GitHub 门面缺乏开源项目标准要素
-- **决策**: 分 5 个版本递进完成，**严格按序执行，不可跳步**
+### DECISION-017: v0.10.x Release Engineering — From "Working" to "Professional Open Source Project"
+- **Level**: S
+- **Role**: [PM] [ARCH]
+- **Problem**: Project features are essentially complete (v0.9.4, 1201 tests, 36 .py files, ~15K LOC), but three major issues hinder open-source adoption: (1) Code/CLI/docs entirely in Chinese, international audience cannot use (2) 97 git commits mixed Chinese/English, unprofessional (3) README/GitHub facade lacks standard open-source project elements
+- **Decision**: Complete in 5 incremental versions, **strict sequential execution, no steps may be skipped**
 
-#### 版本规划
+#### Version Plan
 
-**v0.10.0 — 最后业务逻辑 + 稳定性门槛**
-> 确保功能冻结前所有业务逻辑闭环，建立发布质量门槛
-- 外部项目 QA 全量验证（Phase 11 TC-E2E-001~010）
-- 测试覆盖率 ≥ 85% ✅ (已达 85%)
-- `vibecollab check` 全绿
-- MCP Server 在 Cursor/CodeBuddy 中实际验证
-- 修复 QA 过程中发现的所有 bug
-- 项目文件结构审查 — 确保 src/ 目录组织清晰可读（必要时拆分大文件、引入子包）
-- **功能冻结**: 此版本后不再新增业务功能
+**v0.10.0 — Final Business Logic + Stability Gate**
+> Ensure all business logic is closed-loop before feature freeze, establish release quality gate
+- External project QA full validation (Phase 11 TC-E2E-001~010)
+- Test coverage ≥ 85% ✅ (reached 85%)
+- `vibecollab check` all green
+- MCP Server validated in Cursor/CodeBuddy
+- Fix all bugs found during QA
+- Project file structure review — ensure src/ directory organization is clean and readable (split large files, introduce sub-packages if necessary)
+- **Feature freeze**: No new business features after this version
 
-**v0.10.1 — 代码国际化 (Code i18n)**
-> 代码层面全英文化，确保非中文母语开发者可读
-- **Scope 1: docstring/comment** — 36 个 .py 文件的中文注释/docstring 全部翻译为英文（~2055 行）
-- **Scope 2: CLI help** — 62+ 处 `help=` 参数翻译为英文
-- **Scope 3: 运行时输出** — `click.echo` / `console.print` 中的中文提示翻译为英文
-- **Scope 4: 错误消息** — "错误:", "未找到" 等翻译为英文
-- **不改**: 生成的 CONTRIBUTING_AI.md 模板内容保持中文（用户面向中文项目时需要）
-- **参考模板**: `event_log.py`, `llm_client.py`, `config_manager.py`, `task_manager.py`（已是英文）
-- 全量测试必须通过，覆盖率不降
+**v0.10.1 — Code Internationalization (Code i18n)**
+> Code-level full English translation, ensure non-Chinese native developers can read
+- **Scope 1: docstring/comment** — Translate Chinese comments/docstrings in 36 .py files to English (~2055 lines)
+- **Scope 2: CLI help** — Translate 62+ `help=` parameters to English
+- **Scope 3: Runtime output** — Translate Chinese prompts in `click.echo` / `console.print` to English
+- **Scope 4: Error messages** — Translate error messages to English
+- **Not changed**: Generated CONTRIBUTING_AI.md template content remains Chinese (needed for Chinese-facing projects)
+- **Reference templates**: `event_log.py`, `llm_client.py`, `config_manager.py`, `task_manager.py` (already in English)
+- Full test suite must pass, coverage must not decrease
 
-**v0.10.2 — 文档双语化 (Doc Bilingual)**
-> README 和核心文档提供英文版本
-- README.md 重写为英文（作为主 README）
-- README_CN.md 保留中文版
-- CHANGELOG.md 整理为英文
-- pyproject.toml description 英文化
-- docs/ 下内部开发文档保持中文（开发者自用）
+**v0.10.2 — Documentation Bilingualization (Doc Bilingual)**
+> README and core docs provide English versions
+- README.md rewritten in English (as primary README)
+- README_CN.md preserves Chinese version
+- CHANGELOG.md organized in English
+- pyproject.toml description in English
+- docs/ internal development documents remain Chinese (developer self-use)
 
-**v0.10.3 — Git 历史重写 + 仓库门面**
-> 这是破坏性操作，必须在最后执行
-- `git filter-branch` 或 `git-filter-repo` 重写全部 97+ commit message 为标准英文
-  - 保持 Conventional Commits 格式: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `release:`
-  - 保留关键信息（版本号、测试数、决策编号）
-  - 一次性 force push（不可逆）
-- Git commit 向量化索引 — `vibecollab index` 支持索引 git commit message，作为语义检索上下文
-  - commit message 已是 insight suggest / onboard 等模块的核心输入信号
-  - 英文化后的 commit 质量更高，向量化价值更大
-- GitHub 仓库门面:
-  - About 描述 + Topics 标签
+**v0.10.3 — Git History Rewrite + Repository Facade**
+> This is a destructive operation, must be executed last
+- `git filter-branch` or `git-filter-repo` rewrite all 97+ commit messages to standard English
+  - Maintain Conventional Commits format: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `release:`
+  - Preserve key info (version numbers, test counts, decision numbers)
+  - One-time force push (irreversible)
+- Git commit vectorization index — `vibecollab index` supports indexing git commit messages as semantic search context
+  - Commit messages are core input signals for insight suggest / onboard etc.
+  - Englishified commits have higher quality, greater vectorization value
+- GitHub repository facade:
+  - About description + Topics tags
   - Issue / PR template
-  - CONTRIBUTING.md (英文，面向外部贡献者)
+  - CONTRIBUTING.md (English, for external contributors)
   - CODE_OF_CONDUCT.md
-  - GitHub Release 创建（v0.10.3 起）
+  - GitHub Release (from v0.10.3 onward)
   - Badge: PyPI / CI / Coverage / License / Python Version
 
-**v1.0.0 — 正式发布**
-> 标记稳定版本
-- 清理所有 .dev0 标记
-- PyPI v1.0.0 发布
+**v1.0.0 — Official Release**
+> Mark stable version
+- Clean up all .dev0 markers
+- PyPI v1.0.0 release
 - GitHub Release v1.0.0
-- 宣发准备
+- Publicity preparation
 
-#### 核心原则
-1. **先功能冻结，再美化** — v0.10.0 之后不再新增功能
-2. **先代码英文化，再文档英文化** — 代码是根本，文档跟随
-3. **Git 历史重写放最后** — 避免 force push 后还要继续提交中文 commit
-4. **每个版本自成一体，可独立发布 PyPI** — 任何版本都是可发布状态
-5. **全量测试是铁门** — 每个版本必须 1201+ tests passed, 0 regression
+#### Core Principles
+1. **Feature freeze first, then polish** — No new features after v0.10.0
+2. **Code English first, then docs English** — Code is fundamental, docs follow
+3. **Git history rewrite goes last** — Avoid force push then continue committing Chinese commits
+4. **Each version is self-contained and independently releasable to PyPI** — Any version is a releasable state
+5. **Full test suite is the iron gate** — Each version must have 1201+ tests passed, 0 regression
 
-#### 工作量估算
+#### Effort Estimate
 
-| 版本 | 核心工作 | 预估工时 |
-|------|---------|---------|
-| v0.10.0 | QA 验证 + bug fix + 覆盖率 | 2-3 session |
-| v0.10.1 | 36 文件代码英文化 (~2055 行中文) | 3-4 session |
-| v0.10.2 | README 英文重写 + CHANGELOG 整理 | 1-2 session |
-| v0.10.3 | 97 commit 重写 + GitHub 门面 | 1-2 session |
-| v1.0.0 | 版本号 + Release + 宣发 | 1 session |
+| Version | Core Work | Estimated Effort |
+|---------|-----------|-----------------|
+| v0.10.0 | QA validation + bug fix + coverage | 2-3 sessions |
+| v0.10.1 | 36 files code English translation (~2055 Chinese lines) | 3-4 sessions |
+| v0.10.2 | README English rewrite + CHANGELOG cleanup | 1-2 sessions |
+| v0.10.3 | 97 commits rewrite + GitHub facade | 1-2 sessions |
+| v1.0.0 | Version number + Release + publicity | 1 session |
 
-- **日期**: 2026-02-27
-- **状态**: CONFIRMED
-- **影响**: 整个项目从 demo 阶段向 production 阶段过渡的关键路径
+- **Date**: 2026-02-27
+- **Status**: CONFIRMED
+- **Impact**: Critical path for the entire project's transition from demo to production phase
 
-### DECISION-001: 将 llm.txt 重命名为 CONTRIBUTING_AI.md
-- **等级**: A
-- **角色**: [ARCH]
-- **问题**: 输出文件名应该使用什么名称？
-- **决策**: 使用 `CONTRIBUTING_AI.md` 作为主要输出文件
-- **理由**: 
-  - 更符合 GitHub 社区规范（类似 CONTRIBUTING.md）
-  - 明确表示这是 AI 协作指南
-  - 避免与 llms.txt 标准混淆
-- **日期**: 2026-01-20
-- **状态**: CONFIRMED
-- **影响**: 所有代码、文档、模板中的引用都需要更新
+### DECISION-001: Rename llm.txt to CONTRIBUTING_AI.md
+- **Level**: A
+- **Role**: [ARCH]
+- **Problem**: What name should the output file use?
+- **Decision**: Use `CONTRIBUTING_AI.md` as the primary output file
+- **Rationale**: 
+  - More aligned with GitHub community conventions (similar to CONTRIBUTING.md)
+  - Clearly indicates this is an AI collaboration guide
+  - Avoids confusion with llms.txt standard
+- **Date**: 2026-01-20
+- **Status**: CONFIRMED
+- **Impact**: All references in code, docs, and templates need updating
 
-### DECISION-002: 集成 llms.txt 标准
-- **等级**: A
-- **角色**: [ARCH]
-- **问题**: 如何与 llmstxt.org 标准集成？
-- **决策**: 在 llms.txt 中添加 AI Collaboration 章节，引用 CONTRIBUTING_AI.md
-- **理由**:
-  - llms.txt 是更广泛采用的标准
-  - Context7 等工具原生支持
-  - 未来 AI 训练/推理优先读取
-  - 职责分离：llms.txt 描述项目，CONTRIBUTING_AI.md 定义协作规则
-- **日期**: 2026-01-20
-- **状态**: CONFIRMED
-- **影响**: 新增 llmstxt.py 模块，自动检测和更新 llms.txt
+### DECISION-002: Integrate llms.txt Standard
+- **Level**: A
+- **Role**: [ARCH]
+- **Problem**: How to integrate with the llmstxt.org standard?
+- **Decision**: Add an AI Collaboration section in llms.txt, referencing CONTRIBUTING_AI.md
+- **Rationale**:
+  - llms.txt is a more widely adopted standard
+  - Context7 and similar tools natively support it
+  - Future AI training/inference prioritizes reading it
+  - Separation of concerns: llms.txt describes the project, CONTRIBUTING_AI.md defines collaboration rules
+- **Date**: 2026-01-20
+- **Status**: CONFIRMED
+- **Impact**: Added llmstxt.py module, auto-detect and update llms.txt
 
-### DECISION-003: 重命名包为 vibe-collab
-- **等级**: A
-- **角色**: [ARCH]
-- **问题**: 包名应该叫什么？
-- **决策**: 使用 `vibe-collab` 作为包名和仓库名
-- **理由**:
-  - 体现 Vibe Development 哲学
-  - 强调协作（collaboration）特性
-  - 避免与现有 PyPI 包名冲突
-  - 更简洁、易记
-- **日期**: 2026-01-20
-- **状态**: CONFIRMED
-- **影响**: 包名、仓库名、所有文档引用都需要更新
+### DECISION-003: Rename Package to vibe-collab
+- **Level**: A
+- **Role**: [ARCH]
+- **Problem**: What should the package be called?
+- **Decision**: Use `vibe-collab` as package name and repository name
+- **Rationale**:
+  - Embodies Vibe Development philosophy
+  - Emphasizes collaboration feature
+  - Avoids conflicts with existing PyPI package names
+  - Simpler, more memorable
+- **Date**: 2026-01-20
+- **Status**: CONFIRMED
+- **Impact**: Package name, repository name, all documentation references need updating
 
-### DECISION-004: 项目生涯阶段信息放在 ROADMAP.md
-- **等级**: B
-- **角色**: [PM]
-- **问题**: 项目生涯阶段信息应该放在哪里？
-- **决策**: 放在 ROADMAP.md 文档中，而不是 CONTRIBUTING_AI.md
-- **理由**:
-  - ROADMAP 是 PM 侧重的文档
-  - 生涯阶段管理更符合项目管理的范畴
-  - 保持 CONTRIBUTING_AI.md 专注于协作规则
-- **日期**: 2026-01-21
-- **状态**: CONFIRMED
-- **影响**: ROADMAP.md 模板需要包含阶段信息
+### DECISION-004: Place Project Lifecycle Stage Info in ROADMAP.md
+- **Level**: B
+- **Role**: [PM]
+- **Problem**: Where should project lifecycle stage information be placed?
+- **Decision**: In ROADMAP.md, not CONTRIBUTING_AI.md
+- **Rationale**:
+  - ROADMAP is a PM-focused document
+  - Lifecycle stage management better fits project management scope
+  - Keep CONTRIBUTING_AI.md focused on collaboration rules
+- **Date**: 2026-01-21
+- **Status**: CONFIRMED
+- **Impact**: ROADMAP.md template needs to include stage information
 
-### DECISION-005: Demo 阶段早期介入 CI/CD
-- **等级**: B
-- **角色**: [ARCH]
-- **问题**: CI/CD 应该在哪个阶段建立？
-- **决策**: Demo 阶段就应该建立 CI/CD
-- **理由**:
-  - 早期建立 CI/CD 可以避免后期迁移成本
-  - 自动化测试和部署有助于快速迭代
-  - 符合现代开发最佳实践
-- **日期**: 2026-01-21
-- **状态**: CONFIRMED
-- **影响**: 更新 demo 阶段的 principles，添加"建立 CI/CD"
+### DECISION-005: Early CI/CD Involvement in Demo Stage
+- **Level**: B
+- **Role**: [ARCH]
+- **Problem**: At which stage should CI/CD be established?
+- **Decision**: CI/CD should be established during the Demo stage
+- **Rationale**:
+  - Early CI/CD avoids migration costs later
+  - Automated testing and deployment aids rapid iteration
+  - Aligns with modern development best practices
+- **Date**: 2026-01-21
+- **Status**: CONFIRMED
+- **Impact**: Updated demo stage principles, added "establish CI/CD"
 
-### DECISION-006: Production 阶段前确立性能规范和代码重构
-- **等级**: A
-- **角色**: [ARCH]
-- **问题**: 性能规范和代码重构应该在什么时候进行？
-- **决策**: 在进入 Production 阶段前就应该开始
-- **理由**:
-  - 量产前需要建立稳定的代码结构
-  - 性能标准需要在规模化前定义
-  - 全量代码 review 可以提前发现架构问题
-- **日期**: 2026-01-21
-- **状态**: CONFIRMED
-- **影响**: 更新 production 阶段的 principles
+### DECISION-006: Establish Performance Specs and Code Refactoring Before Production Stage
+- **Level**: A
+- **Role**: [ARCH]
+- **Problem**: When should performance specifications and code refactoring happen?
+- **Decision**: Should start before entering Production stage
+- **Rationale**:
+  - Stable code structure needed before mass production
+  - Performance standards should be defined before scaling
+  - Full code review can identify architecture issues early
+- **Date**: 2026-01-21
+- **Status**: CONFIRMED
+- **Impact**: Updated production stage principles
 
-### DECISION-007: 自动 Git 检查和初始化
-- **等级**: B
-- **角色**: [DEV]
-- **问题**: 是否应该自动初始化 Git 仓库？
-- **决策**: 在项目初始化时自动检查，可选自动初始化
-- **理由**:
-  - 确保项目从一开始就使用版本控制
-  - 巩固后续对话时坚持 Git 同步的习惯
-  - 提供 `--no-git` 选项给不需要的用户
-- **日期**: 2026-01-21
-- **状态**: CONFIRMED
-- **影响**: 新增 git_utils.py 模块，集成到项目初始化流程
+### DECISION-007: Automatic Git Check and Initialization
+- **Level**: B
+- **Role**: [DEV]
+- **Problem**: Should Git repos be auto-initialized?
+- **Decision**: Auto-check during project init, optionally auto-initialize
+- **Rationale**:
+  - Ensure projects use version control from the start
+  - Reinforce Git sync habits in subsequent conversations
+  - Provide `--no-git` option for users who don't need it
+- **Date**: 2026-01-21
+- **Status**: CONFIRMED
+- **Impact**: Added git_utils.py module, integrated into project initialization flow
 
-### DECISION-008: 多开发者支持架构设计
-- **发起人**: user
-- **参与者**: user, AI
-- **等级**: A
-- **角色**: [ARCH]
-- **问题**: 如何支持多个开发者/多个 Agent 协同开发？
-- **选项**:
-  - A: 每个开发者独立 CONTEXT.md，无全局视图
-  - B: 保持单一 CONTEXT.md，添加开发者标记
-  - C: 开发者独立 CONTEXT.md + 全局聚合视图（选择）
-- **决策**: 采用方案 C - 开发者独立上下文 + 全局自动聚合
-- **理由**:
-  - **隔离性**: 各开发者维护自己的工作上下文，避免冲突
-  - **全局视图**: 自动聚合提供项目整体状态，便于协调
-  - **可扩展**: 易于添加新开发者，无需重构现有结构
-  - **向后兼容**: 单开发者项目可平滑迁移到多开发者模式
-- **技术方案**:
-  - 开发者身份识别: Git 用户名自动识别（`git config user.name`）
-  - 目录结构: `docs/developers/{developer}/CONTEXT.md`
-  - 全局聚合: `docs/CONTEXT.md` 自动从各开发者上下文生成（只读）
-  - 协作管理: 新增 `docs/developers/COLLABORATION.md` 记录依赖和交接
-  - CHANGELOG.md: 保持全局统一（版本历史应该统一）
-  - DECISIONS.md: 添加 `initiator` 和 `participants` 字段标记参与者
-  - Git commit: 不额外标记，使用 Git 原生 author 信息
-- **日期**: 2026-02-10
-- **状态**: CONFIRMED
-- **影响**: 
-  - 新增 `src/vibecollab/developer.py` 模块（DeveloperManager, ContextAggregator）
-  - 扩展 `project.yaml` schema（multi_developer 配置）
-  - 新增 CLI 命令（`vibecollab dev *`）
-  - 更新项目初始化逻辑（支持 `--multi-dev` 选项）
-  - 版本升级到 v0.5.0
+### DECISION-008: Multi-Developer Support Architecture Design
+- **Initiator**: user
+- **Participants**: user, AI
+- **Level**: A
+- **Role**: [ARCH]
+- **Problem**: How to support multiple developers / multiple AI Agents collaborating?
+- **Options**:
+  - A: Each developer independent CONTEXT.md, no global view
+  - B: Keep single CONTEXT.md, add developer markers
+  - C: Independent developer CONTEXT.md + global aggregated view (chosen)
+- **Decision**: Option C — Independent developer contexts + global auto-aggregation
+- **Rationale**:
+  - **Isolation**: Each developer maintains their own work context, avoiding conflicts
+  - **Global view**: Auto-aggregation provides project-wide status for coordination
+  - **Extensible**: Easy to add new developers without restructuring
+  - **Backward compatible**: Single-developer projects can seamlessly migrate to multi-developer mode
+- **Technical approach**:
+  - Developer identity recognition: Git username auto-recognition (`git config user.name`)
+  - Directory structure: `docs/developers/{developer}/CONTEXT.md`
+  - Global aggregation: `docs/CONTEXT.md` auto-generated from all developer contexts (read-only)
+  - Collaboration management: Added `docs/developers/COLLABORATION.md` for dependencies and handoffs
+  - CHANGELOG.md: Remains globally unified (version history should be unified)
+  - DECISIONS.md: Added `initiator` and `participants` fields to mark participants
+  - Git commit: No extra marking, uses Git native author info
+- **Date**: 2026-02-10
+- **Status**: CONFIRMED
+- **Impact**: 
+  - Added `src/vibecollab/developer.py` module (DeveloperManager, ContextAggregator)
+  - Extended `project.yaml` schema (multi_developer config)
+  - Added CLI commands (`vibecollab dev *`)
+  - Updated project initialization logic (supports `--multi-dev` option)
+  - Version upgraded to v0.5.0
 
 ### DECISION-009: Borrow architectural patterns for protocol maturity
-- **发起人**: user
-- **参与者**: user, AI
-- **等级**: A
-- **角色**: [ARCH]
-- **问题**: How to improve VibeCollab's protocol maturity and structural robustness?
-- **选项**:
+- **Initiator**: user
+- **Participants**: user, AI
+- **Level**: A
+- **Role**: [ARCH]
+- **Problem**: How to improve VibeCollab's protocol maturity and structural robustness?
+- **Options**:
   - A: Full-scale architecture overhaul (high risk, high disruption)
   - B: Selective pattern borrowing with gradual introduction (chosen)
   - C: Minimal changes, only fix bugs
-- **决策**: Direction B — Selectively adopt 10 proven architectural patterns, mapped to VibeCollab-native concepts, introduced incrementally with unit tests per iteration.
-- **理由**:
+- **Decision**: Direction B — Selectively adopt 10 proven architectural patterns, mapped to VibeCollab-native concepts, introduced incrementally with unit tests per iteration.
+- **Rationale**:
   - Incremental approach reduces risk and allows validation at each step
   - Patterns are renamed and adapted to VibeCollab's project-centric philosophy
   - Each iteration is independently testable and committable
@@ -240,245 +240,245 @@
   8. Blast radius control → Task max change scope (Medium)
   9. Defense-in-depth safety → Multi-level validation guards (Low)
   10. Asset sharing protocol → Cross-project template sharing (Low)
-- **日期**: 2026-02-24
-- **状态**: CONFIRMED
-- **影响**:
+- **Date**: 2026-02-24
+- **Status**: CONFIRMED
+- **Impact**:
   - Iteration 1: EventLog module (event_log.py) — COMPLETED
   - Iteration 2: TaskManager module (task_manager.py) — COMPLETED
   - Iteration 3: PatternEngine module (pattern_engine.py) — COMPLETED
   - Iteration 4: Health Signals (health.py) + Agent Executor (agent_executor.py) — COMPLETED
 
-### DECISION-010: 三模式 AI 架构 (IDE + CLI + Agent)
-- **发起人**: user
-- **参与者**: user, AI
-- **等级**: A
-- **角色**: [ARCH]
-- **问题**: VibeCollab 应如何支持不同的 AI 交互场景？
-- **选项**:
-  - A: 仅保留 IDE 对话模式 (现有)
-  - B: 添加 CLI 人机交互 + IDE (两模式)
-  - C: IDE + CLI 人机交互 + Agent 自主 (三模式，选择)
-- **决策**: 采用方案 C — 三模式共存
-- **理由**:
-  - **IDE 对话**: 开发者在 Cursor/CodeBuddy 中直接协作，读 CONTRIBUTING_AI.md (已有)
-  - **CLI 人机交互**: `vibecollab ai ask/chat`，无需 IDE 也能与 AI 协作
-  - **Agent 自主**: `vibecollab ai agent run/serve`，服务器部署，配 API Key 自驱开发
-  - 三模式满足从本地开发到服务器部署的完整场景
-  - Agent 模式内置安全门控 (PID锁, pending-solidify, 最大周期, 自适应退避, 断路器)
-- **技术方案**:
-  - 新增 `cli_ai.py` 作为命令层，注册到主 CLI (`vibecollab ai`)
-  - 复用 `LLMClient` + `build_project_context()` + `TaskManager` + `EventLog`
-  - Agent serve 循环: Plan→Execute→Solidify，每周期独立
-  - 环境变量配置: `VIBECOLLAB_AGENT_MAX_CYCLES`, `VIBECOLLAB_AGENT_*`
-- **日期**: 2026-02-24
-- **状态**: CONFIRMED
-- **影响**:
-  - 新增 `src/vibecollab/cli_ai.py` (870+ 行)
-  - 新增 `tests/test_cli_ai.py` (32 tests)
-  - 版本升级到 v0.5.8
+### DECISION-010: Three-Mode AI Architecture (IDE + CLI + Agent)
+- **Initiator**: user
+- **Participants**: user, AI
+- **Level**: A
+- **Role**: [ARCH]
+- **Problem**: How should VibeCollab support different AI interaction scenarios?
+- **Options**:
+  - A: Keep only IDE dialogue mode (existing)
+  - B: Add CLI human-machine interaction + IDE (two modes)
+  - C: IDE + CLI human-machine interaction + Agent autonomous (three modes, chosen)
+- **Decision**: Option C — Three-mode coexistence
+- **Rationale**:
+  - **IDE dialogue**: Developers collaborate directly in Cursor/CodeBuddy, reading CONTRIBUTING_AI.md (existing)
+  - **CLI human-machine**: `vibecollab ai ask/chat`, collaborate with AI without IDE
+  - **Agent autonomous**: `vibecollab ai agent run/serve`, server deployment, API Key driven development
+  - Three modes cover the complete spectrum from local development to server deployment
+  - Agent mode has built-in safety gates (PID lock, pending-solidify, max cycles, adaptive backoff, circuit breaker)
+- **Technical approach**:
+  - Added `cli_ai.py` as command layer, registered to main CLI (`vibecollab ai`)
+  - Reuses `LLMClient` + `build_project_context()` + `TaskManager` + `EventLog`
+  - Agent serve loop: Plan→Execute→Solidify, each cycle independent
+  - Environment variable config: `VIBECOLLAB_AGENT_MAX_CYCLES`, `VIBECOLLAB_AGENT_*`
+- **Date**: 2026-02-24
+- **Status**: CONFIRMED
+- **Impact**:
+  - Added `src/vibecollab/cli_ai.py` (870+ lines)
+  - Added `tests/test_cli_ai.py` (32 tests)
+  - Version upgraded to v0.5.8
 
-### DECISION-011: Pattern Engine 架构 (Manifest 驱动模板引擎)
-- **发起人**: user
-- **参与者**: user, AI
-- **等级**: A
-- **角色**: [ARCH]
-- **问题**: 如何替换 generator.py 中 27 个硬编码的 `_add_*()` 方法，实现可维护、可扩展的文档生成？
-- **选项**:
-  - A: 保持硬编码 Python 方法，逐步优化
-  - B: Jinja2 模板 + manifest.yaml 声明式引擎 (选择)
-  - C: 纯 Markdown 拼接，不用模板引擎
-- **决策**: 采用方案 B — Manifest 驱动的 Jinja2 模板引擎 + 本地覆盖机制
-- **理由**:
-  - **可维护性**: 每个章节独立 `.md.j2` 模板，修改不影响其他章节
-  - **声明式控制**: `manifest.yaml` 定义章节顺序、条件、模板映射，非代码即配置
-  - **可扩展性**: Template Overlay 允许用户在 `.vibecollab/patterns/` 自定义模板和 manifest
-  - **代码精简**: generator.py 从 1713 行减至 83 行，降低维护成本
-  - **条件语法**: 支持 `config.x.enabled|true` 默认值语法，比硬编码 if/else 更灵活
-- **技术方案**:
-  - `PatternEngine`: Jinja2 Environment + ChoiceLoader (本地优先 → 内置回退)
-  - `manifest.yaml`: 27 个 section 定义 (id, template, condition, chapter_title)
-  - `_merge_manifests()`: 支持 override/insert(after)/exclude 三种合并操作
-  - `_evaluate_condition()`: 支持 `|default` 语法的条件求值
-  - 27 个 `.md.j2` 模板文件 + `DEFAULT_STAGES` 内置阶段定义
-- **日期**: 2026-02-24
-- **状态**: CONFIRMED
-- **影响**:
-  - `src/vibecollab/pattern_engine.py` 增强 (~290 行)
-  - `src/vibecollab/generator.py` 精简 (1713 → 83 行)
+### DECISION-011: Pattern Engine Architecture (Manifest-Driven Template Engine)
+- **Initiator**: user
+- **Participants**: user, AI
+- **Level**: A
+- **Role**: [ARCH]
+- **Problem**: How to replace 27 hardcoded `_add_*()` methods in generator.py with a maintainable, extensible document generation system?
+- **Options**:
+  - A: Keep hardcoded Python methods, gradually optimize
+  - B: Jinja2 templates + manifest.yaml declarative engine (chosen)
+  - C: Pure Markdown concatenation, no template engine
+- **Decision**: Option B — Manifest-driven Jinja2 template engine + local override mechanism
+- **Rationale**:
+  - **Maintainability**: Each section is an independent `.md.j2` template, modifications don't affect other sections
+  - **Declarative control**: `manifest.yaml` defines section order, conditions, template mapping — configuration not code
+  - **Extensibility**: Template Overlay allows users to customize templates and manifest in `.vibecollab/patterns/`
+  - **Code reduction**: generator.py from 1713 lines to 83 lines, reducing maintenance cost
+  - **Condition syntax**: Supports `config.x.enabled|true` default value syntax, more flexible than hardcoded if/else
+- **Technical approach**:
+  - `PatternEngine`: Jinja2 Environment + ChoiceLoader (local-first → built-in fallback)
+  - `manifest.yaml`: 27 section definitions (id, template, condition, chapter_title)
+  - `_merge_manifests()`: Supports override/insert(after)/exclude three merge operations
+  - `_evaluate_condition()`: Supports `|default` syntax condition evaluation
+  - 27 `.md.j2` template files + `DEFAULT_STAGES` built-in stage definitions
+- **Date**: 2026-02-24
+- **Status**: CONFIRMED
+- **Impact**:
+  - `src/vibecollab/pattern_engine.py` enhanced (~290 lines)
+  - `src/vibecollab/generator.py` reduced (1713 → 83 lines)
   - `tests/test_pattern_engine.py` (40 tests)
-  - 新增 `Jinja2>=3.0` 依赖
-  - 新增 `src/vibecollab/patterns/` 目录 (27 模板 + manifest.yaml)
+  - Added `Jinja2>=3.0` dependency
+  - Added `src/vibecollab/patterns/` directory (27 templates + manifest.yaml)
 
-### DECISION-012: 砍掉 Web UI，转向 Insight 沉淀系统
-- **发起人**: user
-- **参与者**: user, AI
-- **等级**: S
-- **角色**: [ARCH] [PM]
-- **问题**: v0.7.0 应该做什么？Web UI 还是沉淀系统？
-- **选项**:
-  - A: v0.7.0 做 Web UI（项目状态可视化、冲突图谱、实时监控）
-  - B: 砍掉 Web UI，v0.7.0 做 Insight 沉淀系统（选择）
-- **决策**: 砍掉 Web UI，v0.7.0 全力做 Insight 沉淀系统
-- **理由**:
-  - Web UI 不是 VibeCollab 的核心竞争力，投入产出比低
-  - 沉淀系统直接增强 AI 协作质量，是核心差异化能力
-  - 开发中成功的步骤和经验应可被固定化、复用、跨 Developer 共享
-  - 未来沉淀不仅是 YAML 知识，还可关联实际工具/脚本/模板（Artifact），并可跨项目复用
-- **核心架构：本体与注册表分离**:
-  - **Insight 本体** (`INS-xxx.yaml`): 可移植的知识包，包含 title/summary/tags/category/body/artifacts/origin/fingerprint
-  - **Registry 注册表** (`registry.yaml`): 项目级使用状态，包含 weight/used_count/last_used_at/active + 衰减设置
-  - 本体是**跨项目可复用**的纯知识描述；注册表记录**本项目**的使用权重和生命周期
-  - 存储路径: `.vibecollab/insights/INS-xxx.yaml` + `.vibecollab/insights/registry.yaml`
-- **Tag 驱动的 Developer 描述**:
-  - Developer 使用开放式 Tag 体系描述（替代枚举字段），存于 `.metadata.yaml`
-  - 特定 Tag 可影响决策行为（如 `prefers:conservative` 影响风险评估）
-  - Developer 可记录 contributed（创造的 Insight）和 bookmarks（收藏的 Insight）
-- **搜索与溯源**:
-  - Tag 搜索: Jaccard 相似度 × 注册表权重排序
-  - Category 搜索: 精确匹配 + 权重排序
-  - 溯源链: `origin.derived_from` 追踪派生关系，`get_derived_tree()` 构建上下游关系
-  - **自描述溯源协议**: origin.source 结构不依赖项目内部 ID 体系
-    - `context`: 创建背景自然语言描述
-    - `source.description`: 来源的自描述（必填当 source 存在时），跨项目可读
-    - `source.ref`: 来源项目内部 ID（降级为可选 hint）
-    - `source.url`: 外部可访问链接（可选）
-    - `source.project`: 来源项目名（可选）
-- **权重衰减机制**:
-  - `decay_rate` × 周期衰减，`use_reward` 使用奖励，`deactivate_threshold` 自动停用
-  - 生命周期状态（weight/used_count/active）完全属于项目级注册表，不属于沉淀本体
-- **一致性校验**（5 项全量检查）:
-  - 注册表 ↔ 文件双向一致性
-  - `derived_from` 引用完整性
-  - Developer metadata 引用完整性
-  - SHA-256 内容指纹校验
-  - 所有 CRUD 操作自动记录 EventLog 审计事件
-- **设计原则**:
-  - 面向协作沉淀固化，而非 Agent 自进化
-  - Tag 驱动的开放式描述，而非僵硬枚举字段
-  - 融合 VibeCollab 自有符号系统（决策分级 S/A/B/C、SHA-256 指纹、EventLog 审计），不照搬外部术语
-  - Insight 本体极简可移植，未来可抽象为包通过包管理注册到项目
-- **日期**: 2026-02-25
-- **状态**: CONFIRMED
-- **影响**:
-  - ROADMAP.md 更新：v0.7.0 目标变更
-  - `schema/insight.schema.yaml` — Insight 本体 + Registry + Developer Tag 三部分 Schema ✅
-  - `src/vibecollab/insight_manager.py` — 核心模块（CRUD/Registry/搜索/溯源/一致性校验）✅
-  - `tests/test_insight_manager.py` — 62 单元测试 ✅
-  - `tests/test_developer.py` — developer.py 全覆盖，88 单元测试（含 Tag 扩展）✅
-  - Developer metadata 扩展 — tags/contributed/bookmarks CRUD ✅
-  - `src/vibecollab/cli_insight.py` — CLI 命令组 (list/show/add/search/use/decay/check/delete) ✅
-  - `tests/test_cli_insight.py` — 21 单元测试 ✅
-  - 一致性校验集成到 `vibecollab check --insights` ✅
-  - 跨 Developer 共享 + 溯源 CLI 可视化（bookmark/unbookmark/trace/who/stats）✅
-  - InsightManager 扩展: get_full_trace / get_insight_developers / get_cross_developer_stats ✅
+### DECISION-012: Cut Web UI, Pivot to Insight Solidification System
+- **Initiator**: user
+- **Participants**: user, AI
+- **Level**: S
+- **Role**: [ARCH] [PM]
+- **Problem**: What should v0.7.0 deliver? Web UI or solidification system?
+- **Options**:
+  - A: v0.7.0 builds Web UI (project status visualization, conflict graph, real-time monitoring)
+  - B: Cut Web UI, v0.7.0 builds Insight solidification system (chosen)
+- **Decision**: Cut Web UI, v0.7.0 fully focused on Insight solidification system
+- **Rationale**:
+  - Web UI is not VibeCollab's core competency, low ROI
+  - Solidification system directly enhances AI collaboration quality, core differentiator
+  - Successful development steps and experiences should be fixed, reusable, shareable across developers
+  - Future solidifications can be not just YAML knowledge, but also associated tools/scripts/templates (Artifacts), cross-project reusable
+- **Core architecture: Body and Registry separation**:
+  - **Insight body** (`INS-xxx.yaml`): Portable knowledge package with title/summary/tags/category/body/artifacts/origin/fingerprint
+  - **Registry** (`registry.yaml`): Project-level usage state with weight/used_count/last_used_at/active + decay settings
+  - Body is **cross-project reusable** pure knowledge; Registry records **this project's** usage weight and lifecycle
+  - Storage path: `.vibecollab/insights/INS-xxx.yaml` + `.vibecollab/insights/registry.yaml`
+- **Tag-driven Developer description**:
+  - Developers use open tag system (replaces enum fields), stored in `.metadata.yaml`
+  - Specific tags can influence decision behavior (e.g., `prefers:conservative` affects risk assessment)
+  - Developers can record contributed (created Insights) and bookmarks (bookmarked Insights)
+- **Search and provenance**:
+  - Tag search: Jaccard similarity × registry weight ranking
+  - Category search: Exact match + weight ranking
+  - Provenance chain: `origin.derived_from` tracks derivation, `get_derived_tree()` builds upstream/downstream relations
+  - **Self-describing provenance protocol**: origin.source structure doesn't depend on project internal ID system
+    - `context`: Natural language description of creation background
+    - `source.description`: Self-description of source (required when source exists), cross-project readable
+    - `source.ref`: Source project internal ID (demoted to optional hint)
+    - `source.url`: Externally accessible link (optional)
+    - `source.project`: Source project name (optional)
+- **Weight decay mechanism**:
+  - `decay_rate` × periodic decay, `use_reward` usage reward, `deactivate_threshold` auto-deactivation
+  - Lifecycle state (weight/used_count/active) fully belongs to project-level registry, not to the insight body
+- **Consistency check** (5-item full check):
+  - Registry ↔ file bidirectional consistency
+  - `derived_from` reference integrity
+  - Developer metadata reference integrity
+  - SHA-256 content fingerprint verification
+  - All CRUD operations auto-record EventLog audit events
+- **Design principles**:
+  - Oriented toward collaborative solidification, not Agent self-evolution
+  - Tag-driven open descriptions, not rigid enum fields
+  - Integrated with VibeCollab's own symbol system (decision levels S/A/B/C, SHA-256 fingerprint, EventLog audit), not borrowing external terminology
+  - Insight body is minimal and portable; future abstraction as packages via package manager registration
+- **Date**: 2026-02-25
+- **Status**: CONFIRMED
+- **Impact**:
+  - ROADMAP.md updated: v0.7.0 objectives changed
+  - `schema/insight.schema.yaml` — Insight body + Registry + Developer Tag three-part Schema ✅
+  - `src/vibecollab/insight_manager.py` — Core module (CRUD/Registry/search/provenance/consistency check) ✅
+  - `tests/test_insight_manager.py` — 62 unit tests ✅
+  - `tests/test_developer.py` — developer.py full coverage, 88 unit tests (including Tag extension) ✅
+  - Developer metadata extension — tags/contributed/bookmarks CRUD ✅
+  - `src/vibecollab/cli_insight.py` — CLI command group (list/show/add/search/use/decay/check/delete) ✅
+  - `tests/test_cli_insight.py` — 21 unit tests ✅
+  - Consistency check integrated into `vibecollab check --insights` ✅
+  - Cross-developer sharing + provenance CLI visualization (bookmark/unbookmark/trace/who/stats) ✅
+  - InsightManager extension: get_full_trace / get_insight_developers / get_cross_developer_stats ✅
 
-### DECISION-013: AI Agent 接入引导与行动建议系统
-- **发起人**: user
-- **参与者**: user, AI
-- **等级**: A
-- **角色**: [ARCH]
-- **问题**: AI Agent 接入项目后如何确保理解项目全貌？修改文件后如何知道下一步做什么？
-- **选项**:
-  - A: 仅依赖 CONTRIBUTING_AI.md 文档（现状，被动）
-  - B: 新增 onboard + next 命令实现主动引导（选择）
-- **决策**: 新增 `vibecollab onboard` 和 `vibecollab next` 两个核心命令
-- **理由**:
-  - **onboard**: 解决"AI 不知道从哪开始"问题，提供项目概况/进度/决策/待办/应读文件
-  - **next**: 解决"改了文件不知道下一步"问题，基于 git diff + mtime + linked_groups 生成行动建议
-  - 从被动诊断（check 告诉你哪里错了）进化为主动引导（onboard/next 告诉你该做什么）
-  - 同时增强文档一致性检查：linked_groups 三级检查（local_mtime/git_commit/release）
-- **日期**: 2026-02-25
-- **状态**: CONFIRMED
-- **影响**:
-  - 新增 `src/vibecollab/cli_guide.py` (~570 行)
-  - 新增 `tests/test_cli_guide.py` (29 tests)
-  - `protocol_checker.py` 增强: _check_document_consistency() + 三级检查方法
-  - `project.yaml` 新增 `documentation.consistency` 配置块
-  - update_threshold_hours 从 24h → 15min
-
----
-
-### DECISION-014: Task-Insight 自动关联系统
-- **发起人**: user
-- **参与者**: user, AI
-- **等级**: A
-- **角色**: [ARCH]
-- **问题**: Insight 沉淀与 Task 系统之间仅有元数据标注的间接关联，如何建立直接的知识-任务链接？
-- **选项**:
-  - A: 保持间接关联（仅 origin.source_type="task" 元数据）
-  - B: Task 创建时自动搜索关联 Insight，存入 metadata（选择）
-  - C: 全双向绑定（Insight 反向引用 Task）
-- **决策**: B — 单向自动关联（Task → Insight）
-- **理由**:
-  - 零配置：InsightManager 可选注入，无 InsightManager 时自动退化
-  - 低侵入：仅在 create_task() 追加 metadata，不改变返回类型和现有 API
-  - 高价值：Agent 创建 Task 时自动获得知识上下文，减少重复劳动
-  - 从 feature/description 提取关键词 + Jaccard × weight 匹配，复用已有搜索逻辑
-- **日期**: 2026-02-25
-- **状态**: CONFIRMED
-- **影响**:
-  - `task_manager.py` 增强: insight_manager 参数 + _find_related_insights() + suggest_insights()
-  - 新增 `src/vibecollab/cli_task.py` (task create/list/show/suggest)
-  - 新增 `tests/test_task_insight_integration.py` (28 tests)
-  - 完全向后兼容
+### DECISION-013: AI Agent Onboarding Guidance and Action Suggestion System
+- **Initiator**: user
+- **Participants**: user, AI
+- **Level**: A
+- **Role**: [ARCH]
+- **Problem**: How does an AI Agent understand the full project picture after onboarding? How does it know what to do next after modifying files?
+- **Options**:
+  - A: Rely solely on CONTRIBUTING_AI.md documentation (current, passive)
+  - B: Add onboard + next commands for proactive guidance (chosen)
+- **Decision**: Add two core commands: `vibecollab onboard` and `vibecollab next`
+- **Rationale**:
+  - **onboard**: Solves "AI doesn't know where to start" — provides project overview/progress/decisions/TODOs/reading list
+  - **next**: Solves "modified files, don't know next step" — generates action suggestions based on git diff + mtime + linked_groups
+  - Evolves from passive diagnostics (check tells you what's wrong) to proactive guidance (onboard/next tells you what to do)
+  - Simultaneously enhances document consistency check: linked_groups three-level check (local_mtime/git_commit/release)
+- **Date**: 2026-02-25
+- **Status**: CONFIRMED
+- **Impact**:
+  - Added `src/vibecollab/cli_guide.py` (~570 lines)
+  - Added `tests/test_cli_guide.py` (29 tests)
+  - `protocol_checker.py` enhanced: _check_document_consistency() + three-level check methods
+  - `project.yaml` added `documentation.consistency` config block
+  - update_threshold_hours from 24h → 15min
 
 ---
 
-### DECISION-015: 砍掉自举能力(v0.9.2)和 Agent 增强(v0.10.1)，聚焦 MCP + 发布
-- **发起人**: user
-- **参与者**: user, AI
-- **等级**: S
-- **角色**: [PM]
-- **问题**: v0.9.2 自举能力和 v0.10.1 Agent 增强是否值得继续投入？v0.10 应该做什么？
-- **选项**:
-  - A: 按原计划推进 v0.9.2 自举 → v0.10.0 无监督 → v0.10.1 Agent
-  - B: 砍掉自举和 Agent，MCP 完成后直接进入发布准备（选择）
-  - C: 只砍 Agent，保留自举
-- **决策**: B — 砍掉 v0.9.2 和 v0.10.1，v0.10.0 改为发布准备（文档/Wiki/README/PyPI）
-- **理由**:
-  - `bootstrap` 价值不足：已有手写 CONTRIBUTING_AI.md (1488行)，自动生成会覆盖且质量更差
-  - `ContextBuilder` 重构可在 MCP 开发中按需进行，不需要单列版本
-  - Agent 自建能力与 MCP + 外部 IDE (Cline/Cursor/CodeBuddy) 路线冲突，`vibecollab ai` 已在 DECISION-012 中标记 experimental 冻结
-  - 无监督运行（Git Hook/CI/CD）降为未来规划，优先级低于产品发布
-  - v0.10.0 聚焦文档完善 + PyPI 正式发布，是走向 v1.0 的关键步骤
-- **日期**: 2026-02-27
-- **状态**: CONFIRMED
-- **影响**:
-  - ROADMAP 版本链简化为: v0.9.0(语义检索) → v0.9.1(MCP) → v0.10.0(发布准备)
-  - v0.9.2 自举、v0.10.1 Agent 标记 ❌ 已砍掉
-  - 原 v0.10.0 无监督运行能力降入"未来规划"
-  - v1.0.0 前置条件简化
+### DECISION-014: Task-Insight Auto-Link System
+- **Initiator**: user
+- **Participants**: user, AI
+- **Level**: A
+- **Role**: [ARCH]
+- **Problem**: Insight solidification and Task system only have indirect association via metadata annotation, how to establish direct knowledge-task links?
+- **Options**:
+  - A: Keep indirect association (only origin.source_type="task" metadata)
+  - B: Auto-search related Insights on Task creation, store in metadata (chosen)
+  - C: Full bidirectional binding (Insight reverse-references Task)
+- **Decision**: B — Unidirectional auto-link (Task → Insight)
+- **Rationale**:
+  - Zero-config: InsightManager optionally injected, auto-degrades when absent
+  - Low intrusion: Only appends metadata in create_task(), doesn't change return type or existing API
+  - High value: Agent creating Tasks automatically gets knowledge context, reducing duplicate work
+  - Extract keywords from feature/description + Jaccard × weight matching, reuses existing search logic
+- **Date**: 2026-02-25
+- **Status**: CONFIRMED
+- **Impact**:
+  - `task_manager.py` enhanced: insight_manager parameter + _find_related_insights() + suggest_insights()
+  - Added `src/vibecollab/cli_task.py` (task create/list/show/suggest)
+  - Added `tests/test_task_insight_integration.py` (28 tests)
+  - Fully backward compatible
 
 ---
 
-### DECISION-016: v0.9.3 优先接通 Task/EventLog 到核心工作流
-- **发起人**: user
-- **参与者**: user, AI
-- **等级**: S
-- **角色**: [PM, ARCH]
-- **问题**: TaskManager（53 tests）和 EventLog（23 tests）已精心实现，但与用户日常工作流完全脱节。tasks.json 为空，events.jsonl 仅有 Insight 操作事件。onboard/next/check 三个核心命令均不读取 Task/EventLog 数据。HealthExtractor 已实现但未接入 CLI。v0.9.3/v0.9.4 应该做什么？
-- **选项**:
-  - A: 接受现状 — Task/EventLog 作为底层 API 存在，等用户手动使用
-  - B: 接通核心工作流 — onboard 注入 Task 概览、next 基于 Task 推荐、MCP 暴露 task_create/transition、CLI 补齐 transition/solidify/rollback（选择）
-  - C: 砍掉 TaskManager — 代码已验证，但用户不用就是废代码，不如删掉降低维护成本
-- **决策**: B — v0.9.3 优先将 Task/EventLog 接通到核心工作流，Insight 质量推到 v0.9.4
-- **理由**:
-  - TaskManager/EventLog 设计良好、测试充分，问题不是代码质量而是接入缺失
-  - onboard/next 是用户高频使用的命令，注入 Task/EventLog 数据能让用户感知到这些模块的价值
-  - MCP 暴露 task_create/transition 让 AI IDE 能自动管理任务，形成完整闭环
-  - CLI 缺少 transition/solidify/rollback 导致用户无法手动操作任务状态
-  - health 命令已接入 HealthExtractor，但 onboard/check 缺少 EventLog 可见性
-  - Insight 质量（去重/关联图谱/跨项目）优先级低于核心工作流打通
-- **日期**: 2026-02-27
-- **状态**: CONFIRMED
-- **影响**:
-  - v0.9.3 从 "Insight 质量与生命周期" 改为 "Task/EventLog 核心工作流接通"
-  - v0.9.4 新增 "Insight 质量与生命周期"
-  - Task CLI 补齐 transition/solidify/rollback 三个命令
-  - onboard 注入活跃 Task 概览
-  - next 基于 Task 状态推荐行动
-  - MCP 新增 task_create / task_transition Tool
-  - EventLog 数据在 onboard 中可见
+### DECISION-015: Cut Bootstrap (v0.9.2) and Agent Enhancement (v0.10.1), Focus on MCP + Release
+- **Initiator**: user
+- **Participants**: user, AI
+- **Level**: S
+- **Role**: [PM]
+- **Problem**: Are v0.9.2 bootstrap and v0.10.1 Agent enhancement worth continued investment? What should v0.10 focus on?
+- **Options**:
+  - A: Follow original plan v0.9.2 bootstrap → v0.10.0 unsupervised → v0.10.1 Agent
+  - B: Cut bootstrap and Agent, proceed to release preparation after MCP (chosen)
+  - C: Only cut Agent, keep bootstrap
+- **Decision**: B — Cut v0.9.2 and v0.10.1, change v0.10.0 to release preparation (docs/Wiki/README/PyPI)
+- **Rationale**:
+  - `bootstrap` insufficient value: already have handwritten CONTRIBUTING_AI.md (1488 lines), auto-generation would overwrite with lower quality
+  - `ContextBuilder` refactoring can happen on-demand during MCP development, no need for separate version
+  - Agent self-build conflicts with MCP + external IDE (Cline/Cursor/CodeBuddy) roadmap; `vibecollab ai` already marked experimental frozen in DECISION-012
+  - Unsupervised operation (Git Hook/CI/CD) demoted to future planning, lower priority than product release
+  - v0.10.0 focuses on documentation + PyPI official release, critical step toward v1.0
+- **Date**: 2026-02-27
+- **Status**: CONFIRMED
+- **Impact**:
+  - ROADMAP version chain simplified: v0.9.0(semantic search) → v0.9.1(MCP) → v0.10.0(release preparation)
+  - v0.9.2 bootstrap, v0.10.1 Agent marked ❌ cut
+  - Original v0.10.0 unsupervised operation demoted to "future planning"
+  - v1.0.0 prerequisites simplified
 
 ---
-*决策记录格式见 CONTRIBUTING_AI.md*
+
+### DECISION-016: v0.9.3 Prioritize Task/EventLog Core Workflow Integration
+- **Initiator**: user
+- **Participants**: user, AI
+- **Level**: S
+- **Role**: [PM, ARCH]
+- **Problem**: TaskManager (53 tests) and EventLog (23 tests) are well-implemented, but completely disconnected from user daily workflow. tasks.json is empty, events.jsonl only has Insight operation events. onboard/next/check three core commands don't read Task/EventLog data. HealthExtractor implemented but not connected to CLI. What should v0.9.3/v0.9.4 deliver?
+- **Options**:
+  - A: Accept status quo — Task/EventLog exist as low-level API, wait for users to manually use
+  - B: Connect core workflow — onboard injects Task overview, next recommends based on Tasks, MCP exposes task_create/transition, CLI adds transition/solidify/rollback (chosen)
+  - C: Cut TaskManager — Code is verified, but unused code is waste, better to delete and reduce maintenance cost
+- **Decision**: B — v0.9.3 prioritize connecting Task/EventLog to core workflow, Insight quality pushed to v0.9.4
+- **Rationale**:
+  - TaskManager/EventLog are well-designed and thoroughly tested; the issue is missing integration, not code quality
+  - onboard/next are high-frequency user commands; injecting Task/EventLog data lets users perceive these modules' value
+  - MCP exposing task_create/transition enables AI IDE to auto-manage tasks, completing the loop
+  - CLI missing transition/solidify/rollback prevents users from manually operating task states
+  - health command already connected to HealthExtractor, but onboard/check lack EventLog visibility
+  - Insight quality (dedup/graph/cross-project) lower priority than core workflow integration
+- **Date**: 2026-02-27
+- **Status**: CONFIRMED
+- **Impact**:
+  - v0.9.3 changed from "Insight Quality & Lifecycle" to "Task/EventLog Core Workflow Integration"
+  - v0.9.4 added "Insight Quality & Lifecycle"
+  - Task CLI added transition/solidify/rollback three commands
+  - onboard injects active Task overview
+  - next recommends actions based on Task status
+  - MCP added task_create / task_transition Tools
+  - EventLog data visible in onboard
+
+---
+*Decision record format defined in CONTRIBUTING_AI.md*
