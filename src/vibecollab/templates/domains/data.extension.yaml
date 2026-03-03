@@ -1,116 +1,116 @@
-# 数据工程领域扩展
-# 扩展 = 流程钩子 + 上下文注入 + 引用文档
+# Data Engineering Domain Extension
+# Extension = workflow hooks + context injection + reference documents
 
-# 角色覆盖
+# Role overrides
 roles_override:
   - code: "DESIGN"
-    name: "数据产品"
-    focus: ["数据需求", "指标定义", "报表设计"]
-    triggers: ["需求", "指标", "报表"]
+    name: "Data Product"
+    focus: ["data requirements", "metric definitions", "report design"]
+    triggers: ["requirements", "metrics", "reports"]
 
   - code: "DE"
-    name: "数据工程"
-    focus: ["ETL", "数据管道", "数据仓库"]
-    triggers: ["ETL", "管道", "仓库", "调度"]
+    name: "Data Engineering"
+    focus: ["ETL", "data pipelines", "data warehouse"]
+    triggers: ["ETL", "pipeline", "warehouse", "scheduling"]
 
   - code: "DA"
-    name: "数据分析"
-    focus: ["数据探索", "可视化", "洞察"]
-    triggers: ["分析", "可视化", "报告"]
+    name: "Data Analysis"
+    focus: ["data exploration", "visualization", "insights"]
+    triggers: ["analysis", "visualization", "report"]
 
   - code: "ML"
-    name: "机器学习"
-    focus: ["模型", "特征工程", "训练"]
-    triggers: ["模型", "ML", "特征"]
+    name: "Machine Learning"
+    focus: ["models", "feature engineering", "training"]
+    triggers: ["model", "ML", "features"]
 
-# 领域扩展
+# Domain extensions
 domain_extensions:
   data:
     
-    # ========== 钩子定义 ==========
+    # ========== Hook Definitions ==========
     hooks:
-      # QA 测试时注入数据质量检查
+      # Inject data quality checks when QA lists test cases
       - trigger: "qa.list_test_cases"
         action: "inject_context"
         context_id: "data_quality_checks"
         condition: "files.exists('tests/expectations/')"
       
-      # 功能完成时检查数据文档
+      # Check data documentation when feature is complete
       - trigger: "dev.feature_complete"
         action: "append_checklist"
         context_id: "data_doc_check"
         condition: "feature.type in ['etl', 'pipeline', 'model']"
       
-      # 管道部署前检查
+      # Pre-pipeline deployment checks
       - trigger: "build.pre"
         action: "inject_context"
         context_id: "pipeline_checklist"
         condition: "project.has_feature('pipeline')"
 
-    # ========== 上下文定义 ==========
+    # ========== Context Definitions ==========
     contexts:
-      # 数据质量检查
+      # Data quality checks
       data_quality_checks:
         type: "reference"
         source: "docs/DATA_QUALITY.md"
-        description: "数据质量规则和验证"
+        description: "Data quality rules and validation"
       
-      # 数据文档检查
+      # Data documentation check
       data_doc_check:
         type: "template"
         content: |
-          ## 数据文档检查
-          - [ ] Schema 是否已文档化？
-          - [ ] 数据字典是否更新？
-          - [ ] 数据血缘是否记录？
-          - [ ] 数据质量规则是否定义？
+          ## Data Documentation Check
+          - [ ] Is the schema documented?
+          - [ ] Is the data dictionary updated?
+          - [ ] Is the data lineage recorded?
+          - [ ] Are data quality rules defined?
       
-      # 管道部署清单
+      # Pipeline deployment checklist
       pipeline_checklist:
         type: "template"
         content: |
-          ## 管道部署检查
-          - [ ] 单元测试通过
-          - [ ] 集成测试通过
-          - [ ] 数据质量验证通过
-          - [ ] 调度配置正确
-          - [ ] 监控告警配置
-          - [ ] 回滚方案准备
+          ## Pipeline Deployment Checklist
+          - [ ] Unit tests pass
+          - [ ] Integration tests pass
+          - [ ] Data quality validation pass
+          - [ ] Scheduling configuration correct
+          - [ ] Monitoring and alerting configured
+          - [ ] Rollback plan prepared
 
-    # ========== 额外文件 ==========
+    # ========== Additional Files ==========
     additional_files:
       - path: "docs/DATA_QUALITY.md"
-        purpose: "数据质量规则"
+        purpose: "Data quality rules"
         template: |
-          # 数据质量规则
+          # Data Quality Rules
           
-          ## 通用规则
+          ## General Rules
           
-          | 规则 | 说明 | 阈值 |
-          |------|------|------|
-          | 完整性 | 非空率 | > 99% |
-          | 唯一性 | 主键唯一 | 100% |
-          | 时效性 | 数据延迟 | < 1h |
+          | Rule | Description | Threshold |
+          |------|-------------|-----------|
+          | Completeness | Non-null rate | > 99% |
+          | Uniqueness | Primary key uniqueness | 100% |
+          | Timeliness | Data latency | < 1h |
           
-          ## 表级规则
+          ## Table-Level Rules
           
-          (按表添加)
+          (Add per table)
       
       - path: "docs/DATA_DICTIONARY.md"
-        purpose: "数据字典"
+        purpose: "Data dictionary"
         template: |
-          # 数据字典
+          # Data Dictionary
           
-          ## 表清单
+          ## Table List
           
-          | 表名 | 说明 | Owner |
-          |------|------|-------|
+          | Table | Description | Owner |
+          |-------|-------------|-------|
           
-          ## 字段说明
+          ## Field Descriptions
           
-          (按表添加)
+          (Add per table)
 
-    # ========== 配置项 ==========
+    # ========== Configuration ==========
     config:
       test_command: "pytest tests/"
       dq_tool: "great_expectations"

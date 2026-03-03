@@ -1,128 +1,128 @@
-# Web 应用领域扩展
-# 扩展 = 流程钩子 + 上下文注入 + 引用文档
+# Web Application Domain Extension
+# Extension = workflow hooks + context injection + reference documents
 
-# 角色覆盖
+# Role overrides
 roles_override:
   - code: "DESIGN"
-    name: "产品设计"
-    focus: ["需求", "用户体验", "交互设计", "原型"]
-    triggers: ["产品", "设计", "需求", "PRD"]
+    name: "Product Design"
+    focus: ["requirements", "user experience", "interaction design", "prototyping"]
+    triggers: ["product", "design", "requirements", "PRD"]
 
   - code: "FE"
-    name: "前端开发"
-    focus: ["UI实现", "交互逻辑", "性能优化"]
-    triggers: ["前端", "页面", "组件"]
+    name: "Frontend Development"
+    focus: ["UI implementation", "interaction logic", "performance optimization"]
+    triggers: ["frontend", "page", "component"]
 
   - code: "BE"
-    name: "后端开发"
-    focus: ["API", "数据库", "服务架构"]
-    triggers: ["后端", "接口", "服务"]
+    name: "Backend Development"
+    focus: ["API", "database", "service architecture"]
+    triggers: ["backend", "endpoint", "service"]
 
-# 领域扩展
+# Domain extensions
 domain_extensions:
   web:
     
-    # ========== 钩子定义 ==========
+    # ========== Hook Definitions ==========
     hooks:
-      # QA 测试时注入 API 文档
+      # Inject API docs when QA lists test cases
       - trigger: "qa.list_test_cases"
         action: "inject_context"
         context_id: "api_docs"
         condition: "files.exists('docs/api.yaml') or files.exists('docs/api.md')"
       
-      # 功能完成时检查 API 文档更新
+      # Check API doc updates when feature is complete
       - trigger: "dev.feature_complete"
         action: "append_checklist"
         context_id: "api_update_check"
         condition: "feature.has_api_change"
       
-      # 构建前检查
+      # Pre-build checks
       - trigger: "build.pre"
         action: "append_checklist"
         context_id: "build_checklist"
       
-      # 部署后检查
+      # Post-deploy checks
       - trigger: "build.post"
         action: "inject_context"
         context_id: "deploy_guide"
 
-    # ========== 上下文定义 ==========
+    # ========== Context Definitions ==========
     contexts:
-      # API 文档引用
+      # API documentation reference
       api_docs:
         type: "reference"
         source: "docs/api.yaml"
         fallback: "docs/api.md"
-        description: "API 接口文档"
+        description: "API endpoint documentation"
       
-      # API 更新检查
+      # API update check
       api_update_check:
         type: "template"
         content: |
-          ## API 变更检查
-          - [ ] 接口是否有变更？
-          - [ ] API 文档是否已更新？
-          - [ ] 是否需要版本号变更？
+          ## API Change Check
+          - [ ] Are there any API changes?
+          - [ ] Has the API documentation been updated?
+          - [ ] Is a version number change needed?
       
-      # 构建检查清单
+      # Build checklist
       build_checklist:
         type: "template"
         content: |
-          ## 构建检查
-          - [ ] `{lint_command}` 无错误
-          - [ ] `{test_command}` 测试通过
-          - [ ] `{build_command}` 构建成功
+          ## Build Checklist
+          - [ ] `{lint_command}` no errors
+          - [ ] `{test_command}` tests pass
+          - [ ] `{build_command}` build successful
       
-      # 部署指南
+      # Deploy guide
       deploy_guide:
         type: "reference"
         source: "docs/DEPLOY.md"
         inline_if_short: true
 
-    # ========== 额外文件 ==========
+    # ========== Additional Files ==========
     additional_files:
       - path: "docs/api.md"
-        purpose: "API 接口文档"
+        purpose: "API endpoint documentation"
         template: |
-          # API 接口文档
+          # API Documentation
           
           ## Base URL
           
           - Dev: `http://localhost:3000/api`
           - Prod: `https://api.example.com`
           
-          ## 接口列表
+          ## Endpoints
           
           ### GET /endpoint
           
-          **描述**: 
+          **Description**: 
           
-          **参数**:
+          **Parameters**:
           
-          **响应**:
+          **Response**:
           
           ```json
           {}
           ```
       
       - path: "docs/DEPLOY.md"
-        purpose: "部署指南"
+        purpose: "Deployment guide"
         template: |
-          # 部署指南
+          # Deployment Guide
           
-          ## 环境
+          ## Environments
           
-          | 环境 | URL | 说明 |
-          |------|-----|------|
-          | dev | localhost:3000 | 本地开发 |
-          | staging | staging.example.com | 预发布 |
-          | prod | example.com | 生产 |
+          | Environment | URL | Description |
+          |-------------|-----|-------------|
+          | dev | localhost:3000 | Local development |
+          | staging | staging.example.com | Pre-release |
+          | prod | example.com | Production |
           
-          ## 部署步骤
+          ## Deployment Steps
           
-          (待填写)
+          (To be filled)
 
-    # ========== 配置项 ==========
+    # ========== Configuration ==========
     config:
       lint_command: "npm run lint"
       test_command: "npm run test"

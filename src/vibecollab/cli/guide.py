@@ -619,22 +619,22 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
 # Protocol section to CONTRIBUTING_AI.md heading mapping
 _SECTION_MAP = {
     "protocol": [
-        "# 一、核心理念",
-        "# 三、决策分级制度",
-        "## 4.2 标准对话流程",
+        "# I. Core Philosophy",
+        "# III. Decision Classification System",
+        "## 4.2 Standard Dialogue Flow",
     ],
     "context": [],       # Dynamically generated, not extracted from file
     "insight": [
-        "# 经验沉淀工作流 (Insight Workflow)",
+        "# Insight Accumulation Workflow",
     ],
     "roles": [
-        "# 二、职能角色定义",
+        "# II. Role Definitions",
     ],
     "testing": [
-        "# 五、测试体系",
+        "# V. Testing System",
     ],
     "git": [
-        "## 4.3 Git 协作规范",
+        "## 4.3 Git Collaboration Standards",
     ],
 }
 

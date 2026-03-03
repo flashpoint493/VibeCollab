@@ -1,127 +1,127 @@
-# 游戏领域扩展
-# 扩展 = 流程钩子 + 上下文注入 + 引用文档
+# Game Domain Extension
+# Extension = workflow hooks + context injection + reference documents
 
-# 角色覆盖
+# Role overrides
 roles_override:
   - code: "DESIGN"
-    name: "游戏策划"
-    focus: ["玩法", "体验", "平衡", "叙事"]
-    triggers: ["策划", "设计", "玩法"]
+    name: "Game Designer"
+    focus: ["gameplay", "experience", "balance", "narrative"]
+    triggers: ["design", "gameplay", "mechanics"]
 
   - code: "ART"
-    name: "美术指导"
-    focus: ["风格", "资产规范", "视觉反馈"]
-    triggers: ["美术", "视觉", "风格"]
+    name: "Art Director"
+    focus: ["style", "asset standards", "visual feedback"]
+    triggers: ["art", "visual", "style"]
 
-# 领域扩展
+# Domain extensions
 domain_extensions:
   game:
     
-    # ========== 钩子定义 ==========
+    # ========== Hook Definitions ==========
     hooks:
-      # QA 列测试用例时，注入 GM 命令
+      # Inject GM commands when QA lists test cases
       - trigger: "qa.list_test_cases"
         action: "inject_context"
         context_id: "gm_commands"
         condition: "files.exists('docs/GM_COMMANDS.md')"
       
-      # 功能完成时，提供 GM 测试模板
+      # Provide GM test template when feature is complete
       - trigger: "dev.feature_complete"
         action: "inject_context"
         context_id: "gm_test_guide"
         condition: "project.has_feature('gm_console')"
       
-      # 构建前检查
+      # Pre-build checks
       - trigger: "build.pre"
         action: "append_checklist"
         context_id: "build_checklist"
       
-      # 对话开始时读取 GDD
+      # Read GDD at dialogue start
       - trigger: "dialogue.start"
         action: "require_file_read"
         context_id: "gdd_files"
         condition: "topic.relates_to('design')"
 
-    # ========== 上下文定义 ==========
+    # ========== Context Definitions ==========
     contexts:
-      # GM 命令列表 - 引用外部文档
+      # GM command list - reference external document
       gm_commands:
         type: "reference"
         source: "docs/GM_COMMANDS.md"
         inline_if_short: true
-        description: "GM 控制台命令，用于快速测试"
+        description: "GM console commands for quick testing"
       
-      # GM 测试指南 - 模板
+      # GM test guide - template
       gm_test_guide:
         type: "template"
         content: |
-          ## 🎮 GM 快速测试
+          ## GM Quick Test
           
-          **测试目标**: {feature_name}
+          **Test Target**: {feature_name}
           
-          **可用 GM 命令**: 
-          见 `docs/GM_COMMANDS.md` 或按 `{gm_trigger_key}` 打开控制台
+          **Available GM Commands**: 
+          See `docs/GM_COMMANDS.md` or press `{gm_trigger_key}` to open console
           
-          **推荐测试步骤**:
-          1. 使用 GM 跳过非目标流程
-          2. 快速到达测试场景
-          3. 验证功能表现
-          4. 关闭 GM 验证正常流程
+          **Recommended Test Steps**:
+          1. Use GM to skip non-target workflows
+          2. Quickly reach the test scenario
+          3. Verify feature behavior
+          4. Disable GM to verify normal flow
       
-      # 构建检查清单
+      # Build checklist
       build_checklist:
         type: "template"
         content: |
-          ## 构建前检查
+          ## Pre-Build Checklist
           - [ ] `{build_command}`
-          - [ ] 双击 `{dist_entry}` 测试
-          - [ ] 确认游戏正常运行
-          - [ ] 更新操作说明（如有新功能）
+          - [ ] Double-click `{dist_entry}` to test
+          - [ ] Confirm game runs normally
+          - [ ] Update instructions (if new features)
       
-      # GDD 文件列表 - 动态计算
+      # GDD file list - dynamically computed
       gdd_files:
         type: "file_list"
         pattern: "docs/GDD_*.md"
-        description: "游戏设计文档"
+        description: "Game design documents"
 
-    # ========== 额外文件 ==========
+    # ========== Additional Files ==========
     additional_files:
       - path: "docs/GM_COMMANDS.md"
-        purpose: "GM 控制台命令文档"
+        purpose: "GM console command documentation"
         template: |
-          # GM 控制台命令
+          # GM Console Commands
           
-          按 `/` 打开控制台。
+          Press `/` to open the console.
           
-          ## 通用命令
+          ## General Commands
           
-          | 命令 | 参数 | 说明 |
-          |------|------|------|
-          | `god` | - | 切换无敌模式 |
-          | `tp` | x y z | 传送到指定位置 |
-          | `give` | item_id [amount] | 给予物品 |
-          | `clear` | - | 清空背包 |
-          | `refill` | - | 补满资源 |
+          | Command | Args | Description |
+          |---------|------|-------------|
+          | `god` | - | Toggle invincibility |
+          | `tp` | x y z | Teleport to position |
+          | `give` | item_id [amount] | Give item |
+          | `clear` | - | Clear inventory |
+          | `refill` | - | Refill resources |
           
-          ## 项目特定命令
+          ## Project-Specific Commands
           
-          (根据项目添加)
+          (Add per project)
       
       - path: "docs/BALANCE.md"
-        purpose: "数值平衡表"
+        purpose: "Balance spreadsheet"
         template: |
-          # 数值平衡表
+          # Balance Spreadsheet
           
-          ## 角色属性
+          ## Character Attributes
           
-          | 属性 | 初始值 | 说明 |
-          |------|--------|------|
+          | Attribute | Initial Value | Description |
+          |-----------|---------------|-------------|
           
-          ## 物品数值
+          ## Item Values
           
-          (待填写)
+          (To be filled)
 
-    # ========== 配置项 ==========
+    # ========== Configuration ==========
     config:
       gm_trigger_key: "/"
       build_command: "npm run build"
