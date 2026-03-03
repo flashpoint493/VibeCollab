@@ -1,459 +1,459 @@
-# E2ETest AI 协作开发规则
+# MyProject AI Collaboration Rules
 ## LLM Collaboration Protocol v1.0
 
 ---
 
-# 一、核心理念
+# I. Core Philosophy
 
-## 1.1 Vibe Development 哲学
+## 1.1 Vibe Development Philosophy
 
-> **最珍贵的是对话过程本身，不追求直接出结果，而是步步为营共同规划。**
+> **The most valuable part is the dialogue process itself -- not rushing to produce results, but planning step by step together.**
 
-本项目采用 **Vibe Development** 模式：
-- AI 不是执行者，而是协作伙伴
-- 不急于产出代码，先对齐理解
-- 每个决策都是共同思考的结果
-- 对话本身就是设计过程的一部分
+This project follows the **Vibe Development** model:
+- AI is not an executor but a collaboration partner
+- Don't rush to produce code -- first align understanding
+- Every decision is a result of shared thinking
+- The conversation itself is part of the design process
 
-## 1.2 决策质量观
+## 1.2 Decision Quality Principle
 
-> **大量决策，90% 正确率，关键决策零失误**
+> **Many decisions, 90% accuracy, zero tolerance for critical mistakes**
 
-项目是一系列决策的集合：
-- 只有做对 90% 以上的决策，项目才有望成功
-- 关键决策容错数: 0
-- 因此每个 S/A 级决策都需要 **人机共同 Review**
+A project is a collection of decisions:
+- Only with 90%+ correct decisions can the project succeed
+- Critical decision error tolerance: 0
+- Therefore every S/A-level decision requires **human-AI co-review**
 
-## 1.3 长期对话工程观
+## 1.3 Long-term Dialogue Engineering
 
-这是一个**长期对话工程**，不是一次性任务：
-- 对话是连续的，上下文需要被**持久化保存**
-- 每次对话都在前次基础上**迭代推进**
-- Git 提交历史记录了**思维演进过程**
-- CONTRIBUTING_AI.md 是**活文档**，随项目成长
-
----
-
-# 二、职能角色定义
-
-本项目模拟多职能协作，AI 在对话中切换不同角色视角：
-
-| 角色代号 | 职能 | 关注点 | 触发词 |
-|---------|------|--------|--------|
-| `[DESIGN]` | 产品设计 | 需求、体验、交互 | "设计"、"需求"、"产品" |
-| `[ARCH]` | 架构 | 底层结构、性能、可扩展性 | "架构"、"底层"、"重构" |
-| `[DEV]` | 开发 | 具体实现、Bug修复 | "开发"、"实现"、"代码" |
-| `[PM]` | 项目管理 | 里程碑、优先级、进度 | "规划"、"排期"、"优先级" |
-| `[QA]` | 产品质量保证 | 验收测试、用户体验验证、边界情况 | "验收"、"体验测试"、"功能验证" |
-| `[TEST]` | 单元测试 | 代码测试、覆盖率、自动化测试 | "单元测试"、"测试用例"、"coverage" |
-
-**使用方式**: 在对话中明确指定角色，或让 AI 自动识别并标注当前角色视角。
-
-
-## 2.2 QA 角色的特殊地位
-
-> **QA 是每个功能的最后守门人，无验收则不算完成**
-
-QA 职能贯穿整个开发流程：
-- **开发前**: 参与需求评审，提出测试视角问题
-- **开发中**: 准备测试用例框架
-- **开发后**: 执行验收测试，确认功能符合预期
+This is a **long-term dialogue engineering** effort, not a one-off task:
+- Dialogue is continuous; context must be **persistently saved**
+- Each conversation **iterates** on the previous one
+- Git commit history records the **evolution of thinking**
+- CONTRIBUTING_AI.md is a **living document** that grows with the project
 
 ---
 
-# 三、决策分级制度
+# II. Role Definitions
 
-## 3.1 决策等级
+This project simulates multi-role collaboration. The AI switches between different role perspectives during dialogue:
 
-| 等级 | 类型 | 影响范围 | Review 要求 |
-|-----|------|---------|------------|
-| **S** | 战略决策 | 整体方向、核心功能 | 必须人工确认，记录决策理由 |
-| **A** | 架构决策 | 系统设计、数据结构 | 人工Review，可异步确认 |
-| **B** | 实现决策 | 具体方案选择 | AI 提出建议，人工可快速确认或默认通过 |
-| **C** | 细节决策 | 参数、命名、格式 | AI 自主决策，事后可调整 |
+| Role Code | Function | Focus Areas | Trigger Words |
+|-----------|----------|-------------|---------------|
+| `[DESIGN]` | Product Design | requirements, experience, interaction | "design", "requirements", "product" |
+| `[ARCH]` | Architecture | infrastructure, performance, extensibility | "architecture", "infrastructure", "refactor" |
+| `[DEV]` | Development | implementation, bug fixing | "develop", "implement", "code" |
+| `[PM]` | Project Management | milestones, priorities, progress | "plan", "schedule", "priority" |
+| `[QA]` | Product Quality Assurance | acceptance testing, user experience validation, edge cases | "acceptance", "experience testing", "feature verification" |
+| `[TEST]` | Unit Testing | code testing, coverage, automated testing | "unit test", "test case", "coverage" |
 
-## 3.2 决策记录格式
+**Usage**: Explicitly specify a role in dialogue, or let the AI automatically identify and label the current role perspective.
+
+
+## 2.2 Special Status of the QA Role
+
+> **QA is the final gatekeeper for every feature -- no acceptance means not complete**
+
+The QA role spans the entire development lifecycle:
+- **Before development**: Participates in requirement review, raises testing perspective questions
+- **During development**: Prepares test case frameworks
+- **After development**: Executes acceptance tests, confirms features meet expectations
+
+---
+
+# III. Decision Classification System
+
+## 3.1 Decision Levels
+
+| Level | Type | Scope | Review Requirements |
+|-------|------|-------|---------------------|
+| **S** | Strategic Decision | Overall direction, core features | Must be manually confirmed, record decision rationale |
+| **A** | Architecture Decision | System design, data structures | Human review, async confirmation allowed |
+| **B** | Implementation Decision | Specific approach selection | AI suggests, human can quickly confirm or auto-approve |
+| **C** | Detail Decision | Parameters, naming, formatting | AI decides autonomously, adjustable afterwards |
+
+## 3.2 Decision Record Format
 
 ```markdown
-## DECISION-{序号}: {标题}
-- **等级**: S/A/B/C
-- **角色**: [角色代号]
-- **问题**: {需要决策的问题}
-- **选项**: 
-  - A: {选项A}
-  - B: {选项B}
-- **决策**: {最终选择}
-- **理由**: {为什么这么选}
-- **日期**: {YYYY-MM-DD}
-- **状态**: PENDING / CONFIRMED / REVISED
+## DECISION-{number}: {title}
+- **Level**: S/A/B/C
+- **Role**: [role code]
+- **Problem**: {the issue requiring a decision}
+- **Options**: 
+  - A: {option A}
+  - B: {option B}
+- **Decision**: {final choice}
+- **Rationale**: {why this was chosen}
+- **Date**: {YYYY-MM-DD}
+- **Status**: PENDING / CONFIRMED / REVISED
 ```
 
 ---
 
-# 四、开发流程协议
+# IV. Development Workflow Protocol
 
-## 4.1 任务单元定义
+## 4.1 Task Unit Definition
 
-开发不按日期，按 **对话任务单元** 推进：
-
-```
-任务单元 (Task Unit):
-├── ID: TASK-{role}-{seq}
-├── role
-├── feature
-├── dependencies
-├── output
-├── status
-├── dialogue_rounds
-└── 状态: TODO / IN_PROGRESS / REVIEW / DONE
-```
-
-## 4.2 标准对话流程
-
-### 4.2.0 对话开始时（强制）
-
-> **每次新对话开始，AI 必须先恢复当前状态**
+Development is driven by **dialogue task units**, not dates:
 
 ```
-1. 读取 docs/CONTEXT.md
-2. 读取 CONTRIBUTING_AI.md
-3. 了解当前进度
-4. 确认用户本次对话目标
+Task Unit:
++-- ID: TASK-{role}-{seq}
++-- role
++-- feature
++-- dependencies
++-- output
++-- status
++-- dialogue_rounds
++-- status: TODO / IN_PROGRESS / REVIEW / DONE
 ```
 
-**Insight 检索（推荐）**：
-- 如果项目存在 `.vibecollab/insights/` 目录，执行 `vibecollab insight search --tags <当前任务关键词>` 检索相关经验
-- 检索结果可帮助避免重复踩坑、复用已验证的方案
-- 也可用 `vibecollab insight list` 浏览全部沉淀
+## 4.2 Standard Dialogue Flow
 
-**项目初始化约束**：
-- 如果是新项目且没有 `.git` 目录，必须执行 `git init` 初始化 Git 仓库
-- 初始化后立即执行首次提交：`git add -A && git commit -m "init: 项目初始化"`
-- Git 是协作记录的基础，没有 Git 无法进行有效的版本追踪
+### 4.2.0 On Dialogue Start (mandatory)
 
-### 4.2.1 对话结束时（强制）
-
-> **每次对话结束前，AI 必须保存当前状态**
-
-```1. 更新 docs/CONTEXT.md
-2. 更新 docs/CHANGELOG.md
-3. 经验沉淀检查 → 是否有值得记录的 Insight？(vibecollab insight add)
-4. Git commit → 记录对话成果
-```
-
-### 4.2.2 标准对话中流程
+> **At the start of every new dialogue, the AI must first restore the current state**
 
 ```
-1. [人] 提出需求/问题
-       ↓
-2. [AI] 识别角色，分析问题
-       ↓
-3. [AI] S/A级决策请求确认，B/C级自主执行 ← 条件: decision_level in [S, A]
-       ↓
-4. [AI] 执行任务，输出结果
-       ↓
-5. [AI] 更新测试用例（如为功能开发） ← 条件: task_type == feature
-       ↓
-6. [AI] 总结进展，提示下一步
-       ↓
-7. [人] 确认/修正/继续
-       ↓
-8. [AI] Git 提交记录
+1. Read docs/CONTEXT.md
+2. Read CONTRIBUTING_AI.md
+3. Understand current progress
+4. Confirm user's goal for this conversation
 ```
 
-## 4.2.3 需求澄清协议（重要）
+**Insight Retrieval (recommended)**:
+- If the project has a `.vibecollab/insights/` directory, run `vibecollab insight search --tags <current task keywords>` to find relevant experience
+- Search results help avoid repeating mistakes and reuse verified solutions
+- You can also use `vibecollab insight list` to browse all insights
 
-> **用户提出需求时可能是自然无意识的，AI 必须将模糊描述转化为结构化需求**
+**Project Initialization Constraint**:
+- If this is a new project without a `.git` directory, you must run `git init` to initialize the repository
+- After initialization, perform the first commit immediately: `git add -A && git commit -m "init: project initialization"`
+- Git is the foundation for collaboration tracking; without Git, effective version tracking is impossible
 
-**触发条件**: 用户提出的需求存在以下情况
-- 描述模糊或不完整
-- 缺少具体的验收标准
-- 可能有多种理解方式
-- 涉及 S/A 级决策
+### 4.2.1 On Dialogue End (mandatory)
 
-**澄清流程**:
+> **Before ending each dialogue, the AI must save the current state**
+
+```1. Update docs/CONTEXT.md
+2. Update docs/CHANGELOG.md
+3. Insight check -> any experience worth recording? (vibecollab insight add)
+4. Git commit -> record dialogue outcomes
 ```
-1. [AI] 识别用户意图，提取关键信息
-2. [AI] 转化为结构化需求描述
-3. [AI] 列出假设和待确认项
-4. [人] 确认/修正/补充
-5. [AI] 形成最终需求文档
+
+### 4.2.2 Standard In-Dialogue Flow
+
+```
+1. [Human] Raise a requirement or question
+       |
+2. [AI] Identify role, analyze the problem
+       |
+3. [AI] Request confirmation for S/A level decisions, execute B/C autonomously <- condition: decision_level in [S, A]
+       |
+4. [AI] Execute task, produce output
+       |
+5. [AI] Update test cases (if feature development) <- condition: task_type == feature
+       |
+6. [AI] Summarize progress, suggest next steps
+       |
+7. [Human] Confirm / correct / continue
+       |
+8. [AI] Git commit record
 ```
 
-**结构化需求模板**:
+## 4.2.3 Requirement Clarification Protocol (important)
+
+> **User requirements may be stated casually and unconsciously. The AI must transform vague descriptions into structured requirements.**
+
+**Trigger Conditions**: The user's requirement has any of the following issues:
+- Description is vague or incomplete
+- Missing specific acceptance criteria
+- Open to multiple interpretations
+- Involves S/A-level decisions
+
+**Clarification Flow**:
+```
+1. [AI] Identify user intent, extract key information
+2. [AI] Transform into structured requirement description
+3. [AI] List assumptions and items to confirm
+4. [Human] Confirm / correct / supplement
+5. [AI] Finalize the requirement document
+```
+
+**Structured Requirement Template**:
 
 ```markdown
-## 需求: {需求标题}
+## Requirement: {title}
 
-**原始描述**: 
-> {用户原话}
+**Original Description**: 
+> {user's original words}
 
-**需求分析**:
-- 目标: {要达成什么}
-- 场景: {在什么情况下使用}
-- 用户: {谁会使用}
+**Requirement Analysis**:
+- Goal: {what to achieve}
+- Scenario: {under what circumstances}
+- User: {who will use it}
 
-**功能要求**:
-1. {具体功能点1}
-2. {具体功能点2}
+**Functional Requirements**:
+1. {specific feature 1}
+2. {specific feature 2}
 
-**验收标准**:
-- [ ] {可验证的标准1}
-- [ ] {可验证的标准2}
+**Acceptance Criteria**:
+- [ ] {verifiable criterion 1}
+- [ ] {verifiable criterion 2}
 
-**待确认项**:
-- [ ] {需要用户确认的假设1}
-- [ ] {需要用户确认的假设2}
+**Items to Confirm**:
+- [ ] {assumption needing user confirmation 1}
+- [ ] {assumption needing user confirmation 2}
 
-**决策等级**: {S/A/B/C}
-**预估复杂度**: {高/中/低}
+**Decision Level**: {S/A/B/C}
+**Estimated Complexity**: {high/medium/low}
 ```
 
-**快速澄清问句**:
-- "你希望达到什么效果？"
-- "有没有参考案例？"
-- "这个功能谁会用？在什么场景下用？"
-- "如何验证这个功能是否完成？"
-- "有时间或资源约束吗？"
+**Quick Clarification Questions**:
+- "What outcome are you hoping for?"
+- "Do you have any reference examples?"
+- "Who will use this feature? In what scenario?"
+- "How do we verify this feature is complete?"
+- "Are there any time or resource constraints?"
 
-**示例**:
+**Example**:
 
-用户说: "加个导出功能"
+User says: "Add an export feature"
 
-AI 澄清后:
+AI after clarification:
 ```markdown
-## 需求: 数据导出功能
+## Requirement: Data Export Feature
 
-**原始描述**: 
-> 加个导出功能
+**Original Description**: 
+> Add an export feature
 
-**需求分析**:
-- 目标: 将系统数据导出为文件，便于备份或分享
-- 场景: 用户需要离线查看或迁移数据时
-- 用户: 所有用户
+**Requirement Analysis**:
+- Goal: Export system data to files for backup or sharing
+- Scenario: When users need to view data offline or migrate data
+- User: All users
 
-**功能要求**:
-1. 支持导出为 JSON 格式
-2. 支持导出为 CSV 格式（如有表格数据）
-3. 导出文件包含时间戳命名
+**Functional Requirements**:
+1. Support export to JSON format
+2. Support export to CSV format (if tabular data exists)
+3. Exported files named with timestamps
 
-**验收标准**:
-- [ ] 点击导出按钮后生成文件
-- [ ] 文件可被其他工具正常打开
-- [ ] 导出内容完整无丢失
+**Acceptance Criteria**:
+- [ ] File is generated after clicking the export button
+- [ ] File can be opened normally by other tools
+- [ ] Exported content is complete with no data loss
 
-**待确认项**:
-- [ ] 需要导出哪些数据？全部还是部分？
-- [ ] 是否需要导出格式选择？
-- [ ] 文件大小有限制吗？
+**Items to Confirm**:
+- [ ] Which data needs to be exported? All or partial?
+- [ ] Is export format selection needed?
+- [ ] Are there file size limits?
 
-**决策等级**: B
-**预估复杂度**: 中
+**Decision Level**: B
+**Estimated Complexity**: Medium
 ```
 
 
-## 4.3 迭代建议管理协议（重要）
+## 4.3 Iteration Suggestion Management Protocol (important)
 
-> **QA 测试中产生的迭代建议，必须经过 PM 评审后决定是否纳入当前里程碑**
+> **Iteration suggestions from QA testing must be reviewed by PM before deciding whether to include in the current milestone**
 
-**迭代建议来源**:
-- QA 测试过程中的体验反馈
-- 开发过程中发现的改进点
-- 用户/人类的直接建议
+**Sources of Iteration Suggestions**:
+- Experience feedback from QA testing
+- Improvements discovered during development
+- Direct suggestions from users/humans
 
-**PM 评审流程**:
+**PM Review Flow**:
 ```
-1. 收集 → 记录到 docs/ROADMAP.md "迭代建议池"
-2. 评审 → 分析优先级、冲突、成本
-3. 决策 → 纳入/延后/拒绝
-4. 排期 → 确定开发顺序
-5. 执行 → 转为 TASK
+1. Collect -> Record in docs/ROADMAP.md "Iteration Suggestion Pool"
+2. Review -> Analyze priority, conflicts, cost
+3. Decide -> Include / Defer / Reject
+4. Schedule -> Determine development order
+5. Execute -> Convert to TASK
 ```
 
-## 4.4 版本回顾协议（重要）
+## 4.4 Version Review Protocol (important)
 
-> **每次新版本规划前，必须回顾上个版本的测试表现和用户反馈**
+> **Before planning each new version, you must review the previous version's test performance and user feedback**
 
-**回顾时机**: 里程碑验收完成后，开始下一阶段规划前
+**Review Timing**: After milestone acceptance, before starting next phase planning
 
-**回顾内容**:
+**Review Content**:
 ```
-1. 测试表现
-   - 通过率、问题分布
-   - 稳定性评估
+1. Test Performance
+   - Pass rate, issue distribution
+   - Stability assessment
    
-2. 用户体验反馈
-   - 核心功能验证结果
-   - 操作体验、视觉体验
+2. User Experience Feedback
+   - Core feature validation results
+   - Usability, visual experience
    
-3. 技术债务
-   - 已知问题表
-   - 性能瓶颈
+3. Technical Debt
+   - Known issues table
+   - Performance bottlenecks
    
-4. 迭代建议池
-   - 上版本积累的建议
-   - 优先级重新评估
+4. Iteration Suggestion Pool
+   - Accumulated suggestions from previous version
+   - Priority re-evaluation
 ```
 
-**产出**:
-- 补充新的需求到下一阶段
-- 调整任务优先级
-- 记录设计决策
+**Outputs**:
+- Add new requirements to the next phase
+- Adjust task priorities
+- Record design decisions
 
-## 4.5 构建打包协议（重要）
+## 4.5 Build & Package Protocol (important)
 
-> **全量验收前必须完成打包流程，打包是开发的一环**
+> **The build process must be completed before full acceptance -- building is part of development**
 
-**构建时机**:
-- ✅ 里程碑全量验收前
-- ✅ Bug 修复期集中测试
-- ✅ 准备分发/演示版本
-- ❌ 不需要每次提交都构建
+**Build Timing**:
+- [x] Before milestone full acceptance
+- [x] During bug fix period for focused testing
+- [x] Preparing distribution/demo versions
+- [ ] NOT required for every commit
 
-**全量验收前 CheckList**:
+**Pre-Acceptance Checklist**:
 ```
 [ ] 1. npm run build
-[ ] 2. 双击 dist/index.html 测试
-[ ] 3. 确认正常运行
-[ ] 4. 更新操作说明（如有新功能）
+[ ] 2. Open dist/index.html to test
+[ ] 3. Confirm normal operation
+[ ] 4. Update instructions (if new features added)
 ```
 
-## 4.6 配置级迭代协议（重要）
+## 4.6 Config-Level Iteration Protocol (important)
 
-> **仅修改数值配置、不改动代码逻辑的迭代，可快速执行**
+> **Iterations that only modify configuration values without changing code logic can be executed quickly**
 
-**定义**: 配置级迭代 = 仅调整现有参数值，不增删代码逻辑
+**Definition**: Config-level iteration = only adjusting existing parameter values, no adding/removing code logic
 
-**可快速执行的配置示例**:
-- 数值参数调整
-- 配置文件修改
-- 样式/主题变更
-- 文案/文本修改
+**Examples of quick-execute configurations**:
+- Numeric parameter adjustments
+- Config file modifications
+- Style / theme changes
+- Copy / text modifications
 
-**执行规则**:
-1. 用户明确指出"配置调整"或"数值修改"
-2. AI 直接修改对应配置值
-3. 无需 PM 审批，无需创建 TASK
-4. commit 使用 `[CONFIG]` 前缀
+**Execution Rules**:
+1. User explicitly states "config adjustment" or "value change"
+2. AI directly modifies the corresponding config value
+3. No PM approval needed, no TASK creation required
+4. Commit uses `[CONFIG]` prefix
 
-**不适用情况** (需 PM 审核排期):
-- 需要新增函数/类/文件
-- 涉及系统交互逻辑变更
-- 可能影响其他模块
-- 用户不确定该改什么
+**Not Applicable** (requires PM review and scheduling):
+- Requires new functions/classes/files
+- Involves system interaction logic changes
+- May affect other modules
+- User is unsure what to change
 
 
-## 4.7 QA 验收协议（重要）
+## 4.7 QA Acceptance Protocol (important)
 
-> **每个功能完成后，必须同步更新 QA 测试用例，供验收使用**
+> **After each feature is completed, QA test cases must be updated simultaneously for acceptance**
 
-**QA 测试用例要素**:
-- 测试 ID (TC-{module}-{seq})
-- 关联功能 (TASK-ID)
-- 前置条件
-- 测试步骤 (可复现的操作序列)
-- 预期结果 (明确、可验证)
-- 测试状态
+**QA Test Case Elements**:
+- Test ID (TC-{module}-{seq})
+- Related Feature (TASK-ID)
+- Preconditions
+- Test Steps (reproducible operation sequence)
+- Expected Results (clear, verifiable)
+- Test Status
 
-**开发者责任**:
-1. 功能完成时，在 `docs/QA_TEST_CASES.md` 添加测试用例
-2. 提供清晰的操作步骤和预期表现
-3. 标注已知限制或边界情况
+**Developer Responsibilities**:
+1. When a feature is complete, add test cases to `docs/QA_TEST_CASES.md`
+2. Provide clear operation steps and expected behavior
+3. Note known limitations or edge cases
 
-**QA 责任**:
-1. 按测试用例执行验收测试
-2. 记录实际结果和问题
-3. 更新测试状态 (通过/部分通过/未通过)
-4. **验收失败时**: 附上日志/截图
-5. 提交 Bug 到已知问题表
+**QA Responsibilities**:
+1. Execute acceptance tests per test cases
+2. Record actual results and issues
+3. Update test status (pass/partial/fail)
+4. **On acceptance failure**: Attach logs/screenshots
+5. Submit bugs to the known issues table
 
-## 4.8 快速验收回复模板
+## 4.8 Quick Acceptance Reply Template
 
-功能开发完成后，AI 必须提供**快速验收清单**，用户可直接复制回复：
+After feature development, the AI must provide a **quick acceptance checklist** that users can directly copy and reply:
 
 ```markdown
-## 🧪 快速验收
+## Quick Acceptance
 
-**启动**: `npm run dev`
+**Start**: `npm run dev`
 
-**验收项**:
-- [ ] 功能A: {操作} → {预期}
-- [ ] 功能B: {操作} → {预期}
-- [ ] 功能C: {操作} → {预期}
+**Acceptance Items**:
+- [ ] Feature A: {operation} -> {expected}
+- [ ] Feature B: {operation} -> {expected}
+- [ ] Feature C: {operation} -> {expected}
 
-**快速回复** (复制修改后发送):
-✅ 全部通过
-或
-⚠️ 问题: {描述问题}
+**Quick Reply** (copy and modify before sending):
+[PASS] All passed
+or
+[ISSUE] Problem: {describe the issue}
 ```
 
-**用户回复格式**:
-- `✅` 或 `通过` - 全部验收通过，继续下一步
-- `⚠️ 问题: xxx` - 有问题需要修复
-- `跳过` - 暂不验收，先继续
+**User Reply Format**:
+- `[PASS]` or `pass` - All acceptance passed, proceed to next step
+- `[ISSUE] Problem: xxx` - Issue found, needs fixing
+- `skip` - Skip acceptance for now, continue
 
 
-## 4.3 Git 协作规范
+## 4.3 Git Collaboration Standards
 
-### 分支策略
+### Branch Strategy
 ```
-main                 # 稳定版本
-├── dev              # 开发主线
-│   ├── feature/{特性名}     # 功能开发
-│   ├── design/{设计文档}    # 设计迭代
-│   ├── refactor/{模块名}    # 重构优化
-│   └── fix/{问题描述}       # Bug修复
-```
-
-### Commit 前缀
-```
-[DESIGN]  设计文档变更
-[ARCH]  架构调整
-[FEAT]  新功能
-[FIX]  Bug修复
-[CONFIG]  配置调整（不改逻辑）
-[REFACTOR]  重构
-[DOC]  文档更新
-[TEST]  测试相关
-[VIBE]  协作流程更新
+main                 # stable release
++-- dev              # development mainline
+|   +-- feature/{feature-name}     # feature development
+|   +-- design/{design-doc}    # design iteration
+|   +-- refactor/{module-name}    # refactoring
+|   +-- fix/{issue-desc}       # bug fix
 ```
 
-### Git 提交要求（重要）
+### Commit Prefixes
+```
+[DESIGN]  Design document changes
+[ARCH]  Architecture adjustments
+[FEAT]  New features
+[FIX]  Bug fixes
+[CONFIG]  Config adjustments (no logic changes)
+[REFACTOR]  Refactoring
+[DOC]  Documentation updates
+[TEST]  Test related
+[VIBE]  Collaboration workflow updates
+```
 
-> **每次有效对话都必须产生 Git 提交，记录思维演进**
+### Git Commit Requirements (important)
 
-Git 历史不仅是代码版本，更是**设计思维的演进记录**。
+> **Every productive dialogue must produce a Git commit, recording the evolution of thinking**
+
+Git history is not just code versioning -- it is a **record of design thinking evolution**.
 
 ---
 
-# 五、测试体系
+# V. Testing System
 
-## 5.1 单元测试 (Unit Test)
+## 5.1 Unit Test
 
-> **开发者视角：验证代码逻辑正确性**
+> **Developer perspective: verify code logic correctness**
 
-| 配置项 | 值 |
-|-------|-----|
-| 测试框架 | jest |
-| 覆盖率目标 | 80% |
-| 文件模式 | **/*.test.ts, **/*.spec.ts |
-| 运行时机 | pre-commit, ci |
+| Config | Value |
+|--------|-------|
+| Framework | jest |
+| Coverage Target | 80% |
+| File Patterns | **/*.test.ts, **/*.spec.ts |
+| Run Timing | pre-commit, ci |
 
-**单元测试原则**:
-- 每个模块应有对应的测试文件
-- 关键函数必须有测试覆盖
-- 测试应该独立、可重复
-- Mock 外部依赖
+**Unit Test Principles**:
+- Each module should have a corresponding test file
+- Critical functions must have test coverage
+- Tests should be independent and repeatable
+- Mock external dependencies
 
-## 5.2 产品QA验收 (Product QA)
+## 5.2 Product QA Acceptance
 
-> **用户视角：验证功能符合预期**
+> **User perspective: verify features meet expectations**
 
-**测试用例文件**: `docs/QA_TEST_CASES.md`
+**Test Case File**: `docs/QA_TEST_CASES.md`
 
-**用例ID格式**: `TC-{module}-{seq}`
+**Case ID Format**: `TC-{module}-{seq}`
 
-**测试用例要素**:
+**Test Case Elements**:
 - id
 - feature
 - precondition
@@ -461,688 +461,691 @@ Git 历史不仅是代码版本，更是**设计思维的演进记录**。
 - expected
 - status
 
-**测试状态**:
+**Test Statuses**:
 - 🟢 PASS
 - 🟡 PARTIAL
 - 🔴 FAIL
 - ⚪ SKIP
 
-## 5.3 Unit Test vs Product QA 区别
+## 5.3 Unit Test vs Product QA
 
-| 维度 | Unit Test | Product QA |
-|------|-----------|------------|
-| 视角 | 开发者 | 用户 |
-| 目标 | 代码正确性 | 功能完整性 |
-| 粒度 | 函数/模块级 | 功能/流程级 |
-| 执行 | 自动化 | 可自动+人工 |
-| 时机 | 提交时 | 功能完成时 |
-| 工具 | 测试框架 | 测试用例手册 |
+| Dimension | Unit Test | Product QA |
+|-----------|-----------|------------|
+| Perspective | Developer | User |
+| Goal | Code correctness | Feature completeness |
+| Granularity | Function/module level | Feature/flow level |
+| Execution | Automated | Automated + manual |
+| Timing | On commit | On feature completion |
+| Tools | Test framework | Test case manual |
 
 ---
 
-# 六、里程碑定义
+# VI. Milestone Definition
 
-## 6.1 里程碑规范
+## 6.1 Milestone Standards
 
-> **里程碑 = 多个特性 + Bug修复期 + 全量验收**
+> **Milestone = multiple features + bug fix period + full acceptance**
 
-### 里程碑生命周期
+### Milestone Lifecycle
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   里程碑生命周期                          │
-├─────────────────────────────────────────────────────────┤
-│  1. feature_dev - 特性开发期
-│     └── 所有计划特性完成
-│     └── 快速验收通过
-├─────────────────────────────────────────────────────────┤
-│  2. feature_freeze - 特性冻结
-│     └── 不再添加新功能
-│     └── 构建成功
-├─────────────────────────────────────────────────────────┤
-│  3. bug_fix - Bug 修复期
-│     └── P0/P1 问题清零
-│     └── 测试通过率达标
-├─────────────────────────────────────────────────────────┤
-│  4. acceptance - 里程碑验收
-│     └── QA 全量测试通过
-│     └── 单元测试覆盖率达标
-│     └── 已知问题清零或标记延后
-├─────────────────────────────────────────────────────────┤
-│  5. retrospective - 版本回顾
-│     └── 回顾测试表现
-│     └── 收集用户反馈
-│     └── 补充新需求到下一阶段
-└─────────────────────────────────────────────────────────┘
++-----------------------------------------------------------+
+|                   Milestone Lifecycle                       |
++-----------------------------------------------------------+
+|  1. feature_dev - Feature development period
+|     +-- All planned features completed
+|     +-- Quick acceptance passed
++-----------------------------------------------------------+
+|  2. feature_freeze - Feature freeze
+|     +-- No new features added
+|     +-- Build successful
++-----------------------------------------------------------+
+|  3. bug_fix - Bug fix period
+|     +-- P0/P1 issues cleared
+|     +-- Test pass rate meets target
++-----------------------------------------------------------+
+|  4. acceptance - Milestone acceptance
+|     +-- QA full test pass
+|     +-- Unit test coverage meets target
+|     +-- Known issues cleared or deferred
++-----------------------------------------------------------+
+|  5. retrospective - Version retrospective
+|     +-- Review test performance
+|     +-- Collect user feedback
+|     +-- Add new requirements to next phase
++-----------------------------------------------------------+
 ```
 
-### Bug 优先级
+### Bug Priority
 
-| 优先级 | 描述 |
-|-------|------|
-| P0 | 崩溃/阻断 |
-| P1 | 功能异常 |
-| P2 | 体验问题 |
-| P3 | 优化建议 |
+| Priority | Description |
+|----------|-------------|
+| P0 | Crash / blocker |
+| P1 | Feature malfunction |
+| P2 | Experience issue |
+| P3 | Optimization suggestion |
 
-### 里程碑 Tag
+### Milestone Tag
 
 ```bash
-git tag -a v{major}.{minor}.{patch} -m "描述"
+git tag -a v{major}.{minor}.{patch} -m "description"
 ```
 
 ---
 
-# 七、迭代管理
+# VII. Iteration Management
 
-## 7.1 迭代建议管理协议
+## 7.1 Iteration Suggestion Management Protocol
 
-> **迭代建议必须经过 PM 评审后决定是否纳入当前里程碑**
+> **Iteration suggestions must be reviewed by PM before deciding whether to include in the current milestone**
 
-**决策分类**:
-- ✅ 纳入当前里程碑
-- ⏳ 延后到下个里程碑
-- ❌ 拒绝（不符合方向）
-- 🔄 合并其他迭代
+**Decision Categories**:
+- ✅ Include in current milestone
+- ⏳ Defer to next milestone
+- ❌ Reject (doesn't align with direction)
+- 🔄 Merge with other iteration
 
-**评审维度**:
-- 与当前任务的依赖/冲突关系
-- 对用户体验的影响程度
-- 开发成本和技术复杂度
-- 里程碑剩余时间约束
+**Review Dimensions**:
+- Dependency / conflict with current tasks
+- Impact on user experience
+- Development cost and technical complexity
+- Remaining time constraints for milestone
 
 
-## 7.2 配置级迭代协议
+## 7.2 Config-Level Iteration Protocol
 
-> **仅修改配置、不改动代码逻辑的迭代，可快速执行**
+> **Iterations that only modify configuration without changing code logic can be executed quickly**
 
-**执行规则**:
-- 用户明确指出"配置调整"
-- AI 直接修改对应配置值
-- 无需 PM 审批，无需创建 TASK
-- commit 使用 `[CONFIG]` 前缀
+**Execution Rules**:
+- User explicitly states "config adjustment"
+- AI directly modifies the corresponding config value
+- No PM approval needed, no TASK creation required
+- Commit uses `[CONFIG]` prefix
 
-**适用示例**:
-- 数值参数调整
-- 配置文件修改
-- 样式/主题变更
-- 文案/文本修改
-
----
-
-# 八、阶段化协作规则
-
-## 8.1 项目生涯阶段说明
-
-项目开发过程分为 4 个生涯阶段，每个阶段有不同的开发重点和协作原则。阶段信息由 PM 角色在 `docs/ROADMAP.md` 中维护，AI 在协作时应根据当前阶段调整工作方式。
-
-### 阶段类型定义
-
-项目生涯阶段按顺序演进，每个阶段都有明确的定义和规则：
-
-### 原型验证 (demo)
-
-**描述**: 快速验证核心概念和可行性
-
-**阶段重点**:
-- 快速迭代
-- 概念验证
-- 核心功能
-
-**阶段原则**:
-- 快速试错，快速调整
-- 优先核心功能，暂缓优化
-- 技术债务可接受，但需记录
-- 详细的Git开发迭代记录
-- 记录重要决定DECISIONS.md
-- 建立 CI/CD
-
-### 量产 (production)
-
-**描述**: 产品化开发，准备规模化
-
-**阶段重点**:
-- 稳定性
-- 性能优化
-- 可维护性
-
-**阶段原则**:
-- 代码质量优先
-- 建立发布和宣发预备, 指定和完善目标平台支持
-- 启动前review全量代码，建立更稳定稳健的代码结构
-- 完善QA产品测试覆盖
-- 定义性能标准
-- Unitest单元测试、检查规范
-- 完善发布平台标准
-
-### 商业化 (commercial)
-
-**描述**: 面向市场，追求增长
-
-**阶段重点**:
-- 用户体验
-- 市场适配
-- 扩展性
-- 插件化增量开发
-- 数据热更
-
-**阶段原则**:
-- 用户反馈驱动
-- 数据驱动决策
-- 快速响应市场
-
-### 稳定运营 (stable)
-
-**描述**: 成熟产品，稳定维护
-
-**阶段重点**:
-- 稳定性
-- 维护成本
-- 长期规划
-
-**阶段原则**:
-- 变更需谨慎
-- 向后兼容优先
-- 文档完善
-
-## 8.2 阶段化协作指导
-
-AI 在协作时应：
-
-1. **读取当前阶段**: 在对话开始时，读取 `docs/ROADMAP.md` 了解项目当前处于哪个阶段
-2. **应用阶段规则**: 根据当前阶段的重点和原则调整工作方式
-3. **关注阶段变化**: 当项目升级到新阶段时，注意新阶段的原则变化，调整协作方式
-4. **阶段里程碑**: 关注当前阶段的里程碑完成情况，协助推进里程碑达成
-
-> **重要**: 具体的当前阶段信息请查看 `docs/ROADMAP.md` 中的"当前项目生涯阶段"章节。
+**Applicable Examples**:
+- Numeric parameter adjustments
+- Config file modifications
+- Style / theme changes
+- Copy / text modifications
 
 ---
 
-# 九、上下文管理
+# VIII. Phase-Based Collaboration Rules
 
-## 9.1 关键文件职责
+## 8.1 Project Lifecycle Phases
 
-| 文件 | 职责 | 更新时机 |
-|-----|------|---------|
-| `CONTRIBUTING_AI.md` | AI 协作规则，顶层指导 | 协作方式演进时 |
-| `llms.txt` | 项目上下文摘要 (llmstxt.org 标准) | 项目信息变更时 |
-| `docs/CONTEXT.md` | 当前开发上下文 | 每次对话结束时 |
-| `docs/DECISIONS.md` | 重要决策记录 | 每次 S/A 级决策后 |
-| `docs/CHANGELOG.md` | 版本变更日志 | 每次有效对话后 |
-| `docs/QA_TEST_CASES.md` | 产品QA测试用例 | 每个功能完成时 |
-| `docs/PRD.md` | 产品需求文档 | 需求变更时 |
-| `docs/ROADMAP.md` | 路线图+迭代建议 | 里程碑规划/反馈时 |
+The project development process is divided into 4 lifecycle phases, each with different development priorities and collaboration principles. Phase information is maintained by the PM role in `docs/ROADMAP.md`, and the AI should adjust its working style based on the current phase.
 
-## 9.2 上下文恢复协议
+### Phase Type Definitions
 
-当开启新对话时，AI 应：
-1. 读取 `CONTRIBUTING_AI.md` 了解协作规则
-2. 读取 `docs/CONTEXT.md` 恢复当前状态
-3. 读取 `docs/DECISIONS.md` 了解已确认和待定决策
-4. 运行 `git log --oneline -10` 了解最近进展
-5. 询问用户本次对话目标
+Project lifecycle phases evolve sequentially, each with clear definitions and rules:
 
-## 9.3 上下文保存协议
+### Prototype (demo)
 
-每次对话结束时，AI 应：
-1. 更新 `docs/CONTEXT.md` 保存当前状态
-2. 更新 `docs/CHANGELOG.md` 记录本次产出
-3. 如有新决策，更新 `docs/DECISIONS.md`
-4. **必须执行 git commit** 记录本次对话产出
+**Description**: Rapidly validate core concepts and feasibility
 
----
+**Phase Focus**:
+- Rapid iteration
+- Proof of concept
+- Core features
 
-# Prompt 工程最佳实践
+**Phase Principles**:
+- Fail fast, adjust fast
+- Prioritize core features, defer optimization
+- Technical debt is acceptable but must be documented
+- Detailed Git development iteration records
+- Record important decisions in DECISIONS.md
+- Establish CI/CD
 
-## 有效提问模板
+### Production (production)
 
-### 产品设计讨论
-```
-[DESIGN] 我想讨论{系统名称}的设计
-当前想法是: {描述}
-主要顾虑: {顾虑}
-请从用户体验角度分析
+**Description**: Production-ready development, preparing for scale
 
-```
+**Phase Focus**:
+- Stability
+- Performance optimization
+- Maintainability
 
-### 架构讨论
-```
-[ARCH] 我需要设计{模块名}的架构
-需求: {功能需求}
-约束: {性能/兼容性约束}
-请给出2-3个方案对比
+**Phase Principles**:
+- Code quality first
+- Prepare release and distribution, define target platform support
+- Full code review before launch, establish robust code structure
+- Complete QA product test coverage
+- Define performance standards
+- Unit test and code standard enforcement
+- Finalize release platform standards
 
-```
+### Commercial (commercial)
 
-### 开发讨论
-```
-[DEV] 请实现{功能}
-输入: {输入描述}
-输出: {期望输出}
-相关文件: {文件路径}
+**Description**: Market-facing, pursuing growth
 
-```
+**Phase Focus**:
+- User experience
+- Market adaptation
+- Extensibility
+- Plugin-based incremental development
+- Data hot-reload
 
-### 项目管理讨论
-```
-[PM] 请帮我{任务描述}
-```
+**Phase Principles**:
+- User feedback driven
+- Data-driven decisions
+- Fast market response
 
-### 问题诊断
-```
-[QA] 遇到问题: {问题描述}
-复现步骤: {步骤}
-期望行为: {期望}
-实际行为: {实际}
-```
+### Stable Operations (stable)
 
-## 高价值引导词
+**Description**: Mature product, stable maintenance
 
-| 场景 | 引导词 |
-|-----|-------|
-| 深入分析 | "请从{角色}视角分析"、"有哪些我没考虑到的" |
-| 方案对比 | "给出2-3个方案并对比优劣" |
-| 风险评估 | "这个方案最大的风险是什么" |
-| 简化问题 | "MVP版本最少需要什么" |
-| 扩展思考 | "如果未来要支持{X}，现在要预留什么" |
-| Vibe 对齐 | "你理解我的意图了吗"、"我们先对齐一下理解" |
+**Phase Focus**:
+- Stability
+- Maintenance cost
+- Long-term planning
 
-## Vibe Development 沟通技巧
+**Phase Principles**:
+- Changes require caution
+- Backward compatibility first
+- Complete documentation
 
-### 不要说
-- "帮我写一个XXX" (太直接，跳过思考)
-- "直接给我代码" (跳过设计讨论)
+## 8.2 Phase-Based Collaboration Guidance
 
-### 推荐说
-- "我想和你讨论一下XXX的设计"
-- "你觉得这个方案有什么问题"
-- "我们先对齐一下理解，再动手"
-- "这个决策你怎么看"
-- "把你的思考过程告诉我"
+The AI should during collaboration:
+
+1. **Read current phase**: At dialogue start, read `docs/ROADMAP.md` to understand which phase the project is in
+2. **Apply phase rules**: Adjust working style based on the current phase's focus and principles
+3. **Monitor phase changes**: When the project upgrades to a new phase, note the principle changes and adjust collaboration
+4. **Phase milestones**: Track the current phase's milestone completion, assist in reaching milestones
+
+> **Important**: For specific current phase information, see the "Current Project Lifecycle Phase" section in `docs/ROADMAP.md`.
 
 ---
 
-# 十一、符号学标注系统
+# IX. Context Management
 
-本协议使用统一的符号体系确保沟通一致性：
+## 9.1 Key File Responsibilities
+
+| File | Purpose | Update Trigger |
+|------|---------|----------------|
+| `CONTRIBUTING_AI.md` | AI collaboration rules, top-level guidance | When collaboration approach evolves |
+| `llms.txt` | Project context summary (llmstxt.org standard) | When project info changes |
+| `docs/CONTEXT.md` | Current development context | End of every conversation |
+| `docs/DECISIONS.md` | Important decision records | After every S/A level decision |
+| `docs/CHANGELOG.md` | Version changelog | After every productive conversation |
+| `docs/QA_TEST_CASES.md` | Product QA test cases | When each feature is completed |
+| `docs/PRD.md` | Product requirements document | When requirements change |
+| `docs/ROADMAP.md` | Roadmap + iteration suggestions | During milestone planning / feedback |
+
+## 9.2 Context Restoration Protocol
+
+When starting a new dialogue, the AI should:
+1. Read `CONTRIBUTING_AI.md` to understand collaboration rules
+2. Read `docs/CONTEXT.md` to restore current state
+3. Read `docs/DECISIONS.md` to review confirmed and pending decisions
+4. Run `git log --oneline -10` to review recent progress
+5. Ask the user about the goal of this dialogue
+
+## 9.3 Context Save Protocol
+
+At the end of each dialogue, the AI should:
+1. Update `docs/CONTEXT.md` to save current state
+2. Update `docs/CHANGELOG.md` to record outputs from this session
+3. If new decisions were made, update `docs/DECISIONS.md`
+4. **Must execute git commit** to record this dialogue's outputs
+
+---
+
+# Prompt Engineering Best Practices
+
+## Effective Prompt Templates
+
+### Product Design Discussion
+```
+[DESIGN] I'd like to discuss the design of {system_name}
+Current thinking: {description}
+Main concerns: {concerns}
+Please analyze from a user experience perspective
+
+```
+
+### Architecture Discussion
+```
+[ARCH] I need to design the architecture for {module_name}
+Requirements: {functional_requirements}
+Constraints: {performance_compatibility_constraints}
+Please provide 2-3 approaches for comparison
+
+```
+
+### Development Discussion
+```
+[DEV] Please implement {feature}
+Input: {input_description}
+Output: {expected_output}
+Related files: {file_paths}
+
+```
+
+### Project Management Discussion
+```
+[PM] Please help me with {task description}
+```
+
+### Issue Diagnosis
+```
+[QA] Encountered issue: {issue description}
+Reproduction steps: {steps}
+Expected behavior: {expected}
+Actual behavior: {actual}
+```
+
+## High-Value Prompt Phrases
+
+| Scenario | Prompt Phrase |
+|----------|-------------|
+| Deep analysis | "Please analyze from the {role} perspective", "What have I not considered?" |
+| Solution comparison | "Provide 2-3 solutions and compare pros and cons" |
+| Risk assessment | "What is the biggest risk of this approach?" |
+| Simplification | "What is the minimum needed for an MVP version?" |
+| Future thinking | "If we need to support {X} in the future, what should we prepare now?" |
+| Vibe alignment | "Do you understand my intent?", "Let's align our understanding first" |
+
+## Vibe Development Communication Tips
+
+### Avoid saying
+- "Write me an XXX" (too direct, skips thinking)
+- "Just give me the code" (skips design discussion)
+
+### Recommended
+- "I'd like to discuss the design of XXX with you"
+- "What issues do you see with this approach?"
+- "Let's align our understanding before we start"
+- "What's your take on this decision?"
+- "Walk me through your thought process"
+
+---
+
+# XI. Symbology Annotation System
+
+This protocol uses a unified symbol system to ensure communication consistency:
 
 ## Decision Status
 
-| 符号 | 含义 |
-|------|------|
-| `PENDING` | 待确认 |
-| `CONFIRMED` | 已确认 |
-| `REVISED` | 已修订 |
+| Symbol | Meaning |
+|--------|---------|
+| `PENDING` | Pending confirmation |
+| `CONFIRMED` | Confirmed |
+| `REVISED` | Revised |
 
 ## Task Status
 
-| 符号 | 含义 |
-|------|------|
-| `TODO` | 待开始 |
-| `IN_PROGRESS` | 进行中 |
-| `REVIEW` | 待审核 |
-| `DONE` | 已完成 |
+| Symbol | Meaning |
+|--------|---------|
+| `TODO` | Not started |
+| `IN_PROGRESS` | In progress |
+| `REVIEW` | Pending review |
+| `DONE` | Completed |
 
 ## Test Status
 
-| 符号 | 含义 |
-|------|------|
-| `🟢` | 通过 |
-| `🟡` | 部分通过 |
-| `🔴` | 未通过 |
-| `⚪` | 跳过 |
+| Symbol | Meaning |
+|--------|---------|
+| `🟢` | Pass |
+| `🟡` | Partial pass |
+| `🔴` | Fail |
+| `⚪` | Skip |
 
 ## Priority
 
-| 符号 | 含义 |
-|------|------|
-| `P0` | 最高优先级/阻断 |
-| `P1` | 高优先级 |
-| `P2` | 中优先级 |
-| `P3` | 低优先级 |
+| Symbol | Meaning |
+|--------|---------|
+| `P0` | Highest priority / blocker |
+| `P1` | High priority |
+| `P2` | Medium priority |
+| `P3` | Low priority |
 
 ---
 
-# 已确认决策汇总
+# Confirmed Decisions Summary
 
-*暂无已确认决策，将在项目进行中记录*
+*No confirmed decisions yet. Will be recorded as the project progresses.*
 
 ---
 
-# 十二、协议自检机制
+# XII. Protocol Self-Check Mechanism
 
-## 12.1 协议自检的重要性
+## 12.1 Importance of Protocol Self-Check
 
-> **使用协议时常常发现，有时候对话时会漏掉一些东西，比如没有记得提交 git，没有记得及时同步某个对应文档.md。**
+> **When using the protocol, we often find that things get missed during dialogue -- such as forgetting to commit to git, or failing to update a corresponding document.**
 
-协议自检机制帮助 AI 和用户确保遵循了协作协议中的各项要求。
+The protocol self-check mechanism helps the AI and users ensure compliance with all collaboration protocol requirements.
 
-## 12.2 自检触发方式
+## 12.2 Self-Check Trigger Methods
 
-### 方式一：命令行检查
+### Method 1: Command Line Check
 
 ```bash
-# 检查协议遵循情况
+# Check protocol compliance
 vibecollab check
 
-# 严格模式（警告也视为失败）
+# Strict mode (warnings treated as failures)
 vibecollab check --strict
 
-# 含 Insight 一致性校验 (v0.7.0+)
+# Include Insight consistency check (v0.7.0+)
 vibecollab check --insights
 ```
 
-### 方式二：对话中触发
+### Method 2: Dialogue Trigger
 
-在对话中使用以下触发词，AI 应主动执行协议自检：
+Use the following trigger phrases in dialogue, and the AI should proactively execute a protocol self-check:
 
-- "检查协议"
-- "协议自检"
-- "检查是否遵循协议"
+- "check protocol"
 - "protocol check"
-- "自检"
+- "self-check"
+- "verify compliance"
 
-## 12.3 检查项说明
+## 12.3 Check Items
 
-协议检查器会检查以下内容：
+The protocol checker verifies the following:
 
-### Git 协议检查
-- ✅ 项目是否已初始化 Git 仓库
-- ✅ 是否有未提交的更改
-- ⚠️  Git 提交频率（提醒长时间未提交）
+### Git Protocol Check
+- [x] Whether the project has initialized a Git repository
+- [x] Whether there are uncommitted changes
+- [!] Git commit frequency (reminder for long periods without commits)
 
-### 文档更新检查
-- ✅ 必需文档是否存在（CONTEXT.md, CHANGELOG.md 等）
-- ⚠️  文档是否及时更新（24小时内）
-- ✅ PRD.md 是否存在（如果启用）
+### Documentation Update Check
+- [x] Whether required documents exist (CONTEXT.md, CHANGELOG.md, etc.)
+- [!] Whether documents are recently updated (within 24 hours)
+- [x] Whether PRD.md exists (if enabled)
 
-### 对话流程检查
-- ✅ 对话开始时应该读取的文件是否存在
-- ✅ 对话结束时应该更新的文件是否存在
+### Dialogue Flow Check
+- [x] Whether files that should be read at dialogue start exist
+- [x] Whether files that should be updated at dialogue end exist
 
-## 12.4 检查结果说明
+## 12.4 Check Results
 
-检查结果分为三个级别：
+Check results are classified into three levels:
 
-| 级别 | 符号 | 说明 | 处理方式 |
-|------|------|------|---------|
-| **错误** | ❌ | 违反协议要求 | 必须修复 |
-| **警告** | ⚠️  | 可能遗漏的协议步骤 | 建议处理 |
-| **信息** | ℹ️  | 提醒信息 | 可选择性处理 |
+| Level | Symbol | Description | Action Required |
+|-------|--------|-------------|-----------------|
+| **Error** | [FAIL] | Protocol violation | Must fix |
+| **Warning** | [WARN] | Potentially missed protocol step | Recommended to address |
+| **Info** | [INFO] | Informational notice | Optional |
 
-## 12.5 AI 自检行为规范
+## 12.5 AI Self-Check Behavior Guidelines
 
-当用户触发协议自检时，AI 应：
+When the user triggers a protocol self-check, the AI should:
 
-1. **执行检查**: 运行协议检查器，获取检查结果
-2. **展示结果**: 清晰展示所有检查项的状态
-3. **提供建议**: 对于未通过的检查项，提供具体的修复建议
-4. **主动修复**: 对于可以自动修复的问题（如更新文档），主动执行修复
-5. **记录提醒**: 对于需要人工处理的问题，明确提醒用户
+1. **Execute check**: Run the protocol checker, obtain results
+2. **Display results**: Clearly show the status of all check items
+3. **Provide suggestions**: For failed items, provide specific fix suggestions
+4. **Auto-fix**: For auto-fixable issues (e.g., updating docs), proactively execute fixes
+5. **Record reminders**: For issues requiring manual handling, clearly remind the user
 
-## 12.6 自检最佳实践
+## 12.6 Self-Check Best Practices
 
-### 对话开始时
-- 在恢复上下文后，可以执行一次快速自检，确保环境正常
+### At Dialogue Start
+- After restoring context, run a quick self-check to ensure the environment is normal
 
-### 对话结束时
-- 在执行 git commit 前，执行自检确保所有协议要求都已满足
+### At Dialogue End
+- Before executing git commit, run self-check to ensure all protocol requirements are met
 
-### 定期检查
-- 如果长时间未对话，重新开始对话时执行完整自检
+### Periodic Check
+- If there has been a long gap since the last dialogue, run a full self-check when resuming
 
 ---
 
 
-# 十三、产品需求文档 (PRD) 管理
+# XIII. Product Requirements Document (PRD) Management
 
-## 13.1 PRD 的作用
+## 13.1 Purpose of PRD
 
-> **我们虽然是一个启发式对话，需求在对话中推进，不过我们目前没有一个记录原始需求和变化的 PRD.md。我认为项目需求也在随着对话变化和成长。**
+> **Although we use heuristic dialogue where requirements evolve through conversation, we need a PRD.md to record original requirements and their changes. Project requirements grow and change along with dialogue.**
 
-PRD.md 用于：
-- 📝 **记录原始需求**: 保存用户最初提出的需求描述
-- 📊 **跟踪需求变化**: 记录需求在对话中的演进过程
-- 🔍 **需求追溯**: 了解每个需求从提出到实现的完整历程
-- 📈 **需求统计**: 了解项目需求的状态分布
+PRD.md is used for:
+- **Recording original requirements**: Preserve the user's initial requirement descriptions
+- **Tracking requirement changes**: Record how requirements evolve through dialogue
+- **Requirement traceability**: Understand the complete journey from proposal to implementation
+- **Requirement statistics**: Overview of requirement status distribution
 
-## 13.2 PRD 文档结构
+## 13.2 PRD Document Structure
 
-PRD.md 位于 `docs/PRD.md`，包含以下内容：
+PRD.md is located at `docs/PRD.md` and contains:
 
-### 需求列表
+### Requirement List
 
-每个需求包含：
-- **需求 ID**: REQ-001, REQ-002, ...
-- **需求标题**: 简洁的需求名称
-- **原始描述**: 用户最初提出的需求描述
-- **当前描述**: 经过澄清和演进后的需求描述
-- **状态**: draft / confirmed / in_progress / completed / cancelled
-- **优先级**: high / medium / low
-- **创建时间**: 需求首次记录的时间
-- **更新时间**: 需求最后修改的时间
-- **需求变化历史**: 记录需求描述的变化轨迹
+Each requirement includes:
+- **Requirement ID**: REQ-001, REQ-002, ...
+- **Title**: Concise requirement name
+- **Original Description**: User's initial requirement description
+- **Current Description**: Refined description after clarification and evolution
+- **Status**: draft / confirmed / in_progress / completed / cancelled
+- **Priority**: high / medium / low
+- **Created At**: When the requirement was first recorded
+- **Updated At**: When the requirement was last modified
+- **Change History**: Record of requirement description changes
 
-### 需求统计
+### Requirement Statistics
 
-自动统计各状态需求的数量。
+Auto-generated statistics of requirements by status.
 
-## 13.3 PRD 使用流程
+## 13.3 PRD Usage Flow
 
-### 需求提出阶段
+### Requirement Proposal Phase
 
-1. **用户提出需求**: 在对话中描述需求
-2. **AI 记录需求**: 
-   - 使用需求澄清协议，将模糊描述转化为结构化需求
-   - 在 PRD.md 中创建新需求条目（REQ-XXX）
-   - 记录原始描述和当前描述
+1. **User proposes requirement**: Describes requirement in dialogue
+2. **AI records requirement**: 
+   - Uses requirement clarification protocol to transform vague descriptions into structured requirements
+   - Creates new requirement entry (REQ-XXX) in PRD.md
+   - Records original and current descriptions
 
-### 需求演进阶段
+### Requirement Evolution Phase
 
-1. **需求澄清**: 在对话中进一步明确需求细节
-2. **更新 PRD**: 
-   - 更新需求的当前描述
-   - 在变化历史中记录变化原因
-   - 更新需求状态（如从 draft → confirmed）
+1. **Requirement clarification**: Further define requirement details in dialogue
+2. **Update PRD**: 
+   - Update the requirement's current description
+   - Record change reason in change history
+   - Update requirement status (e.g., draft -> confirmed)
 
-### 需求实现阶段
+### Requirement Implementation Phase
 
-1. **开始实现**: 将需求状态更新为 in_progress
-2. **完成实现**: 将需求状态更新为 completed
-3. **记录关联**: 在需求中关联对应的 TASK-ID
+1. **Start implementation**: Update requirement status to in_progress
+2. **Complete implementation**: Update requirement status to completed
+3. **Record association**: Associate the corresponding TASK-ID in the requirement
 
-## 13.4 PRD 管理触发词
+## 13.4 PRD Management Trigger Words
 
-在对话中使用以下触发词，AI 应主动管理 PRD：
+Use the following trigger phrases in dialogue, and the AI should proactively manage the PRD:
 
-- "记录需求"
-- "更新 PRD"
-- "查看需求"
-- "需求状态"
+- "record requirement"
+- "update PRD"
+- "view requirements"
+- "requirement status"
 - "PRD"
-- "需求文档"
+- "requirements document"
 
-## 13.5 PRD 与需求澄清协议的关系
+## 13.5 Relationship Between PRD and Requirement Clarification Protocol
 
-PRD 是需求澄清协议的**输出产物**：
+PRD is the **output artifact** of the requirement clarification protocol:
 
 ```
-用户提出需求
-    ↓
-需求澄清协议（结构化需求）
-    ↓
-记录到 PRD.md
-    ↓
-需求演进和实现
+User proposes requirement
+    |
+    v
+Requirement Clarification Protocol (structured requirement)
+    |
+    v
+Record in PRD.md
+    |
+    v
+Requirement evolution and implementation
 ```
 
-## 13.6 PRD 更新时机
+## 13.6 PRD Update Timing
 
-AI 应在以下时机更新 PRD：
+The AI should update PRD at these times:
 
-1. **新需求提出时**: 创建新需求条目
-2. **需求澄清后**: 更新当前描述和变化历史
-3. **需求状态变化时**: 更新状态字段
-4. **需求实现完成时**: 更新状态为 completed，关联 TASK-ID
+1. **When new requirement is proposed**: Create new requirement entry
+2. **After requirement clarification**: Update current description and change history
+3. **When requirement status changes**: Update the status field
+4. **When requirement implementation completes**: Update status to completed, associate TASK-ID
 
-## 13.7 PRD 最佳实践
+## 13.7 PRD Best Practices
 
-### 需求描述规范
-- **原始描述**: 保持用户原话，不做修改
-- **当前描述**: 经过澄清后的结构化描述
-- **变化原因**: 清晰说明为什么需求发生变化
+### Requirement Description Standards
+- **Original Description**: Keep user's exact words, no modification
+- **Current Description**: Structured description after clarification
+- **Change Reason**: Clearly explain why the requirement changed
 
-### 需求状态流转
+### Requirement Status Flow
 ```
-draft → confirmed → in_progress → completed
-  ↓                    ↓
-cancelled          cancelled
+draft -> confirmed -> in_progress -> completed
+  |                      |
+  v                      v
+cancelled            cancelled
 ```
 
-### 需求关联
-- 需求可以关联到 TASK-ID
-- 一个需求可能对应多个任务
-- 在需求中记录关联的任务 ID
+### Requirement Association
+- Requirements can be associated with TASK-IDs
+- One requirement may correspond to multiple tasks
+- Record associated task IDs in the requirement
 
 ---
 
 
-# 十四、快速参考
+# XIV. Quick Reference
 
-## 开始新对话时说
-
-```
-继续项目开发。
-请先读取 CONTRIBUTING_AI.md 和 docs/CONTEXT.md 恢复上下文。
-本次对话目标: {你的目标}
-```
-
-## 结束对话前说
+## Starting a New Dialogue
 
 ```
-请更新 docs/CONTEXT.md 保存当前进度。
-总结本次对话的决策和产出。
-然后 git commit 记录本次对话。
+Continue project development.
+Please read CONTRIBUTING_AI.md and docs/CONTEXT.md to restore context first.
+Goal for this dialogue: {your goal}
 ```
 
-## 协议自检触发
+## Before Ending a Dialogue
 
 ```
-检查协议
-或
-协议自检
-或
+Please update docs/CONTEXT.md to save current progress.
+Summarize the decisions and outputs of this dialogue.
+Then git commit to record this dialogue.
+```
+
+## Protocol Self-Check Trigger
+
+```
+check protocol
+or
+protocol check
+or
 vibecollab check
 ```
 
 ## Vibe Check
 
 ```
-在继续之前，确认一下：
-- 我们对齐理解了吗？
-- 这个方向对吗？
-- 有什么我没考虑到的？
+Before continuing, let's confirm:
+- Are we aligned in understanding?
+- Is this the right direction?
+- Is there anything I haven't considered?
 ```
 
 ---
 
-# CONTRIBUTING_AI.md 迭代日志
+# CONTRIBUTING_AI.md Iteration Log
 
-| 版本 | 日期 | 变更内容 |
-|-----|------|---------|
-| v1.0 | 2026-03-02 | 初始版本 |
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | 2026-03-03 | Initial version |
 
 ---
 
-# Git 提交历史参考
+# Git Commit History Reference
 
-本项目的 Git 历史记录了完整的设计演进过程：
+This project's Git history records the complete design evolution process:
 
 ```bash
-# 查看提交历史
+# View commit history
 git log --oneline
 
-# 查看某次提交详情
+# View specific commit details
 git show <commit-hash>
 
-# 查看文件变更历史
+# View file change history
 git log --follow -p <file>
 ```
 
 ---
 
-# 经验沉淀工作流 (Insight Workflow)
+# Insight Accumulation Workflow
 
-## 沉淀的意义
+## Why Accumulate Insights
 
-> **每次对话都可能产生值得沉淀的经验。无论是 AI Agent 自主执行还是人类在 IDE 中对话驱动开发，经验沉淀的习惯应贯穿始终。**
+> **Every dialogue may produce experience worth accumulating. Whether the AI Agent is executing autonomously or a human is driving development through IDE dialogue, the habit of insight accumulation should be maintained throughout.**
 
-Insight 系统是项目的"组织记忆"——它将分散在对话、代码和文档中的经验提取为结构化知识，供后续开发者（人或 AI）检索复用。
+The Insight system is the project's "organizational memory" -- it extracts experience scattered across dialogues, code, and documentation into structured knowledge for future developers (human or AI) to retrieve and reuse.
 
-## 何时应该沉淀
+## When to Accumulate
 
-在以下场景中，应主动考虑创建 Insight：
+In the following scenarios, proactively consider creating an Insight:
 
-| 场景 | 示例 | 建议 category |
-|------|------|--------------|
-| **解决了一个棘手 bug** | 发现 GBK 编码导致 emoji 崩溃 | `debug` |
-| **发现了更好的做法** | 用 dataclass 替代 dict 提升类型安全 | `technique` |
-| **做出了重要的架构/设计决策** | 选择 Jinja2 而非 Mako 作为模板引擎 | `decision` |
-| **总结了工具/框架的使用经验** | pytest fixture 的 scope 选择策略 | `tool` |
-| **建立了可复用的工作流** | CI/CD 配置从 3.8 升级到 3.9+ 的检查清单 | `workflow` |
-| **发现了跨模块的集成要点** | EventLog 与 InsightManager 的协作模式 | `integration` |
+| Scenario | Example | Suggested Category |
+|----------|---------|-------------------|
+| **Solved a tricky bug** | Found GBK encoding causes emoji crash | `debug` |
+| **Discovered a better approach** | Using dataclass instead of dict for type safety | `technique` |
+| **Made an important architecture/design decision** | Chose Jinja2 over Mako as template engine | `decision` |
+| **Summarized tool/framework experience** | pytest fixture scope selection strategy | `tool` |
+| **Established a reusable workflow** | CI/CD config checklist for upgrading from 3.8 to 3.9+ | `workflow` |
+| **Found cross-module integration points** | EventLog and InsightManager collaboration pattern | `integration` |
 
-## 沉淀流程
+## Accumulation Flow
 
-### IDE 对话模式（人类 + AI 对话）
+### IDE Dialogue Mode (Human + AI Dialogue)
 
-在对话接近结束时，执行以下检查：
+Near the end of dialogue, perform the following check:
 
 ```
-1. 回顾本次对话的主要成果
-2. 判断是否有值得沉淀的经验（参考上方场景表）
-3. 如有 → 使用 vibecollab insight add 创建 Insight
-4. 如无 → 跳过，继续正常的对话结束流程
+1. Review the main outcomes of this dialogue
+2. Determine if there is experience worth accumulating (refer to scenario table above)
+3. If yes -> Use vibecollab insight add to create an Insight
+4. If no -> Skip, continue normal dialogue end flow
 ```
 
-**创建命令示例**：
+**Creation command example**:
 ```bash
 vibecollab insight add \
-  --title "Windows GBK 编码兼容方案" \
+  --title "Windows GBK Encoding Compatibility Solution" \
   --tags "windows,encoding,gbk,unicode" \
   --category debug \
-  --body "在 Windows GBK 终端下，直接输出 emoji 字符会导致 UnicodeEncodeError。解决方案：创建共享的 _compat.py 模块，统一 EMOJI 字典和 BULLET 变量，GBK 环境下自动降级为 ASCII 替代符。"
+  --body "On Windows GBK terminals, directly outputting emoji characters causes UnicodeEncodeError. Solution: create a shared _compat.py module with unified EMOJI dict and BULLET variable, auto-downgrade to ASCII substitutes in GBK environment."
 ```
 
-### Agent 自主模式
+### Agent Autonomous Mode
 
-Agent 在完成任务后，应自动评估是否有值得沉淀的经验，并在适当时调用 `vibecollab insight add`。
+After completing tasks, the Agent should automatically evaluate whether there is experience worth accumulating and call `vibecollab insight add` when appropriate.
 
-### 查看与检索
+### Viewing and Searching
 
 ```bash
-# 列出所有 Insight
+# List all Insights
 vibecollab insight list
 
-# 按标签搜索
+# Search by tags
 vibecollab insight search --tags "encoding,windows"
 
-# 查看详情
+# View details
 vibecollab insight show INS-001
 ```
 
-## AI 对话结束检查清单
+## AI Dialogue End Checklist
 
-在执行正常的对话结束流程（更新文档 → git commit）**之前**，请先完成：
+**Before** executing the normal dialogue end flow (update docs -> git commit), complete the following:
 
-- [ ] **经验检查**：本次对话是否产生了新的、值得沉淀的经验？
-- [ ] **已有检索**：是否已有类似的 Insight？（避免重复沉淀）
-- [ ] **沉淀执行**：如有新经验 → `vibecollab insight add`
+- [ ] **Experience check**: Did this dialogue produce new experience worth accumulating?
+- [ ] **Existing search**: Is there already a similar Insight? (avoid duplicate accumulation)
+- [ ] **Accumulation execution**: If new experience -> `vibecollab insight add`
 
-> 💡 **提示**：宁可多沉淀也不要遗漏。Insight 有自动衰减机制，不常被检索的经验会自然降低权重。
+> **Tip**: Better to over-accumulate than to miss. Insights have an automatic decay mechanism -- infrequently retrieved experience will naturally decrease in weight.
 
 ---
 
-*本文档是活文档，记录人机协作的演进过程。*
-*生成时间: 2026-03-02 17:33:32*
-*最珍贵的不是结果，而是我们共同思考的旅程。*
+*This is a living document that records the evolution of human-AI collaboration.*
+*Generated at: 2026-03-03 18:53:18*
+*The most precious thing is not the result, but the journey of thinking together.*
