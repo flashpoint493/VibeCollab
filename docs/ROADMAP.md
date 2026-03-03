@@ -400,28 +400,29 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [ ] MCP Server validated in Cursor/CodeBuddy
 - [ ] Feature freeze declaration
 
-### v0.10.1 - Code Internationalization (Code i18n)
+### v0.10.1 - Code Internationalization (Code i18n) (Completed ✅)
 
 > Objective: Code-level full English translation, ensure non-Chinese native developers can read
 
-- [ ] Translate Chinese docstring/comment in 36 .py files to English (~2055 lines)
-- [ ] Translate 62+ CLI `help=` parameters to English
-- [ ] Runtime output text (`click.echo` / `console.print`) English translation
-- [ ] Error message English translation
-- [ ] Full 1201+ tests passed, coverage must not decrease
+- [x] Translate Chinese docstring/comment in 36 .py files to English (~2055 lines)
+- [x] Translate 62+ CLI `help=` parameters to English
+- [x] Runtime output text (`click.echo` / `console.print`) English translation
+- [x] Error message English translation
+- [x] Full 1201+ tests passed, coverage must not decrease
 
-### v0.10.2 - Documentation Bilingualization (Doc Bilingual)
+### v0.10.2 - Documentation Bilingualization (Doc Bilingual) (Completed ✅)
 
 > Objective: README and core docs provide English versions
 
-- [ ] README.md rewritten in English (as primary README)
-- [ ] README_CN.md preserves Chinese version
-- [ ] CHANGELOG.md organized in English
-- [ ] pyproject.toml description in English
+- [x] README.md rewritten in English (as primary README)
+- [x] README_CN.md preserves Chinese version
+- [x] CHANGELOG.md organized in English
+- [x] pyproject.toml description in English
 
-### v0.10.3 - Git History Rewrite + Repository Facade
+### v0.10.3 - Git History Rewrite + Repository Facade (In Progress)
 
 > Objective: One-time rewrite of all commit messages to standard English + GitHub facade professionalization
+> Note: Template/config English translation and Insight cache translation completed as part of i18n effort
 
 - [ ] `git-filter-repo` rewrite 97+ commit messages to Conventional Commits English format
 - [ ] force push (irreversible, ensure this is the last history-breaking operation)

@@ -71,7 +71,6 @@
 ## Technical Debt
 - External QA validation (Phase 11 TC-E2E-001~010) pending
 - events.jsonl Windows file lock issue needs investigation
-- Pipeline unit tests not yet written
 - README.zh-CN.md project structure section has outdated module layout
 
 ---
