@@ -18,7 +18,7 @@ vibecollab init -n "<PROJECT_NAME>" -d <DOMAIN>
 ```
 
 - `<PROJECT_NAME>`: Ask the user for their project name
-- `<DOMAIN>`: Ask the user to choose: `web` / `mobile` / `game` / `data` / `general`
+- `<DOMAIN>`: Ask the user to choose: `web` / `mobile` / `game` / `data` / `generic`
 
 This creates `project.yaml`, `CONTRIBUTING_AI.md`, and `docs/` directory with protocol documents.
 
@@ -53,13 +53,19 @@ VibeCollab is ready. You now have MCP tools available in your IDE:
 | `onboard` | **Start of every conversation** — get project context |
 | `check` | **End of every conversation** — verify protocol compliance |
 | `next_step` | When unsure what to do next |
-| `roadmap_status` | View milestone progress |
-| `roadmap_sync` | Sync ROADMAP.md ↔ tasks.json |
 | `insight_search` | Search past development experience |
 | `insight_add` | Save a reusable insight |
+| `insight_suggest` | Get signal-driven insight recommendations |
+| `insight_graph` | View insight relationship graph |
+| `insight_export` | Export insights in YAML format |
+| `search_docs` | Semantic search across project documents |
 | `task_list` | List current tasks |
-| `task_create` | Create a new task |
+| `task_create` | Create a new task (auto-links insights) |
 | `task_transition` | Move task status (TODO → IN_PROGRESS → REVIEW → DONE) |
+| `developer_context` | Get a specific developer's context |
+| `project_prompt` | Generate full context prompt |
+| `roadmap_status` | View milestone progress |
+| `roadmap_sync` | Sync ROADMAP.md ↔ tasks.json |
 | `session_save` | **End of conversation** — save session summary |
 
 ## ROADMAP Format
