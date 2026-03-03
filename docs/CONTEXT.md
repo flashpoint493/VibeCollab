@@ -9,7 +9,7 @@
 - **Previous release**: v0.9.7 (PyPI published)
 - **Active developers**: 2 (alice, ocarina)
 - **Tests**: 1344 passed, 89% coverage
-- **Current phase**: CLI i18n framework implemented, progressing toward v0.10.2
+- **Current phase**: v0.10.2 documentation English translation completed, progressing toward v0.10.3
 
 ## Developer Status
 
@@ -21,26 +21,22 @@
 
 ### ocarina
 - **Last updated**: 2026-03-03
-- **Current task**: CLI i18n — runtime output string wrapping (remaining files)
+- **Current task**: v0.10.2 documentation English translation — COMPLETED
 - **Recently completed**:
-  - **CLI i18n framework (v0.10.1)**: gettext-based i18n infrastructure
-    - Created `src/vibecollab/i18n/` module with `_()`, `setup_locale()`, `ngettext()`
-    - Pre-parse `--lang` from sys.argv before Click loads (solves Click help= timing issue)
-    - Language priority: `--lang` CLI option > `VIBECOLLAB_LANG` env var > English fallback
-    - Wrapped 316 unique `_()` strings across all 11 CLI files
-    - All `help=` parameters wrapped in all CLI files (62+ strings via batch script)
-    - Created `.pot` template (316 strings), `zh_CN .po` (131 translations), compiled `.mo`
-    - `pyproject.toml` artifacts updated to include `.mo` files in wheel builds
-    - Fixed 7 f-string backslash escaping SyntaxErrors
-    - 1344 tests all passing, zero regression
-  - **Code i18n (v0.10.1)**: Full English translation of 96 files (62 source + 34 test files)
-  - Directory restructure: 36 flat .py files reorganized into 7 sub-packages
-  - GBK encoding fix: 3-layer defense system
+  - **Docs English translation (v0.10.2)**: All 10 docs/ files translated (~4000+ lines)
+  - **Schema English translation**: All 3 schema/ YAML files translated
+  - **README version sync**: Both README.md and README.zh-CN.md updated with v0.9.6/v0.9.7
+  - **Version unification**: Hatchling dynamic versioning, single source of truth
+  - **Pipeline module**: SchemaValidator, ActionRegistry, DocSyncChecker, Pipeline orchestrator
+  - **Task lifecycle hooks**: on_complete/on_transition callbacks
+  - **Code i18n (v0.10.1)**: Full English translation of 96 files (62 source + 34 tests)
+  - **i18n framework**: gettext-based CLI localization, 316 translatable strings
 
 ## Active Tasks
 
-- CLI i18n: wrap remaining runtime output strings in config.py, roadmap.py, task.py, ai.py, guide.py, insight.py
-- Create `.pot` extraction + `.mo` compilation tooling script
+- v0.10.3: Git history rewrite (97 commits) + GitHub facade
+- Pipeline unit tests (pipeline.py)
+- README.zh-CN.md project structure section modernization
 
 ## Architecture (v0.9.7+)
 
@@ -72,8 +68,8 @@
 ## Technical Debt
 - External QA validation (Phase 11 TC-E2E-001~010) pending
 - events.jsonl Windows file lock issue needs investigation
-- CLI i18n: runtime output strings in 6 files still need `_()` wrapping
-- CLI i18n: remaining 185 untranslated strings in zh_CN .po file
+- Pipeline unit tests not yet written
+- README.zh-CN.md project structure section has outdated module layout
 
 ---
 *This file is auto-aggregated from multi-developer contexts*

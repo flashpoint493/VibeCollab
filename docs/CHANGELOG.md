@@ -2,6 +2,20 @@
 
 ## v0.10.1-dev (2026-03-03) - Code Internationalization (i18n)
 
+### Documentation English Translation (v0.10.2)
+- **All 10 docs/ files translated** from Chinese to English (~4000+ lines, ~6400 line changes)
+  - CHANGELOG.md, DECISIONS.md, ROADMAP.md, PRD.md, QA_TEST_CASES.md
+  - LIFECYCLE_DESIGN.md, TEST_VALIDATION.md, developers/COLLABORATION.md
+  - developers/alice/CONTEXT.md, developers/ocarina/CONTEXT.md
+- **All 3 schema/ files translated** (project.schema.yaml, insight.schema.yaml, extension.schema.yaml)
+- **README version sync**: Both README.md and README.zh-CN.md updated with v0.9.6/v0.9.7 entries, footer version corrected to v0.9.7
+- Translation principles: technical terms/code/YAML/version numbers preserved exactly, Markdown structure maintained
+
+### Version Unification + Pipeline Module + Task Lifecycle
+- **Version unification**: Hatchling dynamic versioning via `pyproject.toml` → `__init__.py` as single source of truth
+- **Pipeline module** (`src/vibecollab/core/pipeline.py`): SchemaValidator, ActionRegistry, DocSyncChecker, Pipeline orchestrator (~310 lines)
+- **Task lifecycle hooks**: `on_complete()`, `on_transition()` callbacks in TaskManager, completion action hints in CLI
+
 ### i18n Framework
 - **CLI i18n architecture**: gettext-based localization with zero external dependencies
   - Created `src/vibecollab/i18n/` module: `_()`, `setup_locale()`, `ngettext()`, `get_current_language()`
