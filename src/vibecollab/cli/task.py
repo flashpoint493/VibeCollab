@@ -69,6 +69,7 @@ def create_task(task_id, role, feature, assignee, description, milestone, config
             actor=assignee or "cli",
         )
     except ValueError as e:
+        click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
 
     related = task.metadata.get("related_insights", [])
@@ -322,4 +323,4 @@ def rollback_task(task_id, reason, config, json_output):
     else:
         for v in result.violations:
             click.echo(f"Error: {v}", err=True)
-        raise SystemE
+        raise SystemExit(1)
