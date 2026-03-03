@@ -1,57 +1,57 @@
-# 扩展机制 Schema 定义
-# 扩展 = 流程钩子 + 上下文注入 + 引用文档
+# Extension Mechanism Schema Definition
+# Extension = Workflow Hooks + Context Injection + Reference Documents
 
 extension:
   type: object
-  description: 领域扩展定义
+  description: Domain extension definition
   properties:
     
     # ============================================
-    # 钩子定义：在什么时机触发什么动作
+    # Hook Definitions: What action to trigger at what point
     # ============================================
     hooks:
       type: array
-      description: 流程钩子列表
+      description: Workflow hook list
       items:
         type: object
         required: [trigger, action]
         properties:
           trigger:
             type: string
-            description: 触发点标识
+            description: Trigger point identifier
             enum:
-              # 对话生命周期
-              - "dialogue.start"           # 对话开始
-              - "dialogue.end"             # 对话结束
-              # QA 流程
-              - "qa.list_test_cases"       # 列出测试用例时
-              - "qa.acceptance"            # 验收测试时
-              # 开发流程
-              - "dev.feature_complete"     # 功能完成时
-              - "dev.before_implement"     # 实现前
-              # 构建流程
-              - "build.pre"                # 构建前
-              - "build.post"               # 构建后
-              # 里程碑
-              - "milestone.review"         # 里程碑回顾
-              - "milestone.planning"       # 里程碑规划
+              # Dialogue lifecycle
+              - "dialogue.start"           # Dialogue start
+              - "dialogue.end"             # Dialogue end
+              # QA workflow
+              - "qa.list_test_cases"       # When listing test cases
+              - "qa.acceptance"            # During acceptance testing
+              # Development workflow
+              - "dev.feature_complete"     # When feature is complete
+              - "dev.before_implement"     # Before implementation
+              # Build workflow
+              - "build.pre"                # Before build
+              - "build.post"               # After build
+              # Milestone
+              - "milestone.review"         # Milestone review
+              - "milestone.planning"       # Milestone planning
           
           action:
             type: string
-            description: 执行动作
+            description: Action to execute
             enum:
-              - "inject_context"           # 注入上下文
-              - "append_checklist"         # 追加检查项
-              - "require_file_read"        # 要求读取文件
-              - "update_file"              # 更新文件
+              - "inject_context"           # Inject context
+              - "append_checklist"         # Append checklist items
+              - "require_file_read"        # Require file reading
+              - "update_file"              # Update file
           
           context_id:
             type: string
-            description: 关联的上下文ID（action=inject_context时必填）
+            description: Associated context ID (required when action=inject_context)
           
           condition:
             type: string
-            description: 触发条件表达式
+            description: Trigger condition expression
             examples:
               - "project.domain == 'game'"
               - "project.has_feature('gm_console')"
@@ -60,14 +60,14 @@ extension:
           priority:
             type: integer
             default: 0
-            description: 执行优先级（越大越先）
+            description: Execution priority (higher = earlier)
 
     # ============================================
-    # 上下文定义：注入什么内容
+    # Context Definitions: What content to inject
     # ============================================
     contexts:
       type: object
-      description: 上下文字典，key 为 context_id
+      description: Context dictionary, key is context_id
       additionalProperties:
         type: object
         required: [type]
@@ -75,42 +75,42 @@ extension:
           type:
             type: string
             enum:
-              - "reference"    # 引用外部文档
-              - "template"     # 内联模板
-              - "computed"     # 动态计算
-              - "file_list"    # 文件列表
+              - "reference"    # Reference external document
+              - "template"     # Inline template
+              - "computed"     # Dynamically computed
+              - "file_list"    # File list
           
-          # type=reference 时
+          # When type=reference
           source:
             type: string
-            description: 引用的文档路径
+            description: Referenced document path
           section:
             type: string
-            description: 只引用文档的特定章节
+            description: Reference only a specific section of the document
           inline_if_short:
             type: boolean
             default: true
-            description: 内容较短时内联显示
+            description: Display inline when content is short
           
-          # type=template 时
+          # When type=template
           content:
             type: string
-            description: 模板内容，支持 {variable} 占位符
+            description: Template content, supports {variable} placeholders
           
-          # type=computed 时
+          # When type=computed
           from:
             type: string
-            description: 数据来源路径
+            description: Data source path
           transform:
             type: string
-            description: 转换表达式
+            description: Transform expression
 
     # ============================================
-    # 额外文件：领域特定文档
+    # Additional Files: Domain-specific documents
     # ============================================
     additional_files:
       type: array
-      description: 领域需要的额外文档文件
+      description: Additional document files needed by the domain
       items:
         type: object
         properties:
@@ -120,19 +120,19 @@ extension:
             type: string
           template:
             type: string
-            description: 文件模板内容或模板文件路径
+            description: File template content or template file path
 
     # ============================================
-    # 角色覆盖/追加
+    # Role Override/Append
     # ============================================
     roles_override:
       type: array
-      description: 覆盖或追加角色定义
+      description: Override or append role definitions
       items:
         $ref: "#/definitions/role"
 
 # ============================================
-# 公共定义
+# Common Definitions
 # ============================================
 definitions:
   role:

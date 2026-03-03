@@ -1,15 +1,15 @@
 # VibeCollab Insight Schema v1
-# 沉淀系统数据结构定义
+# Insight system data structure definition
 #
-# Insight = 从开发实践中提炼的可复用知识单元
-# 设计目标：
-#   - 沉淀本体与项目使用状态分离
-#   - 未来可作为独立包跨项目分发
-#   - 支持关联实际工具/脚本（artifacts）
-#   - 通过 Tag 体系驱动匹配和推荐
+# Insight = Reusable knowledge unit distilled from development practice
+# Design goals:
+#   - Separate insight entity from project usage state
+#   - Enable future cross-project distribution as standalone package
+#   - Support association with actual tools/scripts (artifacts)
+#   - Drive matching and recommendations through Tag system
 
 # ============================================
-# 一、Insight 本体（知识单元，可移植）
+# 1. Insight Entity (knowledge unit, portable)
 # ============================================
 insight:
   type: object
@@ -18,165 +18,167 @@ insight:
     kind:
       type: string
       const: "insight"
-      description: 固定类型标识
+      description: Fixed type identifier
 
     version:
       type: string
       default: "1"
-      description: Schema 版本号，便于跨项目迁移时的兼容处理
+      description: Schema version number for cross-project migration compatibility
 
     id:
       type: string
       pattern: "^INS-\\d{3,}$"
-      description: 全局唯一 ID，格式 INS-001, INS-002, ...
+      description: Globally unique ID, format INS-001, INS-002, ...
 
-    # --- 描述 ---
+    # --- Description ---
     title:
       type: string
-      description: 简明标题
+      description: Concise title
 
     summary:
       type: string
-      description: 一句话摘要
+      description: One-line summary
 
     tags:
       type: array
       items:
         type: string
       minItems: 1
-      description: 标签列表，驱动匹配和推荐
+      description: Tag list, drives matching and recommendations
 
     category:
       type: string
       enum:
-        - technique      # 技术手法（如模板替换硬编码）
-        - workflow        # 工作流程（如 Plan→Execute→Solidify）
-        - decision        # 决策模式（如何做技术选型）
-        - debug           # 调试经验（如何排查某类问题）
-        - tool            # 工具用法（某工具的最佳实践）
-        - integration     # 集成模式（模块间如何协作）
-      description: 沉淀分类
+        - technique      # Technical approach (e.g. template replacing hardcoded values)
+        - workflow        # Workflow pattern (e.g. Plan→Execute→Solidify)
+        - decision        # Decision pattern (how to make tech choices)
+        - debug           # Debugging experience (how to troubleshoot certain issues)
+        - tool            # Tool usage (best practices for a tool)
+        - integration     # Integration pattern (how modules collaborate)
+      description: Insight category
 
-    # --- 知识体 ---
+    # --- Knowledge Body ---
     body:
       type: object
       required: [scenario, approach]
-      description: 知识主体，Jinja2 模板化，渲染时可注入上下文
+      description: Knowledge body, Jinja2 templatable, context injectable at render time
       properties:
         scenario:
           type: string
-          description: 适用场景描述
+          description: Applicable scenario description
         approach:
           type: string
-          description: 方法/步骤（支持 Markdown 和多行文本）
+          description: Method/steps (supports Markdown and multi-line text)
         validation:
           type: string
-          description: 验证方法（如何确认此沉淀有效）
+          description: Validation method (how to confirm this insight is effective)
         constraints:
           type: array
           items:
             type: string
-          description: 使用约束/前提条件
+          description: Usage constraints/prerequisites
         notes:
           type: string
-          description: 补充说明
+          description: Additional notes
 
-    # --- 工具/制品关联 ---
+    # --- Artifacts ---
     artifacts:
       type: array
       default: []
-      description: 关联的工具、脚本、配置等制品
+      description: Associated tools, scripts, configurations, and other artifacts
       items:
         type: object
         required: [path, type]
         properties:
           path:
             type: string
-            description: 制品相对路径（相对于 insight 所在目录）
+            description: Artifact relative path (relative to insight directory)
           type:
             type: string
             enum:
-              - script       # 可执行脚本
-              - template     # Jinja2 模板
-              - config       # 配置文件
-              - schema       # Schema 定义
-              - reference    # 参考文档
-            description: 制品类型
+              - script       # Executable script
+              - template     # Jinja2 template
+              - config       # Configuration file
+              - schema       # Schema definition
+              - reference    # Reference document
+            description: Artifact type
           runtime:
             type: string
-            description: 执行环境（python3 / node / bash / ...）
+            description: Execution environment (python3 / node / bash / ...)
           description:
             type: string
 
-    # --- 溯源 ---
+    # --- Provenance ---
     origin:
       type: object
       required: [created_by, created_at]
       description: |
-        来源追踪。设计原则：溯源信息必须自描述，不依赖任何项目的内部 ID 体系。
-        Insight 本体可能被跨项目复用，因此来源描述应使人类在无原始项目上下文时也能理解。
+        Source tracking. Design principle: provenance info must be self-describing,
+        not dependent on any project's internal ID system.
+        Insight entities may be reused across projects, so source descriptions
+        should be understandable without original project context.
       properties:
         created_by:
           type: string
-          description: 创造者（developer ID）
+          description: Creator (developer ID)
         created_at:
           type: string
           format: date
-          description: 创建日期
+          description: Creation date
         context:
           type: string
-          description: 创建背景的自然语言描述（如"VibeCollab v0.7.0 Insight 系统架构设计"）
+          description: Natural language description of creation context (e.g. "VibeCollab v0.7.0 Insight system architecture design")
         source:
           type: object
           description: |
-            沉淀的直接来源。所有字段均为可选，但建议至少填写 type + description。
-            - description 是自描述的自然语言，跨项目时任何人都能理解
-            - ref 是来源项目的内部 ID（仅作为 hint，跨项目时可忽略）
-            - url 是外部可访问链接（如 GitHub issue/PR/文档 URL）
-            - project 标注来源项目名
+            Direct source of the insight. All fields are optional, but it's recommended
+            to fill at least type + description.
+            - description is self-describing natural language, readable by anyone across projects
+            - ref is the source project's internal ID (hint only, can be ignored cross-project)
+            - url is an externally accessible link (e.g. GitHub issue/PR/doc URL)
+            - project marks the source project name
           properties:
             type:
               type: string
               enum:
-                - task        # 从某个任务中提炼
-                - decision    # 从某个决策中提炼
-                - insight     # 从已有沉淀组合派生
-                - external    # 从外部引入
+                - task        # Distilled from a task
+                - decision    # Distilled from a decision
+                - insight     # Derived from existing insights
+                - external    # Imported from external source
             description:
               type: string
-              description: 来源的自然语言描述，确保跨项目可读
+              description: Natural language description of the source, ensuring cross-project readability
             ref:
               type: string
-              description: 来源项目内部 ID（可选 hint，如 DECISION-012、TASK-DEV-001）
+              description: Source project internal ID (optional hint, e.g. DECISION-012, TASK-DEV-001)
             url:
               type: string
               format: uri
-              description: 外部可访问链接（如 GitHub issue/PR URL）
+              description: Externally accessible link (e.g. GitHub issue/PR URL)
             project:
               type: string
-              description: 来源项目名称
+              description: Source project name
         derived_from:
           type: array
           items:
             type: string
           default: []
-          description: 派生自哪些 insight ID（溯源链）
+          description: Insight IDs this was derived from (provenance chain)
 
-    # --- 完整性 ---
+    # --- Integrity ---
     fingerprint:
       type: string
-      description: SHA-256 内容哈希，工具自动计算填充
-
+      description: SHA-256 content hash, auto-computed by tooling
 
 # ============================================
-# 二、项目注册表（项目级使用状态）
+# 2. Project Registry (project-level usage state)
 # ============================================
 registry:
   type: object
   required: [schema_version, entries]
   description: |
-    项目对沉淀库的使用状态。
-    与 insight 本体分离，同一 insight 在不同项目中有独立的注册状态。
+    Project's usage state of the insight library.
+    Separated from insight entity; the same insight has independent registry state in different projects.
   properties:
     schema_version:
       type: string
@@ -193,27 +195,27 @@ registry:
             minimum: 0.0
             default: 1.0
             description: |
-              使用权重。
-              使用一次 +0.1（奖励），每个衰减周期 *decay_rate（衰减）。
-              weight < deactivate_threshold 时自动 active=false。
+              Usage weight.
+              Each use: +0.1 (reward). Each decay cycle: *decay_rate (decay).
+              When weight < deactivate_threshold, auto-set active=false.
           used_count:
             type: integer
             minimum: 0
             default: 0
-            description: 被使用次数
+            description: Usage count
           last_used_at:
             type: string
             format: date-time
-            description: 最后一次使用时间
+            description: Last used timestamp
           last_used_by:
             type: string
-            description: 最后使用者（developer ID）
+            description: Last user (developer ID)
           active:
             type: boolean
             default: true
-            description: 是否启用。weight 过低或手动关闭
+            description: Whether enabled. Disabled when weight too low or manually turned off
 
-    # 注册表级配置
+    # Registry-level settings
     settings:
       type: object
       properties:
@@ -222,49 +224,48 @@ registry:
           minimum: 0.0
           maximum: 1.0
           default: 0.95
-          description: 每周期权重衰减系数
+          description: Weight decay coefficient per cycle
         decay_interval_days:
           type: integer
           default: 30
-          description: 衰减周期（天）
+          description: Decay cycle (days)
         use_reward:
           type: number
           default: 0.1
-          description: 每次使用的权重奖励
+          description: Weight reward per use
         deactivate_threshold:
           type: number
           default: 0.1
-          description: 低于此权重自动停用
-
+          description: Auto-deactivate when weight falls below this threshold
 
 # ============================================
-# 三、Developer Tag 扩展（.metadata.yaml 新增字段）
+# 3. Developer Tag Extension (.metadata.yaml additions)
 # ============================================
 developer_tags:
   type: object
   description: |
-    Developer 的 Tag 体系扩展，追加到现有 .metadata.yaml 中。
-    Tag 是开放式的，不预定义枚举。
-    特定 Tag 可被流程引擎识别并影响决策行为。
+    Developer Tag system extension, appended to existing .metadata.yaml.
+    Tags are open-ended, no predefined enums.
+    Specific tags can be recognized by the workflow engine and influence decision behavior.
   properties:
     tags:
       type: array
       items:
         type: string
       description: |
-        开发者标签列表。例：
-        - "arch"          → 擅长架构
-        - "python"        → 技术栈
-        - "test-first"    → 影响决策：先写测试
-        - "cautious"      → 影响决策：保守风格
-        - "no-breaking-change" → 影响决策：禁止破坏性变更
+        Developer tag list. Examples:
+        - "arch"          → architecture expertise
+        - "python"        → tech stack
+        - "test-first"    → influences decisions: write tests first
+        - "cautious"      → influences decisions: conservative style
+        - "no-breaking-change" → influences decisions: no breaking changes
     contributed:
       type: array
       items:
         type: string
-      description: 该开发者创造的 insight ID 列表
+      description: Insight IDs created by this developer
     bookmarks:
       type: array
       items:
         type: string
-      description: 该开发者收藏/常用的 insight ID 列表
+      description: Insight IDs bookmarked/frequently used by this developer

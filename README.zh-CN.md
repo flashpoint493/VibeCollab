@@ -790,7 +790,7 @@ VibeCollab/
 │   ├── DECISIONS.md
 │   ├── PRD.md
 │   └── ROADMAP.md
-└── tests/                       # 1164 tests
+└── tests/                       # 1344 tests
 ```
 
 ---
@@ -823,6 +823,10 @@ vibecollab health
 
 | 版本 | 日期 | 主要特性 |
 |------|------|---------|
+| v0.9.7 | 2026-03-03 | 源码英文化 (96 文件) + 模块重构 (7 子包) |
+| v0.9.6 | 2026-02-28 | CLI i18n 框架 (gettext) + zh_CN 翻译 + 316 可翻译字符串 |
+| v0.9.5 | 2026-02-28 | ROADMAP ↔ Task 集成 + 双语 README + MCP roadmap 工具 |
+| v0.9.4 | 2026-02-27 | Insight 质量生命周期 (去重、关系图、导入/导出) |
 | v0.9.3 | 2026-02-27 | Task/EventLog 核心工作流接通 + task transition/solidify/rollback + MCP 12 Tools |
 | v0.9.2 | 2026-02-27 | Insight 信号驱动沉淀 + Session 持久化 + MCP 增强 |
 | v0.9.1 | 2026-02-27 | MCP Server + AI IDE 集成 (Cursor/Cline/CodeBuddy) + PyPI 发布 |
@@ -879,4 +883,4 @@ MIT
 
 ---
 
-*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.9.3。*
+*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.9.7。*

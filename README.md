@@ -415,6 +415,8 @@ Use `vibecollab prompt --compact --copy` to generate a context text and paste it
 
 | Version | Date | Highlights |
 |---------|------|-----------|
+| v0.9.7 | 2026-03-03 | Source code i18n (96 files English) + module restructure (7 subpackages) |
+| v0.9.6 | 2026-02-28 | CLI i18n framework (gettext) + zh_CN translation + 316 translatable strings |
 | v0.9.5 | 2026-02-28 | ROADMAP ↔ Task integration + bilingual README + MCP roadmap tools |
 | v0.9.4 | 2026-02-27 | Insight quality lifecycle (dedup, graph, export/import) |
 | v0.9.3 | 2026-02-27 | Task/EventLog core workflow + task transition/solidify/rollback + MCP 12 Tools |
@@ -450,4 +452,4 @@ MIT
 
 ---
 
-*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.9.5.*
+*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.9.7.*
