@@ -3,6 +3,10 @@
 ## v0.10.1-dev (2026-03-03) - Code Internationalization (i18n)
 
 ### Template & Config English Translation (v0.10.3)
+- **Insight cache translation**: 16 Insight YAML files (INS-001 through INS-017) translated from Chinese to English
+  - SHA-256 fingerprints regenerated for all translated files
+  - Removed orphan `INS-007` entry from `registry.yaml` (file did not exist)
+  - Scanned and confirmed zero private/sensitive information in all Insight files
 - **`default.project.yaml`** fully translated — the init template for new projects (310 Chinese chars → 0)
 - **3 domain extension templates** translated:
   - `game.extension.yaml`: roles (Game Designer, Art Director), GM commands, balance tables
@@ -11,7 +15,13 @@
 - **`guide.py` `_SECTION_MAP` fix**: Updated section headings from Chinese to English to match translated CONTRIBUTING_AI.md (bug fix — old Chinese headings caused `vibecollab prompt` to fail matching)
 - **AI-facing context files translated**: `skill.md`, `.codebuddy/rules/*.mdc`, `.cursor/skills/` templates, `llms.txt`
 - **`project.yaml` translated** + CONTRIBUTING_AI.md regenerated (zero Chinese output)
-- All **1344 tests passed**, zero regression
+- All **1413 tests passed**, zero regression
+
+### CLI Bug Fixes & Pipeline Tests
+- **`task.py` silent error on create**: Added `click.echo(f"Error: {e}", err=True)` before `raise SystemExit(1)` — previously printed nothing on ValueError
+- **`task.py` truncated `raise SystemE`**: Fixed incomplete statement at file end to `raise SystemExit(1)`
+- **Pipeline test coverage**: 69 new tests for `pipeline.py` (from 0% to comprehensive coverage)
+  - `TestSchemaValidator` (26), `TestActionRegistry` (8), `TestDocSyncChecker` (6), `TestPipeline` (15), `TestValidationReport` (5), `TestCliTaskBugFixes` (9)
 
 ### Documentation English Translation (v0.10.2)
 - **All 10 docs/ files translated** from Chinese to English (~4000+ lines, ~6400 line changes)

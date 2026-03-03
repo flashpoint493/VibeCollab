@@ -8,8 +8,8 @@
 - **Version**: v0.10.1-dev (in development)
 - **Previous release**: v0.9.7 (PyPI published)
 - **Active developers**: 2 (alice, ocarina)
-- **Tests**: 1344 passed, 89% coverage
-- **Current phase**: v0.10.3 template translation completed, all internationalization work done
+- **Tests**: 1413 passed, 89% coverage
+- **Current phase**: v0.10.3 internationalization fully completed (code, docs, templates, Insights all in English)
 
 ## Developer Status
 
@@ -21,8 +21,11 @@
 
 ### ocarina
 - **Last updated**: 2026-03-03
-- **Current task**: v0.10.3 template translation — COMPLETED
+- **Current task**: v0.10.3 internationalization — FULLY COMPLETED
 - **Recently completed**:
+  - **Insight cache translation**: 16 Insight YAML files (INS-001~017) translated to English, fingerprints regenerated, INS-007 orphan removed from registry
+  - **CLI bug fixes**: `task.py` silent error on create + truncated `raise SystemE` fixed
+  - **Pipeline test coverage**: 69 new tests for `pipeline.py` (SchemaValidator, ActionRegistry, DocSyncChecker, Pipeline)
   - **Template translation (v0.10.3)**: `default.project.yaml`, 3 domain extensions, `guide.py` section map fix
   - **AI context files translation**: `skill.md`, `.codebuddy/rules/`, `.cursor/skills/`, `llms.txt`
   - **project.yaml translation + CONTRIBUTING_AI.md regeneration**
@@ -36,7 +39,6 @@
 ## Active Tasks
 
 - v0.10.3: Git history rewrite (97 commits) + GitHub facade
-- Pipeline unit tests (pipeline.py)
 - README.zh-CN.md project structure section modernization
 
 ## Architecture (v0.9.7+)
