@@ -2,6 +2,17 @@
 
 ## v0.10.1-dev (2026-03-03) - Code Internationalization (i18n)
 
+### Template & Config English Translation (v0.10.3)
+- **`default.project.yaml`** fully translated — the init template for new projects (310 Chinese chars → 0)
+- **3 domain extension templates** translated:
+  - `game.extension.yaml`: roles (Game Designer, Art Director), GM commands, balance tables
+  - `web.extension.yaml`: roles (Frontend Dev, Backend Dev), API docs, deploy guide
+  - `data.extension.yaml`: roles (Data Engineering, Data Analysis, Machine Learning), data quality rules, pipeline checklists
+- **`guide.py` `_SECTION_MAP` fix**: Updated section headings from Chinese to English to match translated CONTRIBUTING_AI.md (bug fix — old Chinese headings caused `vibecollab prompt` to fail matching)
+- **AI-facing context files translated**: `skill.md`, `.codebuddy/rules/*.mdc`, `.cursor/skills/` templates, `llms.txt`
+- **`project.yaml` translated** + CONTRIBUTING_AI.md regenerated (zero Chinese output)
+- All **1344 tests passed**, zero regression
+
 ### Documentation English Translation (v0.10.2)
 - **All 10 docs/ files translated** from Chinese to English (~4000+ lines, ~6400 line changes)
   - CHANGELOG.md, DECISIONS.md, ROADMAP.md, PRD.md, QA_TEST_CASES.md

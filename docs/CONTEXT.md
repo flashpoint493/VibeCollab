@@ -9,7 +9,7 @@
 - **Previous release**: v0.9.7 (PyPI published)
 - **Active developers**: 2 (alice, ocarina)
 - **Tests**: 1344 passed, 89% coverage
-- **Current phase**: v0.10.2 documentation English translation completed, progressing toward v0.10.3
+- **Current phase**: v0.10.3 template translation completed, all internationalization work done
 
 ## Developer Status
 
@@ -21,11 +21,12 @@
 
 ### ocarina
 - **Last updated**: 2026-03-03
-- **Current task**: v0.10.2 documentation English translation — COMPLETED
+- **Current task**: v0.10.3 template translation — COMPLETED
 - **Recently completed**:
+  - **Template translation (v0.10.3)**: `default.project.yaml`, 3 domain extensions, `guide.py` section map fix
+  - **AI context files translation**: `skill.md`, `.codebuddy/rules/`, `.cursor/skills/`, `llms.txt`
+  - **project.yaml translation + CONTRIBUTING_AI.md regeneration**
   - **Docs English translation (v0.10.2)**: All 10 docs/ files translated (~4000+ lines)
-  - **Schema English translation**: All 3 schema/ YAML files translated
-  - **README version sync**: Both README.md and README.zh-CN.md updated with v0.9.6/v0.9.7
   - **Version unification**: Hatchling dynamic versioning, single source of truth
   - **Pipeline module**: SchemaValidator, ActionRegistry, DocSyncChecker, Pipeline orchestrator
   - **Task lifecycle hooks**: on_complete/on_transition callbacks
