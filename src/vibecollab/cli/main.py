@@ -13,6 +13,7 @@ from rich.table import Table
 from .. import __version__
 from .._compat import BULLET, EMOJI, is_windows_gbk, safe_console
 from ..core.generator import LLMContextGenerator
+from ..i18n import _, setup_locale
 from ..utils.git import is_git_repo
 from ..utils.llmstxt import LLMsTxtManager
 from ..core.project import Project
@@ -34,24 +35,24 @@ def _safe_load_yaml(path: Path, label: str = "config file") -> dict:
     Handles: file not found, YAML syntax error, empty file.
     """
     if not path.exists():
-        console.print(f"[red]Error:[/red] {label} not found: {path}")
-        console.print("[dim]Hint: run in the project directory or use -c to specify the path[/dim]")
+        console.print(f"[red]{_('Error:')}[/red] {label} {_('not found:')} {path}")
+        console.print(f"[dim]{_('Hint: run in the project directory or use -c to specify the path')}[/dim]")
         raise SystemExit(1)
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except yaml.YAMLError as e:
-        console.print(f"[red]Error:[/red] {label} has invalid YAML syntax: {path}")
+        console.print(f"[red]{_('Error:')}[/red] {label} {_('has invalid YAML syntax:')} {path}")
         console.print(f"[dim]{e}[/dim]")
         raise SystemExit(1)
     except OSError as e:
-        console.print(f"[red]Error:[/red] Cannot read {label}: {e}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Cannot read')} {label}: {e}")
         raise SystemExit(1)
     if data is None:
-        console.print(f"[red]Error:[/red] {label} is empty: {path}")
+        console.print(f"[red]{_('Error:')}[/red] {label} {_('is empty:')} {path}")
         raise SystemExit(1)
     if not isinstance(data, dict):
-        console.print(f"[red]Error:[/red] {label} has invalid format (expected YAML dict): {path}")
+        console.print(f"[red]{_('Error:')}[/red] {label} {_('has invalid format (expected YAML dict):')} {path}")
         raise SystemExit(1)
     return data
 
@@ -69,28 +70,35 @@ def deep_merge(base: dict, override: dict) -> dict:
 
 @click.group()
 @click.version_option(version=__version__, prog_name="vibecollab")
-def main():
+@click.option(
+    "--lang",
+    envvar="VIBECOLLAB_LANG",
+    default=None,
+    hidden=True,
+    help="Language for CLI output (en/zh). Default: en. Env: VIBECOLLAB_LANG",
+)
+def main(lang):
     """VibeCollab - AI Collaboration Protocol Generator
 
     Generate standardized AI collaboration protocol documents from YAML config,
     supporting Vibe Development philosophy for human-AI collaboration.
     Automatically integrates llms.txt standard.
     """
-    pass
+    setup_locale(lang)
 
 
 @main.command()
-@click.option("--name", "-n", required=True, help="Project name")
+@click.option("--name", "-n", required=True, help=_("Project name"))
 @click.option(
     "--domain", "-d",
     type=click.Choice(DOMAINS),
     default="generic",
-    help="Business domain"
+    help=_("Business domain")
 )
-@click.option("--output", "-o", required=True, help="Output directory")
-@click.option("--force", "-f", is_flag=True, help="Force overwrite existing directory")
-@click.option("--no-git", is_flag=True, help="Skip automatic Git initialization")
-@click.option("--multi-dev", is_flag=True, help="Enable multi-developer mode")
+@click.option("--output", "-o", required=True, help=_("Output directory"))
+@click.option("--force", "-f", is_flag=True, help=_("Force overwrite existing directory"))
+@click.option("--no-git", is_flag=True, help=_("Skip automatic Git initialization"))
+@click.option("--multi-dev", is_flag=True, help=_("Enable multi-developer mode"))
 def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_dev: bool):
     """Initialize a new project
 
@@ -106,51 +114,51 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
 
     if output_path.exists() and not force:
         if any(output_path.iterdir()):
-            console.print(f"[red]Error:[/red] Directory {output} already exists and is not empty. Use --force to overwrite.")
+            console.print(f"[red]{_('Error:')}[/red] {_('Directory {dir} already exists and is not empty. Use --force to overwrite.').format(dir=output)}")
             raise SystemExit(1)
 
-    with console.status(f"[bold green]Initializing project {name}..."):
+    with console.status(f"[bold green]{_('Initializing project {name}...').format(name=name)}"):
         try:
             project = Project.create(name=name, domain=domain, output_dir=output_path, multi_dev=multi_dev)
             project.generate_all(auto_init_git=not no_git)
         except PermissionError as e:
-            console.print(f"[red]Error:[/red] Permission denied: {e}")
+            console.print(f"[red]{_('Error:')}[/red] {_('Permission denied:')} {e}")
             raise SystemExit(1)
         except OSError as e:
-            console.print(f"[red]Error:[/red] File system error (disk full/invalid path): {e}")
+            console.print(f"[red]{_('Error:')}[/red] {_('File system error (disk full/invalid path):')} {e}")
             raise SystemExit(1)
         except Exception as e:
-            console.print(f"[red]Error:[/red] Project initialization failed: {e}")
+            console.print(f"[red]{_('Error:')}[/red] {_('Project initialization failed:')} {e}")
             raise SystemExit(1)
 
     console.print()
-    mode_text = "multi-developer" if multi_dev else "single-developer"
+    mode_text = _("multi-developer") if multi_dev else _("single-developer")
     console.print(Panel.fit(
-        f"[bold green]{EMOJI_MAP['success']} Project {name} initialized![/bold green]\n\n"
-        f"[dim]Directory:[/dim] {output_path.absolute()}\n"
-        f"[dim]Domain:[/dim] {domain}\n"
-        f"[dim]Mode:[/dim] {mode_text}",
-        title="Done"
+        f"[bold green]{EMOJI_MAP['success']} {_('Project {name} initialized!').format(name=name)}[/bold green]\n\n"
+        f"[dim]{_('Directory:')}[/dim] {output_path.absolute()}\n"
+        f"[dim]{_('Domain:')}[/dim] {domain}\n"
+        f"[dim]{_('Mode:')}[/dim] {mode_text}",
+        title=_("Done")
     ))
 
-    table = Table(title="Generated Files", show_header=True)
-    table.add_column("File", style="cyan")
-    table.add_column("Description")
-    table.add_row("CONTRIBUTING_AI.md", "AI collaboration rules")
-    table.add_row("llms.txt", "Project context (with collaboration rules reference)")
-    table.add_row("project.yaml", "Project config (editable)")
+    table = Table(title=_("Generated Files"), show_header=True)
+    table.add_column(_("File"), style="cyan")
+    table.add_column(_("Description"))
+    table.add_row("CONTRIBUTING_AI.md", _("AI collaboration rules"))
+    table.add_row("llms.txt", _("Project context (with collaboration rules reference)"))
+    table.add_row("project.yaml", _("Project config (editable)"))
 
     if multi_dev:
-        table.add_row("docs/CONTEXT.md", "Global aggregated context (auto-generated)")
-        table.add_row("docs/developers/{dev}/CONTEXT.md", "Per-developer context")
-        table.add_row("docs/developers/COLLABORATION.md", "Collaboration document")
+        table.add_row("docs/CONTEXT.md", _("Global aggregated context (auto-generated)"))
+        table.add_row("docs/developers/{dev}/CONTEXT.md", _("Per-developer context"))
+        table.add_row("docs/developers/COLLABORATION.md", _("Collaboration document"))
     else:
-        table.add_row("docs/CONTEXT.md", "Current context")
+        table.add_row("docs/CONTEXT.md", _("Current context"))
 
-    table.add_row("docs/DECISIONS.md", "Decision records")
-    table.add_row("docs/CHANGELOG.md", "Changelog")
-    table.add_row("docs/ROADMAP.md", "Roadmap")
-    table.add_row("docs/QA_TEST_CASES.md", "Test cases")
+    table.add_row("docs/DECISIONS.md", _("Decision records"))
+    table.add_row("docs/CHANGELOG.md", _("Changelog"))
+    table.add_row("docs/ROADMAP.md", _("Roadmap"))
+    table.add_row("docs/QA_TEST_CASES.md", _("Test cases"))
     console.print(table)
 
     git_warning = project.config.get("_meta", {}).get("git_warning")
@@ -158,11 +166,11 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
 
     if git_auto_init:
         console.print()
-        console.print(f"[green]{EMOJI_MAP['success']} Git repository initialized automatically[/green]")
+        console.print(f"[green]{EMOJI_MAP['success']} {_('Git repository initialized automatically')}[/green]")
     elif git_warning:
         console.print()
         console.print(f"[yellow]{EMOJI_MAP['warning']} {git_warning}[/yellow]")
-        console.print("[dim]Hint: consider initializing a Git repository to track changes[/dim]")
+        console.print(f"[dim]{_('Hint: consider initializing a Git repository to track changes')}[/dim]")
 
     if multi_dev:
         from ..domain.developer import DeveloperManager
@@ -170,31 +178,32 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
         current_dev = dm.get_current_developer()
 
         console.print()
-        console.print("[bold cyan]Multi-developer mode enabled[/bold cyan]")
-        console.print(f"  {BULLET} Current developer: {current_dev}")
-        console.print(f"  {BULLET} Use 'vibecollab dev' for related commands")
+        console.print(f"[bold cyan]{_('Multi-developer mode enabled')}[/bold cyan]")
+        console.print(f"  {BULLET} {_('Current developer:')} {current_dev}")
+        cmd_hint = _("Use 'vibecollab dev' for related commands")
+        console.print(f"  {BULLET} {cmd_hint}")
 
     console.print()
-    console.print("[bold]Next steps:[/bold]")
+    console.print(f"[bold]{_('Next steps:')}[/bold]")
     console.print(f"  1. cd {output}")
     step = 2
     if not is_git_repo(output_path):
-        console.print(f"  {step}. git init  # Initialize Git repository")
+        console.print(f"  {step}. git init  # {_('Initialize Git repository')}")
         step += 1
     if multi_dev:
-        console.print(f"  {step}. vibecollab dev whoami  # Check current developer")
+        console.print(f"  {step}. vibecollab dev whoami  # {_('Check current developer')}")
         step += 1
-    console.print(f"  {step}. Edit project.yaml to customize configuration")
+    console.print(f"  {step}. {_('Edit project.yaml to customize configuration')}")
     step += 1
-    console.print(f"  {step}. vibecollab generate -c project.yaml  # Regenerate")
+    console.print(f"  {step}. vibecollab generate -c project.yaml  # {_('Regenerate')}")
     step += 1
-    console.print(f"  {step}. Start your Vibe Development journey!")
+    console.print(f"  {step}. {_('Start your Vibe Development journey!')}")
 
 
 @main.command()
-@click.option("--config", "-c", required=True, help="YAML config file path")
-@click.option("--output", "-o", default="CONTRIBUTING_AI.md", help="Output file path")
-@click.option("--no-llmstxt", is_flag=True, help="Skip llms.txt integration")
+@click.option("--config", "-c", required=True, help=_("YAML config file path"))
+@click.option("--output", "-o", default="CONTRIBUTING_AI.md", help=_("Output file path"))
+@click.option("--no-llmstxt", is_flag=True, help=_("Skip llms.txt integration"))
 def generate(config: str, output: str, no_llmstxt: bool):
     """Generate AI collaboration rules document from config and integrate llms.txt
 
@@ -209,10 +218,10 @@ def generate(config: str, output: str, no_llmstxt: bool):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
         raise SystemExit(1)
 
-    with console.status("[bold green]Generating collaboration rules document..."):
+    with console.status(f"[bold green]{_('Generating collaboration rules document...')}"):
         try:
             generator = LLMContextGenerator.from_file(config_path, project_root)
             content = generator.generate()
@@ -233,27 +242,27 @@ def generate(config: str, output: str, no_llmstxt: bool):
 
                 if updated:
                     if llmstxt_path and llmstxt_path.exists():
-                        console.print(f"[green]{EMOJI_MAP['success']} Updated:[/green] {llmstxt_path}")
+                        console.print(f"[green]{EMOJI_MAP['success']} {_('Updated:')}[/green] {llmstxt_path}")
                     else:
-                        console.print(f"[green]{EMOJI_MAP['success']} Created:[/green] {llmstxt_path}")
+                        console.print(f"[green]{EMOJI_MAP['success']} {_('Created:')}[/green] {llmstxt_path}")
                 else:
-                    console.print("[dim]Info: llms.txt already contains collaboration rules reference[/dim]")
+                    console.print(f"[dim]{_('Info: llms.txt already contains collaboration rules reference')}[/dim]")
         except yaml.YAMLError as e:
-            console.print(f"[red]Error:[/red] Invalid YAML in config file: {e}")
+            console.print(f"[red]{_('Error:')}[/red] {_('Invalid YAML in config file:')} {e}")
             raise SystemExit(1)
         except FileNotFoundError as e:
-            console.print(f"[red]Error:[/red] Required file not found: {e}")
+            console.print(f"[red]{_('Error:')}[/red] {_('Required file not found:')} {e}")
             raise SystemExit(1)
         except Exception as e:
-            console.print(f"[red]Error:[/red] Document generation failed: {e}")
+            console.print(f"[red]{_('Error:')}[/red] {_('Document generation failed:')} {e}")
             raise SystemExit(1)
 
-    console.print(f"[green]{EMOJI_MAP['success']} Generated:[/green] {output_path}")
-    console.print(f"[dim]Config:[/dim] {config_path}")
+    console.print(f"[green]{EMOJI_MAP['success']} {_('Generated:')}[/green] {output_path}")
+    console.print(f"[dim]{_('Config:')}[/dim] {config_path}")
 
 
 @main.command()
-@click.option("--config", "-c", required=True, help="YAML config file path")
+@click.option("--config", "-c", required=True, help=_("YAML config file path"))
 def validate(config: str):
     """Validate configuration file
 
@@ -264,44 +273,44 @@ def validate(config: str):
     config_path = Path(config)
 
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
         raise SystemExit(1)
 
-    with console.status("[bold green]Validating configuration..."):
+    with console.status(f"[bold green]{_('Validating configuration...')}"):
         try:
             generator = LLMContextGenerator.from_file(config_path)
             errors = generator.validate()
         except yaml.YAMLError as e:
-            console.print(f"[red]Error:[/red] Invalid YAML in config file: {e}")
+            console.print(f"[red]{_('Error:')}[/red] {_('Invalid YAML in config file:')} {e}")
             raise SystemExit(1)
         except Exception as e:
-            console.print(f"[red]Error:[/red] Config parsing failed: {e}")
+            console.print(f"[red]{_('Error:')}[/red] {_('Config parsing failed:')} {e}")
             raise SystemExit(1)
 
     if errors:
-        console.print(f"[red]{EMOJI_MAP['error']} Found {len(errors)} issue(s):[/red]")
+        console.print(f"[red]{EMOJI_MAP['error']} {_('Found {n} issue(s):').format(n=len(errors))}[/red]")
         for err in errors:
             console.print(f"  - {err}")
         raise SystemExit(1)
     else:
-        console.print(f"[green]{EMOJI_MAP['success']} Config valid:[/green] {config}")
+        console.print(f"[green]{EMOJI_MAP['success']} {_('Config valid:')}[/green] {config}")
 
 
 @main.command()
 def domains():
     """List supported business domains"""
-    table = Table(title="Supported Domains", show_header=True)
-    table.add_column("Domain", style="cyan")
-    table.add_column("Description")
-    table.add_column("Features")
+    table = Table(title=_("Supported Domains"), show_header=True)
+    table.add_column(_("Domain"), style="cyan")
+    table.add_column(_("Description"))
+    table.add_column(_("Features"))
 
     domain_info = {
-        "generic": ("General purpose", "Basic config"),
-        "game": ("Game development", "GM console, GDD docs"),
-        "web": ("Web application", "API docs, deployment env"),
-        "data": ("Data engineering", "ETL pipeline, data quality"),
-        "mobile": ("Mobile app", "Platform adaptation, release flow"),
-        "infra": ("Infrastructure", "IaC, monitoring & alerting"),
+        "generic": (_("General purpose"), _("Basic config")),
+        "game": (_("Game development"), _("GM console, GDD docs")),
+        "web": (_("Web application"), _("API docs, deployment env")),
+        "data": (_("Data engineering"), _("ETL pipeline, data quality")),
+        "mobile": (_("Mobile app"), _("Platform adaptation, release flow")),
+        "infra": (_("Infrastructure"), _("IaC, monitoring & alerting")),
     }
 
     for domain in DOMAINS:
@@ -317,10 +326,10 @@ def templates():
     tm = TemplateManager()
     available = tm.list_templates()
 
-    table = Table(title="Available Templates", show_header=True)
-    table.add_column("Template", style="cyan")
-    table.add_column("Type")
-    table.add_column("Path")
+    table = Table(title=_("Available Templates"), show_header=True)
+    table.add_column(_("Template"), style="cyan")
+    table.add_column(_("Type"))
+    table.add_column(_("Path"))
 
     for tpl in available:
         table.add_row(tpl["name"], tpl["type"], str(tpl["path"]))
@@ -329,8 +338,8 @@ def templates():
 
 
 @main.command()
-@click.option("--template", "-t", default="default", help="Template name")
-@click.option("--output", "-o", default="project.yaml", help="Output file path")
+@click.option("--template", "-t", default="default", help=_("Template name"))
+@click.option("--output", "-o", default="project.yaml", help=_("Output file path"))
 def export_template(template: str, output: str):
     """Export template configuration file
 
@@ -346,17 +355,18 @@ def export_template(template: str, output: str):
     try:
         content = tm.get_template(template)
         output_path.write_text(content, encoding="utf-8")
-        console.print(f"[green]{EMOJI_MAP['success']} Template exported:[/green] {output_path}")
+        console.print(f"[green]{EMOJI_MAP['success']} {_('Template exported:')}[/green] {output_path}")
     except FileNotFoundError:
-        console.print(f"[red]Error:[/red] Template not found: {template}")
-        console.print("[dim]Use 'vibecollab templates' to view available templates[/dim]")
+        console.print(f"[red]{_('Error:')}[/red] {_('Template not found:')} {template}")
+        hint = _("Use 'vibecollab templates' to view available templates")
+        console.print(f"[dim]{hint}[/dim]")
         raise SystemExit(1)
 
 
 @main.command()
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
-@click.option("--dry-run", is_flag=True, help="Dry run: show changes only")
-@click.option("--force", "-f", is_flag=True, help="Force upgrade without backup")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
+@click.option("--dry-run", is_flag=True, help=_("Dry run: show changes only"))
+@click.option("--force", "-f", is_flag=True, help=_("Force upgrade without backup"))
 def upgrade(config: str, dry_run: bool, force: bool):
     """Upgrade protocol to the latest version
 
@@ -373,8 +383,8 @@ def upgrade(config: str, dry_run: bool, force: bool):
     config_path = Path(config)
 
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config}")
-        console.print("[dim]Hint: Run in the project directory, or use -c to specify the config file path[/dim]")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
+        console.print(f"[dim]{_('Hint: Run in the project directory, or use -c to specify the config file path')}[/dim]")
         raise SystemExit(1)
 
     # Load user config
@@ -385,10 +395,10 @@ def upgrade(config: str, dry_run: bool, force: bool):
     try:
         latest_template = yaml.safe_load(tm.get_template("default"))
         if not isinstance(latest_template, dict):
-            console.print("[red]Error:[/red] Built-in default template has invalid format")
+            console.print(f"[red]{_('Error:')}[/red] {_('Built-in default template has invalid format')}")
             raise SystemExit(1)
     except yaml.YAMLError as e:
-        console.print(f"[red]Error:[/red] Built-in template parse failed: {e}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Built-in template parse failed:')} {e}")
         raise SystemExit(1)
 
     # Record user-customized key fields (should not be overwritten)
@@ -397,7 +407,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
         "roles": user_config.get("roles"),
         "confirmed_decisions": user_config.get("confirmed_decisions"),
         "domain_extensions": user_config.get("domain_extensions"),
-        "multi_developer": user_config.get("multi_developer"),  # v0.5.0+ preserve multi-developer config
+        "multi_developer": user_config.get("multi_developer"),
     }
 
     # Deep merge: latest as base, user_preserved overrides
@@ -411,29 +421,29 @@ def upgrade(config: str, dry_run: bool, force: bool):
 
     if dry_run:
         console.print(Panel.fit(
-            "[bold yellow]Preview mode[/bold yellow] - No files will be modified",
-            title="Dry Run"
+            f"[bold yellow]{_('Preview mode')}[/bold yellow] - {_('No files will be modified')}",
+            title=_("Dry Run")
         ))
         console.print()
 
         if new_sections:
-            console.print(f"[bold]{EMOJI['package']} New config sections to be added:[/bold]")
+            console.print(f"[bold]{EMOJI['package']} {_('New config sections to be added:')}[/bold]")
             for section in new_sections:
                 console.print(f"  [green]+ {section}[/green]")
         else:
-            console.print("[dim]No new config sections[/dim]")
+            console.print(f"[dim]{_('No new config sections')}[/dim]")
 
         console.print()
-        console.print(f"[bold]{EMOJI_MAP['lock']} User config to be preserved:[/bold]")
-        console.print(f"  {BULLET} project.name: {user_preserved['project'].get('name', '(not set)')}")
-        console.print(f"  {BULLET} project.domain: {user_preserved['project'].get('domain', '(not set)')}")
+        console.print(f"[bold]{EMOJI_MAP['lock']} {_('User config to be preserved:')}[/bold]")
+        console.print(f"  {BULLET} project.name: {user_preserved['project'].get('name', _('(not set)'))}")
+        console.print(f"  {BULLET} project.domain: {user_preserved['project'].get('domain', _('(not set)'))}")
         if user_preserved.get('roles'):
-            console.print(f"  {BULLET} roles: {len(user_preserved['roles'])} role(s)")
+            console.print(f"  {BULLET} roles: {len(user_preserved['roles'])} {_('role(s)')}")
         if user_preserved.get('confirmed_decisions'):
-            console.print(f"  {BULLET} confirmed_decisions: {len(user_preserved['confirmed_decisions'])} decision(s)")
+            console.print(f"  {BULLET} confirmed_decisions: {len(user_preserved['confirmed_decisions'])} {_('decision(s)')}")
 
         console.print()
-        console.print("[dim]Remove --dry-run to perform the actual upgrade[/dim]")
+        console.print(f"[dim]{_('Remove --dry-run to perform the actual upgrade')}[/dim]")
         return
 
     # Backup original config
@@ -442,9 +452,9 @@ def upgrade(config: str, dry_run: bool, force: bool):
         backup_path = config_path.with_suffix(".yaml.bak")
         try:
             config_path.rename(backup_path)
-            console.print(f"[dim]Original config backed up to: {backup_path}[/dim]")
+            console.print(f"[dim]{_('Original config backed up to:')} {backup_path}[/dim]")
         except OSError as e:
-            console.print(f"[red]Error:[/red] Backup failed: {e}")
+            console.print(f"[red]{_('Error:')}[/red] {_('Backup failed:')} {e}")
             raise SystemExit(1)
 
     # Write merged config
@@ -452,10 +462,10 @@ def upgrade(config: str, dry_run: bool, force: bool):
         with open(config_path, "w", encoding="utf-8") as f:
             yaml.dump(merged, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
     except OSError as e:
-        console.print(f"[red]Error:[/red] Failed to write config: {e}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Failed to write config:')} {e}")
         if backup_path and backup_path.exists():
             backup_path.rename(config_path)
-            console.print("[yellow]Original config restored from backup[/yellow]")
+            console.print(f"[yellow]{_('Original config restored from backup')}[/yellow]")
         raise SystemExit(1)
 
     # Regenerate collaboration rules document and integrate llms.txt
@@ -496,7 +506,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
             dev_dir = developers_dir / dev_id
             if not dev_dir.exists():
                 dm.init_developer_context(dev_id)
-                console.print(f"  [green]{EMOJI_MAP['sparkles']} Initialized developer directory: docs/developers/{dev_id}/[/green]")
+                console.print(f"  [green]{EMOJI_MAP['sparkles']} {_('Initialized developer directory:')} docs/developers/{dev_id}/[/green]")
                 initialized = True
 
         # Create COLLABORATION.md
@@ -537,7 +547,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
 *Last updated: {today}*
 """
             collab_file.write_text(collab_content, encoding='utf-8')
-            console.print(f"  [green]{EMOJI_MAP['sparkles']} Created collaboration document: {collab_config.get('file', 'docs/developers/COLLABORATION.md')}[/green]")
+            console.print(f"  [green]{EMOJI_MAP['sparkles']} {_('Created collaboration document:')} {collab_config.get('file', 'docs/developers/COLLABORATION.md')}[/green]")
             initialized = True
 
         # Generate global aggregated CONTEXT.md
@@ -545,28 +555,28 @@ def upgrade(config: str, dry_run: bool, force: bool):
         global_context = config_path.parent / "docs" / "CONTEXT.md"
         if not global_context.exists() or initialized:
             aggregator.generate_and_save()
-            console.print(f"  [green]{EMOJI_MAP['sparkles']} Generated global context aggregation: docs/CONTEXT.md[/green]")
+            console.print(f"  [green]{EMOJI_MAP['sparkles']} {_('Generated global context aggregation:')} docs/CONTEXT.md[/green]")
 
     # Success message
     console.print()
     console.print(Panel.fit(
-        f"[bold green]{EMOJI_MAP['success']} Protocol upgraded to v{__version__}[/bold green]",
-        title="Upgrade Complete"
+        f"[bold green]{EMOJI_MAP['success']} {_('Protocol upgraded to v{version}').format(version=__version__)}[/bold green]",
+        title=_("Upgrade Complete")
     ))
 
     if new_sections:
         console.print()
-        console.print(f"[bold]{EMOJI['package']} New config sections:[/bold]")
+        console.print(f"[bold]{EMOJI['package']} {_('New config sections:')}[/bold]")
         for section in new_sections:
             console.print(f"  [green]+ {section}[/green]")
 
     console.print()
-    console.print("[bold]Updated files:[/bold]")
+    console.print(f"[bold]{_('Updated files:')}[/bold]")
     console.print(f"  {BULLET} {config_path}")
     console.print(f"  {BULLET} {contributing_ai_path}")
 
     console.print()
-    console.print("[dim]Hint: Use git diff to review specific changes[/dim]")
+    console.print(f"[dim]{_('Hint: Use git diff to review specific changes')}[/dim]")
 
 
 @main.command()
@@ -574,17 +584,17 @@ def version_info():
     """Show version and protocol information"""
     console.print(Panel.fit(
         f"[bold]LLMContext[/bold] v{__version__}\n\n"
-        f"[dim]Protocol version:[/dim] 1.0\n"
-        f"[dim]Supported domains:[/dim] {', '.join(DOMAINS)}\n"
+        f"[dim]{_('Protocol version:')}[/dim] 1.0\n"
+        f"[dim]{_('Supported domains:')}[/dim] {', '.join(DOMAINS)}\n"
         f"[dim]Python:[/dim] 3.8+",
-        title="Version Info"
+        title=_("Version Info")
     ))
 
 
 @main.command()
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
-@click.option("--strict", is_flag=True, help="Strict mode: treat warnings as failures")
-@click.option("--insights", is_flag=True, help="Also run Insight consistency check")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
+@click.option("--strict", is_flag=True, help=_("Strict mode: treat warnings as failures"))
+@click.option("--insights", is_flag=True, help=_("Also run Insight consistency check"))
 def check(config: str, strict: bool, insights: bool):
     """Check protocol compliance
 
@@ -604,8 +614,8 @@ def check(config: str, strict: bool, insights: bool):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config}")
-        console.print("[dim]Hint: Run in the project directory, or use -c to specify the config file path[/dim]")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
+        console.print(f"[dim]{_('Hint: Run in the project directory, or use -c to specify the config file path')}[/dim]")
         raise SystemExit(1)
 
     # Load config
@@ -619,8 +629,8 @@ def check(config: str, strict: bool, insights: bool):
     # Display results
     console.print()
     console.print(Panel.fit(
-        "[bold]Protocol Compliance Check[/bold]",
-        title="Protocol Check"
+        f"[bold]{_('Protocol Compliance Check')}[/bold]",
+        title=_("Protocol Check")
     ))
     console.print()
 
@@ -630,27 +640,27 @@ def check(config: str, strict: bool, insights: bool):
     infos = [r for r in results if r.severity == "info"]
 
     if errors:
-        console.print(f"[bold red]{EMOJI_MAP['error']} Errors:[/bold red]")
+        console.print(f"[bold red]{EMOJI_MAP['error']} {_('Errors:')}[/bold red]")
         for result in errors:
             console.print(f"  {BULLET} {result.name}: {result.message}")
             if result.suggestion:
-                console.print(f"    [dim]Suggestion: {result.suggestion}[/dim]")
+                console.print(f"    [dim]{_('Suggestion:')} {result.suggestion}[/dim]")
         console.print()
 
     if warnings:
-        console.print(f"[bold yellow]{EMOJI_MAP['warning']} Warnings:[/bold yellow]")
+        console.print(f"[bold yellow]{EMOJI_MAP['warning']} {_('Warnings:')}[/bold yellow]")
         for result in warnings:
             console.print(f"  {BULLET} {result.name}: {result.message}")
             if result.suggestion:
-                console.print(f"    [dim]Suggestion: {result.suggestion}[/dim]")
+                console.print(f"    [dim]{_('Suggestion:')} {result.suggestion}[/dim]")
         console.print()
 
     if infos:
-        console.print(f"[bold blue]{EMOJI_MAP['info']} Info:[/bold blue]")
+        console.print(f"[bold blue]{EMOJI_MAP['info']} {_('Info:')}[/bold blue]")
         for result in infos:
             console.print(f"  {BULLET} {result.name}: {result.message}")
             if result.suggestion:
-                console.print(f"    [dim]Suggestion: {result.suggestion}[/dim]")
+                console.print(f"    [dim]{_('Suggestion:')} {result.suggestion}[/dim]")
         console.print()
 
     # Insight consistency check
@@ -658,8 +668,8 @@ def check(config: str, strict: bool, insights: bool):
     insight_warnings = 0
     if insights:
         console.print(Panel.fit(
-            "[bold]Insight System Consistency Check[/bold]",
-            title="Insight Consistency Check"
+            f"[bold]{_('Insight System Consistency Check')}[/bold]",
+            title=_("Insight Consistency Check")
         ))
         console.print()
         try:
@@ -671,21 +681,21 @@ def check(config: str, strict: bool, insights: bool):
 
             if report.errors:
                 insight_errors = len(report.errors)
-                console.print(f"[bold red]{EMOJI_MAP['error']} Insight Errors:[/bold red]")
+                console.print(f"[bold red]{EMOJI_MAP['error']} {_('Insight Errors:')}[/bold red]")
                 for err in report.errors:
                     console.print(f"  {BULLET} {err}")
                 console.print()
             if report.warnings:
                 insight_warnings = len(report.warnings)
-                console.print(f"[bold yellow]{EMOJI_MAP['warning']} Insight Warnings:[/bold yellow]")
+                console.print(f"[bold yellow]{EMOJI_MAP['warning']} {_('Insight Warnings:')}[/bold yellow]")
                 for warn in report.warnings:
                     console.print(f"  {BULLET} {warn}")
                 console.print()
             if report.ok and not report.warnings:
-                console.print(f"  [green]{EMOJI_MAP['success']} Insight consistency check passed[/green]")
+                console.print(f"  [green]{EMOJI_MAP['success']} {_('Insight consistency check passed')}[/green]")
                 console.print()
         except Exception as e:
-            console.print(f"  [yellow]{EMOJI_MAP['warning']} Insight check skipped: {e}[/yellow]")
+            console.print(f"  [yellow]{EMOJI_MAP['warning']} {_('Insight check skipped:')} {e}[/yellow]")
             console.print()
 
     # Merge statistics
@@ -696,24 +706,24 @@ def check(config: str, strict: bool, insights: bool):
     # Display summary
     if total_errors == 0 and not (strict and total_warnings > 0):
         console.print(Panel.fit(
-            f"[bold green]{EMOJI_MAP['success']} All checks passed[/bold green]\n\n"
-            f"Total: {total_checks} check(s)",
-            title="Check Complete"
+            f"[bold green]{EMOJI_MAP['success']} {_('All checks passed')}[/bold green]\n\n"
+            f"{_('Total:')} {total_checks} {_('check(s)')}",
+            title=_("Check Complete")
         ))
     else:
-        status = "Failed" if total_errors > 0 or (strict and total_warnings > 0) else "Has Warnings"
+        status = _("Failed") if total_errors > 0 or (strict and total_warnings > 0) else _("Has Warnings")
         color = "red" if total_errors > 0 or (strict and total_warnings > 0) else "yellow"
         emoji = EMOJI_MAP['error'] if total_errors > 0 or (strict and total_warnings > 0) else EMOJI_MAP['warning']
         console.print(Panel.fit(
-            f"[bold {color}]{emoji} Check {status}[/bold {color}]\n\n"
-            f"Total: {total_checks} check(s)\n"
-            f"Errors: {total_errors}\n"
-            f"Warnings: {total_warnings}",
-            title="Check Complete"
+            f"[bold {color}]{emoji} {_('Check')} {status}[/bold {color}]\n\n"
+            f"{_('Total:')} {total_checks} {_('check(s)')}\n"
+            f"{_('Errors:')} {total_errors}\n"
+            f"{_('Warnings:')} {total_warnings}",
+            title=_("Check Complete")
         ))
         if strict and total_warnings > 0:
             console.print()
-            console.print("[dim]Hint: In --strict mode, warnings are treated as failures[/dim]")
+            console.print(f"[dim]{_('Hint: In --strict mode, warnings are treated as failures')}[/dim]")
 
     # Return exit code
     if total_errors > 0 or (strict and total_warnings > 0):
@@ -721,15 +731,15 @@ def check(config: str, strict: bool, insights: bool):
 
 
 @main.command()
-@click.option("-c", "--config", default="project.yaml", help="Config file path")
-@click.option("--json", "as_json", is_flag=True, help="Output in JSON format")
+@click.option("-c", "--config", default="project.yaml", help=_("Config file path"))
+@click.option("--json", "as_json", is_flag=True, help=_("Output in JSON format"))
 def health(config: str, as_json: bool):
     """Project health signal check"""
     import json as json_mod
 
     config_path = Path(config)
     if not config_path.exists():
-        console.print(f"[red]Config file not found: {config}[/red]")
+        console.print(f"[red]{_('Config file not found:')} {config}[/red]")
         raise SystemExit(1)
 
     cfg = _safe_load_yaml(config_path)
@@ -747,9 +757,9 @@ def health(config: str, as_json: bool):
     grade_color = {"A": "green", "B": "blue", "C": "yellow", "D": "red", "F": "red"}.get(grade, "white")
 
     console.print(Panel(
-        f"[bold {grade_color}]Grade: {grade} ({score:.0f}/100)[/bold {grade_color}]\n"
+        f"[bold {grade_color}]{_('Grade:')} {grade} ({score:.0f}/100)[/bold {grade_color}]\n"
         f"CRITICAL: {report.critical_count}  WARNING: {report.warning_count}  INFO: {report.info_count}",
-        title="Project Health"
+        title=_("Project Health")
     ))
 
     level_style = {"critical": "red bold", "warning": "yellow", "info": "dim"}
@@ -827,7 +837,7 @@ def dev():
 
 
 @dev.command("whoami")
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 def dev_whoami(config: str):
     """Show current developer identity
 
@@ -841,7 +851,7 @@ def dev_whoami(config: str):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -855,24 +865,24 @@ def dev_whoami(config: str):
 
     # Friendly display for identity source
     source_display = {
-        'local_switch': '[green]CLI switch[/green] (.vibecollab.local.yaml)',
-        'env_var': '[yellow]Environment variable[/yellow] (VIBECOLLAB_DEVELOPER)',
-        'git_username': 'Git username (git config user.name)',
-        'system_user': 'System username',
+        'local_switch': f'[green]{_("CLI switch")}[/green] (.vibecollab.local.yaml)',
+        'env_var': f'[yellow]{_("Environment variable")}[/yellow] (VIBECOLLAB_DEVELOPER)',
+        'git_username': _('Git username (git config user.name)'),
+        'system_user': _('System username'),
     }.get(identity_source, identity_source)
 
     console.print()
     console.print(Panel.fit(
         f"[bold cyan]{current_dev}[/bold cyan]\n\n"
-        f"Multi-developer mode: {'[green]Enabled[/green]' if multi_dev_enabled else '[yellow]Not enabled[/yellow]'}\n"
-        f"Identity source: {source_display}",
-        title="Current Developer"
+        f"{_('Multi-developer mode:')} {'[green]' + _('Enabled') + '[/green]' if multi_dev_enabled else '[yellow]' + _('Not enabled') + '[/yellow]'}\n"
+        f"{_('Identity source:')} {source_display}",
+        title=_("Current Developer")
     ))
     console.print()
 
 
 @dev.command("list")
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 def dev_list(config: str):
     """List all developers
 
@@ -886,7 +896,7 @@ def dev_list(config: str):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -894,8 +904,8 @@ def dev_list(config: str):
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode is not enabled[/yellow]")
-        console.print("[dim]Set multi_developer.enabled: true in project.yaml[/dim]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]")
+        console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
         raise SystemExit(1)
 
     dm = DeveloperManager(project_root, project_config)
@@ -904,24 +914,25 @@ def dev_list(config: str):
 
     if not developers:
         console.print()
-        console.print("[yellow]No developers yet[/yellow]")
-        console.print("[dim]Use 'vibecollab init --multi-dev' to initialize a multi-developer project[/dim]")
+        console.print(f"[yellow]{_('No developers yet')}[/yellow]")
+        hint = _("Use 'vibecollab init --multi-dev' to initialize a multi-developer project")
+        console.print(f"[dim]{hint}[/dim]")
         console.print()
         return
 
-    table = Table(title="Developer List", show_header=True)
-    table.add_column("Developer", style="cyan")
-    table.add_column("Status")
-    table.add_column("Last Updated")
-    table.add_column("Update Count")
+    table = Table(title=_("Developer List"), show_header=True)
+    table.add_column(_("Developer"), style="cyan")
+    table.add_column(_("Status"))
+    table.add_column(_("Last Updated"))
+    table.add_column(_("Update Count"))
 
     for dev in developers:
         status_info = dm.get_developer_status(dev)
-        is_current = " (current)" if dev == current_dev else ""
-        status = f"{EMOJI_MAP['success']} Active{is_current}" if status_info['exists'] else f"{EMOJI_MAP['warning']} Not initialized"
+        is_current = f" ({_('current')})" if dev == current_dev else ""
+        status = f"{EMOJI_MAP['success']} {_('Active')}{is_current}" if status_info['exists'] else f"{EMOJI_MAP['warning']} {_('Not initialized')}"
         last_updated = status_info.get('last_updated', '-') or '-'
         if last_updated != '-' and len(last_updated) > 19:
-            last_updated = last_updated[:19]  # Trim to datetime portion
+            last_updated = last_updated[:19]
         total_updates = str(status_info.get('total_updates', 0))
 
         table.add_row(dev, status, last_updated, total_updates)
@@ -933,7 +944,7 @@ def dev_list(config: str):
 
 @dev.command("status")
 @click.argument("developer", required=False)
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 def dev_status(developer: Optional[str], config: str):
     """View developer status
 
@@ -949,7 +960,7 @@ def dev_status(developer: Optional[str], config: str):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -957,21 +968,19 @@ def dev_status(developer: Optional[str], config: str):
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode is not enabled[/yellow]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]")
         raise SystemExit(1)
 
     dm = DeveloperManager(project_root, project_config)
 
     if developer:
-        # Show specific developer
         developers = [developer]
     else:
-        # Show all developers
         developers = dm.list_developers()
 
     if not developers:
         console.print()
-        console.print("[yellow]No developers yet[/yellow]")
+        console.print(f"[yellow]{_('No developers yet')}[/yellow]")
         console.print()
         return
 
@@ -981,28 +990,26 @@ def dev_status(developer: Optional[str], config: str):
             console.print()
             console.print(Panel.fit(
                 f"[bold]{dev}[/bold]",
-                title="Developer Status"
+                title=_("Developer Status")
             ))
             console.print()
 
-            # Read and display CONTEXT.md summary
             try:
                 content = context_file.read_text(encoding='utf-8')
-                # Show first 20 lines
                 lines = content.split('\n')[:20]
                 console.print('\n'.join(lines))
                 if len(content.split('\n')) > 20:
-                    console.print(f"\n[dim]... (more at {context_file})[/dim]")
+                    console.print(f"\n[dim]... ({_('more at')} {context_file})[/dim]")
             except Exception as e:
-                console.print(f"[red]Read failed:[/red] {e}")
+                console.print(f"[red]{_('Read failed:')}[/red] {e}")
 
             console.print()
         else:
-            console.print(f"[yellow]{EMOJI_MAP['warning']} Developer {dev} not initialized[/yellow]")
+            console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Developer {name} not initialized').format(name=dev)}[/yellow]")
 
 
 @dev.command("sync")
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 def dev_sync(config: str):
     """Manually trigger global CONTEXT aggregation
 
@@ -1016,7 +1023,7 @@ def dev_sync(config: str):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -1024,26 +1031,26 @@ def dev_sync(config: str):
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode is not enabled[/yellow]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]")
         raise SystemExit(1)
 
     console.print()
-    console.print("[cyan]Aggregating global CONTEXT...[/cyan]")
+    console.print(f"[cyan]{_('Aggregating global CONTEXT...')}[/cyan]")
 
     try:
         aggregator = ContextAggregator(project_root, project_config)
         output_file = aggregator.generate_and_save()
 
-        console.print(f"[green]{EMOJI_MAP['success']} Aggregation complete:[/green] {output_file}")
+        console.print(f"[green]{EMOJI_MAP['success']} {_('Aggregation complete:')}[/green] {output_file}")
         console.print()
     except Exception as e:
-        console.print(f"[red]Aggregation failed:[/red] {e}")
+        console.print(f"[red]{_('Aggregation failed:')}[/red] {e}")
         raise SystemExit(1)
 
 
 @dev.command("init")
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
-@click.option("--developer", "-d", help="Developer name (auto-detect if empty)")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
+@click.option("--developer", "-d", help=_("Developer name (auto-detect if empty)"))
 def dev_init(config: str, developer: Optional[str]):
     """Initialize current developer's context
 
@@ -1059,7 +1066,7 @@ def dev_init(config: str, developer: Optional[str]):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -1067,8 +1074,8 @@ def dev_init(config: str, developer: Optional[str]):
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode is not enabled[/yellow]")
-        console.print("[dim]Set multi_developer.enabled: true in project.yaml[/dim]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]")
+        console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
         raise SystemExit(1)
 
     dm = DeveloperManager(project_root, project_config)
@@ -1077,24 +1084,24 @@ def dev_init(config: str, developer: Optional[str]):
         developer = dm.get_current_developer()
 
     console.print()
-    console.print(f"[cyan]Initializing developer:[/cyan] {developer}")
+    console.print(f"[cyan]{_('Initializing developer:')}[/cyan] {developer}")
 
     try:
         dm.init_developer_context(developer)
         context_file = dm.get_developer_context_file(developer)
 
-        console.print(f"[green]{EMOJI_MAP['success']} Initialization complete:[/green]")
-        console.print(f"  {BULLET} Context file: {context_file}")
+        console.print(f"[green]{EMOJI_MAP['success']} {_('Initialization complete:')}[/green]")
+        console.print(f"  {BULLET} {_('Context file:')} {context_file}")
         console.print()
     except Exception as e:
-        console.print(f"[red]Initialization failed:[/red] {e}")
+        console.print(f"[red]{_('Initialization failed:')}[/red] {e}")
         raise SystemExit(1)
 
 
 @dev.command("switch")
 @click.argument("developer", required=False)
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
-@click.option("--clear", is_flag=True, help="Clear switch, restore default identity")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
+@click.option("--clear", is_flag=True, help=_("Clear switch, restore default identity"))
 def dev_switch(developer: Optional[str], config: str, clear: bool):
     """Switch current developer identity
 
@@ -1115,7 +1122,7 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -1123,8 +1130,8 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode is not enabled[/yellow]")
-        console.print("[dim]Set multi_developer.enabled: true in project.yaml[/dim]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]")
+        console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
         raise SystemExit(1)
 
     dm = DeveloperManager(project_root, project_config)
@@ -1134,10 +1141,10 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
         console.print()
         if dm.clear_switch():
             default_dev = dm.get_current_developer()
-            console.print(f"[green]{EMOJI_MAP['success']} Switch setting cleared[/green]")
-            console.print(f"  {BULLET} Current identity: [cyan]{default_dev}[/cyan] (detected via default strategy)")
+            console.print(f"[green]{EMOJI_MAP['success']} {_('Switch setting cleared')}[/green]")
+            console.print(f"  {BULLET} {_('Current identity:')} [cyan]{default_dev}[/cyan] ({_('detected via default strategy')})")
         else:
-            console.print("[red]Clear failed[/red]")
+            console.print(f"[red]{_('Clear failed')}[/red]")
             raise SystemExit(1)
         console.print()
         return
@@ -1150,39 +1157,40 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
     if developer is None:
         if not developers:
             console.print()
-            console.print("[yellow]No developers yet[/yellow]")
-            console.print("[dim]Use 'vibecollab dev init -d <name>' to initialize a new developer[/dim]")
+            console.print(f"[yellow]{_('No developers yet')}[/yellow]")
+            hint = _("Use 'vibecollab dev init -d <name>' to initialize a new developer")
+            console.print(f"[dim]{hint}[/dim]")
             console.print()
             return
 
         console.print()
-        console.print("[cyan]Select a developer to switch to:[/cyan]")
+        console.print(f"[cyan]{_('Select a developer to switch to:')}[/cyan]")
         console.print()
 
         for i, dev in enumerate(developers, 1):
             status_info = dm.get_developer_status(dev)
-            is_current = " [green](current)[/green]" if dev == current_dev else ""
-            last_update = status_info.get('last_updated', 'unknown')
+            is_current = f" [green]({_('current')})[/green]" if dev == current_dev else ""
+            last_update = status_info.get('last_updated', _('unknown'))
             console.print(f"  {i}. [bold]{dev}[/bold]{is_current}")
-            console.print(f"     Last updated: {last_update}")
+            console.print(f"     {_('Last updated:')} {last_update}")
 
         console.print()
-        console.print("  0. [dim]Cancel[/dim]")
+        console.print(f"  0. [dim]{_('Cancel')}[/dim]")
         console.print()
 
         # Read user selection
         try:
-            choice = click.prompt("Enter number", type=int, default=0)
+            choice = click.prompt(_("Enter number"), type=int, default=0)
         except click.Abort:
-            console.print("\n[dim]Cancelled[/dim]")
+            console.print(f"\n[dim]{_('Cancelled')}[/dim]")
             return
 
         if choice == 0:
-            console.print("[dim]Cancelled[/dim]")
+            console.print(f"[dim]{_('Cancelled')}[/dim]")
             return
 
         if choice < 1 or choice > len(developers):
-            console.print(f"[red]Invalid choice: {choice}[/red]")
+            console.print(f"[red]{_('Invalid choice:')} {choice}[/red]")
             raise SystemExit(1)
 
         developer = developers[choice - 1]
@@ -1195,38 +1203,41 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
     # Check if developer exists
     if developer not in developers:
         console.print()
-        console.print(f"[yellow]{EMOJI_MAP['warning']} Developer '{developer}' does not exist[/yellow]")
+        msg = _("Developer '{name}' does not exist").format(name=developer)
+        console.print(f"[yellow]{EMOJI_MAP['warning']} {msg}[/yellow]")
         console.print()
 
         # Ask whether to initialize
-        create = click.confirm(f"Initialize context for '{developer}'?", default=True)
+        create = click.confirm(_("Initialize context for '{name}'?").format(name=developer), default=True)
         if create:
             dm.init_developer_context(developer)
-            console.print(f"[green]{EMOJI_MAP['success']} Initialized context for '{developer}'[/green]")
+            msg = _("Initialized context for '{name}'").format(name=developer)
+            console.print(f"[green]{EMOJI_MAP['success']} {msg}[/green]")
         else:
-            console.print("[dim]Cancelled[/dim]")
+            console.print(f"[dim]{_('Cancelled')}[/dim]")
             return
 
     # Execute switch
     console.print()
     if dm.switch_developer(developer):
-        console.print(f"[green]{EMOJI_MAP['success']} Switched to developer: [bold cyan]{developer}[/bold cyan][/green]")
+        console.print(f"[green]{EMOJI_MAP['success']} {_('Switched to developer:')} [bold cyan]{developer}[/bold cyan][/green]")
         console.print()
-        console.print(f"  {BULLET} Context file: {dm.get_developer_context_file(developer)}")
-        console.print(f"  {BULLET} Persisted to: .vibecollab.local.yaml")
+        console.print(f"  {BULLET} {_('Context file:')} {dm.get_developer_context_file(developer)}")
+        console.print(f"  {BULLET} {_('Persisted to:')} .vibecollab.local.yaml")
         console.print()
-        console.print("[dim]Hint: Use 'vibecollab dev switch --clear' to restore default identity[/dim]")
+        hint = _("Hint: Use 'vibecollab dev switch --clear' to restore default identity")
+        console.print(f"[dim]{hint}[/dim]")
     else:
-        console.print("[red]Switch failed[/red]")
+        console.print(f"[red]{_('Switch failed')}[/red]")
         raise SystemExit(1)
 
     console.print()
 
 
 @dev.command("conflicts")
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
-@click.option("--verbose", "-v", is_flag=True, help="Show detailed conflict info")
-@click.option("--between", nargs=2, help="Detect conflicts between two developers (e.g. --between alice bob)")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
+@click.option("--verbose", "-v", is_flag=True, help=_("Show detailed conflict info"))
+@click.option("--between", nargs=2, help=_("Detect conflicts between two developers (e.g. --between alice bob)"))
 def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]):
     """Detect cross-developer work conflicts
 
@@ -1247,7 +1258,7 @@ def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]
     project_root = config_path.parent
 
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
         raise SystemExit(1)
 
     with open(config_path, encoding="utf-8") as f:
@@ -1255,33 +1266,30 @@ def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]
 
     multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} Multi-developer mode not enabled[/yellow]")
-        console.print("[dim]Set multi_developer.enabled: true in project.yaml[/dim]")
+        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode not enabled')}[/yellow]")
+        console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
         raise SystemExit(1)
 
     console.print()
-    console.print("[cyan]Detecting cross-developer conflicts...[/cyan]")
+    console.print(f"[cyan]{_('Detecting cross-developer conflicts...')}[/cyan]")
     console.print()
 
     try:
         detector = ConflictDetector(project_root, project_config)
 
-        # Execute conflict detection
         conflicts = detector.detect_all_conflicts(
             target_developer=None,
             between_developers=between
         )
 
-        # Generate and display report
         report = detector.generate_conflict_report(conflicts, verbose=verbose)
         console.print(report)
 
-        # Return non-zero exit code if conflicts found
         if conflicts:
             raise SystemExit(1)
 
     except Exception as e:
-        console.print(f"[red]Conflict detection failed:[/red] {e}")
+        console.print(f"[red]{_('Conflict detection failed:')}[/red] {e}")
         if verbose:
             import traceback
             console.print(traceback.format_exc())

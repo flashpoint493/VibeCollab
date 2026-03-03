@@ -13,6 +13,7 @@ from pathlib import Path
 import click
 
 from .._compat import EMOJI
+from ..i18n import _
 from ..insight.manager import InsightManager
 from ..domain.roadmap_parser import MILESTONE_FORMAT_HINT, RoadmapParser
 from ..domain.task_manager import TaskManager
@@ -36,8 +37,8 @@ def roadmap_group():
 
 
 @roadmap_group.command("status")
-@click.option("--config", "-c", default="project.yaml", help="Config file path")
-@click.option("--json-output", "--json", is_flag=True, help="JSON output")
+@click.option("--config", "-c", default="project.yaml", help=_("Config file path"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 def roadmap_status(config, json_output):
     """View per-milestone progress overview"""
     parser = _get_parser(config)
@@ -97,10 +98,10 @@ def roadmap_status(config, json_output):
 @roadmap_group.command("sync")
 @click.option("--direction", "-d",
               type=click.Choice(["both", "roadmap_to_tasks", "tasks_to_roadmap"]),
-              default="both", help="Sync direction")
-@click.option("--dry-run", is_flag=True, help="Preview only, no actual changes")
-@click.option("--config", "-c", default="project.yaml", help="Config file path")
-@click.option("--json-output", "--json", is_flag=True, help="JSON output")
+              default="both", help=_("Sync direction"))
+@click.option("--dry-run", is_flag=True, help=_("Preview only, no actual changes"))
+@click.option("--config", "-c", default="project.yaml", help=_("Config file path"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 def roadmap_sync(direction, dry_run, config, json_output):
     """Sync ROADMAP.md / tasks.json
 
@@ -164,8 +165,8 @@ def roadmap_sync(direction, dry_run, config, json_output):
 
 
 @roadmap_group.command("parse")
-@click.option("--config", "-c", default="project.yaml", help="Config file path")
-@click.option("--json-output", "--json", is_flag=True, help="JSON output")
+@click.option("--config", "-c", default="project.yaml", help=_("Config file path"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 def roadmap_parse(config, json_output):
     """Parse ROADMAP.md structure
 

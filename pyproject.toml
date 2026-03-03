@@ -72,7 +72,7 @@ vibecollab = "vibecollab.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/vibecollab"]
-artifacts = ["src/vibecollab/patterns/**"]
+artifacts = ["src/vibecollab/patterns/**", "src/vibecollab/i18n/locales/**"]
 
 [tool.hatch.build.targets.sdist]
 include = [

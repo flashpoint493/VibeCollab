@@ -22,6 +22,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .._compat import BULLET, EMOJI, safe_console
+from ..i18n import _
 
 logger = logging.getLogger(__name__)
 
@@ -376,9 +377,9 @@ def _collect_project_context(
 # ============================================================
 
 @click.command()
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
-@click.option("--developer", "-d", default=None, help="Developer ID")
-@click.option("--json", "as_json", is_flag=True, help="JSON output")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
+@click.option("--developer", "-d", default=None, help=_("Developer ID"))
+@click.option("--json", "as_json", is_flag=True, help=_("JSON output"))
 def onboard(config: str, developer: Optional[str], as_json: bool):
     """Onboarding context guide for AI Agent
 
@@ -766,14 +767,14 @@ def _build_prompt_text(
 
 
 @click.command("prompt")
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
-@click.option("--developer", "-d", default=None, help="Developer ID")
-@click.option("--compact", is_flag=True, help="Compact mode (core protocol + state only)")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
+@click.option("--developer", "-d", default=None, help=_("Developer ID"))
+@click.option("--compact", is_flag=True, help=_("Compact mode (core protocol + state only)"))
 @click.option(
     "--sections", "-s", default=None,
-    help="Select sections, comma separated (protocol,context,insight,roles,testing,git)"
+    help=_("Select sections, comma separated (protocol,context,insight,roles,testing,git)")
 )
-@click.option("--copy", "to_clipboard", is_flag=True, help="Copy to clipboard")
+@click.option("--copy", "to_clipboard", is_flag=True, help=_("Copy to clipboard"))
 def prompt_cmd(
     config: str,
     developer: Optional[str],
@@ -885,8 +886,8 @@ def _check_insight_opportunity(project_root: Path, diff_files: List[str]) -> Opt
 # ============================================================
 
 @click.command()
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
-@click.option("--json", "as_json", is_flag=True, help="JSON output")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
+@click.option("--json", "as_json", is_flag=True, help=_("JSON output"))
 def next_step(config: str, as_json: bool):
     """Next-step action suggestions after modifications
 

@@ -14,6 +14,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .._compat import EMOJI, safe_console
+from ..i18n import _
 
 # Short alias (compatible with this module's original _E variable name)
 _E = EMOJI

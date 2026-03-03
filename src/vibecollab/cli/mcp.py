@@ -14,6 +14,8 @@ from pathlib import Path
 
 import click
 
+from ..i18n import _
+
 
 @click.group("mcp")
 def mcp_group():
@@ -30,14 +32,14 @@ def mcp_group():
     "-t",
     type=click.Choice(["stdio", "sse"]),
     default="stdio",
-    help="Transport mode: stdio (IDE direct) or sse (remote debugging)",
+    help=_("Transport mode: stdio (IDE direct) or sse (remote debugging)"),
 )
 @click.option(
     "--project-root",
     "-p",
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     default=None,
-    help="Project root directory (default: auto-find project.yaml)",
+    help=_("Project root directory (default: auto-find project.yaml)"),
 )
 def serve(transport: str, project_root: Path):
     """Start MCP Server
@@ -60,13 +62,13 @@ def serve(transport: str, project_root: Path):
         from ..agent.mcp_server import run_server
     except ImportError:
         click.echo(
-            "Error: MCP Server requires mcp dependency.\n"
-            "Install: pip install vibe-collab[mcp]",
+            _("Error: MCP Server requires mcp dependency.") + "\n"
+            + _("Install: pip install vibe-collab[mcp]"),
             err=True,
         )
         raise SystemExit(1)
 
-    click.echo(f"Starting VibeCollab MCP Server (transport={transport})", err=True)
+    click.echo(_("Starting VibeCollab MCP Server (transport={transport})").format(transport=transport), err=True)
     if project_root:
         click.echo(f"Project root: {project_root}", err=True)
 
@@ -78,7 +80,7 @@ def serve(transport: str, project_root: Path):
     "--ide",
     type=click.Choice(["cursor", "cline", "codebuddy"]),
     default="cursor",
-    help="Target IDE",
+    help=_("Target IDE"),
 )
 def config(ide: str):
     """Output IDE MCP configuration content
@@ -134,14 +136,14 @@ def config(ide: str):
     "--ide",
     type=click.Choice(["cursor", "cline", "codebuddy", "all"]),
     default="all",
-    help="Target IDE (default: all)",
+    help=_("Target IDE (default: all)"),
 )
 @click.option(
     "--project-root",
     "-p",
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     default=None,
-    help="Project root directory",
+    help=_("Project root directory"),
 )
 def inject(ide: str, project_root: Path):
     """Auto-inject MCP config into IDE configuration files
@@ -192,6 +194,6 @@ def inject(ide: str, project_root: Path):
             json_mod.dumps(existing, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
-        click.echo(f"Injected: {config_path}")
+        click.echo(f"{_('Injected:')} {config_path}")
 
-    click.echo(f"\nDone! VibeCollab MCP Server will take effect after restarting IDE.")
+    click.echo(f"\n{_('Done! VibeCollab MCP Server will take effect after restarting IDE.')}")

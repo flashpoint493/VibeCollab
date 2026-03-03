@@ -11,6 +11,7 @@ from rich.panel import Panel
 
 from .._compat import BULLET, EMOJI, safe_console
 from ..domain.lifecycle import STAGE_ORDER, LifecycleManager
+from ..i18n import _
 
 console = safe_console()
 
@@ -22,7 +23,7 @@ def lifecycle():
 
 
 @lifecycle.command()
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 def check(config: str):
     """Check current project lifecycle status
 
@@ -33,7 +34,7 @@ def check(config: str):
     """
     config_path = Path(config)
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file does not exist: {config}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file does not exist:')} {config}")
         raise SystemExit(1)
 
     with open(config_path, "r", encoding="utf-8") as f:
@@ -48,71 +49,72 @@ def check(config: str):
     # Display current stage info
     console.print()
     console.print(Panel.fit(
-        f"[bold]{stage_info.get('name', 'Unknown')}[/bold] ({current_stage})\n\n"
+        f"[bold]{stage_info.get('name', _('Unknown'))}[/bold] ({current_stage})\n\n"
         f"{stage_info.get('description', '')}",
-        title="Current Project Lifecycle Stage"
+        title=_("Current Project Lifecycle Stage")
     ))
 
     # Display stage focus and principles
     console.print()
-    console.print("[bold]Stage Focus:[/bold]")
+    console.print(f"[bold]{_('Stage Focus:')}[/bold]")
     for focus in stage_info.get('focus', []):
         console.print(f"  {BULLET} {focus}")
 
     console.print()
-    console.print("[bold]Stage Principles:[/bold]")
+    console.print(f"[bold]{_('Stage Principles:')}[/bold]")
     for principle in stage_info.get('principles', []):
         console.print(f"  {BULLET} {principle}")
 
     # Display milestone status
     if milestone_status['total'] > 0:
         console.print()
-        console.print(f"[bold]Milestone Progress:[/bold] {milestone_status['completed']}/{milestone_status['total']} completed")
-        console.print(f"[dim]Completion rate:[/dim] {milestone_status['completion_rate']:.0%}")
+        console.print(f"[bold]{_('Milestone Progress:')}[/bold] {milestone_status['completed']}/{milestone_status['total']} {_('completed')}")
+        console.print(f"[dim]{_('Completion rate:')}[/dim] {milestone_status['completion_rate']:.0%}")
 
         if milestone_status['pending'] > 0:
             console.print()
-            console.print("[yellow]Pending milestones:[/yellow]")
+            console.print(f"[yellow]{_('Pending milestones:')}[/yellow]")
             for milestone in milestone_status['milestones']:
                 if not milestone.get('completed', False):
-                    console.print(f"  {EMOJI['hourglass']} {milestone.get('name', 'Unnamed milestone')}")
+                    console.print(f"  {EMOJI['hourglass']} {milestone.get('name', _('Unnamed milestone'))}")
 
     # Check if upgrade is possible
     can_upgrade, next_stage, reason = manager.can_upgrade()
     if can_upgrade:
         console.print()
-        console.print(f"[green]{EMOJI['success']} Ready to upgrade to next stage![/green]")
-        console.print(f"[dim]Next stage:[/dim] {next_stage}")
+        console.print(f"[green]{EMOJI['success']} {_('Ready to upgrade to next stage!')}[/green]")
+        console.print(f"[dim]{_('Next stage:')}[/dim] {next_stage}")
         console.print()
-        console.print("[bold]Upgrade suggestions:[/bold]")
+        console.print(f"[bold]{_('Upgrade suggestions:')}[/bold]")
         suggestions = manager.get_upgrade_suggestions(next_stage)
         for suggestion in suggestions:
             console.print(f"  {BULLET} {suggestion}")
         console.print()
-        console.print("[dim]Run 'vibecollab lifecycle upgrade' to proceed[/dim]")
+        hint = _("Run 'vibecollab lifecycle upgrade' to proceed")
+        console.print(f"[dim]{hint}[/dim]")
     elif reason:
         console.print()
-        console.print(f"[yellow]{EMOJI['warning']} Cannot upgrade yet:[/yellow] {reason}")
+        console.print(f"[yellow]{EMOJI['warning']} {_('Cannot upgrade yet:')}[/yellow] {reason}")
 
     # Display stage history
     if stage_history:
         console.print()
-        console.print("[bold]Stage History:[/bold]")
+        console.print(f"[bold]{_('Stage History:')}[/bold]")
         for entry in stage_history:
-            stage = entry.get("stage", "unknown")
-            started = entry.get("started_at", "Unknown")
+            stage = entry.get("stage", _("unknown"))
+            started = entry.get("started_at", _("Unknown"))
             ended = entry.get("ended_at")
 
             if ended:
                 console.print(f"  {BULLET} {stage}: {started} -> {ended}")
             else:
-                console.print(f"  {BULLET} {stage}: {started} [bold green](in progress)[/bold green]")
+                console.print(f"  {BULLET} {stage}: {started} [bold green]({_('in progress')})[/bold green]")
 
 
 @lifecycle.command()
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
-@click.option("--stage", "-s", type=click.Choice(STAGE_ORDER), help="Target stage (default: upgrade to next stage)")
-@click.option("--force", "-f", is_flag=True, help="Force upgrade (skip checks)")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
+@click.option("--stage", "-s", type=click.Choice(STAGE_ORDER), help=_("Target stage (default: upgrade to next stage)"))
+@click.option("--force", "-f", is_flag=True, help=_("Force upgrade (skip checks)"))
 def upgrade(config: str, stage: Optional[str], force: bool):
     """Upgrade project to next or specified stage
 
@@ -124,7 +126,7 @@ def upgrade(config: str, stage: Optional[str], force: bool):
     """
     config_path = Path(config)
     if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file does not exist: {config}")
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file does not exist:')} {config}")
         raise SystemExit(1)
 
     with open(config_path, "r", encoding="utf-8") as f:
@@ -137,8 +139,8 @@ def upgrade(config: str, stage: Optional[str], force: bool):
     if stage is None:
         can_upgrade, next_stage, reason = manager.can_upgrade()
         if not can_upgrade and not force:
-            console.print(f"[red]Error:[/red] {reason}")
-            console.print("[dim]Use --force to force upgrade (not recommended)[/dim]")
+            console.print(f"[red]{_('Error:')}[/red] {reason}")
+            console.print(f"[dim]{_('Use --force to force upgrade (not recommended)')}[/dim]")
             raise SystemExit(1)
         target_stage = next_stage
     else:
@@ -147,7 +149,7 @@ def upgrade(config: str, stage: Optional[str], force: bool):
     # Execute upgrade
     success, error = manager.upgrade_to_stage(target_stage)
     if not success:
-        console.print(f"[red]Error:[/red] {error}")
+        console.print(f"[red]{_('Error:')}[/red] {error}")
         raise SystemExit(1)
 
     # Save config
@@ -165,23 +167,23 @@ def upgrade(config: str, stage: Optional[str], force: bool):
     target_info = manager.get_stage_info(target_stage)
     console.print()
     console.print(Panel.fit(
-        f"[bold green]{EMOJI['success']} Project upgraded to {target_info.get('name', target_stage)} stage[/bold green]",
-        title="Upgrade Successful"
+        f"[bold green]{EMOJI['success']} {_('Project upgraded to {name} stage').format(name=target_info.get('name', target_stage))}[/bold green]",
+        title=_("Upgrade Successful")
     ))
 
     # Display upgrade suggestions
     suggestions = manager.get_upgrade_suggestions(target_stage)
     if suggestions:
         console.print()
-        console.print("[bold]Changes to note after upgrade:[/bold]")
+        console.print(f"[bold]{_('Changes to note after upgrade:')}[/bold]")
         for suggestion in suggestions:
             console.print(f"  {BULLET} {suggestion}")
 
     console.print()
-    console.print("[bold]Next steps:[/bold]")
-    console.print("  1. Regenerate CONTRIBUTING_AI.md: vibecollab generate -c project.yaml")
-    console.print("  2. Update stage info in ROADMAP.md")
-    console.print("  3. Adjust development workflow according to new stage principles")
+    console.print(f"[bold]{_('Next steps:')}[/bold]")
+    console.print(f"  1. {_('Regenerate CONTRIBUTING_AI.md:')} vibecollab generate -c project.yaml")
+    console.print(f"  2. {_('Update stage info in ROADMAP.md')}")
+    console.print(f"  3. {_('Adjust development workflow according to new stage principles')}")
 
 
 # Export command group

@@ -13,18 +13,19 @@ import click
 from rich.table import Table
 
 from .._compat import BULLET, EMOJI, safe_console
+from ..i18n import _
 
 console = safe_console()
 
 
 @click.command()
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 @click.option(
     "--backend", "-b", default="auto",
     type=click.Choice(["auto", "openai", "local", "pure_python"]),
-    help="Embedding backend"
+    help=_("Embedding backend")
 )
-@click.option("--rebuild", is_flag=True, help="Rebuild after clearing old index")
+@click.option("--rebuild", is_flag=True, help=_("Rebuild after clearing old index"))
 def index_cmd(config: str, backend: str, rebuild: bool):
     """Index project documents and Insights
 
@@ -63,7 +64,7 @@ def index_cmd(config: str, backend: str, rebuild: bool):
     try:
         embedder = Embedder(embedder_config)
     except Exception as e:
-        console.print(f"[red]Embedding initialization failed:[/red] {e}")
+        console.print(f"[red]{_('Embedding initialization failed:')}[/red] {e}")
         raise SystemExit(1)
 
     db_path = project_root / ".vibecollab" / "vectors" / "index.db"
@@ -74,49 +75,49 @@ def index_cmd(config: str, backend: str, rebuild: bool):
         old_count = store.count()
         store.delete_by_source_type("document")
         store.delete_by_source_type("insight")
-        console.print(f"[dim]Cleared {old_count} old index entries[/dim]")
+        console.print(f"[dim]{_('Cleared {n} old index entries').format(n=old_count)}[/dim]")
 
     indexer = Indexer(project_root=project_root, embedder=embedder, store=store)
 
-    console.print(f"[cyan]Indexing... (backend: {embedder.model_name})[/cyan]")
+    console.print(f"[cyan]{_('Indexing... (backend: {name})').format(name=embedder.model_name)}[/cyan]")
 
     stats = indexer.index_all()
 
     # Display results
     console.print()
-    table = Table(title="Index Results", show_header=True)
-    table.add_column("Type", style="cyan")
-    table.add_column("Count", justify="right")
-    table.add_row("Documents", str(stats.documents_indexed))
-    table.add_row("Insights", str(stats.insights_indexed))
-    table.add_row("Chunks Total", str(stats.chunks_total))
-    table.add_row("Skipped", str(stats.skipped))
+    table = Table(title=_("Index Results"), show_header=True)
+    table.add_column(_("Type"), style="cyan")
+    table.add_column(_("Count"), justify="right")
+    table.add_row(_("Documents"), str(stats.documents_indexed))
+    table.add_row(_("Insights"), str(stats.insights_indexed))
+    table.add_row(_("Chunks Total"), str(stats.chunks_total))
+    table.add_row(_("Skipped"), str(stats.skipped))
     console.print(table)
 
     if stats.errors:
         console.print()
-        console.print(f"[yellow]{EMOJI.get('warning', '!')} Index errors:[/yellow]")
+        console.print(f"[yellow]{EMOJI.get('warning', '!')} {_('Index errors:')}[/yellow]")
         for err in stats.errors:
             console.print(f"  {BULLET} {err}")
 
     console.print()
     total = store.count()
-    console.print(f"[green]{EMOJI.get('success', 'OK')} Index complete[/green] -- {total} vectors total")
-    console.print(f"[dim]Storage: {db_path}[/dim]")
+    console.print(f"[green]{EMOJI.get('success', 'OK')} {_('Index complete')}[/green] -- {total} {_('vectors total')}")
+    console.print(f"[dim]{_('Storage:')} {db_path}[/dim]")
 
     store.close()
 
 
 @click.command()
 @click.argument("query")
-@click.option("--top", "-k", default=5, help="Number of results")
+@click.option("--top", "-k", default=5, help=_("Number of results"))
 @click.option(
     "--type", "-t", "source_type", default=None,
     type=click.Choice(["document", "insight"]),
-    help="Filter source type"
+    help=_("Filter source type")
 )
-@click.option("--min-score", default=0.0, type=float, help="Minimum similarity threshold (0~1)")
-@click.option("--config", "-c", default="project.yaml", help="Project config file path")
+@click.option("--min-score", default=0.0, type=float, help=_("Minimum similarity threshold (0~1)"))
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 def search_cmd(query: str, top: int, source_type: Optional[str], min_score: float, config: str):
     """Global semantic search
 
@@ -140,7 +141,7 @@ def search_cmd(query: str, top: int, source_type: Optional[str], min_score: floa
 
     db_path = project_root / ".vibecollab" / "vectors" / "index.db"
     if not db_path.exists():
-        console.print("[red]Index does not exist[/red] -- please run `vibecollab index` first")
+        console.print(f"[red]{_('Index does not exist')}[/red] -- {_('please run `vibecollab index` first')}")
         raise SystemExit(1)
 
     # Infer dimensions from existing index
@@ -149,7 +150,7 @@ def search_cmd(query: str, top: int, source_type: Optional[str], min_score: floa
     row = conn.execute("SELECT dimensions FROM vectors LIMIT 1").fetchone()
     conn.close()
     if not row:
-        console.print("[red]Index is empty[/red] -- please run `vibecollab index` first")
+        console.print(f"[red]{_('Index is empty')}[/red] -- {_('please run `vibecollab index` first')}")
         raise SystemExit(1)
     dims = row[0]
 
@@ -160,21 +161,22 @@ def search_cmd(query: str, top: int, source_type: Optional[str], min_score: floa
     results = store.search(query_vector, top_k=top, source_type=source_type, min_score=min_score)
 
     if not results:
-        console.print(f"[yellow]No results found for \"{query}\"[/yellow]")
+        msg = _('No results found for "{query}"').format(query=query)
+        console.print(f"[yellow]{msg}[/yellow]")
         if min_score > 0:
-            console.print(f"[dim]Hint: Try lowering --min-score (current: {min_score})[/dim]")
+            console.print(f"[dim]{_('Hint: Try lowering --min-score (current: {score})').format(score=min_score)}[/dim]")
         store.close()
         return
 
     console.print()
-    console.print(f"[bold]Search: \"{query}\"[/bold] (Top {len(results)})")
+    console.print(f"[bold]{_('Search:')} \"{query}\"[/bold] ({_('Top')} {len(results)})")
     console.print()
 
     for i, r in enumerate(results, 1):
         score_color = "green" if r.score > 0.5 else "yellow" if r.score > 0.2 else "dim"
         type_label = {"document": "DOC", "insight": "INS"}.get(r.source_type, r.source_type)
         console.print(f"  [{score_color}]{i}. [{type_label}] {r.doc_id}[/{score_color}]")
-        console.print(f"     [{score_color}]Similarity: {r.score:.3f}[/{score_color}]")
+        console.print(f"     [{score_color}]{_('Similarity:')} {r.score:.3f}[/{score_color}]")
 
         # Show text preview (first 100 chars)
         preview = r.text[:150].replace("\n", " ")

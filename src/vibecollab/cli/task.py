@@ -17,6 +17,7 @@ from pathlib import Path
 import click
 import yaml
 
+from ..i18n import _
 from ..insight.manager import InsightManager
 from ..domain.task_manager import TaskManager, TaskStatus
 
@@ -92,11 +93,11 @@ def create_task(task_id, role, feature, assignee, description, milestone, config
 
 
 @task_group.command("list")
-@click.option("--status", default=None, help="Filter by status (TODO/IN_PROGRESS/REVIEW/DONE)")
-@click.option("--assignee", default=None, help="Filter by assignee")
-@click.option("--milestone", default=None, help="Filter by milestone (e.g. v0.9.3)")
-@click.option("--config", "-c", default="project.yaml", help="Config file path")
-@click.option("--json-output", "--json", is_flag=True, help="JSON output")
+@click.option("--status", default=None, help=_("Filter by status (TODO/IN_PROGRESS/REVIEW/DONE)"))
+@click.option("--assignee", default=None, help=_("Filter by assignee"))
+@click.option("--milestone", default=None, help=_("Filter by milestone (e.g. v0.9.3)"))
+@click.option("--config", "-c", default="project.yaml", help=_("Config file path"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 def list_tasks(status, assignee, milestone, config, json_output):
     """List tasks"""
     tm, _ = _get_managers(config)
@@ -124,8 +125,8 @@ def list_tasks(status, assignee, milestone, config, json_output):
 
 @task_group.command("show")
 @click.argument("task_id")
-@click.option("--config", "-c", default="project.yaml", help="Config file path")
-@click.option("--json-output", "--json", is_flag=True, help="JSON output")
+@click.option("--config", "-c", default="project.yaml", help=_("Config file path"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 def show_task(task_id, config, json_output):
     """View task details"""
     tm, _ = _get_managers(config)
@@ -198,9 +199,9 @@ VALID_STATUS_VALUES = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"]
 @task_group.command("transition")
 @click.argument("task_id")
 @click.argument("new_status", type=click.Choice(VALID_STATUS_VALUES, case_sensitive=False))
-@click.option("--reason", "-r", default="", help="Reason for status change")
-@click.option("--config", "-c", default="project.yaml", help="Config file path")
-@click.option("--json-output", "--json", is_flag=True, help="JSON output")
+@click.option("--reason", "-r", default="", help=_("Reason for status change"))
+@click.option("--config", "-c", default="project.yaml", help=_("Config file path"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 def transition_task(task_id, new_status, reason, config, json_output):
     """Transition task status
 
@@ -236,8 +237,8 @@ def transition_task(task_id, new_status, reason, config, json_output):
 
 @task_group.command("solidify")
 @click.argument("task_id")
-@click.option("--config", "-c", default="project.yaml", help="Config file path")
-@click.option("--json-output", "--json", is_flag=True, help="JSON output")
+@click.option("--config", "-c", default="project.yaml", help=_("Config file path"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 def solidify_task(task_id, config, json_output):
     """Solidify task -- mark as DONE after passing validation gate
 
@@ -271,9 +272,9 @@ def solidify_task(task_id, config, json_output):
 
 @task_group.command("rollback")
 @click.argument("task_id")
-@click.option("--reason", "-r", default="", help="Rollback reason")
-@click.option("--config", "-c", default="project.yaml", help="Config file path")
-@click.option("--json-output", "--json", is_flag=True, help="JSON output")
+@click.option("--reason", "-r", default="", help=_("Rollback reason"))
+@click.option("--config", "-c", default="project.yaml", help=_("Config file path"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 def rollback_task(task_id, reason, config, json_output):
     """Rollback task to previous status
 

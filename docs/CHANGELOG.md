@@ -2,7 +2,23 @@
 
 ## v0.10.1-dev (2026-03-03) - Code Internationalization (i18n)
 
-### i18n
+### i18n Framework
+- **CLI i18n architecture**: gettext-based localization with zero external dependencies
+  - Created `src/vibecollab/i18n/` module: `_()`, `setup_locale()`, `ngettext()`, `get_current_language()`
+  - Language selection: `--lang` CLI option > `VIBECOLLAB_LANG` env var > English fallback
+  - Pre-parse `--lang` from `sys.argv` at module import time (before Click evaluates `help=` decorators)
+  - Locale directory: `src/vibecollab/i18n/locales/{lang}/LC_MESSAGES/vibecollab.po/.mo`
+  - `pyproject.toml` artifacts updated to include `.mo` files in wheel builds
+- **316 unique translatable strings** extracted across all 11 CLI files
+  - All `help=` parameters wrapped with `_()` in: main.py, ai.py, guide.py, insight.py, config.py, lifecycle.py, index.py, mcp.py, roadmap.py, task.py
+  - Key runtime output strings wrapped in main.py, lifecycle.py, index.py, mcp.py
+  - f-strings with variables converted to `_('text {var}').format(var=val)` pattern
+  - Rich markup separated from translatable text: `f"[red]{_('Error:')}[/red]"`
+- **Chinese translation (zh_CN)**: 131 key strings translated, `.po`/`.mo` generated
+  - `.pot` template with 316 entries for future translators
+  - Verified end-to-end: `vibecollab --lang zh insight add --help` shows Chinese help text
+
+### i18n (Code English Translation)
 - **Full English translation** of all source code and test files (96 files, ~4900 lines changed)
   - 62 source `.py` files: all Chinese docstrings, comments, error messages, and runtime output strings translated to English
   - 27 `.j2` template files + `manifest.yaml`: all Chinese content translated

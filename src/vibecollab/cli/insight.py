@@ -25,6 +25,7 @@ import click
 import yaml
 
 from .._compat import EMOJI
+from ..i18n import _
 
 
 def _load_insight_manager(config_path: str = "project.yaml"):
@@ -65,8 +66,8 @@ def insight():
 
 
 @insight.command("list")
-@click.option("--active-only", is_flag=True, default=False, help="Show active insights only")
-@click.option("--json", "as_json", is_flag=True, default=False, help="JSON output")
+@click.option("--active-only", is_flag=True, default=False, help=_("Show active insights only"))
+@click.option("--json", "as_json", is_flag=True, default=False, help=_("JSON output"))
 def list_insights(active_only, as_json):
     """List all insights"""
     import json as json_mod
@@ -169,23 +170,23 @@ def show_insight(insight_id):
 
 
 @insight.command("add")
-@click.option("--title", "-t", required=True, help="Insight title")
-@click.option("--tags", required=True, help="Tag list, comma separated")
+@click.option("--title", "-t", required=True, help=_("Insight title"))
+@click.option("--tags", required=True, help=_("Tag list, comma separated"))
 @click.option("--category", "-c", required=True,
               type=click.Choice(["technique", "workflow", "decision", "debug", "tool", "integration"]),
-              help="Category")
-@click.option("--scenario", "-s", required=True, help="Applicable scenario")
-@click.option("--approach", "-a", required=True, help="Method/steps")
-@click.option("--summary", default="", help="One-line summary")
-@click.option("--validation", default="", help="Validation method")
-@click.option("--context", "origin_context", default="", help="Creation context (natural language)")
+              help=_("Category"))
+@click.option("--scenario", "-s", required=True, help=_("Applicable scenario"))
+@click.option("--approach", "-a", required=True, help=_("Method/steps"))
+@click.option("--summary", default="", help=_("One-line summary"))
+@click.option("--validation", default="", help=_("Validation method"))
+@click.option("--context", "origin_context", default="", help=_("Creation context (natural language)"))
 @click.option("--source-type", default=None, type=click.Choice(["task", "decision", "insight", "external"]))
-@click.option("--source-desc", default=None, help="Source description (natural language, cross-project readable)")
-@click.option("--source-ref", default=None, help="Source internal ID (optional hint, e.g. DECISION-012)")
-@click.option("--source-url", default=None, help="Source external link (e.g. GitHub issue URL)")
-@click.option("--source-project", default=None, help="Source project name")
-@click.option("--derived-from", default=None, help="Derived from insight IDs, comma separated")
-@click.option("--force", "-f", is_flag=True, default=False, help="Skip dedup check, force create")
+@click.option("--source-desc", default=None, help=_("Source description (natural language, cross-project readable)"))
+@click.option("--source-ref", default=None, help=_("Source internal ID (optional hint, e.g. DECISION-012)"))
+@click.option("--source-url", default=None, help=_("Source external link (e.g. GitHub issue URL)"))
+@click.option("--source-project", default=None, help=_("Source project name"))
+@click.option("--derived-from", default=None, help=_("Derived from insight IDs, comma separated"))
+@click.option("--force", "-f", is_flag=True, default=False, help=_("Skip dedup check, force create"))
 def add_insight(title, tags, category, scenario, approach, summary,
                 validation, origin_context, source_type, source_desc,
                 source_ref, source_url, source_project, derived_from, force):
@@ -245,11 +246,11 @@ def add_insight(title, tags, category, scenario, approach, summary,
 
 
 @insight.command("search")
-@click.option("--tags", default=None, help="Search by tags, comma separated")
-@click.option("--category", default=None, help="Search by category")
-@click.option("--semantic", "-q", default=None, help="Semantic search (requires vibecollab index first)")
-@click.option("--include-inactive", is_flag=True, default=False, help="Include inactive insights")
-@click.option("--top", "-k", default=10, help="Number of semantic search results")
+@click.option("--tags", default=None, help=_("Search by tags, comma separated"))
+@click.option("--category", default=None, help=_("Search by category"))
+@click.option("--semantic", "-q", default=None, help=_("Semantic search (requires vibecollab index first)"))
+@click.option("--include-inactive", is_flag=True, default=False, help=_("Include inactive insights"))
+@click.option("--top", "-k", default=10, help=_("Number of semantic search results"))
 def search_insights(tags, category, semantic, include_inactive, top):
     """Search insights
 
@@ -359,7 +360,7 @@ def use_insight(insight_id):
 
 
 @insight.command("decay")
-@click.option("--dry-run", is_flag=True, default=False, help="Preview only, do not execute")
+@click.option("--dry-run", is_flag=True, default=False, help=_("Preview only, do not execute"))
 def decay_insights(dry_run):
     """Execute weight decay on all active insights"""
     mgr = _load_insight_manager()
@@ -387,7 +388,7 @@ def decay_insights(dry_run):
 
 
 @insight.command("check")
-@click.option("--json", "as_json", is_flag=True, default=False, help="JSON output")
+@click.option("--json", "as_json", is_flag=True, default=False, help=_("JSON output"))
 def check_insights(as_json):
     """Insight system consistency check"""
     import json as json_mod
@@ -424,7 +425,7 @@ def check_insights(as_json):
 
 @insight.command("delete")
 @click.argument("insight_id")
-@click.option("--yes", "-y", is_flag=True, default=False, help="Skip confirmation")
+@click.option("--yes", "-y", is_flag=True, default=False, help=_("Skip confirmation"))
 def delete_insight(insight_id, yes):
     """Delete an insight entry"""
     mgr = _load_insight_manager()
@@ -484,7 +485,7 @@ def unbookmark_insight(insight_id):
 
 @insight.command("trace")
 @click.argument("insight_id")
-@click.option("--json", "as_json", is_flag=True, default=False, help="JSON output")
+@click.option("--json", "as_json", is_flag=True, default=False, help=_("JSON output"))
 def trace_insight(insight_id, as_json):
     """Traceability tree visualization -- show insight derivation relationships"""
     import json as json_mod
@@ -537,7 +538,7 @@ def _render_tree(nodes, prefix="", direction="down"):
 
 @insight.command("who")
 @click.argument("insight_id")
-@click.option("--json", "as_json", is_flag=True, default=False, help="JSON output")
+@click.option("--json", "as_json", is_flag=True, default=False, help=_("JSON output"))
 def who_insight(insight_id, as_json):
     """View who created/used/bookmarked an insight"""
     import json as json_mod
@@ -563,7 +564,7 @@ def who_insight(insight_id, as_json):
 
 
 @insight.command("stats")
-@click.option("--json", "as_json", is_flag=True, default=False, help="JSON output")
+@click.option("--json", "as_json", is_flag=True, default=False, help=_("JSON output"))
 def stats_insights(as_json):
     """Cross-developer sharing statistics"""
     import json as json_mod
@@ -607,9 +608,9 @@ def stats_insights(as_json):
 
 
 @insight.command("suggest")
-@click.option("--json", "as_json", is_flag=True, help="JSON output")
+@click.option("--json", "as_json", is_flag=True, help=_("JSON output"))
 @click.option("--auto-confirm", is_flag=True,
-              help="Auto-confirm all candidates (non-interactive mode)")
+              help=_("Auto-confirm all candidates (non-interactive mode)"))
 def suggest_insights(as_json, auto_confirm):
     """Suggest candidate Insights based on structured signals
 
@@ -753,8 +754,8 @@ def _create_from_candidates(project_root, candidates, collector):
 
 @insight.command("graph")
 @click.option("--format", "fmt", type=click.Choice(["mermaid", "json", "text"]),
-              default="text", help="Output format")
-@click.option("--json", "json_output", is_flag=True, default=False, help="JSON output (alias for --format json)")
+              default="text", help=_("Output format"))
+@click.option("--json", "json_output", is_flag=True, default=False, help=_("JSON output (alias for --format json)"))
 def insight_graph(fmt, json_output):
     """Insight association graph visualization
 
@@ -811,9 +812,9 @@ def insight_graph(fmt, json_output):
 # ------------------------------------------------------------------
 
 @insight.command("export")
-@click.option("--ids", default=None, help="Insight IDs to export, comma separated (default all)")
-@click.option("--output", "-o", default=None, help="Output file path (default stdout)")
-@click.option("--include-registry", is_flag=True, default=False, help="Include registry state")
+@click.option("--ids", default=None, help=_("Insight IDs to export, comma separated (default all)"))
+@click.option("--output", "-o", default=None, help=_("Output file path (default stdout)"))
+@click.option("--include-registry", is_flag=True, default=False, help=_("Include registry state"))
 def export_insights(ids, output, include_registry):
     """Export Insights to portable YAML format
 
@@ -843,8 +844,8 @@ def export_insights(ids, output, include_registry):
 @insight.command("import")
 @click.argument("filepath")
 @click.option("--strategy", type=click.Choice(["skip", "rename", "overwrite"]),
-              default="skip", help="ID conflict strategy: skip/rename/overwrite")
-@click.option("--json", "json_output", is_flag=True, default=False, help="JSON output")
+              default="skip", help=_("ID conflict strategy: skip/rename/overwrite"))
+@click.option("--json", "json_output", is_flag=True, default=False, help=_("JSON output"))
 def import_insights(filepath, strategy, json_output):
     """Import Insights from YAML file
 

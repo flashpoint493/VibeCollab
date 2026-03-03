@@ -9,7 +9,7 @@
 - **Previous release**: v0.9.7 (PyPI published)
 - **Active developers**: 2 (alice, ocarina)
 - **Tests**: 1344 passed, 89% coverage
-- **Current phase**: Code i18n (v0.10.1), progressing toward v0.10.0 feature freeze
+- **Current phase**: CLI i18n framework implemented, progressing toward v0.10.2
 
 ## Developer Status
 
@@ -21,25 +21,35 @@
 
 ### ocarina
 - **Last updated**: 2026-03-03
-- **Current task**: Code i18n — translate all Chinese text to English
+- **Current task**: CLI i18n — runtime output string wrapping (remaining files)
 - **Recently completed**:
-  - **Code i18n (v0.10.1)**: Full English translation of 96 files (62 source + 34 test files)
-    - All source .py files: docstrings, comments, error messages, CLI output strings
-    - All 27 .j2 template files + manifest.yaml
-    - All 34 test files: assertions, comments, docstrings (preserving functional Chinese test data)
-    - Fixed 2 source code truncation bugs (health.py, vector_store.py)
-    - Fixed previous session leftover Chinese in test_cli_insight.py, test_insight_quality.py, test_insight_manager.py
+  - **CLI i18n framework (v0.10.1)**: gettext-based i18n infrastructure
+    - Created `src/vibecollab/i18n/` module with `_()`, `setup_locale()`, `ngettext()`
+    - Pre-parse `--lang` from sys.argv before Click loads (solves Click help= timing issue)
+    - Language priority: `--lang` CLI option > `VIBECOLLAB_LANG` env var > English fallback
+    - Wrapped 316 unique `_()` strings across all 11 CLI files
+    - All `help=` parameters wrapped in all CLI files (62+ strings via batch script)
+    - Created `.pot` template (316 strings), `zh_CN .po` (131 translations), compiled `.mo`
+    - `pyproject.toml` artifacts updated to include `.mo` files in wheel builds
+    - Fixed 7 f-string backslash escaping SyntaxErrors
     - 1344 tests all passing, zero regression
+  - **Code i18n (v0.10.1)**: Full English translation of 96 files (62 source + 34 test files)
   - Directory restructure: 36 flat .py files reorganized into 7 sub-packages
   - GBK encoding fix: 3-layer defense system
-  - v0.9.5 ROADMAP/Task integration
-  - PyPI v0.9.5/v0.9.6/v0.9.7 releases
 
 ## Active Tasks
 
-- CLI i18n architecture: implement locale-based CLI output (default English, optional Chinese)
+- CLI i18n: wrap remaining runtime output strings in config.py, roadmap.py, task.py, ai.py, guide.py, insight.py
+- Create `.pot` extraction + `.mo` compilation tooling script
 
 ## Architecture (v0.9.7+)
+
+### i18n Architecture
+- Module: `src/vibecollab/i18n/__init__.py`
+- Locale files: `src/vibecollab/i18n/locales/{lang}/LC_MESSAGES/vibecollab.po/.mo`
+- Pattern: `from ..i18n import _` → `help=_("text")`, `click.echo(_("text"))`
+- Click help= solution: `_pre_parse_lang()` reads `--lang` from sys.argv at module import time
+- No lazy string needed — locale is set before Click decorators evaluate
 
 ### Directory Structure
 36 flat modules reorganized into 7 sub-packages:
@@ -62,7 +72,8 @@
 ## Technical Debt
 - External QA validation (Phase 11 TC-E2E-001~010) pending
 - events.jsonl Windows file lock issue needs investigation
-- CLI i18n localization framework (default English, optional Chinese) — next step
+- CLI i18n: runtime output strings in 6 files still need `_()` wrapping
+- CLI i18n: remaining 185 untranslated strings in zh_CN .po file
 
 ---
 *This file is auto-aggregated from multi-developer contexts*

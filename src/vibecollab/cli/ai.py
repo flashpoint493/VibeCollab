@@ -30,6 +30,7 @@ from rich.panel import Panel
 from .._compat import EMOJI as _COMPAT_EMOJI
 from .._compat import is_windows_gbk, safe_console
 from ..domain.event_log import Event, EventLog, EventType
+from ..i18n import _
 from ..agent.llm_client import LLMClient, LLMConfig, LLMResponse, Message, build_project_context
 from ..domain.task_manager import TaskManager, TaskStatus
 
@@ -262,10 +263,10 @@ def ai():
 
 @ai.command()
 @click.argument("question")
-@click.option("--project", "-p", default=None, help="Project root directory (auto-detect by default)")
-@click.option("--no-context", is_flag=True, help="Do not inject project context")
-@click.option("--temperature", "-t", default=0.7, type=float, help="Sampling temperature (0.0-1.0)")
-@click.option("--verbose", "-v", is_flag=True, help="Show token usage and details")
+@click.option("--project", "-p", default=None, help=_("Project root directory (auto-detect by default)"))
+@click.option("--no-context", is_flag=True, help=_("Do not inject project context"))
+@click.option("--temperature", "-t", default=0.7, type=float, help=_("Sampling temperature (0.0-1.0)"))
+@click.option("--verbose", "-v", is_flag=True, help=_("Show token usage and details"))
 def ask(question: str, project: Optional[str], no_context: bool,
         temperature: float, verbose: bool):
     """Ask AI a question (single turn, with project context)
@@ -312,10 +313,10 @@ def ask(question: str, project: Optional[str], no_context: bool,
 
 
 @ai.command()
-@click.option("--project", "-p", default=None, help="Project root directory (auto-detect by default)")
-@click.option("--no-context", is_flag=True, help="Do not inject project context")
-@click.option("--temperature", "-t", default=0.7, type=float, help="Sampling temperature")
-@click.option("--verbose", "-v", is_flag=True, help="Show token usage")
+@click.option("--project", "-p", default=None, help=_("Project root directory (auto-detect by default)"))
+@click.option("--no-context", is_flag=True, help=_("Do not inject project context"))
+@click.option("--temperature", "-t", default=0.7, type=float, help=_("Sampling temperature"))
+@click.option("--verbose", "-v", is_flag=True, help=_("Show token usage"))
 def chat(project: Optional[str], no_context: bool, temperature: float, verbose: bool):
     """Multi-turn conversation with AI (Ctrl+C to exit)
 
@@ -389,8 +390,8 @@ def agent():
 
 
 @agent.command()
-@click.option("--project", "-p", default=None, help="Project root directory")
-@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
+@click.option("--project", "-p", default=None, help=_("Project root directory"))
+@click.option("--verbose", "-v", is_flag=True, help=_("Verbose output"))
 def plan(project: Optional[str], verbose: bool):
     """Analyze project state, generate action plan (read-only)
 
@@ -445,9 +446,9 @@ def plan(project: Optional[str], verbose: bool):
 
 
 @agent.command()
-@click.option("--project", "-p", default=None, help="Project root directory")
-@click.option("--dry-run", is_flag=True, help="Dry run (only generate plan, do not execute)")
-@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
+@click.option("--project", "-p", default=None, help=_("Project root directory"))
+@click.option("--dry-run", is_flag=True, help=_("Dry run (only generate plan, do not execute)"))
+@click.option("--verbose", "-v", is_flag=True, help=_("Verbose output"))
 def run(project: Optional[str], dry_run: bool, verbose: bool):
     """Execute a single Agent cycle: Plan -> Execute -> Solidify
 
@@ -626,10 +627,10 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
 
 
 @agent.command()
-@click.option("--project", "-p", default=None, help="Project root directory")
+@click.option("--project", "-p", default=None, help=_("Project root directory"))
 @click.option("--max-cycles", "-n", default=None, type=int,
               help=f"Max cycles (default: {DEFAULT_MAX_CYCLES})")
-@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
+@click.option("--verbose", "-v", is_flag=True, help=_("Verbose output"))
 def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
     """Long-running Agent service -- loop Plan -> Execute -> Solidify
 
@@ -875,7 +876,7 @@ def _execute_agent_cycle(
 
 
 @agent.command()
-@click.option("--project", "-p", default=None, help="Project root directory")
+@click.option("--project", "-p", default=None, help=_("Project root directory"))
 def status(project: Optional[str]):
     """View Agent runtime status
 
