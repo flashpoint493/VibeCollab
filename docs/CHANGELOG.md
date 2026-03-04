@@ -1,6 +1,24 @@
 # VibeCollab Changelog
 
-## v0.10.1-dev (2026-03-03) - Code Internationalization (i18n)
+## v0.10.1-dev (2026-03-04) - Code Internationalization (i18n)
+
+### MCP Server Refactor: Subprocess → Direct API
+- **Complete rewrite of `mcp_server.py`**: All 15 MCP tools rewritten from `subprocess.run(["vibecollab", ...])` CLI delegation to direct Python API calls
+  - Eliminated 10-30s per-tool latency caused by Python process startup + module loading on Windows
+  - New `_get_managers(root)` lazy initialization helper: creates `InsightManager`, `TaskManager`, `EventLog` in-process
+  - Tools now call APIs directly: `InsightManager.search_by_tags()`, `ProtocolChecker.check_all()`, `TaskManager.list_tasks()`, `RoadmapParser.status()`, etc.
+  - Removed `_run_cli()` function and `import subprocess`
+- **MCP promoted to core dependency**: `mcp>=1.0.0` moved from `[project.optional-dependencies].mcp` to `dependencies`
+  - Deleted `[mcp]` extra group entirely from `pyproject.toml`
+  - Removed `try/except ImportError` fallback in `cli/mcp.py`
+- **Documentation batch update**: 16 files updated to replace `pip install vibe-collab[mcp]` with `pip install vibe-collab`
+  - README.md, README.zh-CN.md, README.pypi.md, docs/CHANGELOG.md, docs/ROADMAP.md, docs/QA_TEST_CASES.md
+  - skill.md, llms.txt, vibecollab.pot, vibecollab.po
+- **Test suite update**: Rewrote test classes that referenced deleted `_run_cli`
+  - `test_mcp_server.py`: `TestTools` rewritten to test `_get_managers` direct API initialization
+  - `test_mcp_server_closures.py`: `TestCliTools` (24 tests) → `TestApiTools` (24 tests verifying JSON structure); removed `TestRunCliEdge`
+  - `test_task_workflow_integration.py`: `TestMcpNewTools` rewritten to use direct `TaskManager` API calls
+- All **1409 tests passed**, zero regression
 
 ### Template & Config English Translation (v0.10.3)
 - **Insight cache translation**: 16 Insight YAML files (INS-001 through INS-017) translated from Chinese to English
@@ -307,7 +325,7 @@
   - 8 Tools: `insight_search`, `insight_add`, `check`, `onboard`, `next_step`, `task_list`, `project_prompt`, `developer_context`, `search_docs`
   - 1 Prompt: `start_conversation` (project info + CONTEXT summary + developer context)
   - Supports `stdio` / `sse` two transport modes
-  - Optional dependency `pip install vibe-collab[mcp]`
+  - `pip install vibe-collab`
 - **MCP CLI command group** (`vibecollab mcp`):
   - `mcp serve` — Start MCP Server
   - `mcp config --ide cursor/cline/codebuddy` — Output IDE configuration content

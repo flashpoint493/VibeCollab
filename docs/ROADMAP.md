@@ -282,7 +282,7 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
   - `vibecollab mcp config --ide cursor/cline/codebuddy` output config
   - `vibecollab mcp inject --ide all` auto-inject IDE config files
   - Supports `stdio` and `sse` two transport modes
-- [x] PyPI v0.9.1 release ✅ — `pip install vibe-collab[mcp]`
+- [x] PyPI v0.9.1 release ✅ — `pip install vibe-collab`
 - [x] CodeBuddy Rule integration ✅ — `.codebuddy/rules/vibecollab-protocol.mdc`
 - [x] 35 unit tests, 1074 full passed ✅
 

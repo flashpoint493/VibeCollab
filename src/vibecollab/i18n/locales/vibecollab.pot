@@ -694,7 +694,7 @@ msgid "Insights"
 msgstr ""
 
 #: src/vibecollab/cli/mcp.py:66
-msgid "Install: pip install vibe-collab[mcp]"
+msgid "Install: pip install vibe-collab"
 msgstr ""
 
 #: src/vibecollab/cli/main.py:251

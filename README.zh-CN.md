@@ -22,7 +22,7 @@ vibecollab init -n "MyProject" -d generic -o ./my-project
 cd my-project
 
 # 接入 AI IDE（Cursor / Cline / CodeBuddy）
-pip install vibe-collab[mcp]
+pip install vibe-collab
 vibecollab mcp inject --ide cursor   # 或: cline / codebuddy / all
 ```
 
@@ -160,13 +160,13 @@ flowchart TD
 pip install vibe-collab
 
 # 含 MCP Server 支持 (推荐，用于 AI IDE 集成)
-pip install vibe-collab[mcp]
+pip install vibe-collab
 
 # 含语义搜索 (sentence-transformers 后端)
 pip install vibe-collab[embedding]
 
 # 全部可选依赖
-pip install vibe-collab[mcp,embedding,llm]
+pip install vibe-collab[embedding,llm]
 ```
 
 或从源码安装：
@@ -174,7 +174,7 @@ pip install vibe-collab[mcp,embedding,llm]
 ```bash
 git clone https://github.com/flashpoint493/VibeCollab.git
 cd VibeCollab
-pip install -e ".[mcp]"
+pip install -e "."
 ```
 
 ---
@@ -656,7 +656,7 @@ domain_extensions:
 
 ```bash
 # 1. 安装
-pip install vibe-collab[mcp]
+pip install vibe-collab
 
 # 2. 注入配置
 vibecollab mcp inject --ide cursor
@@ -674,7 +674,7 @@ vibecollab mcp inject --ide cursor
 
 ```bash
 # 1. 安装
-pip install vibe-collab[mcp]
+pip install vibe-collab
 
 # 2. 注入配置
 vibecollab mcp inject --ide cline
@@ -693,7 +693,7 @@ vibecollab mcp inject --ide cline
 
 ```bash
 # 1. 安装
-pip install vibe-collab[mcp]
+pip install vibe-collab
 
 # 2. 注入配置（MCP + Rule 一步到位）
 vibecollab mcp inject --ide codebuddy
@@ -799,7 +799,7 @@ VibeCollab/
 
 ```bash
 # 安装开发依赖
-pip install -e ".[dev,llm,mcp]"
+pip install -e ".[dev,llm]"
 
 # 运行测试
 pytest

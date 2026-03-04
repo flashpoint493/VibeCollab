@@ -6,7 +6,7 @@ Execute the following steps in order. Stop and report if any step fails.
 ## Step 1: Install
 
 ```bash
-pip install vibe-collab[mcp]
+pip install vibe-collab
 ```
 
 ## Step 2: Initialize

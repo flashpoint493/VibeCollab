@@ -4,7 +4,7 @@ VibeCollab MCP Server Unit Tests
 Testing MCP Server core functionality:
 - Server creation and configuration
 - Resource registration and reading
-- Tool registration and invocation
+- Tool direct Python API invocation
 - Prompt template generation
 - CLI commands (mcp serve/config/inject)
 - Edge cases (empty project, missing files)
@@ -12,7 +12,6 @@ Testing MCP Server core functionality:
 
 import json
 import os
-import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -266,55 +265,30 @@ class TestResources:
 
 
 # ============================================================
-# Tool CLI invocation tests (mock subprocess)
+# Tool direct API tests (no subprocess)
 # ============================================================
 
 
 class TestTools:
-    """Test Tool function CLI invocation logic"""
+    """Test Tool function direct API invocation logic"""
 
-    def test_run_cli_success(self, project_dir):
-        from vibecollab.agent.mcp_server import _run_cli
+    def test_get_managers(self, project_dir):
+        """_get_managers returns working manager instances"""
+        from vibecollab.agent.mcp_server import _get_managers
 
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                stdout="Search result: INS-001\n",
-                stderr="",
-                returncode=0,
-            )
-            result = _run_cli(
-                ["vibecollab", "insight", "search", "test"],
-                project_dir,
-            )
-            assert "INS-001" in result
-            mock_run.assert_called_once()
+        # Need registry.yaml for InsightManager
+        reg_path = project_dir / ".vibecollab" / "insights" / "registry.yaml"
+        reg_path.write_text(yaml.dump({
+            "schema_version": "1",
+            "entries": {},
+            "settings": {"decay_rate": 0.95, "decay_interval_days": 30,
+                         "use_reward": 0.1, "deactivate_threshold": 0.1},
+        }), encoding="utf-8")
 
-    def test_run_cli_error(self, project_dir):
-        from vibecollab.agent.mcp_server import _run_cli
-
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                stdout="",
-                stderr="Error message",
-                returncode=1,
-            )
-            result = _run_cli(["vibecollab", "check"], project_dir)
-            assert "stderr" in result
-            assert "Error message" in result
-
-    def test_run_cli_timeout(self, project_dir):
-        from vibecollab.agent.mcp_server import _run_cli
-
-        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 30)):
-            result = _run_cli(["vibecollab", "check"], project_dir)
-            assert "timed out" in result.lower()
-
-    def test_run_cli_not_found(self, project_dir):
-        from vibecollab.agent.mcp_server import _run_cli
-
-        with patch("subprocess.run", side_effect=FileNotFoundError):
-            result = _run_cli(["vibecollab", "check"], project_dir)
-            assert "not found" in result.lower()
+        im, tm, el = _get_managers(project_dir)
+        assert im is not None
+        assert tm is not None
+        assert el is not None
 
     def test_developer_context_exists(self, project_dir):
         """Developer context reading"""

@@ -22,7 +22,7 @@ vibecollab init -n "MyProject" -d generic -o ./my-project
 cd my-project
 
 # Connect to your AI IDE (Cursor / Cline / CodeBuddy)
-pip install vibe-collab[mcp]
+pip install vibe-collab
 vibecollab mcp inject --ide cursor   # or: cline / codebuddy / all
 ```
 
@@ -144,13 +144,13 @@ flowchart TD
 pip install vibe-collab
 
 # With MCP Server support (recommended for AI IDE integration)
-pip install vibe-collab[mcp]
+pip install vibe-collab
 
 # With semantic search (sentence-transformers backend)
 pip install vibe-collab[embedding]
 
 # All optional dependencies
-pip install vibe-collab[mcp,embedding,llm]
+pip install vibe-collab[embedding,llm]
 ```
 
 Or from source:
@@ -158,7 +158,7 @@ Or from source:
 ```bash
 git clone https://github.com/flashpoint493/VibeCollab.git
 cd VibeCollab
-pip install -e ".[mcp]"
+pip install -e "."
 ```
 
 ---
@@ -215,7 +215,7 @@ vibecollab validate -c project.yaml
 ### Cursor
 
 ```bash
-pip install vibe-collab[mcp]
+pip install vibe-collab
 vibecollab mcp inject --ide cursor
 ```
 
@@ -230,14 +230,14 @@ capture valuable Insights (insight_add), then git commit.
 ### VSCode + Cline
 
 ```bash
-pip install vibe-collab[mcp]
+pip install vibe-collab
 vibecollab mcp inject --ide cline
 ```
 
 ### CodeBuddy
 
 ```bash
-pip install vibe-collab[mcp]
+pip install vibe-collab
 vibecollab mcp inject --ide codebuddy
 ```
 
@@ -436,7 +436,7 @@ Full changelog: [docs/CHANGELOG.md](docs/CHANGELOG.md)
 ## Development
 
 ```bash
-pip install -e ".[dev,llm,mcp]"
+pip install -e ".[dev,llm]"
 pytest
 ruff check src/vibecollab/ tests/
 vibecollab generate -c project.yaml

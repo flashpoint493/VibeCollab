@@ -8,8 +8,8 @@
 - **Version**: v0.10.1-dev (in development)
 - **Previous release**: v0.9.7 (PyPI published)
 - **Active developers**: 2 (alice, ocarina)
-- **Tests**: 1413 passed, 89% coverage
-- **Current phase**: v0.10.3 internationalization fully completed (code, docs, templates, Insights all in English)
+- **Tests**: 1409 passed, 89% coverage
+- **Current phase**: MCP Server refactored from subprocess to direct API calls; MCP promoted to core dependency
 
 ## Developer Status
 
@@ -40,6 +40,7 @@
 
 - v0.10.3: Git history rewrite (97 commits) + GitHub facade
 - README.zh-CN.md project structure section modernization
+- Verify MCP Server response times after IDE restart
 
 ## Architecture (v0.9.7+)
 

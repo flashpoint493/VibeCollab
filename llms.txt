@@ -17,7 +17,7 @@ Current version: v0.9.7 | Python 3.9+ | License: MIT
 
 ## Quick Start
 
-Install: `pip install vibe-collab[mcp]`
+Install: `pip install vibe-collab`
 Initialize: `vibecollab init -n "MyProject" -d generic -o ./my-project`
 Connect IDE: `vibecollab mcp inject --ide cursor`
 

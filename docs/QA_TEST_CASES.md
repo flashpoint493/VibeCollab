@@ -733,7 +733,7 @@
 
 ### TC-MCP-001: MCP Server Start (stdio)
 - **Related**: v0.9.1
-- **Prerequisites**: `pip install vibe-collab[mcp]` with mcp dependency installed
+- **Prerequisites**: `pip install vibe-collab` with mcp dependency installed
 - **Steps**:
   1. Run `vibecollab mcp serve`
   2. Send MCP initialize request via stdin
@@ -1028,7 +1028,7 @@
 - **Prerequisites**: An existing code project with Git
 - **Steps**:
   1. `cd /path/to/external-project`
-  2. `pip install vibe-collab[mcp]`
+  2. `pip install vibe-collab`
   3. `vibecollab init -n "ProjectName" -d generic`
   4. `vibecollab generate -c project.yaml`
   5. `vibecollab check`
@@ -1113,7 +1113,7 @@
 
 ### TC-E2E-006: MCP Server End-to-End (CodeBuddy/Cursor Integration)
 - **Related**: v0.9.1+
-- **Prerequisites**: `pip install vibe-collab[mcp]`
+- **Prerequisites**: `pip install vibe-collab`
 - **Steps**:
   1. `vibecollab mcp config --ide codebuddy` (verify output format)
   2. `vibecollab mcp inject --ide codebuddy`

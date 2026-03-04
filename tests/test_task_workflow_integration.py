@@ -524,48 +524,32 @@ class TestNextTaskRecommendations:
 
 class TestMcpNewTools:
     def test_task_create_tool(self, project_dir):
-        """task_create tool should call the correct CLI command"""
-        from vibecollab.agent.mcp_server import _run_cli
+        """task_create tool should use direct API to create tasks"""
+        from vibecollab.agent.mcp_server import _get_managers
 
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                stdout='{"id": "TASK-DEV-001"}',
-                stderr="",
-                returncode=0,
-            )
-            result = _run_cli(
-                [
-                    "vibecollab", "task", "create",
-                    "--id", "TASK-DEV-001",
-                    "--role", "DEV",
-                    "--feature", "Test",
-                    "--json",
-                ],
-                project_dir,
-            )
-            assert "TASK-DEV-001" in result
-            mock_run.assert_called_once()
+        im, tm, _ = _get_managers(project_dir)
+        task = tm.create_task(
+            id="TASK-DEV-001",
+            role="DEV",
+            feature="Test",
+        )
+        assert task.id == "TASK-DEV-001"
+        assert task.role == "DEV"
 
     def test_task_transition_tool(self, project_dir):
-        """task_transition tool should call the correct CLI command"""
-        from vibecollab.agent.mcp_server import _run_cli
+        """task_transition tool should use direct API to transition tasks"""
+        from vibecollab.agent.mcp_server import _get_managers
+        from vibecollab.domain.task_manager import TaskStatus
 
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                stdout='{"ok": true}',
-                stderr="",
-                returncode=0,
-            )
-            result = _run_cli(
-                [
-                    "vibecollab", "task", "transition",
-                    "TASK-DEV-001", "IN_PROGRESS",
-                    "--json",
-                ],
-                project_dir,
-            )
-            assert "ok" in result
-            mock_run.assert_called_once()
+        im, tm, _ = _get_managers(project_dir)
+        # Create a task first
+        tm.create_task(
+            id="TASK-DEV-002",
+            role="DEV",
+            feature="Transition test",
+        )
+        result = tm.transition("TASK-DEV-002", TaskStatus.IN_PROGRESS)
+        assert result.ok is True
 
     def test_start_conversation_lists_new_tools(self, project_dir):
         """start_conversation prompt should include new tools"""

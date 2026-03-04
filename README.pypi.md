@@ -22,7 +22,7 @@ vibecollab init -n "MyProject" -d generic -o ./my-project
 cd my-project
 
 # Connect to your AI IDE (Cursor / Cline / CodeBuddy)
-pip install vibe-collab[mcp]
+pip install vibe-collab
 vibecollab mcp inject --ide cursor   # or: cline / codebuddy / all
 ```
 
@@ -114,13 +114,13 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 pip install vibe-collab
 
 # With MCP Server support (recommended for AI IDE integration)
-pip install vibe-collab[mcp]
+pip install vibe-collab
 
 # With semantic search (sentence-transformers backend)
 pip install vibe-collab[embedding]
 
 # All optional dependencies
-pip install vibe-collab[mcp,embedding,llm]
+pip install vibe-collab[embedding,llm]
 ```
 
 ---
@@ -167,21 +167,21 @@ my-project/
 ### Cursor
 
 ```bash
-pip install vibe-collab[mcp]
+pip install vibe-collab
 vibecollab mcp inject --ide cursor
 ```
 
 ### VSCode + Cline
 
 ```bash
-pip install vibe-collab[mcp]
+pip install vibe-collab
 vibecollab mcp inject --ide cline
 ```
 
 ### CodeBuddy
 
 ```bash
-pip install vibe-collab[mcp]
+pip install vibe-collab
 vibecollab mcp inject --ide codebuddy
 ```
 
