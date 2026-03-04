@@ -58,15 +58,7 @@ def serve(transport: str, project_root: Path):
         }
       }
     """
-    try:
-        from ..agent.mcp_server import run_server
-    except ImportError:
-        click.echo(
-            _("Error: MCP Server requires mcp dependency.") + "\n"
-            + _("Install: pip install vibe-collab[mcp]"),
-            err=True,
-        )
-        raise SystemExit(1)
+    from ..agent.mcp_server import run_server
 
     click.echo(_("Starting VibeCollab MCP Server (transport={transport})").format(transport=transport), err=True)
     if project_root:

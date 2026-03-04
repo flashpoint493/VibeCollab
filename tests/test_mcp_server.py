@@ -197,7 +197,7 @@ class TestCreateMcpServer:
         from vibecollab.agent.mcp_server import create_mcp_server
 
         with patch.dict("sys.modules", {"mcp": None, "mcp.server.fastmcp": None}):
-            with pytest.raises(ImportError, match="mcp"):
+            with pytest.raises((ImportError, ModuleNotFoundError)):
                 create_mcp_server(project_dir)
 
     @pytest.mark.skipif(

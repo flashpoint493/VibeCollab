@@ -73,12 +73,7 @@ def create_mcp_server(project_root: Optional[Path] = None):
     Returns:
         FastMCP instance
     """
-    try:
-        from mcp.server.fastmcp import FastMCP
-    except ImportError:
-        raise ImportError(
-            "MCP Server requires the mcp dependency. Install: pip install vibe-collab[mcp]"
-        )
+    from mcp.server.fastmcp import FastMCP
 
     root = project_root or _find_project_root()
     config_path = root / "project.yaml"
