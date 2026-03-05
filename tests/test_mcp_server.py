@@ -387,7 +387,7 @@ class TestCliMcp:
         runner = CliRunner()
         result = runner.invoke(mcp_group, ["config", "--ide", "codebuddy"])
         assert result.exit_code == 0
-        assert ".codebuddy/mcp.json" in result.output
+        assert ".mcp.json" in result.output
 
     def test_mcp_inject_cursor(self, tmp_path):
         from vibecollab.cli.mcp import mcp_group
@@ -415,7 +415,7 @@ class TestCliMcp:
         assert result.exit_code == 0
         assert (tmp_path / ".cursor" / "mcp.json").exists()
         assert (tmp_path / ".cline" / "mcp_settings.json").exists()
-        assert (tmp_path / ".codebuddy" / "mcp.json").exists()
+        assert (tmp_path / ".mcp.json").exists()
 
     def test_mcp_inject_preserves_existing(self, tmp_path):
         """Injection should preserve existing config"""

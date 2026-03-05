@@ -753,7 +753,7 @@
 - **Expected**:
   - cursor: Outputs `.cursor/mcp.json` format JSON config
   - cline: Outputs Cline MCP config format
-  - codebuddy: Outputs `.codebuddy/mcp.json` format
+  - codebuddy: Outputs `.mcp.json` format
   - Config contains correct command / args / env
 - **Status**: ⚪ (pending verification)
 
@@ -762,7 +762,7 @@
 - **Prerequisites**: vibe-collab installed
 - **Steps**:
   1. Run `vibecollab mcp inject --ide codebuddy`
-  2. Check `.codebuddy/mcp.json` file
+  2. Check `.mcp.json` file
 - **Expected**:
   - Auto-creates/merges IDE config file
   - Existing config not overwritten (merge strategy)

@@ -106,7 +106,7 @@ def config(ide: str):
             },
         },
         "codebuddy": {
-            "path": ".codebuddy/mcp.json",
+            "path": ".mcp.json",
             "content": {
                 "mcpServers": {
                     "vibecollab": {
@@ -149,7 +149,7 @@ def inject(ide: str, project_root: Path):
     targets = {
         "cursor": root / ".cursor" / "mcp.json",
         "cline": root / ".cline" / "mcp_settings.json",
-        "codebuddy": root / ".codebuddy" / "mcp.json",
+        "codebuddy": root / ".mcp.json",
     }
 
     vibecollab_entry = {
