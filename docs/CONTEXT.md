@@ -1,7 +1,7 @@
 # VibeCollab Global Context
 
 > ! **Auto-generated, do not edit manually**
-> Last updated: 2026-03-03
+> Last updated: 2026-03-04
 > Aggregated from: alice, ocarina
 
 ## Project Status
@@ -9,7 +9,7 @@
 - **Previous release**: v0.9.7 (PyPI published)
 - **Active developers**: 2 (alice, ocarina)
 - **Tests**: 1409 passed, 89% coverage
-- **Current phase**: MCP Server refactored from subprocess to direct API calls; MCP promoted to core dependency
+- **Current phase**: MCP path fix completed; IDE config files removed from git history; v0.10.3 in progress
 
 ## Developer Status
 
@@ -20,27 +20,23 @@
 - **No pending tasks**
 
 ### ocarina
-- **Last updated**: 2026-03-03
-- **Current task**: v0.10.3 internationalization — FULLY COMPLETED
+- **Last updated**: 2026-03-04
+- **Current task**: v0.10.3 Git history rewrite + GitHub facade — IN PROGRESS
 - **Recently completed**:
-  - **Insight cache translation**: 16 Insight YAML files (INS-001~017) translated to English, fingerprints regenerated, INS-007 orphan removed from registry
-  - **CLI bug fixes**: `task.py` silent error on create + truncated `raise SystemE` fixed
-  - **Pipeline test coverage**: 69 new tests for `pipeline.py` (SchemaValidator, ActionRegistry, DocSyncChecker, Pipeline)
-  - **Template translation (v0.10.3)**: `default.project.yaml`, 3 domain extensions, `guide.py` section map fix
-  - **AI context files translation**: `skill.md`, `.codebuddy/rules/`, `.cursor/skills/`, `llms.txt`
-  - **project.yaml translation + CONTRIBUTING_AI.md regeneration**
+  - **MCP path fix**: CodeBuddy config path `.codebuddy/mcp.json` → `.mcp.json` (per official docs)
+  - **Git history cleanup**: `git filter-repo` removed `.vibecollab/`, `.cursor/`, `.codebuddy/` from 218 commits + force push
+  - **`.gitignore` update**: All AI IDE config dirs ignored (`.cursor/`, `.cline/`, `.codebuddy/`, `.mcp.json`, `.openclaw/`, `.windsurf/`, `.roo/`, `.augment/`)
+  - **Insight cache translation**: 16 Insight YAML files (INS-001~017) translated to English
+  - **Template translation (v0.10.3)**: `default.project.yaml`, 3 domain extensions
   - **Docs English translation (v0.10.2)**: All 10 docs/ files translated (~4000+ lines)
-  - **Version unification**: Hatchling dynamic versioning, single source of truth
-  - **Pipeline module**: SchemaValidator, ActionRegistry, DocSyncChecker, Pipeline orchestrator
-  - **Task lifecycle hooks**: on_complete/on_transition callbacks
   - **Code i18n (v0.10.1)**: Full English translation of 96 files (62 source + 34 tests)
   - **i18n framework**: gettext-based CLI localization, 316 translatable strings
 
 ## Active Tasks
 
-- v0.10.3: Git history rewrite (97 commits) + GitHub facade
+- v0.10.3: Git commit messages rewrite (97 commits → Conventional Commits English) + GitHub facade
 - README.zh-CN.md project structure section modernization
-- Verify MCP Server response times after IDE restart
+- MCP `onboard` tool call timeout investigation
 
 ## Architecture (v0.9.7+)
 
@@ -73,6 +69,7 @@
 - External QA validation (Phase 11 TC-E2E-001~010) pending
 - events.jsonl Windows file lock issue needs investigation
 - README.zh-CN.md project structure section has outdated module layout
+- MCP `onboard` tool call timeout — needs investigation after IDE restart
 
 ---
 *This file is auto-aggregated from multi-developer contexts*

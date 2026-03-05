@@ -241,7 +241,7 @@ pip install vibe-collab
 vibecollab mcp inject --ide codebuddy
 ```
 
-CodeBuddy supports Project Rules (`.codebuddy/rules/*.mdc`) that travel with git -- clone and it works, no per-person setup.
+CodeBuddy reads the project-level `.mcp.json` config automatically -- `vibecollab mcp inject` creates it for you.
 
 ### Without MCP
 

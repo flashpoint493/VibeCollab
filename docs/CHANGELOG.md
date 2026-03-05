@@ -2,6 +2,20 @@
 
 ## v0.10.1-dev (2026-03-04) - Code Internationalization (i18n)
 
+### MCP Path Fix & IDE Config Cleanup
+- **CodeBuddy MCP config path fix**: `mcp config` and `mcp inject` commands updated from `.codebuddy/mcp.json` to `.mcp.json` (per [official CodeBuddy docs](https://www.codebuddy.ai/docs/cli/mcp))
+  - `src/vibecollab/cli/mcp.py`: Both `config` and `inject` targets updated
+  - `tests/test_mcp_server.py`: 2 test assertions updated
+  - `docs/QA_TEST_CASES.md`: 2 path references updated
+  - All 7 MCP-related tests passed
+- **Git history cleanup**: `git filter-repo` removed IDE config files from all 218 commits
+  - Removed: `.vibecollab/` (20+ insight/registry files), `.cursor/` (4 skill files), `.codebuddy/` (3 files)
+  - Force pushed to `origin/master`
+- **`.gitignore` comprehensive update**: Added ignore rules for all AI IDE project-level config directories
+  - `.vibecollab/` (entire directory, previously only partial), `.vibecollab.local.yaml`
+  - `.mcp.json`, `.cursor/`, `.cline/`, `.codebuddy/`
+  - `.openclaw/`, `.windsurf/`, `.roo/`, `.augment/`
+
 ### MCP Server Refactor: Subprocess → Direct API
 - **Complete rewrite of `mcp_server.py`**: All 15 MCP tools rewritten from `subprocess.run(["vibecollab", ...])` CLI delegation to direct Python API calls
   - Eliminated 10-30s per-tool latency caused by Python process startup + module loading on Windows

@@ -283,7 +283,7 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
   - `vibecollab mcp inject --ide all` auto-inject IDE config files
   - Supports `stdio` and `sse` two transport modes
 - [x] PyPI v0.9.1 release ✅ — `pip install vibe-collab`
-- [x] CodeBuddy Rule integration ✅ — `.codebuddy/rules/vibecollab-protocol.mdc`
+- [x] CodeBuddy MCP integration ✅ — `.mcp.json` project-level config
 - [x] 35 unit tests, 1074 full passed ✅
 
 #### IDE Adaptation (To Be Completed)
@@ -424,6 +424,9 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 > Objective: One-time rewrite of all commit messages to standard English + GitHub facade professionalization
 > Note: Template/config English translation and Insight cache translation completed as part of i18n effort
 
+- [x] IDE config files removed from git history (`.vibecollab/`, `.cursor/`, `.codebuddy/`) via `git filter-repo`
+- [x] `.gitignore` updated to ignore all AI IDE config dirs
+- [x] CodeBuddy MCP path fixed to `.mcp.json` (per official docs)
 - [ ] `git-filter-repo` rewrite 97+ commit messages to Conventional Commits English format
 - [ ] force push (irreversible, ensure this is the last history-breaking operation)
 - [ ] GitHub About description + Topics tags

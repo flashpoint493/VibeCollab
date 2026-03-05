@@ -699,7 +699,7 @@ pip install vibe-collab
 vibecollab mcp inject --ide codebuddy
 ```
 
-CodeBuddy 支持 Project Rule（`.codebuddy/rules/*.mdc`），协议规则**随项目 git 提交，clone 即生效**，无需每个人手动配置。
+CodeBuddy 会自动读取项目级 `.mcp.json` 配置——`vibecollab mcp inject` 会自动为你创建。
 
 ### 无 MCP 的手动模式
 
@@ -779,8 +779,6 @@ VibeCollab/
 │   ├── project.schema.yaml      # 项目配置 Schema
 │   ├── insight.schema.yaml      # Insight 沉淀 Schema
 │   └── extension.schema.yaml    # 扩展机制 Schema
-├── .codebuddy/rules/            # CodeBuddy Project Rule (随 git 共享)
-│   └── vibecollab-protocol.mdc  # VibeCollab 协议 always 规则
 ├── .github/workflows/
 │   ├── ci.yml                   # CI: 测试 + lint + 构建
 │   └── publish.yml              # CD: Release → PyPI 自动发布
@@ -790,7 +788,7 @@ VibeCollab/
 │   ├── DECISIONS.md
 │   ├── PRD.md
 │   └── ROADMAP.md
-└── tests/                       # 1344 tests
+└── tests/                       # 1409 tests
 ```
 
 ---

@@ -3,33 +3,34 @@
 ## Current Status
 - **Version**: v0.10.1-dev
 - **Developer**: ocarina
-- **Last updated**: 2026-03-03
+- **Last updated**: 2026-03-04
 
 ## Current Tasks
 - **DECISION-017**: v0.10.x release engineering plan confirmed (S-level)
-- **v0.10.2 complete**: Documentation fully translated to English
-- **Coverage**: 89% (1344 tests passed) — exceeds 85% threshold
+- **v0.10.3**: Git history rewrite + Repository facade — IN PROGRESS
+- **Coverage**: 89% (1409 tests passed) — exceeds 85% threshold
 
 ## Recently Completed
-- ✅ **Docs English translation (v0.10.2)**: All 10 docs/ files translated from Chinese to English (~4000+ lines)
-- ✅ **Schema English translation**: All 3 schema/ YAML files translated (project, insight, extension)
-- ✅ **README version sync**: Both README.md and README.zh-CN.md updated with v0.9.6/v0.9.7 entries
-- ✅ **Version unification**: Hatchling dynamic versioning, single source of truth in `__init__.py`
-- ✅ **Pipeline module**: SchemaValidator, ActionRegistry, DocSyncChecker, Pipeline orchestrator
-- ✅ **Task lifecycle hooks**: on_complete/on_transition callbacks, completion action hints
-- ✅ **Code i18n (v0.10.1)**: Full English translation of 96 files (62 source + 34 tests)
-- ✅ **i18n framework**: gettext-based CLI localization, 316 translatable strings
+- ✅ **MCP path fix**: CodeBuddy MCP config path corrected from `.codebuddy/mcp.json` to `.mcp.json` (per official docs)
+- ✅ **Git history cleanup**: `git filter-repo` removed `.vibecollab/`, `.cursor/`, `.codebuddy/` from all 218 commits
+- ✅ **`.gitignore` update**: Added ignore rules for all AI IDE config dirs (`.cursor/`, `.cline/`, `.codebuddy/`, `.mcp.json`, `.openclaw/`, `.windsurf/`, `.roo/`, `.augment/`)
+- ✅ **`vibecollab mcp inject` fix**: Updated `mcp.py` + tests + docs for new CodeBuddy path (7 tests passed)
+- ✅ **Force push**: History rewritten, pushed to `origin/master`
+- ✅ **Insight cache translation**: 16 Insight YAML files translated to English
+- ✅ **Template translation (v0.10.3)**: `default.project.yaml`, 3 domain extensions
+- ✅ **Docs English translation (v0.10.2)**: All 10 docs/ files translated
+- ✅ **Code i18n (v0.10.1)**: Full English translation of 96 files
 
 ## Next Steps (DECISION-017)
 1. ~~**v0.10.2** — Documentation bilingualization~~ ✅ DONE
-2. **v0.10.3** — Git history rewrite (97 commits) + GitHub facade
+2. **v0.10.3** — Git commit messages rewrite (97 commits → Conventional Commits English) + GitHub facade
 3. **v1.0.0** — Official release
 
 ## Technical Debt
 - cli_insight.py / cli_task.py not yet migrated to Rich output style (deferred to v1.0)
 - `vibecollab index --watch` file change auto-rebuild indexing (deferred)
-- Pipeline unit tests not yet written
 - README.zh-CN.md project structure section has outdated module layout
+- MCP `onboard` tool call timeout — needs investigation after IDE restart
 
 ---
 *This file is maintained by ocarina*
