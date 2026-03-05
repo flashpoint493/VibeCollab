@@ -1,2 +1,0 @@
-rm 'docs/developers/alice/.metadata.yaml'
-rm 'docs/developers/ocarina/.metadata.yaml'

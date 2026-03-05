@@ -1,5 +1,0 @@
-docs/developers/COLLABORATION.md
-docs/developers/alice/.metadata.yaml
-docs/developers/alice/CONTEXT.md
-docs/developers/ocarina/.metadata.yaml
-docs/developers/ocarina/CONTEXT.md
