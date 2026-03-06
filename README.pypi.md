@@ -35,7 +35,7 @@ That's it. Your AI assistant now follows structured collaboration protocols, cap
 **For**
 - Teams using AI assistants (Cursor, Cline, CodeBuddy, etc.) for daily development
 - Projects that need auditable decision trails and knowledge accumulation across sessions
-- Multi-developer / multi-Agent environments requiring context isolation and conflict detection
+- Multi-role / multi-Agent environments requiring context isolation and conflict detection
 - Anyone tired of repeating the same context setup at the start of every AI conversation
 
 **Not For**
@@ -53,7 +53,7 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 - **Insight System**: Captures reusable knowledge from development sessions (tag search + semantic search)
 - **Task Management**: Dialogue-driven task lifecycle (validate → solidify → rollback)
 - **Protocol Checking**: Auto-verifies that AI follows collaboration rules
-- **Multi-Developer**: Isolated contexts per developer/agent with cross-developer conflict detection
+- **Multi-Role**: Isolated contexts per role/agent (DEV/QA/ARCH/PM/TEST/DESIGN) with cross-role conflict detection
 
 > This project uses its own generated collaboration rules for development (meta-implementation), and integrates with the [llmstxt.org](https://llmstxt.org) standard.
 
@@ -79,7 +79,7 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 - **Decision Tiers**: S/A/B/C levels with review requirements
 - **Audit Log**: Append-only JSONL with SHA-256 integrity
 
-### Multi-Developer
+### Multi-Role
 - Context isolation per developer/agent
 - Cross-developer conflict detection (file, task, dependency)
 - Shared Insight statistics and provenance tracing
@@ -133,7 +133,7 @@ pip install vibe-collab[embedding,llm]
 # Generic project
 vibecollab init -n "MyProject" -d generic -o ./my-project
 
-# Multi-developer mode
+# Multi-role mode
 vibecollab init -n "MyProject" -d generic -o ./my-project --multi-dev
 
 # Game project (with GM command injection)
@@ -214,7 +214,7 @@ vibecollab mcp serve                           # Start MCP Server (stdio)
 vibecollab mcp inject --ide all                # Inject config to all IDEs
 
 # Agent Guidance
-vibecollab onboard [-d <developer>]            # AI onboarding
+vibecollab onboard [-d <role>]                  # AI onboarding
 vibecollab next                                # Smart action suggestions
 vibecollab prompt [--compact] [--copy]         # Generate LLM context prompt
 
@@ -234,7 +234,7 @@ vibecollab task create/list/show/suggest/transition/solidify/rollback
 # Roadmap Integration
 vibecollab roadmap status/sync/parse
 
-# Multi-Developer
+# Multi-Role
 vibecollab dev whoami/list/status/sync/init/switch/conflicts
 
 # Health & Checking
@@ -304,7 +304,7 @@ Task Unit:
 ## FAQ
 
 **How is this different from Cursor Rules / .cursorrules?**
-Cursor Rules are IDE-specific and static. VibeCollab generates rules from a structured `project.yaml` config, supports multiple IDEs via MCP, includes knowledge capture (Insights), task management, and multi-developer coordination. Rules evolve with your project via `vibecollab upgrade`.
+Cursor Rules are IDE-specific and static. VibeCollab generates rules from a structured `project.yaml` config, supports multiple IDEs via MCP, includes knowledge capture (Insights), task management, and multi-role coordination. Rules evolve with your project via `vibecollab upgrade`.
 
 **Does this modify my code?**
 No. VibeCollab generates collaboration protocol documents and provides tools for AI assistants. It does not modify your application source code.

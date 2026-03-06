@@ -62,7 +62,7 @@ VibeCollab is ready. You now have MCP tools available in your IDE:
 | `task_list` | List current tasks |
 | `task_create` | Create a new task (auto-links insights) |
 | `task_transition` | Move task status (TODO → IN_PROGRESS → REVIEW → DONE) |
-| `developer_context` | Get a specific developer's context |
+| `developer_context` | Get a specific role's context |
 | `project_prompt` | Generate full context prompt |
 | `roadmap_status` | View milestone progress |
 | `roadmap_sync` | Sync ROADMAP.md ↔ tasks.json |

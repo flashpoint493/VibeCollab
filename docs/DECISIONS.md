@@ -198,7 +198,7 @@
   - **Backward compatible**: Single-developer projects can seamlessly migrate to multi-developer mode
 - **Technical approach**:
   - Developer identity recognition: Git username auto-recognition (`git config user.name`)
-  - Directory structure: `docs/developers/{developer}/CONTEXT.md`
+  - Directory structure: `docs/developers/{role_code}/CONTEXT.md`
   - Global aggregation: `docs/CONTEXT.md` auto-generated from all developer contexts (read-only)
   - Collaboration management: Added `docs/developers/COLLABORATION.md` for dependencies and handoffs
   - CHANGELOG.md: Remains globally unified (version history should be unified)

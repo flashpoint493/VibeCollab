@@ -143,12 +143,12 @@ class TestHelpers:
         assert _get_read_files_list({}) == []
 
     def test_suggest_commit_message(self):
-        assert _suggest_commit_message(["src/vibecollab/foo.py", "tests/test_foo.py"]) == "[FEAT]"
-        assert _suggest_commit_message(["tests/test_foo.py"]) == "[TEST]"
-        assert _suggest_commit_message(["docs/CONTEXT.md"]) == "[DOC]"
-        assert _suggest_commit_message(["project.yaml"]) == "[CONFIG]"
-        assert _suggest_commit_message(["schema/insight.schema.yaml"]) == "[DESIGN]"
-        assert _suggest_commit_message(["src/vibecollab/foo.py"]) == "[FEAT]"
+        assert _suggest_commit_message(["src/vibecollab/foo.py", "tests/test_foo.py"]) == "feat:"
+        assert _suggest_commit_message(["tests/test_foo.py"]) == "test:"
+        assert _suggest_commit_message(["docs/CONTEXT.md"]) == "docs:"
+        assert _suggest_commit_message(["project.yaml"]) == "chore:"
+        assert _suggest_commit_message(["schema/insight.schema.yaml"]) == "design:"
+        assert _suggest_commit_message(["src/vibecollab/foo.py"]) == "feat:"
 
     def test_check_linked_groups_freshness_all_fresh(self, project_dir):
         config = yaml.safe_load((project_dir / "project.yaml").read_text(encoding="utf-8"))
@@ -316,22 +316,22 @@ class TestNextStep:
 
 class TestSuggestCommitMessage:
     def test_src_and_test(self):
-        assert _suggest_commit_message(["src/foo.py", "tests/test_foo.py"]) == "[FEAT]"
+        assert _suggest_commit_message(["src/foo.py", "tests/test_foo.py"]) == "feat:"
 
     def test_only_docs(self):
-        assert _suggest_commit_message(["docs/README.md", "llms.txt"]) == "[DOC]"
+        assert _suggest_commit_message(["docs/README.md", "llms.txt"]) == "docs:"
 
     def test_only_config(self):
-        assert _suggest_commit_message([".gitignore"]) == "[CONFIG]"
+        assert _suggest_commit_message([".gitignore"]) == "chore:"
 
     def test_only_schema(self):
         assert _suggest_commit_message(["schema/foo.yaml"]) == "[DESIGN]"
 
     def test_empty(self):
-        assert _suggest_commit_message([]) == "[VIBE]"
+        assert _suggest_commit_message([]) == "chore:"
 
     def test_mixed_unknown(self):
-        assert _suggest_commit_message(["random_file"]) == "[VIBE]"
+        assert _suggest_commit_message(["random_file"]) == "chore:"
 
 
 # ---------------------------------------------------------------------------

@@ -160,6 +160,161 @@
   - Contains domain-specific roles and processes
 - **Status**: 🟢
 
+## Phase 1a Test Cases (v0.4.2 — Protocol Check + PRD Management)
+
+### TC-CHECK-001: Protocol Self-Check
+- **Related**: v0.4.2
+- **Prerequisites**: Project initialized with Git
+- **Steps**:
+  1. Run `vibecollab check`
+  2. Run `vibecollab check --strict`
+  3. Run `vibecollab check --json`
+- **Expected**:
+  - Checks Git protocol, document updates, dialogue flow protocol
+  - `--strict` mode: warnings also count as failures (non-zero exit code)
+  - `--json` outputs structured JSON report
+  - Reports error/warning/info counts
+- **Status**: 🟢 (unit test covered)
+
+### TC-PRD-001: PRD Document Management
+- **Related**: v0.4.2
+- **Prerequisites**: Project initialized
+- **Steps**:
+  1. Check `docs/PRD.md` exists after `vibecollab init`
+  2. Verify PRD contains requirement tracking structure
+- **Expected**:
+  - PRD.md auto-created on project initialization
+  - Contains requirement status management structure
+- **Status**: 🟢 (unit test covered)
+
+---
+
+## Phase 1b Test Cases (v0.5.0 — Multi-Developer Support)
+
+### TC-DEV-001: Developer Identity Recognition
+- **Related**: v0.5.0
+- **Prerequisites**: Project initialized with multi-developer mode
+- **Steps**:
+  1. Run `vibecollab dev whoami`
+  2. Set `VIBECOLLAB_DEVELOPER` environment variable, run again
+- **Expected**:
+  - Shows current developer identity (Git username / system user / env var)
+  - Shows identity source
+  - Environment variable overrides Git username
+- **Status**: 🟢 (unit test covered)
+
+### TC-DEV-002: Developer List and Status
+- **Related**: v0.5.0
+- **Prerequisites**: Multi-developer project with at least 2 developers
+- **Steps**:
+  1. Run `vibecollab dev list`
+  2. Run `vibecollab dev status dev`
+- **Expected**:
+  - list: Shows all developers and their status
+  - status: Shows developer detailed status (active tasks, recent activity)
+- **Status**: 🟢 (unit test covered)
+
+### TC-DEV-003: Developer Context Init and Sync
+- **Related**: v0.5.0
+- **Prerequisites**: Multi-developer project
+- **Steps**:
+  1. Run `vibecollab dev init -d newdev`
+  2. Check `docs/developers/newdev/CONTEXT.md` exists
+  3. Run `vibecollab dev sync`
+  4. Check `docs/CONTEXT.md` for aggregated content
+- **Expected**:
+  - init creates developer context directory and CONTEXT.md
+  - sync aggregates all developer contexts into global CONTEXT.md
+- **Status**: 🟢 (unit test covered)
+
+### TC-DEV-004: Multi-Developer Project Init
+- **Related**: v0.5.0
+- **Prerequisites**: vibe-collab installed
+- **Steps**:
+  1. Run `vibecollab init -n "MultiProject" -d generic --multi-dev`
+  2. Check directory structure
+- **Expected**:
+  - Creates `docs/developers/` directory structure
+  - project.yaml contains `multi_developer` config section
+  - CONTRIBUTING_AI.md includes multi-developer collaboration protocol
+- **Status**: 🟢 (unit test covered)
+
+---
+
+## Phase 1c Test Cases (v0.5.1 — Cross-Developer Conflict Detection)
+
+### TC-CONFLICT-001: File Conflict Detection
+- **Related**: v0.5.1
+- **Prerequisites**: Multi-developer project, multiple developers have modified same files
+- **Steps**:
+  1. Run `vibecollab dev conflicts`
+  2. Run `vibecollab dev conflicts --verbose`
+- **Expected**:
+  - Detects file conflicts between current developer and others
+  - `--verbose` shows detailed conflict information
+  - Identifies high/medium/low priority conflicts
+- **Status**: 🟢 (unit test covered, 38 tests)
+
+### TC-CONFLICT-002: Cross-Developer Conflict Detection
+- **Related**: v0.5.1
+- **Prerequisites**: Multi-developer project
+- **Steps**:
+  1. Run `vibecollab dev conflicts --between dev arch`
+- **Expected**:
+  - Detects conflicts between two specified developers
+  - Reports file conflicts, task overlaps, dependency conflicts, naming conflicts
+- **Status**: 🟢 (unit test covered)
+
+### TC-CONFLICT-003: Dependency Circular Reference Detection
+- **Related**: v0.5.1
+- **Prerequisites**: Tasks with dependency chain
+- **Steps**:
+  1. Create tasks with circular dependencies
+  2. Run `vibecollab dev conflicts`
+- **Expected**:
+  - DFS detects circular dependencies
+  - Reports circular reference path
+- **Status**: 🟢 (unit test covered)
+
+---
+
+## Phase 1d Test Cases (v0.5.4 — CLI Developer Switch)
+
+### TC-SWITCH-001: Developer Switch Direct
+- **Related**: v0.5.4
+- **Prerequisites**: Multi-developer project
+- **Steps**:
+  1. Run `vibecollab dev switch dev`
+  2. Run `vibecollab dev whoami`
+- **Expected**:
+  - Switch succeeds, persisted to `.vibecollab.local.yaml`
+  - whoami shows switched identity with source "CLI switch"
+- **Status**: 🟢 (unit test covered)
+
+### TC-SWITCH-002: Developer Switch Interactive
+- **Related**: v0.5.4
+- **Prerequisites**: Multi-developer project
+- **Steps**:
+  1. Run `vibecollab dev switch` (no argument)
+  2. Select developer from list
+- **Expected**:
+  - Shows interactive developer selection
+  - Switch persisted after selection
+- **Status**: 🟢 (unit test covered)
+
+### TC-SWITCH-003: Developer Switch Clear
+- **Related**: v0.5.4
+- **Prerequisites**: Developer switch active
+- **Steps**:
+  1. Run `vibecollab dev switch --clear`
+  2. Run `vibecollab dev whoami`
+- **Expected**:
+  - Clears switch setting from `.vibecollab.local.yaml`
+  - whoami reverts to default identification strategy (Git/env/system)
+- **Status**: 🟢 (unit test covered)
+
+---
+
 ## Phase 2 Test Cases (v0.5.5 ~ v0.5.8)
 
 ### TC-EVENTLOG-001: EventLog Append and Read
@@ -481,9 +636,9 @@
 - **Related**: v0.7.0
 - **Prerequisites**: Developer metadata initialized
 - **Steps**:
-  1. `dm.set_tags(["arch", "python"], "alice")`
-  2. `dm.add_contributed("INS-001", "alice")`
-  3. `dm.add_bookmark("INS-002", "alice")`
+  1. `dm.set_tags(["arch", "python"], "dev")`
+  2. `dm.add_contributed("INS-001", "dev")`
+  3. `dm.add_bookmark("INS-002", "dev")`
 - **Expected**:
   - tags/contributed/bookmarks correctly written to .metadata.yaml
   - Does not affect existing developer/created_at/total_updates fields
@@ -662,6 +817,53 @@
   - Total coverage ≥ 80% (current 81%)
   - Key modules: git_utils 100%, extension 100%, llmstxt 97%, lifecycle 93%, cli_lifecycle 92%, templates 91%
 - **Status**: 🟢
+
+### TC-PROMPT-001: Prompt Command Full Output
+- **Related**: v0.8.0
+- **Prerequisites**: Project initialized + CONTRIBUTING_AI.md generated
+- **Steps**:
+  1. Run `vibecollab prompt`
+  2. Run `vibecollab prompt --compact`
+  3. Run `vibecollab prompt --sections protocol,context`
+- **Expected**:
+  - Full output includes protocol sections, project state, Insight summary
+  - `--compact` omits roadmap and role definitions
+  - `--sections` selectively outputs only specified sections
+- **Status**: ⚪ (pending verification)
+
+### TC-PROMPT-002: Prompt Copy to Clipboard
+- **Related**: v0.8.0
+- **Prerequisites**: Project initialized (Windows environment)
+- **Steps**:
+  1. Run `vibecollab prompt --copy`
+  2. Paste from clipboard
+- **Expected**:
+  - Content copied to clipboard via Windows `clip` command
+  - Clipboard content matches terminal output
+- **Status**: ⚪ (pending verification)
+
+### TC-PROMPT-003: Prompt with Developer Context
+- **Related**: v0.8.0
+- **Prerequisites**: Multi-developer project
+- **Steps**:
+  1. Run `vibecollab prompt -d dev`
+- **Expected**:
+  - Output includes developer personal context from `docs/developers/dev/CONTEXT.md`
+  - Developer-specific Insights prioritized
+- **Status**: ⚪ (pending verification)
+
+### TC-CHECK-002: Key Files Staleness Detection
+- **Related**: v0.8.0
+- **Prerequisites**: project.yaml configured `documentation.key_files` with `max_stale_days`
+- **Steps**:
+  1. Configure `QA_TEST_CASES.md` with `max_stale_days: 7`
+  2. Ensure file not updated for >7 days
+  3. Run `vibecollab check`
+- **Expected**:
+  - Reports warning for stale file with `update_trigger` hint
+  - Files within threshold show no warning
+  - Files without `max_stale_days` config are not checked
+- **Status**: 🟢 (unit test covered, 3 tests)
 
 ---
 
@@ -943,6 +1145,73 @@
 
 ---
 
+## Phase 9a Test Cases (v0.9.5 — ROADMAP ↔ Task Integration)
+
+### TC-ROADMAP-002: Roadmap Status Overview
+- **Related**: v0.9.5
+- **Prerequisites**: Project with ROADMAP.md containing `### vX.Y.Z` milestones and Task data
+- **Steps**:
+  1. Run `vibecollab roadmap status`
+  2. Run `vibecollab roadmap status --json`
+- **Expected**:
+  - Shows per-milestone progress bar and Task status distribution
+  - Detects orphan Tasks not linked to any ROADMAP item
+  - JSON output contains milestones array with total/done/progress_pct/task_breakdown
+- **Status**: ⚪ (pending verification)
+
+### TC-ROADMAP-003: Roadmap Parse Structure
+- **Related**: v0.9.5
+- **Prerequisites**: ROADMAP.md with `### vX.Y.Z - Title` format milestones
+- **Steps**:
+  1. Run `vibecollab roadmap parse`
+  2. Run `vibecollab roadmap parse --json`
+- **Expected**:
+  - Extracts milestones and checklist items from ROADMAP.md
+  - Parses `TASK-{ROLE}-{SEQ}` ID references from checklist lines
+  - JSON output contains parsed milestone structure
+- **Status**: ⚪ (pending verification)
+
+### TC-ROADMAP-004: Roadmap Sync Bidirectional
+- **Related**: v0.9.5
+- **Prerequisites**: ROADMAP.md + tasks.json with matching Task IDs
+- **Steps**:
+  1. Run `vibecollab roadmap sync --dry-run`
+  2. Run `vibecollab roadmap sync -d both`
+  3. Run `vibecollab roadmap sync -d roadmap_to_tasks`
+  4. Run `vibecollab roadmap sync -d tasks_to_roadmap`
+- **Expected**:
+  - `--dry-run` previews changes without modifying files
+  - `both`: ROADMAP `[x]` → Task DONE and Task DONE → ROADMAP `[x]`
+  - Directional sync only applies changes in specified direction
+  - Tasks get `milestone` field assigned from ROADMAP
+- **Status**: ⚪ (pending verification)
+
+### TC-ROADMAP-005: Task Milestone Field
+- **Related**: v0.9.5
+- **Prerequisites**: Project initialized
+- **Steps**:
+  1. `vibecollab task create --id TASK-DEV-010 --role DEV --feature "test feature" --milestone v0.9.5`
+  2. `vibecollab task list --milestone v0.9.5`
+  3. `vibecollab task show TASK-DEV-010`
+- **Expected**:
+  - Task created with milestone field
+  - `--milestone` filter returns only matching tasks
+  - show displays milestone field
+- **Status**: ⚪ (pending verification)
+
+### TC-ROADMAP-006: MCP Roadmap Tools
+- **Related**: v0.9.5
+- **Prerequisites**: MCP Server running
+- **Steps**:
+  1. Call MCP tool `roadmap_status`
+  2. Call MCP tool `roadmap_sync` with dry_run=true
+- **Expected**:
+  - roadmap_status returns milestone progress overview
+  - roadmap_sync returns sync preview results
+- **Status**: ⚪ (pending verification)
+
+---
+
 ## Phase 10 Test Cases (v0.9.4 — Insight Quality & Lifecycle)
 
 ### TC-DEDUP-001: Insight Auto-Dedup Detection
@@ -1015,6 +1284,121 @@
 - **Expected**:
   - rename: Conflicting IDs auto-assigned new IDs (INS-xxx)
   - overwrite: Overwrites existing Insights
+- **Status**: ⚪ (pending verification)
+
+---
+
+## Phase 10a Test Cases (v0.9.7 — Directory Restructure + GBK Encoding Fix)
+
+### TC-COMPAT-001: Sub-Package Import Compatibility
+- **Related**: v0.9.7
+- **Prerequisites**: vibe-collab installed
+- **Steps**:
+  1. `from vibecollab import LLMContextGenerator, TaskManager, EventLog`
+  2. `from vibecollab.core.pattern_engine import PatternEngine`
+  3. `from vibecollab.domain.task_manager import TaskManager`
+  4. `from vibecollab.insight.manager import InsightManager`
+- **Expected**:
+  - Public API imports from `__init__.py` work unchanged
+  - New sub-package paths (`core/`, `domain/`, `insight/`, `cli/`, `agent/`, `search/`, `utils/`) all importable
+  - No ImportError for any documented API
+- **Status**: 🟢 (unit test covered, 1344 tests)
+
+### TC-COMPAT-002: GBK Terminal Encoding Safety
+- **Related**: v0.9.7
+- **Prerequisites**: Windows PowerShell/CMD with GBK (cp936) encoding
+- **Steps**:
+  1. Run `vibecollab check` (contains emoji output)
+  2. Run `vibecollab roadmap status` (contains progress bar characters)
+  3. Run `vibecollab health` (contains grade emoji)
+- **Expected**:
+  - No `UnicodeEncodeError` on any command
+  - Emoji gracefully degraded to ASCII substitutes (✅→OK, ❌→X, etc.)
+  - `ensure_safe_stdout()` reconfigures stdout errors mode to `replace`
+  - Rich Console uses `safe_console()` factory
+- **Status**: 🟢 (E2E verified, 36 CLI scenarios)
+
+### TC-COMPAT-003: Strict Milestone Format
+- **Related**: v0.9.7
+- **Prerequisites**: ROADMAP.md with various heading formats
+- **Steps**:
+  1. Create ROADMAP.md with `### v0.1.0` (valid) and `#### v0.2.0` (invalid) headings
+  2. Run `vibecollab roadmap status`
+- **Expected**:
+  - Only `### vX.Y.Z` level-3 headings recognized as milestones
+  - `####` or `##` headings ignored
+  - Zero milestones found → outputs `MILESTONE_FORMAT_HINT`
+- **Status**: 🟢 (unit test covered)
+
+---
+
+## Phase 10b Test Cases (v0.10.1-dev — i18n + Pipeline + MCP Refactor)
+
+### TC-I18N-001: CLI Language Switch
+- **Related**: v0.10.1
+- **Prerequisites**: vibe-collab installed with zh_CN locale
+- **Steps**:
+  1. Run `vibecollab --lang zh insight add --help`
+  2. Run `VIBECOLLAB_LANG=zh vibecollab task list --help`
+  3. Run `vibecollab insight add --help` (no lang flag)
+- **Expected**:
+  - `--lang zh` shows Chinese help text for all parameters
+  - `VIBECOLLAB_LANG` environment variable also triggers Chinese
+  - Without lang specification, defaults to English
+  - Priority: `--lang` > `VIBECOLLAB_LANG` > English fallback
+- **Status**: ⚪ (pending verification)
+
+### TC-I18N-002: i18n String Coverage
+- **Related**: v0.10.1
+- **Prerequisites**: Source code and .pot file
+- **Steps**:
+  1. Check `src/vibecollab/i18n/locales/vibecollab.pot` for entry count
+  2. Check `zh_CN/LC_MESSAGES/vibecollab.po` for translation count
+  3. Verify `.mo` binary file exists
+- **Expected**:
+  - .pot contains 316 unique translatable strings
+  - zh_CN .po has 131 key strings translated
+  - .mo file compiled and included in wheel builds
+- **Status**: ⚪ (pending verification)
+
+### TC-PIPELINE-001: Pipeline Module Validation
+- **Related**: v0.10.1
+- **Prerequisites**: Project initialized
+- **Steps**:
+  1. Create `SchemaValidator` and validate project.yaml against schema
+  2. Create `ActionRegistry` and register/execute actions
+  3. Create `DocSyncChecker` and check document sync status
+  4. Create `Pipeline` orchestrator and run full validation
+- **Expected**:
+  - SchemaValidator reports schema violations
+  - ActionRegistry registers and executes named actions
+  - DocSyncChecker detects out-of-sync documents
+  - Pipeline orchestrates all validators in sequence
+- **Status**: 🟢 (unit test covered, 69 tests)
+
+### TC-MCP-010: MCP Direct API Performance
+- **Related**: v0.10.1
+- **Prerequisites**: MCP Server running
+- **Steps**:
+  1. Call any MCP tool (e.g., `onboard`, `check`)
+  2. Measure response time
+- **Expected**:
+  - Tools respond via direct Python API calls (not subprocess)
+  - No 10-30s latency from Python process startup
+  - `_get_managers()` lazy initialization creates managers in-process
+- **Status**: ⚪ (pending verification)
+
+### TC-TASK-HOOK-001: Task Lifecycle Hooks
+- **Related**: v0.10.1
+- **Prerequisites**: Project initialized with tasks
+- **Steps**:
+  1. Create task and transition through TODO → IN_PROGRESS → REVIEW → DONE
+  2. Check for `on_transition()` callback execution
+  3. Check for `on_complete()` callback on DONE transition
+- **Expected**:
+  - `on_transition()` fires on each state change
+  - `on_complete()` fires when task reaches DONE
+  - Completion action hints displayed in CLI output
 - **Status**: ⚪ (pending verification)
 
 ---
@@ -1202,4 +1586,4 @@
 
 ---
 
-*Last updated: 2026-02-27 (v0.9.4)*
+*Last updated: 2026-03-05 (v0.10.1-dev) — 127 test cases covering v0.1.0 ~ v0.10.1*

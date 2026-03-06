@@ -74,7 +74,7 @@ class SessionStore:
     Usage:
         store = SessionStore(project_root=Path("."))
         session = store.save(Session(
-            developer="ocarina",
+            developer="dev",
             summary="Implemented MCP Server + AI IDE integration",
             key_decisions=["DECISION-015: Removed self-bootstrap capability"],
             files_changed=["mcp_server.py", "cli_mcp.py"],

@@ -312,8 +312,8 @@ AI after clarification:
 
 **Pre-Acceptance Checklist**:
 ```
-[ ] 1. npm run build
-[ ] 2. Open dist/index.html to test
+[ ] 1. hatch build
+[ ] 2. Open dist/ to test
 [ ] 3. Confirm normal operation
 [ ] 4. Update instructions (if new features added)
 ```
@@ -334,7 +334,7 @@ AI after clarification:
 1. User explicitly states "config adjustment" or "value change"
 2. AI directly modifies the corresponding config value
 3. No PM approval needed, no TASK creation required
-4. Commit uses `[CONFIG]` prefix
+4. Commit uses `chore:` prefix
 
 **Not Applicable** (requires PM review and scheduling):
 - Requires new functions/classes/files
@@ -374,7 +374,7 @@ After feature development, the AI must provide a **quick acceptance checklist** 
 ```markdown
 ## Quick Acceptance
 
-**Start**: `npm run dev`
+**Start**: `pip install -e . && vibecollab check`
 
 **Acceptance Items**:
 - [ ] Feature A: {operation} -> {expected}
@@ -407,15 +407,15 @@ main                 # stable release
 
 ### Commit Prefixes
 ```
-[DESIGN]  Design document changes
-[ARCH]  Architecture adjustments
-[FEAT]  New features
-[FIX]  Bug fixes
-[CONFIG]  Config adjustments (no logic changes)
-[REFACTOR]  Refactoring
-[DOC]  Documentation updates
-[TEST]  Test related
-[VIBE]  Collaboration workflow updates
+design:  Design document changes
+arch:  Architecture adjustments
+feat:  New features
+fix:  Bug fixes
+chore:  Config adjustments (no logic changes)
+refactor:  Refactoring
+docs:  Documentation updates
+test:  Test related
+ci:  Collaboration workflow updates
 ```
 
 ### Git Commit Requirements (important)
@@ -434,10 +434,10 @@ Git history is not just code versioning -- it is a **record of design thinking e
 
 | Config | Value |
 |--------|-------|
-| Framework | jest |
+| Framework | pytest |
 | Coverage Target | 80% |
-| File Patterns | **/*.test.ts, **/*.spec.ts |
-| Run Timing | pre-commit, ci |
+| File Patterns | tests/test_*.py |
+| Run Timing | ci |
 
 **Unit Test Principles**:
 - Each module should have a corresponding test file
@@ -560,7 +560,7 @@ git tag -a v{major}.{minor}.{patch} -m "description"
 - User explicitly states "config adjustment"
 - AI directly modifies the corresponding config value
 - No PM approval needed, no TASK creation required
-- Commit uses `[CONFIG]` prefix
+- Commit uses `chore:` prefix
 
 **Applicable Examples**:
 - Numeric parameter adjustments
@@ -1053,7 +1053,7 @@ Before continuing, let's confirm:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1.0 | 2026-03-03 | Initial version |
+| v1.0 | 2026-03-05 | Initial version |
 
 ---
 
@@ -1147,5 +1147,5 @@ vibecollab insight show INS-001
 ---
 
 *This is a living document that records the evolution of human-AI collaboration.*
-*Generated at: 2026-03-03 18:53:18*
+*Generated at: 2026-03-05 15:30:20*
 *The most precious thing is not the result, but the journey of thinking together.*

@@ -334,7 +334,7 @@ iteration:
 
   config_level_iteration:
     enabled: true
-    commit_prefix: "[CONFIG]"
+    commit_prefix: "chore:"
     skip_pm_review: true
     examples:
       - "Numeric parameter adjustments"

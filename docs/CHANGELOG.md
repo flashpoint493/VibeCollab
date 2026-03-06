@@ -1,40 +1,8 @@
 # VibeCollab Changelog
 
-## v0.10.1-dev (2026-03-04) - Code Internationalization (i18n)
+## v0.10.3 (2026-03-04) - Template & Config English Translation
 
-### MCP Path Fix & IDE Config Cleanup
-- **CodeBuddy MCP config path fix**: `mcp config` and `mcp inject` commands updated from `.codebuddy/mcp.json` to `.mcp.json` (per [official CodeBuddy docs](https://www.codebuddy.ai/docs/cli/mcp))
-  - `src/vibecollab/cli/mcp.py`: Both `config` and `inject` targets updated
-  - `tests/test_mcp_server.py`: 2 test assertions updated
-  - `docs/QA_TEST_CASES.md`: 2 path references updated
-  - All 7 MCP-related tests passed
-- **Git history cleanup**: `git filter-repo` removed IDE config files from all 218 commits
-  - Removed: `.vibecollab/` (20+ insight/registry files), `.cursor/` (4 skill files), `.codebuddy/` (3 files)
-  - Force pushed to `origin/master`
-- **`.gitignore` comprehensive update**: Added ignore rules for all AI IDE project-level config directories
-  - `.vibecollab/` (entire directory, previously only partial), `.vibecollab.local.yaml`
-  - `.mcp.json`, `.cursor/`, `.cline/`, `.codebuddy/`
-  - `.openclaw/`, `.windsurf/`, `.roo/`, `.augment/`
-
-### MCP Server Refactor: Subprocess → Direct API
-- **Complete rewrite of `mcp_server.py`**: All 15 MCP tools rewritten from `subprocess.run(["vibecollab", ...])` CLI delegation to direct Python API calls
-  - Eliminated 10-30s per-tool latency caused by Python process startup + module loading on Windows
-  - New `_get_managers(root)` lazy initialization helper: creates `InsightManager`, `TaskManager`, `EventLog` in-process
-  - Tools now call APIs directly: `InsightManager.search_by_tags()`, `ProtocolChecker.check_all()`, `TaskManager.list_tasks()`, `RoadmapParser.status()`, etc.
-  - Removed `_run_cli()` function and `import subprocess`
-- **MCP promoted to core dependency**: `mcp>=1.0.0` moved from `[project.optional-dependencies].mcp` to `dependencies`
-  - Deleted `[mcp]` extra group entirely from `pyproject.toml`
-  - Removed `try/except ImportError` fallback in `cli/mcp.py`
-- **Documentation batch update**: 16 files updated to replace `pip install vibe-collab[mcp]` with `pip install vibe-collab`
-  - README.md, README.zh-CN.md, README.pypi.md, docs/CHANGELOG.md, docs/ROADMAP.md, docs/QA_TEST_CASES.md
-  - skill.md, llms.txt, vibecollab.pot, vibecollab.po
-- **Test suite update**: Rewrote test classes that referenced deleted `_run_cli`
-  - `test_mcp_server.py`: `TestTools` rewritten to test `_get_managers` direct API initialization
-  - `test_mcp_server_closures.py`: `TestCliTools` (24 tests) → `TestApiTools` (24 tests verifying JSON structure); removed `TestRunCliEdge`
-  - `test_task_workflow_integration.py`: `TestMcpNewTools` rewritten to use direct `TaskManager` API calls
-- All **1409 tests passed**, zero regression
-
-### Template & Config English Translation (v0.10.3)
+### New Feature
 - **Insight cache translation**: 16 Insight YAML files (INS-001 through INS-017) translated from Chinese to English
   - SHA-256 fingerprints regenerated for all translated files
   - Removed orphan `INS-007` entry from `registry.yaml` (file did not exist)
@@ -44,18 +12,20 @@
   - `game.extension.yaml`: roles (Game Designer, Art Director), GM commands, balance tables
   - `web.extension.yaml`: roles (Frontend Dev, Backend Dev), API docs, deploy guide
   - `data.extension.yaml`: roles (Data Engineering, Data Analysis, Machine Learning), data quality rules, pipeline checklists
-- **`guide.py` `_SECTION_MAP` fix**: Updated section headings from Chinese to English to match translated CONTRIBUTING_AI.md (bug fix — old Chinese headings caused `vibecollab prompt` to fail matching)
 - **AI-facing context files translated**: `skill.md`, `.codebuddy/rules/*.mdc`, `.cursor/skills/` templates, `llms.txt`
 - **`project.yaml` translated** + CONTRIBUTING_AI.md regenerated (zero Chinese output)
+
+### Bug Fix
+- **`guide.py` `_SECTION_MAP` fix**: Updated section headings from Chinese to English to match translated CONTRIBUTING_AI.md (bug fix — old Chinese headings caused `vibecollab prompt` to fail matching)
+
+### Test
 - All **1413 tests passed**, zero regression
 
-### CLI Bug Fixes & Pipeline Tests
-- **`task.py` silent error on create**: Added `click.echo(f"Error: {e}", err=True)` before `raise SystemExit(1)` — previously printed nothing on ValueError
-- **`task.py` truncated `raise SystemE`**: Fixed incomplete statement at file end to `raise SystemExit(1)`
-- **Pipeline test coverage**: 69 new tests for `pipeline.py` (from 0% to comprehensive coverage)
-  - `TestSchemaValidator` (26), `TestActionRegistry` (8), `TestDocSyncChecker` (6), `TestPipeline` (15), `TestValidationReport` (5), `TestCliTaskBugFixes` (9)
+---
 
-### Documentation English Translation (v0.10.2)
+## v0.10.2 (2026-03-03) - Documentation English Translation
+
+### Documentation
 - **All 10 docs/ files translated** from Chinese to English (~4000+ lines, ~6400 line changes)
   - CHANGELOG.md, DECISIONS.md, ROADMAP.md, PRD.md, QA_TEST_CASES.md
   - LIFECYCLE_DESIGN.md, TEST_VALIDATION.md, developers/COLLABORATION.md
@@ -64,10 +34,49 @@
 - **README version sync**: Both README.md and README.zh-CN.md updated with v0.9.6/v0.9.7 entries, footer version corrected to v0.9.7
 - Translation principles: technical terms/code/YAML/version numbers preserved exactly, Markdown structure maintained
 
-### Version Unification + Pipeline Module + Task Lifecycle
+---
+
+## v0.10.1-dev (2026-03-04) - Code Internationalization (i18n)
+
+### Refactor
+- **MCP Server Refactor: Subprocess → Direct API**
+  - **Complete rewrite of `mcp_server.py`**: All 15 MCP tools rewritten from `subprocess.run(["vibecollab", ...])` CLI delegation to direct Python API calls
+  - Eliminated 10-30s per-tool latency caused by Python process startup + module loading on Windows
+  - New `_get_managers(root)` lazy initialization helper: creates `InsightManager`, `TaskManager`, `EventLog` in-process
+  - Tools now call APIs directly: `InsightManager.search_by_tags()`, `ProtocolChecker.check_all()`, `TaskManager.list_tasks()`, `RoadmapParser.status()`, etc.
+  - Removed `_run_cli()` function and `import subprocess`
+- **MCP promoted to core dependency**: `mcp>=1.0.0` moved from `[project.optional-dependencies].mcp` to `dependencies`
+  - Deleted `[mcp]` extra group entirely from `pyproject.toml`
+  - Removed `try/except ImportError` fallback in `cli/mcp.py`
+
+### Improvement
+- **CodeBuddy MCP config path fix**: `mcp config` and `mcp inject` commands updated from `.codebuddy/mcp.json` to `.mcp.json` (per [official CodeBuddy docs](https://www.codebuddy.ai/docs/cli/mcp))
+  - `src/vibecollab/cli/mcp.py`: Both `config` and `inject` targets updated
+  - `tests/test_mcp_server.py`: 2 test assertions updated
+  - `docs/QA_TEST_CASES.md`: 2 path references updated
+- **Git history cleanup**: `git filter-repo` removed IDE config files from all 218 commits
+  - Removed: `.vibecollab/` (20+ insight/registry files), `.cursor/` (4 skill files), `.codebuddy/` (3 files)
+  - Force pushed to `origin/master`
+- **`.gitignore` comprehensive update**: Added ignore rules for all AI IDE project-level config directories
+- **Documentation batch update**: 16 files updated to replace `pip install vibe-collab[mcp]` with `pip install vibe-collab`
+
+### New Feature
 - **Version unification**: Hatchling dynamic versioning via `pyproject.toml` → `__init__.py` as single source of truth
 - **Pipeline module** (`src/vibecollab/core/pipeline.py`): SchemaValidator, ActionRegistry, DocSyncChecker, Pipeline orchestrator (~310 lines)
 - **Task lifecycle hooks**: `on_complete()`, `on_transition()` callbacks in TaskManager, completion action hints in CLI
+
+### Bug Fix
+- **`task.py` silent error on create**: Added `click.echo(f"Error: {e}", err=True)` before `raise SystemExit(1)` — previously printed nothing on ValueError
+- **`task.py` truncated `raise SystemE`**: Fixed incomplete statement at file end to `raise SystemExit(1)`
+
+### Test
+- **Pipeline test coverage**: 69 new tests for `pipeline.py` (from 0% to comprehensive coverage)
+  - `TestSchemaValidator` (26), `TestActionRegistry` (8), `TestDocSyncChecker` (6), `TestPipeline` (15), `TestValidationReport` (5), `TestCliTaskBugFixes` (9)
+- **Test suite update**: Rewrote test classes that referenced deleted `_run_cli`
+  - `test_mcp_server.py`: `TestTools` rewritten to test `_get_managers` direct API initialization
+  - `test_mcp_server_closures.py`: `TestCliTools` (24 tests) → `TestApiTools` (24 tests verifying JSON structure); removed `TestRunCliEdge`
+  - `test_task_workflow_integration.py`: `TestMcpNewTools` rewritten to use direct `TaskManager` API calls
+- All **1409 tests passed**, zero regression
 
 ### i18n Framework
 - **CLI i18n architecture**: gettext-based localization with zero external dependencies
@@ -360,25 +369,31 @@
 - 35 MCP Server unit tests (34 passed, 1 skipped)
 - Full 1074 passed, zero regression
 
+## v0.9.0 (2026-02-27) - Semantic Search Engine
+
+### New Feature
+- **Embedder module** — Lightweight embedding abstraction layer
+  - Supports OpenAI `text-embedding-3-small` / local `sentence-transformers` / pure Python trigram hash three backends
+  - Zero external dependency fallback: pure_python trigram hash embedding
+  - Optional `pip install vibe-collab[embedding]` for sentence-transformers
+- **VectorStore module** — SQLite persistent vector storage, pure Python cosine similarity
+- **Indexer module** — Project document + Insight YAML indexer (Markdown chunk splitting)
+- **`vibecollab index` command** — Incremental/rebuild indexing
+- **`vibecollab search` command** — Global semantic search
+- **`vibecollab insight search --semantic`** — Insight semantic search mode
+- **`onboard` semantic enhancement** — Extract task description from CONTEXT.md/developer context → vector search Top-N related Insights
+  - Rich panel "Task-related Insights (semantic match)" + JSON `related_insights` field
+  - Developer context prioritized over global CONTEXT.md as query text
+
+### Test
+- 11 new unit tests (_search_related_insights + onboard integration)
+
 ## v0.8.0-dev (In Development) - Config Management System
 
 ### Architecture
 - **Three-layer config architecture**: `Environment variables > ~/.vibecollab/config.yaml > Built-in defaults`
 - Config file stored in user home directory (`~/.vibecollab/config.yaml`), not in git
 - Lightweight .env parsing: self-implemented `parse_dotenv()`, extracts only `VIBECOLLAB_*` prefix variables
-- **v0.9.0 Semantic Search Engine**:
-  - `Embedder` module — Lightweight embedding abstraction layer, supports OpenAI / sentence-transformers / pure_python three backends
-  - `VectorStore` module — SQLite persistent vector storage, pure Python cosine similarity
-  - `Indexer` module — Project document + Insight YAML indexer (Markdown chunk splitting)
-  - `vibecollab index` command — Incremental/rebuild indexing
-  - `vibecollab search` command — Global semantic search
-  - `vibecollab insight search --semantic` — Insight semantic search mode
-  - Zero external dependency fallback: pure_python trigram hash embedding
-  - Optional `pip install vibe-collab[embedding]` for sentence-transformers
-  - `onboard` semantic enhancement — Extract task description from CONTEXT.md/developer context → vector search Top-N related Insights
-    - Rich panel "Task-related Insights (semantic match)" + JSON `related_insights` field
-    - Developer context prioritized over global CONTEXT.md as query text
-    - 11 new unit tests (_search_related_insights + onboard integration)
 
 ### Decision
 - **`vibecollab ai` command group marked experimental**: VibeCollab core positioning is protocol management tool, LLM communication and Tool Use delegated to Cline/Cursor/Aider etc. `ai ask/chat/agent` retained as lightweight alternative but no longer a primary development direction. Affected modules: `cli_ai.py`, `llm_client.py`, `agent_executor.py`, `config_manager.py` (all cleanly isolated, core features zero dependency)
@@ -1037,127 +1052,41 @@ This release completes all core objectives for the v0.6.0 milestone, marking Vib
 
 ## v0.1.1 (2026-01-20)
 
-### Conversation 10: Requirement Clarification Protocol [FEAT]
+### New Feature
+- **Requirement clarification protocol** (`generator.py`):
+  - Added `_add_requirement_clarification()` method
+  - Transform vague user requirements into structured descriptions
+  - Structured requirement template: Original description → Requirement analysis → Acceptance criteria → Decision levels
+- **Generator section expansion** (`generator.py`):
+  - `_add_iteration_protocols()` - Iteration suggestion management, version review, build packaging, config-level iteration
+  - `_add_qa_protocol()` - QA acceptance protocol, quick acceptance template
+  - `_add_prompt_engineering()` - Prompt engineering best practices
+  - `_add_decisions_summary()` - Confirmed decisions summary
+  - `_add_changelog()` - Documentation iteration log
+  - `_add_git_history_reference()` - Git history reference
+- **Cursor Skill packaging**:
+  - Created `.cursor/skills/llmcontext/SKILL.md`
+  - Added references/project_template.yaml
+  - Added assets/CONTEXT_TEMPLATE.md, CHANGELOG_TEMPLATE.md
+- **Extension hook processing** (`extension.py`):
+  - Hook management, condition evaluation, context resolution
+  - Supports reference/template/file_list/computed four context types
+  - 13 extension mechanism unit tests
 
-**generator.py**:
-- Added `_add_requirement_clarification()` method
-- Transform vague user requirements into structured descriptions
-
-**Structured requirement template**:
-- Original description → Requirement analysis (goals/scenarios/users)
-- Functional requirements → Acceptance criteria
-- Pending confirmations → Decision levels
-
----
-
-### Conversation 9: CONTRIBUTING_AI.md Self-Update + README Update [VIBE] [DOC]
-
-- Added `project.yaml` - Project self-configuration
+### Improvement
+- `project.yaml` project self-configuration added
 - `CONTRIBUTING_AI.md` self-updated using generator, includes all sections
 - README added complete section list, Cursor Skill instructions
 
----
-
-### Conversation 8: Add Missing Sections [FEAT]
-
-**generator.py new methods**:
-- `_add_iteration_protocols()` - Iteration suggestion management, version review, build packaging, config-level iteration
-- `_add_qa_protocol()` - QA acceptance protocol, quick acceptance template
-- `_add_prompt_engineering()` - Prompt engineering best practices
-- `_add_decisions_summary()` - Confirmed decisions summary
-- `_add_changelog()` - Documentation iteration log
-- `_add_git_history_reference()` - Git history reference
-
----
-
-### Conversation 7: Package as Cursor Skill [FEAT]
-
-- Created `.cursor/skills/llmcontext/SKILL.md`
-- Added references/project_template.yaml
-- Added assets/CONTEXT_TEMPLATE.md, CHANGELOG_TEMPLATE.md
-- Packaged as llmcontext-skill.zip
-
----
-
-### Conversation 6: Clean Up Duplicate Templates [REFACTOR]
-
+### Refactor
 - Deleted root `templates/` (kept package internal)
 - Updated pyproject.toml build config
 
 ---
 
-### Conversation 5: Implement Extension Hook Processing [DEV]
+## v0.1.0 (2026-01-20)
 
-- Added `extension.py`: Hook management, condition evaluation, context resolution
-- Supports reference/template/file_list/computed four context types
-- Integrated into generator.py for extension section generation
-- Added 13 extension mechanism unit tests
-
----
-
-## Conversation Log
-
-### Conversation 16: Fix Windows Encoding Issues (2026-02-10) [FIX]
-
-**Problem**:
-- `vibecollab check` crashes due to emoji characters in Windows GBK environment
-- UnicodeEncodeError: 'gbk' codec can't encode character
-
-**Solution**:
-- Implemented `is_windows_gbk()` platform detection function
-- Added emoji and special character mapping table:
-  - ✅ → OK, ❌ → X, ⚠️ → !, ℹ️ → i
-  - • → -, 🔒 → [retained]
-- Modified all CLI output to use EMOJI_MAP and BULLET
-
-**Modified files**:
-- `src/vibecollab/cli.py`: Added platform detection and character substitution (+80 lines)
-- `src/vibecollab/cli_lifecycle.py`: Synced lifecycle management commands (+36 lines)
-
-**Test results**:
-- ✅ `vibecollab check` runs correctly on Windows GBK
-- ✅ Display format good, readability not affected
-
-**Technical debt**:
-- ✅ **Resolved**: Windows console encoding issue (high priority)
-
-### Conversation 15: Protocol Self-Check Execution (2026-02-10) [VIBE]
-
-**Check results**:
-- ✅ Git repository normal
-- ⚠️ CHANGELOG.md not updated for 19 days
-- ⚠️ CONTEXT.md not updated for 2 days
-- Total 3 checks: 0 errors, 2 warnings, 1 info
-
-**Issues found**:
-- Windows console encoding: `vibecollab check` crashes due to emoji characters causing GBK encoding error
-- Workaround: Directly invoke Python `ProtocolChecker` module
-
-**Output**:
-- Updated CONTEXT.md recording conversation 15
-- Added missing records to CHANGELOG.md (conversation 14, v0.4.3)
-- Recorded Windows encoding issue in technical debt
-
-### Conversation 14: Complete Key File Responsibility Config (2026-02-09) [CONFIG]
-
-**Background**:
-- Pulled latest code from GitHub
-- Found documentation.key_files config incomplete
-
-**Improvements**:
-- Added 4 key file configs: llms.txt, DECISIONS.md, QA_TEST_CASES.md, ROADMAP.md
-- Synced project.yaml and templates/default.project.yaml
-
-**Release**:
-- Version upgraded to v0.4.3
-- Built release package: `python -m build`
-
----
-
-## Historical Versions
-
-### Conversations 1-4: Project Initialization to Document Sync
-
-- Project initialization, CLI implementation
-- Schema design, generator core logic
+### New Feature
+- Project initialization and CLI implementation
+- Schema design and generator core logic
 - Domain template creation

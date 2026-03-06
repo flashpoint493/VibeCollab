@@ -146,7 +146,7 @@ class EventLog:
         log = EventLog(project_root=Path("."))
         log.append(Event(
             event_type=EventType.TASK_CREATED,
-            actor="alice",
+            actor="dev",
             summary="Created task TASK-DEV-001",
             payload={"task_id": "TASK-DEV-001", "title": "Implement auth"}
         ))

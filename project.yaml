@@ -197,31 +197,31 @@ git_workflow:
     refactor_prefix: "refactor/"
 
   commit_prefixes:
-    - prefix: "[DESIGN]"
+    - prefix: "design:"
       description: "Design document changes"
       roles: ["DESIGN"]
-    - prefix: "[ARCH]"
+    - prefix: "arch:"
       description: "Architecture adjustments"
       roles: ["ARCH"]
-    - prefix: "[FEAT]"
+    - prefix: "feat:"
       description: "New features"
       roles: ["DEV"]
-    - prefix: "[FIX]"
+    - prefix: "fix:"
       description: "Bug fixes"
       roles: ["DEV", "QA"]
-    - prefix: "[CONFIG]"
+    - prefix: "chore:"
       description: "Config adjustments (no logic changes)"
       roles: ["DEV"]
-    - prefix: "[REFACTOR]"
+    - prefix: "refactor:"
       description: "Refactoring"
       roles: ["ARCH", "DEV"]
-    - prefix: "[DOC]"
+    - prefix: "docs:"
       description: "Documentation updates"
       roles: ["PM", "DESIGN"]
-    - prefix: "[TEST]"
+    - prefix: "test:"
       description: "Test related"
       roles: ["TEST", "QA"]
-    - prefix: "[VIBE]"
+    - prefix: "ci:"
       description: "Collaboration workflow updates"
       roles: ["PM"]
 
@@ -234,13 +234,11 @@ testing:
   # Unit Test (developer perspective - code correctness)
   unit_test:
     enabled: true
-    framework: "jest"  # jest/pytest/mocha/go-test/...
+    framework: "pytest"
     coverage_target: 0.8
     patterns:
-      - "**/*.test.ts"
-      - "**/*.spec.ts"
+      - "tests/test_*.py"
     run_on:
-      - "pre-commit"
       - "ci"
     required_for_merge: true
 
@@ -334,7 +332,7 @@ iteration:
 
   config_level_iteration:
     enabled: true
-    commit_prefix: "[CONFIG]"
+    commit_prefix: "chore:"
     skip_pm_review: true
     examples:
       - "Numeric parameter adjustments"
@@ -365,19 +363,19 @@ version_review:
 # ============================================
 build:
   enabled: true
-  command: "npm run build"
-  dist_entry: "dist/index.html"
+  command: "hatch build"
+  dist_entry: "dist/"
   timing:
     - "Before milestone full acceptance"
     - "During bug fix period for concentrated testing"
-    - "When preparing distribution / demo version"
+    - "When preparing PyPI release"
 
 # ============================================
 # Quick Acceptance
 # ============================================
 quick_acceptance:
   enabled: true
-  start_command: "npm run dev"
+  start_command: "pip install -e . && vibecollab check"
   reply_formats:
     pass: "✅"
     issue: "⚠️ Issue:"
@@ -497,12 +495,12 @@ multi_developer:
     on_start:
       read_files:
         - "docs/CONTEXT.md"                           # Read global aggregated view
-        - "docs/developers/{developer}/CONTEXT.md"    # Read own context
+        - "docs/developers/{role_code}/CONTEXT.md"    # Read own role context
         - "docs/developers/COLLABORATION.md"          # Read collaboration document
         - "CONTRIBUTING_AI.md"
     on_end:
       update_files:
-        - "docs/developers/{developer}/CONTEXT.md"    # Update own context
+        - "docs/developers/{role_code}/CONTEXT.md"    # Update own role context
         - "docs/CHANGELOG.md"                         # Update global CHANGELOG
       aggregate_context: true                         # Regenerate global aggregation
       git_commit: true

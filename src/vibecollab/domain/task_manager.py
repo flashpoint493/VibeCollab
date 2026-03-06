@@ -154,9 +154,9 @@ class TaskManager:
     Usage:
         mgr = TaskManager(project_root=Path("."))
         task = mgr.create_task(id="TASK-DEV-001", role="DEV",
-                               feature="Add auth module", assignee="alice")
-        result = mgr.transition(task.id, TaskStatus.IN_PROGRESS, actor="alice")
-        solidify = mgr.solidify(task.id, actor="alice")
+                               feature="Add auth module", assignee="dev")
+        result = mgr.transition(task.id, TaskStatus.IN_PROGRESS, actor="dev")
+        solidify = mgr.solidify(task.id, actor="dev")
     """
 
     TASKS_FILE = "tasks.json"

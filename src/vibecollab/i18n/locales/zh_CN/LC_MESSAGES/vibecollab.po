@@ -272,7 +272,7 @@ msgid "Description"
 msgstr "描述"
 
 #: src/vibecollab/cli/main.py:1240
-msgid "Detect conflicts between two developers (e.g. --between alice bob)"
+msgid "Detect conflicts between two roles (e.g. --between dev qa)"
 msgstr ""
 
 #: src/vibecollab/cli/main.py:1274

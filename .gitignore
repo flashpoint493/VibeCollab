@@ -37,6 +37,10 @@ publish_pypi.bat
 # Secrets / environment variables (NEVER commit)
 .env
 .env.*
+_sensitive_detail.txt
+
+# pytest cache
+.pytest_cache/
 
 # VibeCollab local runtime data (insights, sessions, events, etc.)
 .vibecollab/

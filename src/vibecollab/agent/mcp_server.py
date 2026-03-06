@@ -394,7 +394,7 @@ def create_mcp_server(project_root: Optional[Path] = None):
                 priority += 1
                 actions.append({"priority": f"P1-{priority}", "type": "git_commit",
                                 "action": f"Commit changes ({len(uncommitted)} files)",
-                                "suggestion": f'git commit -m "{suggested_prefix or "[FEAT]"} <description>"'})
+                                "suggestion": f'git commit -m "{suggested_prefix or "feat:"} <description>"'})
 
             for f in missing:
                 priority += 1

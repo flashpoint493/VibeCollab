@@ -42,10 +42,10 @@ project/
     +-- DECISIONS.md          # Global decision records
     +-- developers/           # Developer workspaces
         +-- COLLABORATION.md  # Collaboration document
-        +-- alice/            # Developer alice's directory
-        |   +-- CONTEXT.md    # alice's work context
-        |   +-- .metadata.yaml # Metadata (update time, etc.)
-        +-- bob/              # Developer bob's directory
+        +-- dev/              # DEV role directory
+        |   +-- CONTEXT.md    # DEV's work context
+        |   +-- .metadata.yaml # Metadata (role rules, etc.)
+        +-- qa/               # QA role directory
             +-- CONTEXT.md
             +-- .metadata.yaml
 ```
@@ -118,17 +118,17 @@ vibecollab dev sync --aggregate
 
 | Task | Owner | Collaborator | Status | Dependencies |
 |------|-------|-------------|--------|--------------|
-| TASK-DEV-001: User Auth | alice | bob | IN_PROGRESS | - |
-| TASK-DEV-002: DB Design | bob | - | DONE | - |
-| TASK-DEV-003: API Dev | alice | - | TODO | TASK-DEV-002 |
+| TASK-DEV-001: User Auth | dev | qa | IN_PROGRESS | - |
+| TASK-DEV-002: DB Design | arch | - | DONE | - |
+| TASK-DEV-003: API Dev | dev | - | TODO | TASK-DEV-002 |
 
 ## Handoff Records
 
 ### TASK-DEV-001: User Auth
 - **Handoff Time**: 2026-02-10 14:30
-- **From**: bob
-- **To**: alice
-- **Reason**: bob completed DB design, alice takes over frontend integration
+- **From**: arch
+- **To**: dev
+- **Reason**: arch completed DB design, dev takes over frontend integration
 - **Notes**: API endpoints are complete, docs at docs/api.md
 ```
 
@@ -139,10 +139,10 @@ vibecollab dev sync --aggregate
 vibecollab dev list
 
 # View specific developer status
-vibecollab dev status alice
+vibecollab dev status dev
 
 # Initialize new developer context
-vibecollab dev init --developer bob
+vibecollab dev init --developer qa
 ```
 
 ## 10.6 Dialogue Flow Adaptation
@@ -172,17 +172,17 @@ In multi-developer mode, the AI should at dialogue start:
 ### 10.6.3 Special Considerations for Multi-Developer Scenarios
 
 **Scenario 1: Task Dependencies**
-- Alice's task depends on Bob's task completion
+- DEV's task depends on ARCH's task completion
 - AI should annotate dependencies in COLLABORATION.md
-- Alice should check dependent task status before starting
+- DEV should check dependent task status before starting
 
 **Scenario 2: Task Handoff**
-- Bob completes phase work, hands off to Alice
+- ARCH completes phase work, hands off to DEV
 - Record handoff info in COLLABORATION.md
-- Alice reads handoff notes when taking over
+- DEV reads handoff notes when taking over
 
 **Scenario 3: Parallel Development**
-- Alice and Bob develop different modules simultaneously
+- DEV and QA develop different modules simultaneously
 - Each maintains independent CONTEXT.md
 - Use global aggregation to track each other's progress
 
@@ -209,7 +209,7 @@ vibecollab dev conflicts
 vibecollab dev conflicts --verbose
 
 # Detect conflicts between specific developers
-vibecollab dev conflicts --between alice bob
+vibecollab dev conflicts --between dev qa
 ```
 
 ### 10.7.3 Conflict Resolution Flow

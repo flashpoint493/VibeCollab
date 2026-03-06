@@ -239,18 +239,18 @@ def _suggest_commit_message(diff_files: List[str]) -> str:
     has_schema = any(f.startswith("schema/") for f in diff_files)
 
     if has_src and has_test:
-        return "[FEAT]"
+        return "feat:"
     elif has_test and not has_src:
-        return "[TEST]"
+        return "test:"
     elif has_doc and not has_src:
-        return "[DOC]"
+        return "docs:"
     elif has_config and not has_src:
-        return "[CONFIG]"
+        return "chore:"
     elif has_schema:
-        return "[DESIGN]"
+        return "design:"
     elif has_src:
-        return "[FEAT]"
-    return "[VIBE]"
+        return "feat:"
+    return "chore:"
 
 
 def _collect_project_context(
@@ -390,7 +390,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
 
         vibecollab onboard                  # Standard onboarding
 
-        vibecollab onboard -d ocarina       # Developer-specific perspective
+        vibecollab onboard -d dev            # Role-specific perspective
 
         vibecollab onboard --json           # Machine-readable output
     """
@@ -796,7 +796,7 @@ def prompt_cmd(
 
         vibecollab prompt --copy              # Copy directly to clipboard
 
-        vibecollab prompt -d ocarina          # Include developer context
+        vibecollab prompt -d dev              # Include role context
 
         vibecollab prompt -s protocol,context # Only protocol + status
     """
@@ -969,7 +969,7 @@ def next_step(config: str, as_json: bool):
     # P1: Uncommitted changes
     if uncommitted:
         priority += 1
-        prefix = suggested_prefix or "[FEAT]"
+        prefix = suggested_prefix or "feat:"
         actions.append({
             "priority": f"P1-{priority}",
             "type": "git_commit",

@@ -89,7 +89,7 @@
 1. User explicitly states "config adjustment" or "value change"
 2. AI directly modifies the corresponding config value
 3. No PM approval needed, no TASK creation required
-4. Commit uses `{{ config_iter.get('commit_prefix', '[CONFIG]') }}` prefix
+4. Commit uses `{{ config_iter.get('commit_prefix', 'chore:') }}` prefix
 
 **Not Applicable** (requires PM review and scheduling):
 - Requires new functions/classes/files

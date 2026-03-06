@@ -1129,7 +1129,7 @@ def dev_status(developer: Optional[str], config: str):
 
         vibecollab dev status           # View all developers
 
-        vibecollab dev status alice     # View a specific developer
+        vibecollab dev status dev       # View a specific role
     """
     from ..domain.developer import DeveloperManager
 
@@ -1235,7 +1235,7 @@ def dev_init(config: str, developer: Optional[str]):
 
         vibecollab dev init                 # Auto-detect current developer
 
-        vibecollab dev init -d alice        # Initialize for alice
+        vibecollab dev init -d dev          # Initialize for dev role
     """
     from ..domain.developer import DeveloperManager
 
@@ -1287,7 +1287,7 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
 
     Examples:
 
-        vibecollab dev switch alice      # Switch to alice
+        vibecollab dev switch dev        # Switch to dev role
 
         vibecollab dev switch            # Interactive developer selection
 
@@ -1414,7 +1414,7 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
 @dev.command("conflicts")
 @click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 @click.option("--verbose", "-v", is_flag=True, help=_("Show detailed conflict info"))
-@click.option("--between", nargs=2, help=_("Detect conflicts between two developers (e.g. --between alice bob)"))
+@click.option("--between", nargs=2, help=_("Detect conflicts between two roles (e.g. --between dev qa)"))
 def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]):
     """Detect cross-developer work conflicts
 
@@ -1427,7 +1427,7 @@ def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]
 
         vibecollab dev conflicts -v              # Show detailed info
 
-        vibecollab dev conflicts --between alice bob  # Detect conflicts between two specific developers
+        vibecollab dev conflicts --between dev qa    # Detect conflicts between two specific roles
     """
     from ..domain.conflict_detector import ConflictDetector
 

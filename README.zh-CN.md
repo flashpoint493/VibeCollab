@@ -35,7 +35,7 @@ vibecollab mcp inject --ide cursor   # 或: cline / codebuddy / all
 **适合**
 - 使用 AI 助手（Cursor、Cline、CodeBuddy 等）进行日常开发的团队
 - 需要跨对话保留决策记录和知识积累的项目
-- 多开发者 / 多 Agent 协同环境，需要上下文隔离和冲突检测
+- 多角色 / 多 Agent 协同环境，需要上下文隔离和冲突检测
 - 厌倦了每次 AI 对话都要重新输入项目背景的人
 
 **不适合**
@@ -45,9 +45,9 @@ vibecollab mcp inject --ide cursor   # 或: cline / codebuddy / all
 
 ---
 
-**从 YAML 配置生成标准化的 AI 协作协议，内置知识沉淀系统 + MCP Server，支持多开发者/多 Agent 协同开发**
+**从 YAML 配置生成标准化的 AI 协作协议，内置知识沉淀系统 + MCP Server，支持多角色/多 Agent 协同开发**
 
-将 Vibe Development 哲学和 LLM 协作协议抽象为可配置、可复用的框架。核心特性包括：**MCP Server 无缝集成 AI IDE**、Insight 知识沉淀与语义检索、Agent 引导系统 (onboard/next)、多开发者独立上下文管理、跨开发者冲突检测、文档一致性检查等。
+将 Vibe Development 哲学和 LLM 协作协议抽象为可配置、可复用的框架。核心特性包括：**MCP Server 无缝集成 AI IDE**、Insight 知识沉淀与语义检索、Agent 引导系统 (onboard/next)、多角色独立上下文管理、跨角色冲突检测、文档一致性检查等。
 
 > 本项目自身也使用生成的协作规则进行开发（元实现），并支持与 [llmstxt.org](https://llmstxt.org) 标准无缝集成
 
@@ -141,9 +141,9 @@ flowchart TD
 - **项目健康信号**: `vibecollab health` 评分 (0-100 + A/B/C/D/F)，10+ 信号类型
 - **文档一致性检查**: linked_groups 三级检查 (local_mtime / git_commit / release)
 
-### 多开发者协同
-- **多开发者支持**: 多人/多 Agent 协同开发，独立上下文管理，动态开发者发现
-- **冲突检测**: 自动检测跨开发者的文件冲突、任务冲突、依赖冲突
+### 多角色协同
+- **多角色支持**: 多角色/多 Agent 协同开发（DEV/QA/ARCH/PM/TEST/DESIGN），独立上下文管理
+- **冲突检测**: 自动检测跨角色的文件冲突、任务冲突、依赖冲突
 - **跨开发者 Insight 共享**: 收藏/使用/贡献统计 + 溯源可视化
 
 ### 基础设施
@@ -187,7 +187,7 @@ pip install -e "."
 # 通用项目
 vibecollab init -n "MyProject" -d generic -o ./my-project
 
-# 多开发者模式项目
+# 多角色模式项目
 vibecollab init -n "MyProject" -d generic -o ./my-project --multi-dev
 
 # 游戏项目（含 GM 命令注入）
@@ -217,7 +217,7 @@ my-project/
     └── QA_TEST_CASES.md        # 产品QA测试用例
 ```
 
-#### 多开发者模式（`--multi-dev`）
+#### 多角色模式（`--multi-dev`）
 
 ```
 my-project/
@@ -232,10 +232,10 @@ my-project/
     ├── QA_TEST_CASES.md
     └── developers/             # 开发者工作空间
         ├── COLLABORATION.md    # 协作关系文档
-        ├── alice/              # 开发者 alice 的目录
-        │   ├── CONTEXT.md      # alice 的工作上下文
-        │   └── .metadata.yaml  # 元数据
-        └── bob/                # 开发者 bob 的目录
+        ├── dev/                # DEV 角色目录
+        │   ├── CONTEXT.md      # DEV 的工作上下文
+        │   └── .metadata.yaml  # 元数据（含角色规则）
+        └── qa/                 # QA 角色目录
             ├── CONTEXT.md
             └── .metadata.yaml
 ```
@@ -259,13 +259,13 @@ my-project/
 | `docs/PRD.md` | 产品需求文档 | 需求变更时 |
 | `docs/ROADMAP.md` | 路线图+迭代建议 | 里程碑规划/反馈时 |
 
-**多开发者模式额外文件**：
+**多角色模式额外文件**：
 
 | 文件 | 职责 | 更新时机 |
 |-----|------|---------|
 | `docs/developers/COLLABORATION.md` | 团队协作关系和任务分配 | 任务分配/交接时 |
-| `docs/developers/{dev_id}/CONTEXT.md` | 开发者个人工作上下文 | 每次对话结束时 |
-| `docs/developers/{dev_id}/.metadata.yaml` | 开发者元数据（角色、专长等） | 角色变更时 |
+| `docs/developers/{role_code}/CONTEXT.md` | 角色工作上下文 | 每次对话结束时 |
+| `docs/developers/{role_code}/.metadata.yaml` | 角色元数据（focus、triggers 等） | 角色配置变更时 |
 
 > **⚠️ 上下文保存协议**: 每次对话结束时，AI 应：
 > 1. 更新 `docs/CONTEXT.md` 保存当前状态
@@ -403,7 +403,7 @@ vibecollab validate -c project.yaml
 | 测试体系 | Unit Test + Product QA 双轨 |
 | 里程碑定义 | 生命周期、Bug 优先级 |
 | Prompt 工程最佳实践 | 有效提问模板、高价值引导词 |
-| 多开发者协作协议 | 身份识别、上下文管理、冲突检测 (条件渲染) |
+| 多角色协作协议 | 身份识别、上下文管理、冲突检测 (条件渲染) |
 | Insight 沉淀协议 | 知识沉淀/搜索/复用/衰减 + CLI 命令参考 |
 | Task 管理 | 任务创建/状态流转/Insight 自动关联 |
 | 符号学标注系统 | 统一的状态/优先级符号 |
@@ -420,7 +420,7 @@ vibecollab validate -c project.yaml
 vibecollab --help                              # 查看帮助
 vibecollab --version                           # 查看版本
 vibecollab init -n <name> -d <domain> -o <dir> # 初始化项目
-vibecollab init ... --multi-dev                # 初始化多开发者项目
+vibecollab init ... --multi-dev                # 初始化多角色项目
 vibecollab generate -c <config> -o <output>    # 生成协作规则文档（默认集成 llms.txt）
 vibecollab validate -c <config>                # 验证配置
 vibecollab upgrade                             # 升级协议到最新版本
@@ -466,7 +466,7 @@ vibecollab task transition <id> <status>           # 推进任务状态 (v0.9.3+
 vibecollab task solidify <id>                      # 固化任务 → DONE (v0.9.3+)
 vibecollab task rollback <id> [-r reason]          # 回滚任务状态 (v0.9.3+)
 
-# 多开发者命令 (v0.5.0+)
+# 多角色命令 (v0.5.0+)
 vibecollab dev whoami                          # 查看当前开发者身份
 vibecollab dev list                            # 列出所有开发者
 vibecollab dev status <developer>              # 查看开发者状态
@@ -713,7 +713,7 @@ vibecollab prompt --compact
 vibecollab prompt --compact --copy
 
 # 指定开发者视角
-vibecollab prompt -d alice
+vibecollab prompt -d dev
 ```
 
 将输出粘贴到 AI 对话开头即可。
@@ -753,7 +753,7 @@ VibeCollab/
 │   ├── generator.py             # 文档生成器 (粘合层)
 │   ├── extension.py             # 扩展处理器
 │   ├── project.py               # 项目管理
-│   ├── developer.py             # 多开发者管理
+│   ├── developer.py             # 多角色管理
 │   ├── conflict_detector.py     # 冲突检测
 │   ├── insight_manager.py       # Insight 沉淀管理 (CRUD/搜索/溯源/衰减)
 │   ├── insight_signal.py        # Insight 信号收集 + 候选推荐 (v0.9.2)
@@ -838,7 +838,7 @@ vibecollab health
 | v0.5.7 | 2026-02-24 | LLM Client — Provider-agnostic (OpenAI + Anthropic) |
 | v0.5.6 | 2026-02-24 | TaskManager — validate-solidify-rollback 生命周期 |
 | v0.5.5 | 2026-02-24 | EventLog — append-only JSONL 审计日志 |
-| v0.5.0 | 2026-02-10 | 多开发者/多 Agent 协同支持 |
+| v0.5.0 | 2026-02-10 | 多角色/多 Agent 协同支持 |
 | v0.4.0 | 2026-01-21 | 协议自检、PRD 管理、项目生涯管理 |
 | v0.3.0 | 2026-01-20 | llms.txt 标准集成 |
 
@@ -849,7 +849,7 @@ vibecollab health
 ## 常见问题 (FAQ)
 
 **这跟 Cursor Rules / .cursorrules 有什么区别？**
-Cursor Rules 是 IDE 特定的静态文件。VibeCollab 从结构化 `project.yaml` 配置生成规则，通过 MCP 支持多个 IDE，内置知识沉淀 (Insight)、任务管理、多开发者协调。规则随项目演进，通过 `vibecollab upgrade` 升级。
+Cursor Rules 是 IDE 特定的静态文件。VibeCollab 从结构化 `project.yaml` 配置生成规则，通过 MCP 支持多个 IDE，内置知识沉淀 (Insight)、任务管理、多角色协调。规则随项目演进，通过 `vibecollab upgrade` 升级。
 
 **这个工具会修改我的代码吗？**
 不会。VibeCollab 生成协作协议文档并提供工具给 AI 助手使用，不会修改你的应用源代码。

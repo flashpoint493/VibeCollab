@@ -366,7 +366,16 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [x] README bilingual restructure (English main README + Chinese README.zh-CN.md) ✅
 - [x] 40 unit tests, full 1331 passed, 89% coverage, zero regression ✅
 
-### v0.9.7 - Roadmap Parser Format Guidance (In Development)
+### v0.9.6 - PyPI Adaptation + Documentation Quality (Completed ✅)
+
+> Objective: PyPI release page usability optimization, project documentation timeliness maintenance
+
+- [x] README.pypi.md — PyPI-specific README (remove Mermaid + absolute URLs) TASK-DEV-006
+- [x] pyproject.toml readme field points to README.pypi.md TASK-DEV-006
+- [x] CONTEXT.md stale task cleanup (TASK-DEV-005 marked completed) TASK-DEV-007
+- [x] v0.9.6 PyPI release
+
+### v0.9.7 - Roadmap Parser Format Guidance (Completed ✅)
 
 > Objective: Resolve lack of hints when user ROADMAP format doesn't match, strict ### format constraint + clear error guidance
 
@@ -376,15 +385,6 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [x] MCP Tool description enhancement — AI IDE can guide users to modify ROADMAP based on this TASK-DEV-008
 - [x] init template compatibility — Generated ROADMAP is parseable out-of-box TASK-DEV-008
 - [x] v0.9.7 PyPI release
-
-### v0.9.6 - PyPI Adaptation + Documentation Quality (Completed ✅)
-
-> Objective: PyPI release page usability optimization, project documentation timeliness maintenance
-
-- [x] README.pypi.md — PyPI-specific README (remove Mermaid + absolute URLs) TASK-DEV-006
-- [x] pyproject.toml readme field points to README.pypi.md TASK-DEV-006
-- [x] CONTEXT.md stale task cleanup (TASK-DEV-005 marked completed) TASK-DEV-007
-- [x] v0.9.6 PyPI release
 
 ### v0.10.0 - Feature Freeze + Stability Gate (DECISION-017)
 
@@ -498,4 +498,4 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 
 ---
 
-*Last updated: 2026-03-03 (v0.10.1-dev)*
+*Last updated: 2026-03-05 (v0.10.1-dev)*

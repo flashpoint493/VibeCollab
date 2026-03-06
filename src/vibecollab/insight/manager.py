@@ -308,9 +308,9 @@ class InsightManager:
             tags=["refactor", "jinja2"],
             category="technique",
             body={"scenario": "...", "approach": "..."},
-            created_by="ocarina",
+            created_by="dev",
         )
-        mgr.record_use(insight.id, used_by="alice")
+        mgr.record_use(insight.id, used_by="qa")
         results = mgr.search_by_tags(["refactor"])
         report = mgr.check_consistency()
     """
@@ -641,10 +641,10 @@ class InsightManager:
 
         Returns:
             {
-                "created_by": "ocarina",
-                "used_by": ["alice", "bob"],
-                "bookmarked_by": ["alice"],
-                "contributed_by": ["ocarina"],
+                "created_by": "dev",
+                "used_by": ["qa", "pm"],
+                "bookmarked_by": ["qa"],
+                "contributed_by": ["dev"],
             }
         """
         result: Dict[str, Any] = {
@@ -691,8 +691,8 @@ class InsightManager:
         Returns:
             {
                 "developers": {
-                    "ocarina": {"contributed": [...], "bookmarks": [...], "used": [...]},
-                    "alice": {...},
+                    "dev": {"contributed": [...], "bookmarks": [...], "used": [...]},
+                    "qa": {...},
                 },
                 "insights": {
                     "INS-001": {"contributors": 1, "users": 2, "bookmarks": 1},

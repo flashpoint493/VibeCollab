@@ -1,6 +1,6 @@
 # VibeCollab
 
-> Configurable AI collaboration protocol framework with Insight knowledge capture, MCP Server, and multi-developer support
+> Configurable AI collaboration protocol framework with Insight knowledge capture, MCP Server, and multi-role support
 
 ## Overview
 
@@ -10,7 +10,7 @@ VibeCollab is a Python-based framework that generates standardized AI collaborat
 - **MCP Server**: Standard Model Context Protocol integration for AI IDEs (Cursor/Cline/CodeBuddy)
 - **Insight System**: Reusable knowledge capture from development sessions — tag search + semantic search + signal-driven suggestions
 - **Task Management**: Dialogue-driven task lifecycle (TODO → IN_PROGRESS → REVIEW → DONE) with Insight auto-linking
-- **Multi-Developer**: Context isolation per developer/agent, cross-developer conflict detection
+- **Multi-Role**: Context isolation per role/agent (DEV/QA/ARCH/PM/TEST/DESIGN), cross-role conflict detection
 - **Protocol Checking**: Auto-verifies AI follows collaboration rules + project health scoring
 
 Current version: v0.9.7 | Python 3.9+ | License: MIT

@@ -27,7 +27,7 @@
 - User explicitly states "config adjustment"
 - AI directly modifies the corresponding config value
 - No PM approval needed, no TASK creation required
-- Commit uses `{{ config_iter.get('commit_prefix', '[CONFIG]') }}` prefix
+- Commit uses `{{ config_iter.get('commit_prefix', 'chore:') }}` prefix
 
 **Applicable Examples**:
 {% for ex in config_iter.get('examples', []) -%}
