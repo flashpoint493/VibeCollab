@@ -1,0 +1,86 @@
+##
+# Autonomous Loop Demo Plan
+#
+# Demonstrates the 'loop' action: VibeCollab autonomously drives a host
+# through multiple rounds of dialogue, gathering project state before each
+# round and checking goal completion after each round.
+#
+# This demo uses the SubprocessAdapter with examples/mock_host.py so it
+# runs without an LLM API key. Replace host with "llm" for real usage.
+#
+# Usage:
+#   vibecollab plan run examples/demo_loop.yaml -v
+#   vibecollab plan validate examples/demo_loop.yaml
+##
+
+name: "Autonomous Loop Demo"
+description: >
+  Demonstrates the loop action driving a multi-round dialogue.
+  Uses a subprocess mock host for self-contained testing.
+on_fail: abort
+host:
+  type: subprocess
+  command: "python examples/mock_host.py"
+
+steps:
+  # ── Phase 1: Setup ──────────────────────────────────────────
+
+  - action: cli
+    description: "Verify vibecollab is available"
+    command: "vibecollab --version"
+    expect:
+      exit_code: 0
+      stdout_contains: "vibecollab"
+
+  - action: cli
+    description: "Clean temp dir"
+    command: "python -c \"import shutil; shutil.rmtree('_loop_demo', ignore_errors=True)\""
+
+  - action: cli
+    description: "Create temp project"
+    command: "vibecollab init -n loop-demo -d generic -o _loop_demo --force"
+    expect:
+      exit_code: 0
+
+  - action: cli
+    description: "Init git"
+    command: "cd _loop_demo && git init && git add -A && git commit -m init"
+    expect:
+      exit_code: 0
+
+  # ── Phase 2: Autonomous loop ────────────────────────────────
+  #
+  # 3 rounds. Each round gathers project health state, composes a
+  # prompt, sends to mock host, continues regardless of response.
+
+  - action: loop
+    description: "3-round autonomous loop with state feedback"
+    max_rounds: 3
+    state_command: "cd _loop_demo && vibecollab health --json"
+    prompt_template: |
+      You are working on a VibeCollab project. Current health:
+      {{state}}
+
+      This is round {{round}} of {{max_rounds}}.
+      Please follow the recommended actions from the health report.
+    on_round_fail: continue
+
+  # ── Phase 3: Verify & cleanup ──────────────────────────────
+
+  - action: assert
+    description: "Loop should have produced a response"
+    stdout_contains: "Round"
+
+  - action: cli
+    description: "Remove temp project"
+    command: "python -c \"import shutil, time; time.sleep(0.2); shutil.rmtree('_loop_demo', ignore_errors=True)\""
+
+  - action: wait
+    description: "Brief wait for file handles"
+    seconds: 0.5
+
+  - action: cli
+    description: "Verify cleanup"
+    command: "python -c \"import os, shutil; shutil.rmtree('_loop_demo', ignore_errors=True); print('cleanup OK' if not os.path.exists('_loop_demo') else 'partial')\""
+    expect:
+      exit_code: 0

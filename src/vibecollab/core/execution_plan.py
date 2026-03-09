@@ -17,13 +17,16 @@ Step actions:
   assert  — Check file existence / content / previous stdout
   wait    — time.sleep(seconds)
   prompt  — Send a message to a HostAdapter and check the response
+  loop    — Autonomous multi-round dialogue with dynamic state feedback
 
-Host adapters (for 'prompt' steps):
+Host adapters (for 'prompt' and 'loop' steps):
   HostAdapter is a minimal Protocol (send + close). Built-in adapters:
   - LLMAdapter:        Calls LLM API directly (reuses llm_client.py)
   - SubprocessAdapter: Drives any stdin/stdout CLI tool as host
 
-Plan format example:
+Plan format examples:
+
+  Linear plan:
     name: "Multi-round task workflow"
     host: llm
     steps:
@@ -31,13 +34,24 @@ Plan format example:
         message: "Please call onboard, then create task TASK-DEV-001"
         expect:
           contains: "TASK-DEV-001"
-      - action: assert
-        file: ".vibecollab/tasks.json"
-        contains: "TASK-DEV-001"
-      - action: cli
-        command: "vibecollab check"
-        expect:
+
+  Autonomous loop:
+    name: "Iterate project 50 rounds"
+    host: llm
+    steps:
+      - action: loop
+        max_rounds: 50
+        goal: "All vibecollab check items pass"
+        state_command: "vibecollab next --json"
+        prompt_template: |
+          Current project state:
+          {{state}}
+          Round {{round}} of {{max_rounds}}.
+          Follow the recommended next steps.
+        check_command: "vibecollab check"
+        check_expect:
           exit_code: 0
+          stdout_contains: "All checks passed"
 
 See DECISION-018 for architecture rationale.
 """
@@ -387,7 +401,7 @@ class PlanResult:
 # Plan validation
 # ---------------------------------------------------------------------------
 
-VALID_ACTIONS = {"cli", "assert", "wait", "prompt"}
+VALID_ACTIONS = {"cli", "assert", "wait", "prompt", "loop"}
 VALID_ON_FAIL = {"abort", "skip", "continue"}
 
 
@@ -430,6 +444,17 @@ def validate_plan(plan: Dict[str, Any]) -> List[str]:
             has_prompt = True
             if "message" not in step:
                 errors.append(f"{prefix}: 'prompt' action requires 'message'")
+        if action == "loop":
+            has_prompt = True
+            if "max_rounds" not in step:
+                errors.append(f"{prefix}: 'loop' action requires 'max_rounds'")
+            elif not isinstance(step["max_rounds"], int) or step["max_rounds"] < 1:
+                errors.append(f"{prefix}: 'max_rounds' must be a positive integer")
+            if "prompt_template" not in step and "state_command" not in step:
+                errors.append(
+                    f"{prefix}: 'loop' action requires at least "
+                    f"'prompt_template' or 'state_command'"
+                )
 
         on_fail = step.get("on_fail", "abort")
         if on_fail not in VALID_ON_FAIL:
@@ -656,6 +681,284 @@ def _exec_prompt(
 
 
 # ---------------------------------------------------------------------------
+# Loop result — tracks per-round detail for autonomous loop steps
+# ---------------------------------------------------------------------------
+
+@dataclass
+class LoopRound:
+    """Result of a single round within a loop step."""
+    round_num: int
+    state: str = ""
+    prompt_sent: str = ""
+    response: str = ""
+    success: bool = True
+    goal_met: bool = False
+    error: str = ""
+    duration_ms: int = 0
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "round": self.round_num,
+            "success": self.success,
+            "goal_met": self.goal_met,
+            "duration_ms": self.duration_ms,
+            "state_preview": self.state[:200] if self.state else "",
+            "response_preview": self.response[:200] if self.response else "",
+            "error": self.error,
+        }
+
+
+@dataclass
+class LoopResult:
+    """Aggregate result of a loop step execution."""
+    total_rounds: int = 0
+    completed_rounds: int = 0
+    goal_met: bool = False
+    goal_met_at: int = 0
+    rounds: List[LoopRound] = field(default_factory=list)
+    error: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "total_rounds": self.total_rounds,
+            "completed_rounds": self.completed_rounds,
+            "goal_met": self.goal_met,
+            "goal_met_at": self.goal_met_at,
+            "error": self.error,
+            "rounds": [r.to_dict() for r in self.rounds],
+        }
+
+
+def _run_state_command(
+    command: str,
+    project_root: Path,
+    timeout: int = 30,
+) -> str:
+    """Run a state-gathering command and return its stdout."""
+    try:
+        result = subprocess.run(
+            command,
+            shell=True,
+            cwd=str(project_root),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+            encoding="utf-8",
+            errors="replace",
+        )
+        return result.stdout.strip()
+    except Exception:
+        return ""
+
+
+def _check_goal(
+    check_command: str,
+    check_expect: Dict[str, Any],
+    project_root: Path,
+    timeout: int = 30,
+) -> bool:
+    """Run a goal-check command and verify expectations."""
+    try:
+        result = subprocess.run(
+            check_command,
+            shell=True,
+            cwd=str(project_root),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+            encoding="utf-8",
+            errors="replace",
+        )
+        # Check exit code
+        expected_exit = check_expect.get("exit_code")
+        if expected_exit is not None and result.returncode != expected_exit:
+            return False
+        elif expected_exit is None and result.returncode != 0:
+            return False
+
+        # Check stdout
+        stdout_contains = check_expect.get("stdout_contains")
+        if stdout_contains and stdout_contains not in result.stdout:
+            return False
+
+        return True
+    except Exception:
+        return False
+
+
+def _exec_loop(
+    step: Dict[str, Any],
+    host: "HostAdapter",
+    variables: Dict[str, str],
+    project_root: Path,
+    timeout: int = 120,
+    vlog=None,
+) -> StepResult:
+    """Execute an autonomous multi-round loop step.
+
+    Each round:
+      1. Run state_command (if configured) → capture project state
+      2. Compose prompt from prompt_template with {{state}}, {{round}}, etc.
+      3. Send prompt to host via HostAdapter
+      4. Optionally run check_command to test if goal is met
+      5. Repeat until goal met or max_rounds reached
+
+    The loop shares the host's conversation history, so each round
+    builds on the previous context.
+    """
+    max_rounds = step.get("max_rounds", 10)
+    state_command = step.get("state_command", "")
+    prompt_template = step.get("prompt_template", "")
+    goal = step.get("goal", "")
+    check_command = step.get("check_command", "")
+    check_expect = step.get("check_expect", {})
+    on_round_fail = step.get("on_round_fail", "continue")  # continue | abort
+    state_timeout = step.get("state_timeout", 30)
+
+    # Default prompt template if only state_command is provided
+    if not prompt_template and state_command:
+        prompt_template = (
+            "Current project state:\n{{state}}\n\n"
+            "Round {{round}} of {{max_rounds}}."
+        )
+        if goal:
+            prompt_template += f"\nGoal: {goal}"
+        prompt_template += "\nFollow the recommended next steps and make progress."
+
+    loop_result = LoopResult(total_rounds=max_rounds)
+
+    for round_num in range(1, max_rounds + 1):
+        round_start = time.monotonic()
+        lr = LoopRound(round_num=round_num)
+
+        if vlog:
+            vlog(f"")
+            vlog(f"  ┌── Loop Round {round_num}/{max_rounds} ──")
+
+        # 1. Gather state
+        state = ""
+        if state_command:
+            # Variable substitution in state_command
+            cmd = state_command
+            for key, value in variables.items():
+                cmd = cmd.replace("{{" + key + "}}", value)
+            state = _run_state_command(cmd, project_root, timeout=state_timeout)
+            lr.state = state
+            if vlog:
+                preview = state[:150].replace("\n", " | ")
+                vlog(f"  │ state: {preview}")
+
+        # 2. Compose prompt
+        prompt = prompt_template
+        for key, value in variables.items():
+            prompt = prompt.replace("{{" + key + "}}", value)
+        prompt = prompt.replace("{{state}}", state)
+        prompt = prompt.replace("{{round}}", str(round_num))
+        prompt = prompt.replace("{{max_rounds}}", str(max_rounds))
+        if goal:
+            prompt = prompt.replace("{{goal}}", goal)
+        lr.prompt_sent = prompt
+
+        if vlog:
+            preview = prompt[:100].replace("\n", " ")
+            vlog(f"  │ prompt: {preview}...")
+
+        # 3. Send to host
+        try:
+            resp = host.send(prompt)
+        except Exception as e:
+            lr.error = f"Host send failed: {e}"
+            lr.success = False
+            lr.duration_ms = int((time.monotonic() - round_start) * 1000)
+            loop_result.rounds.append(lr)
+            if vlog:
+                vlog(f"  │ [FAIL] {lr.error}")
+                vlog(f"  └── Round {round_num} FAILED ({lr.duration_ms}ms)")
+            if on_round_fail == "abort":
+                loop_result.error = lr.error
+                break
+            continue
+
+        lr.response = resp.content
+        lr.success = resp.success
+
+        if not resp.success:
+            lr.error = resp.error or "Host returned failure"
+            lr.duration_ms = int((time.monotonic() - round_start) * 1000)
+            loop_result.rounds.append(lr)
+            if vlog:
+                vlog(f"  │ [FAIL] host error: {lr.error}")
+                vlog(f"  └── Round {round_num} FAILED ({lr.duration_ms}ms)")
+            if on_round_fail == "abort":
+                loop_result.error = lr.error
+                break
+            continue
+
+        if vlog:
+            preview = resp.content[:150].replace("\n", " | ")
+            vlog(f"  │ response: {preview}")
+
+        # 4. Check goal
+        if check_command:
+            goal_met = _check_goal(check_command, check_expect, project_root, timeout=state_timeout)
+            lr.goal_met = goal_met
+            if vlog:
+                vlog(f"  │ goal check: {'MET' if goal_met else 'not yet'}")
+            if goal_met:
+                lr.duration_ms = int((time.monotonic() - round_start) * 1000)
+                loop_result.rounds.append(lr)
+                loop_result.goal_met = True
+                loop_result.goal_met_at = round_num
+                loop_result.completed_rounds = round_num
+                if vlog:
+                    vlog(f"  └── GOAL MET at round {round_num}! ({lr.duration_ms}ms)")
+                break
+
+        lr.duration_ms = int((time.monotonic() - round_start) * 1000)
+        loop_result.rounds.append(lr)
+        loop_result.completed_rounds = round_num
+
+        if vlog:
+            vlog(f"  └── Round {round_num} OK ({lr.duration_ms}ms)")
+
+    # Determine overall success
+    # Success = all rounds succeeded AND (goal met if check_command is set)
+    all_rounds_ok = all(r.success for r in loop_result.rounds)
+    if check_command:
+        overall_success = all_rounds_ok and loop_result.goal_met
+    else:
+        overall_success = all_rounds_ok
+
+    total_duration = sum(r.duration_ms for r in loop_result.rounds)
+
+    # Build stdout summary
+    summary_lines = [
+        f"Loop completed: {loop_result.completed_rounds}/{max_rounds} rounds",
+    ]
+    if goal:
+        summary_lines.append(f"Goal: {goal}")
+    if loop_result.goal_met:
+        summary_lines.append(f"Goal met at round {loop_result.goal_met_at}")
+    elif check_command:
+        summary_lines.append("Goal NOT met")
+
+    # Last response as the "stdout" for downstream assert steps
+    last_response = loop_result.rounds[-1].response if loop_result.rounds else ""
+
+    return StepResult(
+        step_index=0,
+        action="loop",
+        success=overall_success,
+        stdout=last_response,
+        stderr="\n".join(summary_lines),
+        duration_ms=total_duration,
+        error=loop_result.error,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Plan Runner
 # ---------------------------------------------------------------------------
 
@@ -778,6 +1081,22 @@ class PlanRunner:
                     )
                 else:
                     sr = _exec_prompt(step, host, self._variables)
+            elif action == "loop":
+                max_r = step.get("max_rounds", 10)
+                self._vlog(f"  loop: max_rounds={max_r}")
+                if host is None:
+                    sr = StepResult(
+                        step_index=i,
+                        action="loop",
+                        success=False,
+                        error="No host adapter configured for loop steps",
+                    )
+                else:
+                    sr = _exec_loop(
+                        step, host, self._variables, self.project_root,
+                        timeout=self.timeout,
+                        vlog=self._vlog if self.verbose else None,
+                    )
             else:
                 sr = StepResult(
                     step_index=i,
@@ -805,7 +1124,7 @@ class PlanRunner:
                 self._vlog(f"  error: {sr.error}")
 
             # Track stdout for assert steps and variable storage
-            if action in ("cli", "prompt"):
+            if action in ("cli", "prompt", "loop"):
                 last_stdout = sr.stdout or ""
             store_as = step.get("store_as")
             if store_as and sr.stdout:

@@ -5,7 +5,7 @@
 ### New Feature
 - **Execution Plan** (`src/vibecollab/core/execution_plan.py`): YAML-driven multi-step workflow automation
   - `PlanRunner`: Loads a YAML plan, iterates steps, executes via subprocess/assertion/host adapter, records results
-  - Step actions: `cli` (run shell commands), `assert` (file/content checks), `wait` (delay), `prompt` (host adapter)
+  - Step actions: `cli` (run shell commands), `assert` (file/content checks), `wait` (delay), `prompt` (host adapter), `loop` (autonomous multi-round)
   - Per-step expectations: `exit_code`, `stdout_contains`, `stderr_contains`, `contains`, `not_contains`
   - Flow control: `on_fail` policy per step or plan-wide (`abort`/`skip`/`continue`)
   - `--dry-run` mode: preview all steps without executing
@@ -18,19 +18,31 @@
   - `SubprocessAdapter`: Drives any stdin/stdout CLI tool as host (e.g. `claude`, `aider`)
   - `resolve_host_adapter()`: Factory to create adapter from YAML plan `host` config
   - Variable passing between steps: `store_as` to capture, `{{var}}` to substitute
+- **Autonomous Loop Engine** (`loop` action): Drive a host through N rounds of dynamic dialogue
+  - Per-round: `state_command` → `prompt_template` (with `{{state}}`, `{{round}}`, `{{goal}}`) → host send → `check_command` goal evaluation
+  - Early exit when goal met, configurable `on_round_fail` (continue/abort)
+  - `LoopRound`/`LoopResult` data structures for per-round tracking
+  - Default prompt template auto-generated when only `state_command` is provided
+- **Verbose Logging**: `--verbose/-v` flag with timestamped per-step/per-round logs to stderr
+  - Windows GBK encoding fix: explicit `encoding="utf-8"` + `errors="replace"` in subprocess
 - **CLI `vibecollab plan` command group**:
-  - `vibecollab plan run <plan.yaml> [--dry-run] [--json] [--host]` — Execute or preview a plan
+  - `vibecollab plan run <plan.yaml> [--dry-run] [--json] [--host] [-v]` — Execute or preview a plan
   - `vibecollab plan validate <plan.yaml>` — Validate plan syntax without executing
 
 ### Decision
 - **DECISION-018**: Execution Plan architecture (S-level) — YAML plan + thin runner + host adapters, reuses existing domain APIs
 
+### Examples
+- `examples/demo_bootstrap.yaml`: 18-step self-bootstrap demo (18/18 PASSED)
+- `examples/demo_loop.yaml`: 9-step autonomous loop demo with state feedback (9/9 PASSED)
+- `examples/mock_host.py`: Subprocess mock host for loop demo
+
 ### Documentation
-- Updated CONTEXT.md, ROADMAP.md (v0.10.4 Phase 1+2 completed), DECISIONS.md (DECISION-018 Phase 2)
+- Updated CONTEXT.md, ROADMAP.md, DECISIONS.md, CHANGELOG.md
 - QA_TEST_CASES.md: 34 new test cases added in prior commit (93→127 total)
 
 ### Test
-- 70 unit tests (`test_execution_plan.py`):
+- 101 unit tests (`test_execution_plan.py`):
   - `TestValidatePlan` (10): YAML schema validation edge cases
   - `TestLoadPlan` (4): file loading, not-found, invalid YAML
   - `TestPlanRunnerCli` (6): echo, exit code, stdout, timeout
@@ -46,6 +58,11 @@
   - `TestResolveHostAdapter` (5): adapter factory
   - `TestSubprocessAdapter` (3): real subprocess communication
   - `TestMixedWorkflow` (3): cli+prompt+assert integration
+  - `TestValidatePlanLoop` (7): loop-specific validation rules
+  - `TestLoopDataStructures` (4): LoopRound/LoopResult defaults, serialization
+  - `TestRunStateCommand` (2): state command helper
+  - `TestCheckGoal` (4): goal check helper
+  - `TestPlanRunnerLoop` (14): loop execution, goal, abort, verbose, variable passing
 
 ---
 
