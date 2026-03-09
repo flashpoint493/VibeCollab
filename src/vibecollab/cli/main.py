@@ -1018,7 +1018,8 @@ def plan_group():
 @click.option("--dry-run", is_flag=True, help=_("Preview plan without executing"))
 @click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 @click.option("--timeout", default=120, help=_("Step timeout in seconds"))
-def plan_run(plan_file, dry_run, json_output, timeout):
+@click.option("--host", default=None, help=_("Host adapter override (llm, subprocess:cmd)"))
+def plan_run(plan_file, dry_run, json_output, timeout, host):
     """Execute a YAML automation plan
 
     Examples:
@@ -1028,9 +1029,11 @@ def plan_run(plan_file, dry_run, json_output, timeout):
         vibecollab plan run my_plan.yaml --dry-run
 
         vibecollab plan run my_plan.yaml --json
+
+        vibecollab plan run my_plan.yaml --host llm
     """
     import json as json_mod
-    from ..core.execution_plan import PlanRunner, load_plan
+    from ..core.execution_plan import PlanRunner, load_plan, resolve_host_adapter
 
     try:
         plan = load_plan(Path(plan_file))
@@ -1048,11 +1051,26 @@ def plan_run(plan_file, dry_run, json_output, timeout):
         except Exception:
             pass
 
+    # Resolve host adapter from CLI override or plan config
+    host_adapter = None
+    if host:
+        # CLI override: "llm" or "subprocess:command"
+        if host.startswith("subprocess:"):
+            from ..core.execution_plan import SubprocessAdapter
+            host_adapter = SubprocessAdapter(
+                command=host[len("subprocess:"):],
+                cwd=Path(".").resolve(),
+            )
+        else:
+            override_plan = {**plan, "host": host}
+            host_adapter = resolve_host_adapter(override_plan, Path(".").resolve())
+
     runner = PlanRunner(
         project_root=Path(".").resolve(),
         timeout=timeout,
         event_log=event_log,
         dry_run=dry_run,
+        host=host_adapter,
     )
     result = runner.run(plan)
 

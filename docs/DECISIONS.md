@@ -11,26 +11,30 @@
 - **Participants**: user, AI
 - **Level**: S
 - **Role**: [ARCH] [DEV]
-- **Problem**: VibeCollab lacks a way to automate multi-round workflows — creating temp repos, driving sequential task dialogues, validating feature regression across versions. This is needed both as E2E test infrastructure and as a user-facing protocol automation feature.
+- **Problem**: VibeCollab lacks a way to automate multi-round workflows — creating temp repos, driving sequential task dialogues, validating feature regression across versions. This is needed both as E2E test infrastructure and as a user-facing protocol automation feature. Further, VibeCollab should be able to **actively drive** any host (LLM API, CLI tool, MCP client) rather than passively waiting for the host to call us.
 - **Constraint**: Must align with VibeCollab's lightweight philosophy — no heavy process orchestration frameworks, no new core dependencies, reuse existing modules (Pipeline, TaskManager, EventLog, SessionStore, MCP tools).
 - **Options**:
   - A: Pure pytest fixtures — Too limited, no runtime capability, no user-facing value
   - B: Heavy async orchestrator with process spawning — Violates lightweight principle, over-engineered
-  - C: **YAML execution plan + thin runner** — Minimal new code, reuses existing domain modules (chosen)
-- **Decision**: C — Add `execution_plan.py` to `src/vibecollab/core/`, a single-file thin runner that reads a YAML plan and drives steps through existing VibeCollab APIs
+  - C: **YAML execution plan + thin runner + host adapters** — Minimal new code, reuses existing domain modules (chosen)
+- **Decision**: C — Add `execution_plan.py` to `src/vibecollab/core/`, a single-file thin runner that reads a YAML plan and drives steps through existing VibeCollab APIs and host adapters
 - **Rationale**:
-  - **Different from frozen `vibecollab ai agent`**: Agent was self-contained LLM plan→execute. This is a **declarative plan executor** — the plan is human-written YAML, not LLM-generated. No LLM dependency.
-  - **Single file, not a sub-package**: Follows VibeCollab convention — `pipeline.py` is ~310 lines, `roadmap_parser.py` is ~250 lines. Execution plan runner can be similarly compact (~300-400 lines).
-  - **Zero new dependencies**: Uses only `subprocess.run` (stdlib), `PyYAML` (existing dep), and VibeCollab's own `TaskManager` / `EventLog` / `Pipeline` APIs.
+  - **Different from frozen `vibecollab ai agent`**: Agent was self-contained LLM plan→execute. This is a **declarative plan executor** — the plan is human-written YAML, not LLM-generated. No LLM dependency for basic plans.
+  - **Single file, not a sub-package**: Follows VibeCollab convention — `pipeline.py` is ~310 lines, `roadmap_parser.py` is ~250 lines. Execution plan runner can be similarly compact.
+  - **Zero new dependencies**: Uses only `subprocess.run` (stdlib), `PyYAML` (existing dep), and VibeCollab's own APIs. LLM adapter lazily imports `llm_client.py`.
   - **YAML plan format**: Extends VibeCollab's existing YAML-centric config approach (project.yaml, insight.schema.yaml). A plan is just another YAML file.
-- **Design**:
-  - **Plan file** (`plan.yaml`): Ordered list of steps, each step has `action` (cli/mcp/assert/wait), `args`, optional `expect` assertions, optional `on_fail` (skip/abort/retry)
-  - **PlanRunner** class: Loads plan → iterates steps → executes via `subprocess.run` (CLI) or direct API call (MCP tools) → checks assertions → records results to EventLog
-  - **CLI**: `vibecollab plan run <plan.yaml> [--dry-run]` — Execute or preview a plan
-  - **E2E test helper**: `create_temp_project()` fixture that `vibecollab init` → populate → git commit, returns path for plan execution
+- **Design (v0.10.4 Phase 1 — Core)**: 4 step actions (`cli`/`assert`/`wait`/`prompt`), `PlanRunner`, EventLog integration, CLI commands
+- **Design (v0.10.4 Phase 2 — Host Adapters)**:
+  - **HostAdapter protocol**: `send(message) → HostResponse` + `close()` — minimal 2-method protocol
+  - **`prompt` step action**: Sends a message to the configured host adapter, checks response against expectations
+  - **LLMAdapter**: Calls LLM API via `llm_client.py`, maintains multi-round conversation history
+  - **SubprocessAdapter**: Drives any stdin/stdout CLI tool (e.g. `claude`, `aider`, any interactive process)
+  - **Variable passing**: `store_as` / `{{var}}` substitution between steps
+  - **Plan-level `host` config**: Declares which adapter to use (`llm`, `subprocess`, or a config dict)
+  - **VibeCollab actively initiates**: The plan runner drives the host, not vice versa. Combined with `vibecollab onboard` / `next_step` protocol commands, the plan can guide any host through a complete workflow.
 - **Integration**: Plan results are recorded as EventLog events (`PLAN_STEP_OK` / `PLAN_STEP_FAIL`). Plan completion can auto-transition a Task.
 - **Milestone**: v0.10.4
-- **Date**: 2026-03-05
+- **Date**: 2026-03-05 (Phase 1), 2026-03-09 (Phase 2)
 - **Status**: CONFIRMED
 
 ### DECISION-017: v0.10.x Release Engineering — From "Working" to "Professional Open Source Project"

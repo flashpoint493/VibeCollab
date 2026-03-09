@@ -4,27 +4,33 @@
 
 ### New Feature
 - **Execution Plan** (`src/vibecollab/core/execution_plan.py`): YAML-driven multi-step workflow automation
-  - `PlanRunner`: Loads a YAML plan, iterates steps, executes via subprocess/assertion, records results
-  - Step actions: `cli` (run shell commands), `assert` (file/content checks), `wait` (delay)
-  - Per-step expectations: `exit_code`, `stdout_contains`, `stderr_contains`
+  - `PlanRunner`: Loads a YAML plan, iterates steps, executes via subprocess/assertion/host adapter, records results
+  - Step actions: `cli` (run shell commands), `assert` (file/content checks), `wait` (delay), `prompt` (host adapter)
+  - Per-step expectations: `exit_code`, `stdout_contains`, `stderr_contains`, `contains`, `not_contains`
   - Flow control: `on_fail` policy per step or plan-wide (`abort`/`skip`/`continue`)
   - `--dry-run` mode: preview all steps without executing
   - EventLog integration: `PLAN_STARTED` / `PLAN_STEP_OK` / `PLAN_STEP_FAIL` / `PLAN_COMPLETED` events
   - `create_temp_project()` helper for E2E test fixtures
-  - Single file (~350 lines), zero new dependencies
+  - Single file, zero new dependencies
+- **Host Adapter System**: VibeCollab can now actively drive any external host
+  - `HostAdapter` protocol: minimal 2-method interface (`send` + `close`)
+  - `LLMAdapter`: Calls LLM API via `llm_client.py`, maintains multi-round conversation history
+  - `SubprocessAdapter`: Drives any stdin/stdout CLI tool as host (e.g. `claude`, `aider`)
+  - `resolve_host_adapter()`: Factory to create adapter from YAML plan `host` config
+  - Variable passing between steps: `store_as` to capture, `{{var}}` to substitute
 - **CLI `vibecollab plan` command group**:
-  - `vibecollab plan run <plan.yaml> [--dry-run] [--json]` — Execute or preview a plan
+  - `vibecollab plan run <plan.yaml> [--dry-run] [--json] [--host]` — Execute or preview a plan
   - `vibecollab plan validate <plan.yaml>` — Validate plan syntax without executing
 
 ### Decision
-- **DECISION-018**: Execution Plan architecture (S-level) — YAML plan + thin runner, reuses existing domain APIs
+- **DECISION-018**: Execution Plan architecture (S-level) — YAML plan + thin runner + host adapters, reuses existing domain APIs
 
 ### Documentation
-- Updated CONTEXT.md, ROADMAP.md (v0.10.4 milestone), DECISIONS.md (DECISION-018)
+- Updated CONTEXT.md, ROADMAP.md (v0.10.4 Phase 1+2 completed), DECISIONS.md (DECISION-018 Phase 2)
 - QA_TEST_CASES.md: 34 new test cases added in prior commit (93→127 total)
 
 ### Test
-- 41 new unit tests (`test_execution_plan.py`):
+- 70 unit tests (`test_execution_plan.py`):
   - `TestValidatePlan` (10): YAML schema validation edge cases
   - `TestLoadPlan` (4): file loading, not-found, invalid YAML
   - `TestPlanRunnerCli` (6): echo, exit code, stdout, timeout
@@ -33,6 +39,13 @@
   - `TestPlanResult` (6): data structures and serialization
   - `TestEventLogIntegration` (2): event recording, optional EventLog
   - `TestMultiStepWorkflow` (2): multi-step integration scenarios
+  - `TestValidatePlanPrompt` (4): prompt-specific validation
+  - `TestHostAdapterProtocol` (3): protocol compliance, HostResponse
+  - `TestPlanRunnerPrompt` (9): prompt execution, expectations, multi-round, dry-run
+  - `TestVariableSubstitution` (2): store_as / {{var}} substitution
+  - `TestResolveHostAdapter` (5): adapter factory
+  - `TestSubprocessAdapter` (3): real subprocess communication
+  - `TestMixedWorkflow` (3): cli+prompt+assert integration
 
 ---
 

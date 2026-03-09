@@ -439,23 +439,32 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 ### v0.10.4 - Execution Plan: Protocol-Driven Multi-Round Automation (DECISION-018)
 
 > Objective: YAML-driven plan executor for automating multi-round workflows and E2E test validation.
-> Single-file module (~300-400 lines), zero new dependencies, reuses existing domain APIs.
+> Single-file module, zero new dependencies, reuses existing domain APIs.
 
-#### Core (`src/vibecollab/core/execution_plan.py`)
-- [ ] `PlanRunner` class — Load YAML plan, iterate steps, execute, check assertions, record results
-- [ ] Step actions: `cli` (subprocess), `mcp` (direct API call), `assert` (file/content checks), `wait` (delay)
-- [ ] Plan-level config: `on_fail` policy (skip/abort/retry), `timeout`, `description`
-- [ ] EventLog integration — `PLAN_STEP_OK` / `PLAN_STEP_FAIL` event types
+#### Phase 1: Core (TASK-DEV-018a) ✅
+- [x] `PlanRunner` class — Load YAML plan, iterate steps, execute, check assertions, record results
+- [x] Step actions: `cli` (subprocess), `assert` (file/content checks), `wait` (delay)
+- [x] Plan-level config: `on_fail` policy (skip/abort/continue), `timeout`, `description`
+- [x] EventLog integration — `PLAN_STEP_OK` / `PLAN_STEP_FAIL` event types
+- [x] CLI: `vibecollab plan run <plan.yaml> [--dry-run] [--json]`
+- [x] CLI: `vibecollab plan validate <plan.yaml>`
+- [x] `create_temp_project()` pytest fixture helper
+- [x] 41 unit tests (all passing)
 
-#### CLI
-- [ ] `vibecollab plan run <plan.yaml> [--dry-run] [--json]` — Execute or preview a plan
-- [ ] `vibecollab plan validate <plan.yaml>` — Check plan syntax without executing
+#### Phase 2: Host Adapters (TASK-DEV-018b) ✅
+- [x] `HostAdapter` protocol — `send(message) → HostResponse` + `close()`
+- [x] `prompt` step action — Send message to host, check response expectations
+- [x] `LLMAdapter` — Calls LLM API via `llm_client.py`, multi-round conversation history
+- [x] `SubprocessAdapter` — Drive any stdin/stdout CLI tool as host
+- [x] `resolve_host_adapter()` factory — Resolve `host` field from YAML plan config
+- [x] Variable passing: `store_as` / `{{var}}` substitution between steps
+- [x] CLI `--host` option override
+- [x] 29 new unit tests (70 total, all passing)
 
-#### E2E Test Infrastructure
-- [ ] `create_temp_project()` pytest fixture — init + populate + git commit, returns project path
+#### Phase 3: Sample Plans & E2E (TODO)
 - [ ] Sample plan: multi-round task workflow (create→advance→solidify→validate)
 - [ ] Sample plan: feature regression (init→generate→check→health→insight chain)
-- [ ] Test report output with pass/fail per step
+- [ ] Sample plan: host-driven workflow (onboard→next→prompt loop)
 
 ### v1.0.0 - Official Release
 

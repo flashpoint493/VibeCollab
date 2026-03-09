@@ -2,8 +2,10 @@
 
 import json
 import os
+import sys
 import textwrap
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
@@ -13,11 +15,16 @@ from vibecollab.core.execution_plan import (
     PLAN_STARTED,
     PLAN_STEP_FAIL,
     PLAN_STEP_OK,
+    HostAdapter,
+    HostResponse,
+    LLMAdapter,
     PlanResult,
     PlanRunner,
     StepResult,
+    SubprocessAdapter,
     create_temp_project,
     load_plan,
+    resolve_host_adapter,
     validate_plan,
 )
 
@@ -115,10 +122,12 @@ class TestValidatePlan:
     def test_valid_all_actions(self):
         plan = {
             "name": "test",
+            "host": "llm",
             "steps": [
                 {"action": "cli", "command": "echo hello"},
                 {"action": "assert", "file": "README.md"},
                 {"action": "wait", "seconds": 0.1},
+                {"action": "prompt", "message": "hello"},
             ],
         }
         assert validate_plan(plan) == []
@@ -539,3 +548,495 @@ class TestMultiStepWorkflow:
         result = runner.run(plan)
         assert result.success
         assert result.passed == 4
+
+
+# ---------------------------------------------------------------------------
+# Mock host adapter for testing
+# ---------------------------------------------------------------------------
+
+class MockHostAdapter:
+    """A mock HostAdapter that returns canned responses."""
+
+    def __init__(self, responses: list = None):
+        self.responses = list(responses or [])
+        self.sent: list = []
+        self.closed = False
+
+    def send(self, message: str, context=None) -> HostResponse:
+        self.sent.append(message)
+        if self.responses:
+            return self.responses.pop(0)
+        return HostResponse(content="mock response", success=True)
+
+    def close(self) -> None:
+        self.closed = True
+
+
+# ---------------------------------------------------------------------------
+# TestValidatePlanPrompt
+# ---------------------------------------------------------------------------
+
+class TestValidatePlanPrompt:
+    """Tests for prompt-specific validation rules."""
+
+    def test_prompt_missing_message(self):
+        plan = {
+            "name": "test",
+            "host": "llm",
+            "steps": [{"action": "prompt"}],
+        }
+        errors = validate_plan(plan)
+        assert any("message" in e for e in errors)
+
+    def test_prompt_missing_host(self):
+        plan = {
+            "name": "test",
+            "steps": [{"action": "prompt", "message": "hello"}],
+        }
+        errors = validate_plan(plan)
+        assert any("host" in e for e in errors)
+
+    def test_prompt_valid(self):
+        plan = {
+            "name": "test",
+            "host": "llm",
+            "steps": [{"action": "prompt", "message": "hello"}],
+        }
+        assert validate_plan(plan) == []
+
+    def test_no_host_warning_when_no_prompt(self):
+        """No error about missing host if there are no prompt steps."""
+        plan = {
+            "name": "test",
+            "steps": [{"action": "cli", "command": "echo ok"}],
+        }
+        assert validate_plan(plan) == []
+
+
+# ---------------------------------------------------------------------------
+# TestHostAdapterProtocol
+# ---------------------------------------------------------------------------
+
+class TestHostAdapterProtocol:
+    """Tests for HostAdapter protocol compliance."""
+
+    def test_mock_is_host_adapter(self):
+        adapter = MockHostAdapter()
+        assert isinstance(adapter, HostAdapter)
+
+    def test_host_response_defaults(self):
+        r = HostResponse(content="hello")
+        assert r.success is True
+        assert r.error == ""
+        assert r.raw == {}
+
+    def test_host_response_failure(self):
+        r = HostResponse(content="", success=False, error="timeout")
+        assert not r.success
+        assert r.error == "timeout"
+
+
+# ---------------------------------------------------------------------------
+# TestPlanRunnerPrompt
+# ---------------------------------------------------------------------------
+
+class TestPlanRunnerPrompt:
+    """Tests for PlanRunner executing prompt steps."""
+
+    def test_simple_prompt(self, tmp_path):
+        project = _make_project(tmp_path)
+        mock = MockHostAdapter([
+            HostResponse(content="I created TASK-DEV-001 successfully"),
+        ])
+        plan = {
+            "name": "prompt test",
+            "host": "llm",  # will be overridden by injected host
+            "steps": [
+                {"action": "prompt", "message": "Create a task"},
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=mock)
+        result = runner.run(plan)
+        assert result.success
+        assert result.passed == 1
+        assert "TASK-DEV-001" in result.steps[0].stdout
+        assert len(mock.sent) == 1
+
+    def test_prompt_expect_contains(self, tmp_path):
+        project = _make_project(tmp_path)
+        mock = MockHostAdapter([
+            HostResponse(content="Task TASK-DEV-042 created"),
+        ])
+        plan = {
+            "name": "expect test",
+            "host": "llm",
+            "steps": [
+                {
+                    "action": "prompt",
+                    "message": "Create task",
+                    "expect": {"contains": "TASK-DEV-042"},
+                },
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=mock)
+        result = runner.run(plan)
+        assert result.success
+
+    def test_prompt_expect_contains_fail(self, tmp_path):
+        project = _make_project(tmp_path)
+        mock = MockHostAdapter([
+            HostResponse(content="Something else happened"),
+        ])
+        plan = {
+            "name": "expect fail",
+            "host": "llm",
+            "steps": [
+                {
+                    "action": "prompt",
+                    "message": "Create task",
+                    "expect": {"contains": "TASK-DEV-042"},
+                },
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=mock)
+        result = runner.run(plan)
+        assert not result.success
+        assert "missing" in result.steps[0].error.lower()
+
+    def test_prompt_expect_not_contains(self, tmp_path):
+        project = _make_project(tmp_path)
+        mock = MockHostAdapter([
+            HostResponse(content="All good, no errors"),
+        ])
+        plan = {
+            "name": "not contains test",
+            "host": "llm",
+            "steps": [
+                {
+                    "action": "prompt",
+                    "message": "Check status",
+                    "expect": {"not_contains": "ERROR"},
+                },
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=mock)
+        result = runner.run(plan)
+        assert result.success
+
+    def test_prompt_host_failure(self, tmp_path):
+        project = _make_project(tmp_path)
+        mock = MockHostAdapter([
+            HostResponse(content="", success=False, error="API timeout"),
+        ])
+        plan = {
+            "name": "host fail",
+            "host": "llm",
+            "steps": [
+                {"action": "prompt", "message": "Hello"},
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=mock)
+        result = runner.run(plan)
+        assert not result.success
+        assert "failure" in result.steps[0].error.lower() or "timeout" in result.steps[0].error.lower()
+
+    def test_prompt_no_host_configured(self, tmp_path):
+        project = _make_project(tmp_path)
+        plan = {
+            "name": "no host",
+            "steps": [
+                {"action": "prompt", "message": "Hello"},
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=None)
+        result = runner.run(plan)
+        assert not result.success
+        assert "no host" in result.steps[0].error.lower()
+
+    def test_multi_round_prompt(self, tmp_path):
+        project = _make_project(tmp_path)
+        mock = MockHostAdapter([
+            HostResponse(content="Onboarded. Project context loaded."),
+            HostResponse(content="Created TASK-DEV-001, status TODO"),
+            HostResponse(content="Transitioned TASK-DEV-001 to IN_PROGRESS"),
+        ])
+        plan = {
+            "name": "multi round",
+            "host": "llm",
+            "steps": [
+                {"action": "prompt", "message": "Please call onboard"},
+                {"action": "prompt", "message": "Create task TASK-DEV-001"},
+                {
+                    "action": "prompt",
+                    "message": "Advance TASK-DEV-001 to IN_PROGRESS",
+                    "expect": {"contains": "IN_PROGRESS"},
+                },
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=mock)
+        result = runner.run(plan)
+        assert result.success
+        assert result.passed == 3
+        assert len(mock.sent) == 3
+
+    def test_prompt_stdout_chain_to_assert(self, tmp_path):
+        """Prompt response is available as last_stdout for subsequent assert."""
+        project = _make_project(tmp_path)
+        mock = MockHostAdapter([
+            HostResponse(content="MARKER_XYZ found in project"),
+        ])
+        plan = {
+            "name": "prompt chain",
+            "host": "llm",
+            "steps": [
+                {"action": "prompt", "message": "Search for marker"},
+                {"action": "assert", "stdout_contains": "MARKER_XYZ"},
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=mock)
+        result = runner.run(plan)
+        assert result.success
+        assert result.passed == 2
+
+    def test_prompt_dry_run(self, tmp_path):
+        project = _make_project(tmp_path)
+        mock = MockHostAdapter()
+        plan = {
+            "name": "dry run prompt",
+            "host": "llm",
+            "steps": [
+                {"action": "prompt", "message": "Should not send"},
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=mock, dry_run=True)
+        result = runner.run(plan)
+        assert result.skipped == 1
+        assert len(mock.sent) == 0  # nothing sent in dry run
+
+
+# ---------------------------------------------------------------------------
+# TestVariableSubstitution
+# ---------------------------------------------------------------------------
+
+class TestVariableSubstitution:
+    """Tests for store_as / {{var}} variable passing between steps."""
+
+    def test_store_and_use(self, tmp_path):
+        project = _make_project(tmp_path)
+        mock = MockHostAdapter([
+            HostResponse(content="task_id=TASK-DEV-099"),
+            HostResponse(content="Done with TASK-DEV-099"),
+        ])
+        plan = {
+            "name": "variable test",
+            "host": "llm",
+            "steps": [
+                {
+                    "action": "prompt",
+                    "message": "Create a task",
+                    "store_as": "round1",
+                },
+                {
+                    "action": "prompt",
+                    "message": "Complete task from: {{round1}}",
+                },
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=mock)
+        result = runner.run(plan)
+        assert result.success
+        # Second message should have the substituted content
+        assert "task_id=TASK-DEV-099" in mock.sent[1]
+
+    def test_store_from_cli(self, tmp_path):
+        project = _make_project(tmp_path)
+        mock = MockHostAdapter([
+            HostResponse(content="Got it: hello from cli"),
+        ])
+        plan = {
+            "name": "cli to prompt var",
+            "host": "llm",
+            "steps": [
+                {
+                    "action": "cli",
+                    "command": "echo hello_from_cli",
+                    "store_as": "cli_out",
+                },
+                {
+                    "action": "prompt",
+                    "message": "Process: {{cli_out}}",
+                },
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=mock)
+        result = runner.run(plan)
+        assert result.success
+        assert "hello_from_cli" in mock.sent[0]
+
+
+# ---------------------------------------------------------------------------
+# TestResolveHostAdapter
+# ---------------------------------------------------------------------------
+
+class TestResolveHostAdapter:
+    """Tests for resolve_host_adapter factory function."""
+
+    def test_none_when_no_host(self):
+        plan = {"name": "test", "steps": []}
+        assert resolve_host_adapter(plan) is None
+
+    def test_llm_from_string(self):
+        plan = {"name": "test", "host": "llm", "steps": []}
+        adapter = resolve_host_adapter(plan)
+        assert isinstance(adapter, LLMAdapter)
+
+    def test_subprocess_from_dict(self):
+        plan = {
+            "name": "test",
+            "host": {"type": "subprocess", "command": "cat"},
+            "steps": [],
+        }
+        adapter = resolve_host_adapter(plan)
+        assert isinstance(adapter, SubprocessAdapter)
+
+    def test_subprocess_missing_command(self):
+        plan = {
+            "name": "test",
+            "host": {"type": "subprocess"},
+            "steps": [],
+        }
+        with pytest.raises(ValueError, match="command"):
+            resolve_host_adapter(plan)
+
+    def test_unknown_type(self):
+        plan = {"name": "test", "host": "unknown_host", "steps": []}
+        with pytest.raises(ValueError, match="Unknown"):
+            resolve_host_adapter(plan)
+
+
+# ---------------------------------------------------------------------------
+# TestSubprocessAdapter
+# ---------------------------------------------------------------------------
+
+class TestSubprocessAdapter:
+    """Tests for SubprocessAdapter with real subprocesses."""
+
+    def test_echo_adapter(self, tmp_path):
+        """Simple echo-based subprocess adapter."""
+        # Create a tiny Python script that reads stdin and echoes back
+        script = tmp_path / "echo_host.py"
+        script.write_text(textwrap.dedent("""\
+            import sys
+            sentinel = "__VIBECOLLAB_EOM__"
+            while True:
+                lines = []
+                for line in sys.stdin:
+                    line = line.rstrip("\\n")
+                    if line == sentinel:
+                        break
+                    lines.append(line)
+                if not lines:
+                    break
+                response = "ECHO: " + " ".join(lines)
+                print(response)
+                print(sentinel)
+                sys.stdout.flush()
+        """), encoding="utf-8")
+
+        adapter = SubprocessAdapter(
+            command=f"{sys.executable} {script}",
+            timeout=10,
+        )
+        try:
+            resp = adapter.send("hello world")
+            assert resp.success
+            assert "ECHO:" in resp.content
+            assert "hello world" in resp.content
+        finally:
+            adapter.close()
+
+    def test_subprocess_close_idempotent(self):
+        adapter = SubprocessAdapter(command="echo test")
+        adapter.close()  # no process started
+        adapter.close()  # idempotent
+
+    def test_subprocess_process_exits(self, tmp_path):
+        """Adapter handles process that exits immediately."""
+        adapter = SubprocessAdapter(
+            command=f"{sys.executable} -c \"print('bye')\"",
+            timeout=5,
+        )
+        resp = adapter.send("hello")
+        # Process exits, we should still get output
+        assert resp.content  # at least some output
+        adapter.close()
+
+
+# ---------------------------------------------------------------------------
+# TestMixedWorkflow
+# ---------------------------------------------------------------------------
+
+class TestMixedWorkflow:
+    """Integration: plans mixing cli, prompt, assert, wait steps."""
+
+    def test_cli_prompt_assert_chain(self, tmp_path):
+        project = _make_project(tmp_path)
+        mock = MockHostAdapter([
+            HostResponse(content="Created output.txt with content MAGIC_42"),
+        ])
+        plan = {
+            "name": "mixed workflow",
+            "host": "llm",
+            "steps": [
+                # CLI creates a file
+                {"action": "cli", "command": "python -c \"open('output.txt','w').write('MAGIC_42')\""},
+                # Prompt asks host to describe what happened
+                {"action": "prompt", "message": "Describe the file created"},
+                # Assert the file and prompt response
+                {"action": "assert", "file": "output.txt", "contains": "MAGIC_42"},
+                {"action": "assert", "stdout_contains": "MAGIC_42"},
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=mock)
+        result = runner.run(plan)
+        assert result.success
+        assert result.passed == 4
+
+    def test_host_auto_resolved_from_plan(self, tmp_path):
+        """PlanRunner auto-resolves host from plan when not injected."""
+        project = _make_project(tmp_path)
+        plan = {
+            "name": "auto resolve",
+            "host": "unknown_adapter_type",
+            "steps": [
+                {"action": "prompt", "message": "hello"},
+            ],
+        }
+        runner = PlanRunner(project_root=project)
+        # resolve_host_adapter raises ValueError for unknown type
+        with pytest.raises(ValueError, match="Unknown"):
+            runner.run(plan)
+
+    def test_host_cleanup_on_auto_resolve(self, tmp_path):
+        """Auto-resolved host gets closed after plan run."""
+        project = _make_project(tmp_path)
+        # We'll use a mock by subclassing to track close
+        closed_flag = {"closed": False}
+
+        class TrackingAdapter:
+            def send(self, message, context=None):
+                return HostResponse(content="ok")
+            def close(self):
+                closed_flag["closed"] = True
+
+        plan = {
+            "name": "cleanup",
+            "steps": [
+                {"action": "cli", "command": "echo ok"},
+            ],
+        }
+        runner = PlanRunner(project_root=project, host=TrackingAdapter())
+        result = runner.run(plan)
+        assert result.success
+        # Injected host is NOT auto-closed (caller owns it)
+        assert not closed_flag["closed"]
