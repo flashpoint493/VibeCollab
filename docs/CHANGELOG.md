@@ -1,5 +1,41 @@
 # VibeCollab Changelog
 
+## v0.10.4-dev (2026-03-05) - Execution Plan: Multi-Round Automation
+
+### New Feature
+- **Execution Plan** (`src/vibecollab/core/execution_plan.py`): YAML-driven multi-step workflow automation
+  - `PlanRunner`: Loads a YAML plan, iterates steps, executes via subprocess/assertion, records results
+  - Step actions: `cli` (run shell commands), `assert` (file/content checks), `wait` (delay)
+  - Per-step expectations: `exit_code`, `stdout_contains`, `stderr_contains`
+  - Flow control: `on_fail` policy per step or plan-wide (`abort`/`skip`/`continue`)
+  - `--dry-run` mode: preview all steps without executing
+  - EventLog integration: `PLAN_STARTED` / `PLAN_STEP_OK` / `PLAN_STEP_FAIL` / `PLAN_COMPLETED` events
+  - `create_temp_project()` helper for E2E test fixtures
+  - Single file (~350 lines), zero new dependencies
+- **CLI `vibecollab plan` command group**:
+  - `vibecollab plan run <plan.yaml> [--dry-run] [--json]` — Execute or preview a plan
+  - `vibecollab plan validate <plan.yaml>` — Validate plan syntax without executing
+
+### Decision
+- **DECISION-018**: Execution Plan architecture (S-level) — YAML plan + thin runner, reuses existing domain APIs
+
+### Documentation
+- Updated CONTEXT.md, ROADMAP.md (v0.10.4 milestone), DECISIONS.md (DECISION-018)
+- QA_TEST_CASES.md: 34 new test cases added in prior commit (93→127 total)
+
+### Test
+- 41 new unit tests (`test_execution_plan.py`):
+  - `TestValidatePlan` (10): YAML schema validation edge cases
+  - `TestLoadPlan` (4): file loading, not-found, invalid YAML
+  - `TestPlanRunnerCli` (6): echo, exit code, stdout, timeout
+  - `TestPlanRunnerAssert` (6): file exists/contains/not_contains, stdout chain
+  - `TestPlanRunnerFlow` (5): wait, abort, skip, continue, dry-run
+  - `TestPlanResult` (6): data structures and serialization
+  - `TestEventLogIntegration` (2): event recording, optional EventLog
+  - `TestMultiStepWorkflow` (2): multi-step integration scenarios
+
+---
+
 ## v0.10.3 (2026-03-04) - Template & Config English Translation
 
 ### New Feature

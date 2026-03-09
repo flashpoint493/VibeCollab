@@ -1001,6 +1001,119 @@ def pipeline_actions(event):
 
 
 # ============================================
+# Execution Plan commands (v0.10.4+)
+# ============================================
+
+@main.group("plan")
+def plan_group():
+    """Execution Plan: YAML-driven workflow automation
+
+    Run multi-step automation plans for testing and protocol workflows.
+    """
+    pass
+
+
+@plan_group.command("run")
+@click.argument("plan_file", type=click.Path(exists=True))
+@click.option("--dry-run", is_flag=True, help=_("Preview plan without executing"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
+@click.option("--timeout", default=120, help=_("Step timeout in seconds"))
+def plan_run(plan_file, dry_run, json_output, timeout):
+    """Execute a YAML automation plan
+
+    Examples:
+
+        vibecollab plan run my_plan.yaml
+
+        vibecollab plan run my_plan.yaml --dry-run
+
+        vibecollab plan run my_plan.yaml --json
+    """
+    import json as json_mod
+    from ..core.execution_plan import PlanRunner, load_plan
+
+    try:
+        plan = load_plan(Path(plan_file))
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"[red]{EMOJI_MAP['error']} {e}[/red]")
+        raise SystemExit(1)
+
+    # Optional EventLog integration
+    event_log = None
+    vibecollab_dir = Path(".vibecollab")
+    if vibecollab_dir.exists():
+        try:
+            from ..domain.event_log import EventLog
+            event_log = EventLog(Path("."))
+        except Exception:
+            pass
+
+    runner = PlanRunner(
+        project_root=Path(".").resolve(),
+        timeout=timeout,
+        event_log=event_log,
+        dry_run=dry_run,
+    )
+    result = runner.run(plan)
+
+    if json_output:
+        click.echo(json_mod.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        # Rich output
+        status_emoji = EMOJI_MAP['success'] if result.success else EMOJI_MAP['error']
+        status_color = "green" if result.success else "red"
+
+        console.print()
+        console.print(Panel.fit(
+            f"[bold]{result.name}[/bold]\n\n"
+            f"Status: [{status_color}]{status_emoji} {'PASSED' if result.success else 'FAILED'}[/{status_color}]\n"
+            f"Steps: {result.passed}/{result.total_steps} passed, "
+            f"{result.failed} failed, {result.skipped} skipped\n"
+            f"Duration: {result.duration_ms}ms",
+            title="Plan Result"
+        ))
+
+        if result.failed > 0 or result.aborted:
+            console.print()
+            for sr in result.steps:
+                if not sr.success and not sr.skipped:
+                    console.print(
+                        f"  [red]{EMOJI_MAP['error']}[/red] Step {sr.step_index}: "
+                        f"{sr.action} — {sr.error}"
+                    )
+            if result.abort_reason:
+                console.print(f"\n  [red]Aborted: {result.abort_reason}[/red]")
+
+        console.print()
+
+    if not result.success:
+        raise SystemExit(1)
+
+
+@plan_group.command("validate")
+@click.argument("plan_file", type=click.Path(exists=True))
+def plan_validate(plan_file):
+    """Validate a YAML plan file without executing
+
+    Examples:
+
+        vibecollab plan validate my_plan.yaml
+    """
+    from ..core.execution_plan import load_plan
+
+    try:
+        plan = load_plan(Path(plan_file))
+        steps = len(plan.get("steps", []))
+        console.print(
+            f"[green]{EMOJI_MAP['success']} Plan '{plan.get('name', '?')}' "
+            f"is valid ({steps} steps)[/green]"
+        )
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"[red]{EMOJI_MAP['error']} {e}[/red]")
+        raise SystemExit(1)
+
+
+# ============================================
 # Multi-developer management commands (v0.5.0+)
 # ============================================
 

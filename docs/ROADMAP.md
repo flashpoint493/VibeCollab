@@ -220,7 +220,7 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [x] Minimal project (empty project.yaml) and complex project (full config) boundary tests ✅ 15 tests
 
 #### Documentation & Quality
-- [ ] QA_TEST_CASES.md full update (covering v0.7.x new features)
+- [x] QA_TEST_CASES.md full update (covering v0.1.0~v0.10.1 all features, 127 test cases) ✅
 - [x] README.md update (install/quickstart/feature list sync) ✅ Project structure/test counts/version history synced
 - [x] Known issues zeroed or marked deferred ✅
 
@@ -436,6 +436,27 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [ ] GitHub Release (v0.10.3+)
 - [ ] Badge: PyPI / CI / Coverage / License / Python Version
 
+### v0.10.4 - Execution Plan: Protocol-Driven Multi-Round Automation (DECISION-018)
+
+> Objective: YAML-driven plan executor for automating multi-round workflows and E2E test validation.
+> Single-file module (~300-400 lines), zero new dependencies, reuses existing domain APIs.
+
+#### Core (`src/vibecollab/core/execution_plan.py`)
+- [ ] `PlanRunner` class — Load YAML plan, iterate steps, execute, check assertions, record results
+- [ ] Step actions: `cli` (subprocess), `mcp` (direct API call), `assert` (file/content checks), `wait` (delay)
+- [ ] Plan-level config: `on_fail` policy (skip/abort/retry), `timeout`, `description`
+- [ ] EventLog integration — `PLAN_STEP_OK` / `PLAN_STEP_FAIL` event types
+
+#### CLI
+- [ ] `vibecollab plan run <plan.yaml> [--dry-run] [--json]` — Execute or preview a plan
+- [ ] `vibecollab plan validate <plan.yaml>` — Check plan syntax without executing
+
+#### E2E Test Infrastructure
+- [ ] `create_temp_project()` pytest fixture — init + populate + git commit, returns project path
+- [ ] Sample plan: multi-round task workflow (create→advance→solidify→validate)
+- [ ] Sample plan: feature regression (init→generate→check→health→insight chain)
+- [ ] Test report output with pass/fail per step
+
 ### v1.0.0 - Official Release
 
 > Objective: Mark stable version, PyPI + GitHub Release
@@ -498,4 +519,4 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 
 ---
 
-*Last updated: 2026-03-05 (v0.10.1-dev)*
+*Last updated: 2026-03-05 (v0.10.4-dev)*
