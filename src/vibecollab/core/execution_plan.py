@@ -490,6 +490,8 @@ def _exec_cli(
             text=True,
             timeout=timeout,
             env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+            encoding="utf-8",
+            errors="replace",
         )
         # Check expectations
         expect = step.get("expect", {})
@@ -574,7 +576,7 @@ def _exec_assert(
 
     # Stdout from previous step
     stdout_contains = step.get("stdout_contains")
-    if stdout_contains and stdout_contains not in last_stdout:
+    if stdout_contains and stdout_contains not in (last_stdout or ""):
         error_parts.append(f"Previous stdout missing: '{stdout_contains}'")
 
     return StepResult(
@@ -680,13 +682,22 @@ class PlanRunner:
         event_log: Optional[Any] = None,
         dry_run: bool = False,
         host: Optional["HostAdapter"] = None,
+        verbose: bool = False,
     ):
         self.project_root = project_root.resolve()
         self.timeout = timeout
         self.event_log = event_log
         self.dry_run = dry_run
         self.host = host
+        self.verbose = verbose
         self._variables: Dict[str, str] = {}  # store_as → response content
+
+    def _vlog(self, msg: str) -> None:
+        """Print verbose log message to stderr (never interferes with stdout)."""
+        if self.verbose:
+            import sys as _sys
+            ts = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+            print(f"[plan:{ts}] {msg}", file=_sys.stderr, flush=True)
 
     def run(self, plan: Dict[str, Any]) -> PlanResult:
         """Execute all steps in a plan sequentially.
@@ -709,6 +720,15 @@ class PlanRunner:
         self._log_event(PLAN_STARTED, {"name": name, "steps": len(steps)})
         self._variables.clear()
 
+        self._vlog(f"{'='*60}")
+        self._vlog(f"PLAN START: '{name}' ({len(steps)} steps)")
+        self._vlog(f"  project_root: {self.project_root}")
+        if host:
+            self._vlog(f"  host adapter: {type(host).__name__}")
+        if self.dry_run:
+            self._vlog(f"  mode: DRY RUN")
+        self._vlog(f"{'='*60}")
+
         last_stdout = ""
 
         for i, step in enumerate(steps):
@@ -719,7 +739,11 @@ class PlanRunner:
                 step.get("command", step.get("message", action)[:80] if step.get("message") else action),
             )
 
+            self._vlog(f"")
+            self._vlog(f"--- Step {i}/{len(steps)-1}: [{action}] {description[:60]} ---")
+
             if self.dry_run:
+                self._vlog(f"  [SKIP] dry-run mode")
                 sr = StepResult(
                     step_index=i,
                     action=action,
@@ -733,12 +757,18 @@ class PlanRunner:
             step_start = time.monotonic()
 
             if action == "cli":
+                self._vlog(f"  cmd: {step.get('command', '')[:100]}")
                 sr = _exec_cli(step, self.project_root, self.timeout)
             elif action == "assert":
+                target = step.get('file', step.get('stdout_contains', '?'))
+                self._vlog(f"  target: {target}")
                 sr = _exec_assert(step, self.project_root, last_stdout)
             elif action == "wait":
+                self._vlog(f"  seconds: {step.get('seconds')}")
                 sr = _exec_wait(step)
             elif action == "prompt":
+                msg_preview = step.get("message", "")[:80].replace("\n", " ")
+                self._vlog(f"  message: {msg_preview}...")
                 if host is None:
                     sr = StepResult(
                         step_index=i,
@@ -760,12 +790,27 @@ class PlanRunner:
             sr.duration_ms = int((time.monotonic() - step_start) * 1000)
             result.steps.append(sr)
 
+            # Verbose logging of step result
+            status_mark = "PASS" if sr.success else "FAIL"
+            self._vlog(f"  [{status_mark}] {sr.duration_ms}ms")
+            if sr.exit_code is not None:
+                self._vlog(f"  exit_code: {sr.exit_code}")
+            if sr.stdout:
+                preview = sr.stdout.strip()[:200].replace("\n", "\n         ")
+                self._vlog(f"  stdout: {preview}")
+            if sr.stderr:
+                preview = sr.stderr.strip()[:200].replace("\n", "\n         ")
+                self._vlog(f"  stderr: {preview}")
+            if sr.error:
+                self._vlog(f"  error: {sr.error}")
+
             # Track stdout for assert steps and variable storage
             if action in ("cli", "prompt"):
-                last_stdout = sr.stdout
+                last_stdout = sr.stdout or ""
             store_as = step.get("store_as")
             if store_as and sr.stdout:
                 self._variables[store_as] = sr.stdout
+                self._vlog(f"  stored as: {{{{ {store_as} }}}}")
 
             if sr.success:
                 result.passed += 1
@@ -803,6 +848,16 @@ class PlanRunner:
 
         event_type = PLAN_COMPLETED if result.success else PLAN_ABORTED
         self._log_event(event_type, result.to_dict())
+
+        self._vlog(f"")
+        self._vlog(f"{'='*60}")
+        self._vlog(f"PLAN {'PASSED' if result.success else 'FAILED'}: '{name}'")
+        self._vlog(f"  {result.passed}/{result.total_steps} passed, "
+                   f"{result.failed} failed, {result.skipped} skipped")
+        self._vlog(f"  duration: {result.duration_ms}ms")
+        if result.aborted:
+            self._vlog(f"  abort: {result.abort_reason}")
+        self._vlog(f"{'='*60}")
 
         # Cleanup host adapter
         if host is not None and host is not self.host:

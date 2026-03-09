@@ -1019,7 +1019,8 @@ def plan_group():
 @click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 @click.option("--timeout", default=120, help=_("Step timeout in seconds"))
 @click.option("--host", default=None, help=_("Host adapter override (llm, subprocess:cmd)"))
-def plan_run(plan_file, dry_run, json_output, timeout, host):
+@click.option("--verbose", "-v", is_flag=True, help=_("Verbose step-by-step logging"))
+def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
     """Execute a YAML automation plan
 
     Examples:
@@ -1071,6 +1072,7 @@ def plan_run(plan_file, dry_run, json_output, timeout, host):
         event_log=event_log,
         dry_run=dry_run,
         host=host_adapter,
+        verbose=verbose,
     )
     result = runner.run(plan)
 
