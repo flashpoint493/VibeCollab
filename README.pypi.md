@@ -10,19 +10,20 @@
 
 - **What it is**: A configurable AI collaboration protocol framework with built-in knowledge capture (Insight) and MCP Server.
 - **Pain it solves**: Turns chaotic AI-assisted development into structured, auditable, and reusable collaboration workflows.
-- **Get started**: `pip install vibe-collab` → then have your AI assistant read `skill.md` ([view on GitHub](https://github.com/flashpoint493/VibeCollab/blob/master/skill.md)) for full setup guidance.
+- **Get started**: Copy the text below and send it to your AI assistant (Cursor / CodeBuddy / Cline / ...):
+
+> Read https://raw.githubusercontent.com/flashpoint493/VibeCollab/master/skill.md and follow the instructions.
+
+That's all you need — the AI will install VibeCollab, initialize your project, and connect to your IDE automatically.
 
 ---
 
-## Try It Now
+## Manual Setup
 
 ```bash
 pip install vibe-collab
 vibecollab init -n "MyProject" -d generic -o ./my-project
 cd my-project
-
-# Connect to your AI IDE (Cursor / Cline / CodeBuddy)
-pip install vibe-collab
 vibecollab mcp inject --ide cursor   # or: cline / codebuddy / all
 ```
 

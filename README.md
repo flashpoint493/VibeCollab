@@ -19,15 +19,15 @@
 
 - **What it is**: A configurable AI collaboration protocol framework with built-in knowledge capture (Insight) and MCP Server.
 - **Pain it solves**: Turns chaotic AI-assisted development into structured, auditable, and reusable collaboration workflows.
-- **Get started**: Have your AI assistant read [`skill.md`](skill.md) — it handles everything (install, init, IDE integration).
+- **Get started**: Copy the text below and send it to your AI assistant (Cursor / CodeBuddy / Cline / ...):
+
+> Read https://raw.githubusercontent.com/flashpoint493/VibeCollab/master/skill.md and follow the instructions.
+
+That's all you need — the AI will install VibeCollab, initialize your project, and connect to your IDE automatically.
 
 ---
 
-## Try It Now
-
-Tell your AI assistant to read [`skill.md`](skill.md) — it will install VibeCollab, initialize your project, and connect to your IDE automatically.
-
-Or set up manually:
+## Manual Setup
 
 ```bash
 pip install vibe-collab
@@ -459,6 +459,7 @@ Yes. Run `vibecollab init` in your project root. It creates `project.yaml` and `
 
 | Version | Date | Highlights |
 |---------|------|-----------|
+| v0.10.9 | 2026-03-11 | Get-started rewrite: "copy one line to your AI" with raw skill.md link; PyPI README synced |
 | v0.10.8 | 2026-03-11 | README facade: centered header, rich badges (CI/Tests/Platform), Before/After table, OpenClaw integration, i18n sync |
 | v0.10.7 | 2026-03-11 | CI/CD fixes: cross-platform test fixes (4 tests), bash shell for Windows, Python 3.9 dropped |
 | v0.10.6 | 2026-03-09 | CLI cleanup: removed redundant commands (pipeline group, export-template, version-info, ai group); unified version |
@@ -501,4 +502,4 @@ MIT
 
 ---
 
-*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.10.8.*
+*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.10.9.*

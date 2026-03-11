@@ -19,15 +19,15 @@
 
 - **它是什么**: 一个可配置的 AI 协作协议框架，内置知识沉淀系统 (Insight) + MCP Server
 - **解决什么痛点**: 将混乱的 AI 辅助开发变成结构化、可审计、可复用的协作工作流
-- **快速上手**: 让你的 AI 助手阅读 [`skill.md`](skill.md) — 它会自动处理安装、初始化和 IDE 接入
+- **快速上手**: 复制下面这段话，发送给你正在使用的 AI 助手（Cursor / CodeBuddy / Cline / ...）：
+
+> Read https://raw.githubusercontent.com/flashpoint493/VibeCollab/master/skill.md and follow the instructions.
+
+就这一句，AI 会自动完成安装、初始化和 IDE 接入。
 
 ---
 
-## 立刻体验
-
-让你的 AI 助手阅读 [`skill.md`](skill.md) — 它会自动安装 VibeCollab、初始化项目并接入你的 IDE。
-
-或者手动设置：
+## 手动设置
 
 ```bash
 pip install vibe-collab
@@ -843,6 +843,7 @@ vibecollab health
 
 | 版本 | 日期 | 主要特性 |
 |------|------|---------|
+| v0.10.9 | 2026-03-11 | 快速上手重写: "复制一句话给 AI" + raw skill.md 链接；PyPI README 同步 |
 | v0.10.8 | 2026-03-11 | README 门面装修: 居中 header、丰富 badge (CI/Tests/Platform)、Before/After 对比表、OpenClaw 集成、i18n 同步 |
 | v0.10.7 | 2026-03-11 | CI/CD 修复: 跨平台测试修复 (4 个测试)、Windows bash shell、Python 3.9 停止支持 |
 | v0.10.6 | 2026-03-09 | CLI 清理: 移除冗余命令 (pipeline 组、export-template、version-info、ai 组)；统一版本号 |
@@ -905,4 +906,4 @@ MIT
 
 ---
 
-*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.10.8。*
+*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.10.9。*
