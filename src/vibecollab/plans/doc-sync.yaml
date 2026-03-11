@@ -1,0 +1,60 @@
+# Documentation Sync Loop
+# Keep all project documentation up to date
+#
+# Usage:
+#   vibecollab auto init plans/doc-sync.yaml
+#
+# Focuses on:
+#   - CONTEXT.md currency
+#   - CHANGELOG.md completeness
+#   - ROADMAP.md accuracy
+#   - README consistency
+
+name: "Documentation Sync Loop"
+host: file_exchange
+
+steps:
+  - action: loop
+    max_rounds: 5
+    goal: "All documentation is current and consistent"
+    state_command: "vibecollab health --json"
+    prompt_template: |
+      # Documentation Sync - Round {{round}}/{{max_rounds}}
+      
+      ## Project Health
+      ```json
+      {{state}}
+      ```
+      
+      ## Your Tasks
+      
+      1. **Review docs/CONTEXT.md**:
+         - Is it current? Update if stale
+         - Does it reflect recent work?
+      
+      2. **Review docs/CHANGELOG.md**:
+         - Are recent changes documented?
+         - Add missing entries
+      
+      3. **Review docs/ROADMAP.md**:
+         - Mark completed items as [x]
+         - Update task status
+         - Run `vibecollab roadmap sync`
+      
+      4. **Check README.md**:
+         - Version numbers correct?
+         - Features list accurate?
+      
+      5. **Commit updates**:
+         `git add docs/ README.md && git commit -m "docs: sync documentation"`
+      
+      ## Report
+      
+      Write to `.vibecollab/loop/response.md`:
+      - Documents updated
+      - Any inconsistencies found
+      
+      End with: `<!-- VIBECOLLAB_RESPONSE_READY -->`
+    check_command: "vibecollab health --json"
+    check_expect:
+      exit_code: 0

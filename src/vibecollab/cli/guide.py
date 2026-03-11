@@ -603,7 +603,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         suggestions.append("Use `vibecollab onboard -d <your-ID>` to see your personal context")
 
     suggestions.append("After modifying files, use `vibecollab next` for next-step suggestions")
-    suggestions.append("Use `vibecollab check --insights` to run consistency self-check")
+    suggestions.append("Use `vibecollab check` to run consistency self-check (insights included by default)")
 
     console.print(Panel(
         "\n".join(f"  {BULLET} {s}" for s in suggestions),
@@ -1059,8 +1059,8 @@ def next_step(config: str, as_json: bool):
         actions.append({
             "priority": f"P3-{priority}",
             "type": "run_check",
-            "action": "Run vibecollab check --insights",
-            "reason": "Suggest running consistency self-check after completing above actions",
+            "action": "Run vibecollab check",
+            "reason": "Suggest running consistency self-check after completing above actions (insights included by default)",
         })
 
     # === Output ===

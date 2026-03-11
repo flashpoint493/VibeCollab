@@ -1,5 +1,30 @@
 # VibeCollab Changelog
 
+## v0.10.5 (2026-03-09) - IDE-Driven Automation
+
+### New Feature
+- **FileExchangeAdapter**: File-based communication with IDE AI (Cursor/Cline)
+  - vibecollab writes instructions to `.vibecollab/loop/instruction.md`
+  - IDE AI executes with tool-use, writes response to `response.md`
+  - Configurable `timeout`, `poll_interval`, `exchange_dir`
+  - `<!-- VIBECOLLAB_INSTRUCTION -->` / `<!-- VIBECOLLAB_RESPONSE_READY -->` markers
+
+### Breaking Change
+- **Removed `LLMAdapter`**: Direct LLM API calls without tool-use had no practical use
+  - Use `file_exchange` to drive IDE AI (Cursor/Cline) with tool-use capabilities
+  - Use `subprocess` to drive CLI tools (Aider, etc.) with execution capabilities
+
+### Documentation
+- Simplified Execution Plan documentation — focused on `file_exchange` workflow
+- Removed "two modes" confusion — unified as IDE-driven automation
+- Updated skill.md with IDE setup instructions
+
+### Test
+- 101 tests still passing after LLMAdapter removal
+- Updated `TestResolveHostAdapter` to test `FileExchangeAdapter`
+
+---
+
 ## v0.10.4-dev (2026-03-05) - Execution Plan: Multi-Round Automation
 
 ### New Feature

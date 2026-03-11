@@ -59,6 +59,11 @@ dev = [
     "black>=23.0",
     "ruff>=0.1.0",
 ]
+auto = [
+    "pyautogui>=0.9.54",
+    "pygetwindow>=0.0.9",
+    "pyperclip>=1.8.2",
+]
 
 [project.urls]
 Homepage = "https://github.com/flashpoint493/VibeCollab"
@@ -73,7 +78,7 @@ path = "src/vibecollab/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/vibecollab"]
-artifacts = ["src/vibecollab/patterns/**", "src/vibecollab/i18n/locales/**"]
+artifacts = ["src/vibecollab/patterns/**", "src/vibecollab/i18n/locales/**", "src/vibecollab/plans/**"]
 
 [tool.hatch.build.targets.sdist]
 include = [

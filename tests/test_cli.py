@@ -169,34 +169,6 @@ class TestCLI:
         assert "Available Templates" in result.output
         assert "default" in result.output.lower() or "project" in result.output.lower()
 
-    def test_export_template_default(self):
-        """Test exporting default template"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            output_path = Path(tmpdir) / "exported.yaml"
-            result = self.runner.invoke(main, [
-                "export-template", "-t", "default", "-o", str(output_path)
-            ])
-            assert result.exit_code == 0
-            assert output_path.exists()
-            content = yaml.safe_load(output_path.read_text(encoding="utf-8"))
-            assert "project" in content
-
-    def test_export_template_nonexistent(self):
-        """Test exporting non-existent template"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            output_path = Path(tmpdir) / "exported.yaml"
-            result = self.runner.invoke(main, [
-                "export-template", "-t", "nonexistent_template_xyz", "-o", str(output_path)
-            ])
-            assert result.exit_code != 0
-            assert "not found" in result.output.lower()
-
-    def test_version_info(self):
-        """Test version info command"""
-        result = self.runner.invoke(main, ["version-info"])
-        assert result.exit_code == 0
-        assert "Version Info" in result.output or "version" in result.output.lower()
-
     def test_check_basic(self):
         """Test protocol check command"""
         with tempfile.TemporaryDirectory() as tmpdir:

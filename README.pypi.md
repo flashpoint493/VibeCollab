@@ -10,7 +10,7 @@
 
 - **What it is**: A configurable AI collaboration protocol framework with built-in knowledge capture (Insight) and MCP Server.
 - **Pain it solves**: Turns chaotic AI-assisted development into structured, auditable, and reusable collaboration workflows.
-- **Use in 60 seconds**: `pip install vibe-collab && vibecollab init -n MyProject -d generic -o ./my-project`
+- **Get started**: `pip install vibe-collab` → then have your AI assistant read `skill.md` ([view on GitHub](https://github.com/flashpoint493/VibeCollab/blob/master/skill.md)) for full setup guidance.
 
 ---
 
@@ -84,25 +84,47 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 - Cross-developer conflict detection (file, task, dependency)
 - Shared Insight statistics and provenance tracing
 
+### Execution Plan (v0.10.7)
+- **Unified execution engine**: `vibecollab plan run` is the sole entry point for ALL automation workflows
+- **3 host adapters**: `file_exchange` (file polling), `subprocess` (CLI tools), `auto` (keyboard simulation)
+- **Auto adapter**: `--host auto:cursor` drives IDE via keyboard simulation — hands-free automation
+- **File exchange protocol**: vibecollab sends instructions, IDE AI executes with tool-use, writes response back
+- **YAML-driven workflows**: Define plans with `cli`, `assert`, `wait`, `prompt`, and `loop` actions
+- **Goal-based termination**: Loop continues until `check_command` passes or `max_rounds` reached
+- **Verbose logging**: `--verbose/-v` for timestamped per-step/per-round execution logs
+
 ---
 
-## Workflow
+## Architecture Overview
+
+VibeCollab is built on **5 core pillars**:
+
+| # | Pillar | Key Commands | Purpose |
+|---|--------|-------------|---------|
+| 1 | **Strict Consistency Checking** | `check`, `health` | Protocol compliance, doc freshness, Insight integrity (insights on by default) |
+| 2 | **Multi-Role + Milestone Scheduling** | `task`, `roadmap`, `dev` | Role-isolated contexts, ROADMAP<->Task sync |
+| 3 | **Complete Document-Aligned Context** | `onboard`, `session_save` | CONTEXT/DECISIONS/CHANGELOG/PRD — auto-restored every conversation |
+| 4 | **Insight Knowledge System** | `insight add/search/suggest` | Capture, index, retrieve reusable knowledge across sessions |
+| 5 | **Autonomous Loop / Self-Iteration** | `plan run`, `auto` | Unified execution engine with 3 host adapters |
+
+### Workflow
 
 ```
-1. Install         pip install vibe-collab
-2. Init project    vibecollab init -n MyProject -d generic -o ./my-project
-3. Generated       project.yaml + docs/ (CONTEXT, CHANGELOG, DECISIONS, ROADMAP)
-                        ↓
-4. Pattern Engine  project.yaml → Jinja2 → CONTRIBUTING_AI.md
-                        ↓
-5. Connect IDE     vibecollab mcp inject --ide cursor
-                   (or: vibecollab prompt --compact --copy)
-                        ↓
-6. Dev loop        TaskManager → Insight matching → EventLog → Session end
-                        ↓
-7. Checkpoint      vibecollab check + health + insight capture
-                        ↓
-8. Release         Milestone release
+1. Setup              pip install vibe-collab && vibecollab init
+                             ↓
+2. Connect IDE        vibecollab mcp inject --ide cursor
+                             ↓
+3. Conversation       onboard → read CONTEXT/DECISIONS/ROADMAP → Insight search
+        ↓
+4. Dev Loop           TaskManager (create → transition → solidify)
+        ↓                    ↓
+5. Knowledge          Insight add/suggest → reusable knowledge captured
+        ↓
+6. Session End        Update CONTEXT + CHANGELOG → check → session_save → git commit
+        ↓
+7. Automation         plan run --host file_exchange  (IDE file polling)
+   (optional)         plan run --host auto:cursor    (keyboard simulation)
+                      plan run --host subprocess     (CLI tools like aider)
 ```
 
 ---
@@ -204,6 +226,7 @@ vibecollab prompt --compact --copy   # Copy context to clipboard
 
 ```bash
 vibecollab --help                              # Help
+vibecollab --version                           # Show version
 vibecollab init -n <name> -d <domain> -o <dir> # Init project
 vibecollab generate -c <config>                # Generate collaboration rules
 vibecollab validate -c <config>                # Validate config
@@ -237,8 +260,24 @@ vibecollab roadmap status/sync/parse
 # Multi-Role
 vibecollab dev whoami/list/status/sync/init/switch/conflicts
 
+# Execution Plan (v0.10.7)
+vibecollab plan run <plan.yaml> [-v] [--dry-run] [--json]
+vibecollab plan run <plan.yaml> --host auto:cursor  # Auto adapter
+vibecollab plan validate <plan.yaml>           # Validate plan syntax
+
+# Auto Driver Shortcuts (v0.10.7 — delegates to plan run)
+vibecollab auto list                           # List preset automation plans
+vibecollab auto init <plan.yaml> [--ide cursor] # Create .bat launcher
+vibecollab auto status                         # Check running status
+vibecollab auto stop                           # Stop running process
+
+# Config Management
+vibecollab config setup                        # Interactive LLM config wizard
+vibecollab config show                         # Show current config
+vibecollab config set <key> <value>            # Set config value
+
 # Health & Checking
-vibecollab check [--insights] [--strict]       # Protocol compliance
+vibecollab check [--no-insights] [--strict]    # Protocol compliance (insights on by default)
 vibecollab health [--json]                     # Health score (0-100)
 ```
 
@@ -310,7 +349,7 @@ Cursor Rules are IDE-specific and static. VibeCollab generates rules from a stru
 No. VibeCollab generates collaboration protocol documents and provides tools for AI assistants. It does not modify your application source code.
 
 **Do I need an LLM API key?**
-No. Core features (init, generate, check, MCP Server, Insights, Tasks) work entirely offline. LLM keys are only needed for the experimental `vibecollab ai` commands.
+No. All features (init, generate, check, MCP Server, Insights, Tasks, Execution Plan, Auto Driver) work entirely offline. No LLM API key is required.
 
 **Can I use it with an existing project?**
 Yes. Run `vibecollab init` in your project root. It creates `project.yaml` and `docs/` alongside your existing files without touching them.
@@ -326,4 +365,4 @@ MIT
 
 ---
 
-*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator.*
+*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.10.7.*

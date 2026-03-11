@@ -10,7 +10,7 @@
 
 - **它是什么**: 一个可配置的 AI 协作协议框架，内置知识沉淀系统 (Insight) + MCP Server
 - **解决什么痛点**: 将混乱的 AI 辅助开发变成结构化、可审计、可复用的协作工作流
-- **60 秒上手**: `pip install vibe-collab && vibecollab init -n MyProject -d generic -o ./my-project`
+- **快速上手**: `pip install vibe-collab` → 让你的 AI 助手阅读 [`skill.md`](skill.md) 获取完整安装引导
 
 ---
 
@@ -53,54 +53,50 @@ vibecollab mcp inject --ide cursor   # 或: cline / codebuddy / all
 
 ---
 
-## 工作流程图
+## 架构概览
 
-```mermaid
-flowchart TD
-    A[1. 安装 vibe-collab<br/>pip install] --> B[2. 初始化项目<br/>vibecollab init]
-    B --> C[生成项目结构]
-    C --> D1[project.yaml<br/>核心配置 · 单一数据源]
-    C --> D2[docs/<br/>CONTEXT · CHANGELOG · DECISIONS]
-    
-    D1 --> E[Pattern Engine<br/>Jinja2 模板渲染]
-    E --> F[CONTRIBUTING_AI.md<br/>协作规则文档]
-    
-    F --> G[3. 接入 AI IDE]
-    D2 --> G
-    
-    G --> M0[MCP Server 模式<br/>vibecollab mcp inject<br/>IDE 自动读取协议]
-    G --> M1[手动模式<br/>复制 CONTRIBUTING_AI.md<br/>到 AI 对话]
-    G --> M4[Agent 引导<br/>vibecollab onboard<br/>vibecollab prompt]
-    
-    M0 --> H[开发循环]
-    M1 --> H
-    M4 --> H
-    
-    H --> H1[TaskManager<br/>创建任务 · 状态流转<br/>validate → solidify]
-    H1 --> H1a[Insight 语义匹配<br/>向量检索 + 标签匹配<br/>推荐相关知识沉淀]
-    H1a --> H2[EventLog<br/>append-only 审计日志<br/>SHA-256 完整性校验]
-    H2 --> H3[对话结束<br/>更新 CONTEXT · CHANGELOG<br/>git commit]
-    
-    H3 --> I{检查点}
-    I --> I1[vibecollab check<br/>协议自检 + Insight 一致性]
-    I --> I2[vibecollab health<br/>项目健康信号]
-    I --> I3[Insight 沉淀<br/>vibecollab insight add/search<br/>知识复用与语义检索]
-    
-    I1 --> J[里程碑发布]
-    I2 --> J
-    I3 --> J
-    
-    style A fill:#e1f5ff
-    style B fill:#e1f5ff
-    style D1 fill:#fff4e1
-    style E fill:#fff4e1
-    style G fill:#ffe1f5
-    style M0 fill:#e1ffe1
-    style H fill:#ffe1f5
-    style H1a fill:#f5e1ff
-    style I3 fill:#f5e1ff
-    style J fill:#e1ffe1
+VibeCollab 围绕 **5 大核心支柱** 构建：
+
+| # | 支柱 | 关键命令 | 用途 |
+|---|------|---------|------|
+| 1 | **严格一致性检查** | `check`, `health` | 协议遵循、文档时效、Insight 完整性（默认开启） |
+| 2 | **多角色 + 里程碑调度** | `task`, `roadmap`, `dev` | 角色隔离上下文 (DEV/QA/ARCH/PM)，ROADMAP<->Task 同步 |
+| 3 | **完备文档对齐上下文** | `onboard`, `session_save` | CONTEXT/DECISIONS/CHANGELOG/PRD — 每次对话自动恢复 |
+| 4 | **Insight 沉淀知识系统** | `insight add/search/suggest` | 跨对话捕获、索引、检索可复用知识 |
+| 5 | **自循环迭代系统** | `plan run`, `auto` | 统一执行引擎 + 3 种宿主适配器 |
+
+### 工作流程
+
 ```
+1. 安装              pip install vibe-collab && vibecollab init
+                            ↓
+2. 接入 IDE          vibecollab mcp inject --ide cursor
+                            ↓
+3. 对话开始          onboard → 读取 CONTEXT/DECISIONS/ROADMAP → Insight 检索
+        ↓
+4. 开发循环          TaskManager（创建 → 流转 → 固化）
+        ↓                    ↓
+5. 知识沉淀          Insight add/suggest → 可复用知识入库
+        ↓
+6. 对话结束          更新 CONTEXT + CHANGELOG → check → session_save → git commit
+        ↓
+7. 自动化            plan run --host file_exchange  （IDE 文件轮询）
+   （可选）           plan run --host auto:cursor    （键盘模拟）
+                     plan run --host subprocess     （CLI 工具如 aider）
+```
+
+### 角色系统
+
+角色在 `project.yaml` 中定义，通过 CLI 脚手架创建：
+
+```bash
+vibecollab init -n "MyProject" -d generic -o ./my-project --multi-dev  # 创建多角色项目
+vibecollab dev init -d dev          # 初始化特定角色上下文
+vibecollab dev switch qa            # 切换到 QA 角色
+vibecollab dev list                 # 列出所有角色
+```
+
+每个角色拥有独立的 `docs/developers/{role}/CONTEXT.md` + `.metadata.yaml`，跨角色冲突自动检测。
 
 ---
 
@@ -131,8 +127,6 @@ flowchart TD
 ### 协作引擎
 - **Pattern Engine**: Jinja2 模板驱动的 CONTRIBUTING_AI.md 生成，27+ 个 `.md.j2` 模板 + manifest 控制
 - **Template Overlay**: `.vibecollab/patterns/` 本地模板覆盖，支持章节增删改
-- **三模式 AI CLI**: `vibecollab ai ask/chat` 人机交互 + `vibecollab ai agent` 自主模式 (Plan→Execute→Solidify)
-- **LLM 客户端**: Provider-agnostic (OpenAI-compatible + Anthropic Claude)
 
 ### 项目管理
 - **任务生命周期**: validate→solidify→rollback 状态管理 + 自动 Insight 关联
@@ -145,6 +139,15 @@ flowchart TD
 - **多角色支持**: 多角色/多 Agent 协同开发（DEV/QA/ARCH/PM/TEST/DESIGN），独立上下文管理
 - **冲突检测**: 自动检测跨角色的文件冲突、任务冲突、依赖冲突
 - **跨开发者 Insight 共享**: 收藏/使用/贡献统计 + 溯源可视化
+
+### 执行计划 (v0.10.7)
+- **统一执行引擎**: `vibecollab plan run` 是所有自动化工作流的唯一入口
+- **3 种宿主适配器**: `file_exchange`（文件轮询）、`subprocess`（CLI 工具）、`auto`（键盘模拟）
+- **Auto 适配器**: `--host auto:cursor` 通过键盘模拟驱动 IDE，实现无人值守自动化
+- **文件交换协议**: vibecollab 发送指令，IDE AI 用 tool-use 执行，写回响应
+- **YAML 驱动工作流**: 支持 `cli`、`assert`、`wait`、`prompt`、`loop` 五种步骤动作
+- **目标驱动终止**: 循环直到 `check_command` 通过或达到 `max_rounds`
+- **详细日志**: `--verbose/-v` 逐步/逐轮带时间戳的执行日志
 
 ### 基础设施
 - **CI/CD 自动发布**: GitHub Release 触发自动 PyPI 发布
@@ -240,7 +243,7 @@ my-project/
             └── .metadata.yaml
 ```
 
-> **💡 llms.txt 集成**：工具会自动检测项目中是否已有 `llms.txt` 文件。如果存在，会在其中添加 AI Collaboration 章节引用协作规则；如果不存在，会创建一个符合 [llmstxt.org](https://llmstxt.org) 标准的 `llms.txt` 文件。
+> **llms.txt 集成**：工具会自动检测项目中是否已有 `llms.txt` 文件。如果存在，会在其中添加 AI Collaboration 章节引用协作规则；如果不存在，会创建一个符合 [llmstxt.org](https://llmstxt.org) 标准的 `llms.txt` 文件。
 
 ### 文档体系说明
 
@@ -267,20 +270,20 @@ my-project/
 | `docs/developers/{role_code}/CONTEXT.md` | 角色工作上下文 | 每次对话结束时 |
 | `docs/developers/{role_code}/.metadata.yaml` | 角色元数据（focus、triggers 等） | 角色配置变更时 |
 
-> **⚠️ 上下文保存协议**: 每次对话结束时，AI 应：
+> **[!] 上下文保存协议**: 每次对话结束时，AI 应：
 > 1. 更新 `docs/CONTEXT.md` 保存当前状态
 > 2. 更新 `docs/CHANGELOG.md` 记录本次产出
 > 3. 如有新决策，更新 `docs/DECISIONS.md`
 > 4. **必须执行 git commit** 记录本次对话产出
 
-#### 📄 `CONTRIBUTING_AI.md` - AI 协作规则文档
+####  `CONTRIBUTING_AI.md` - AI 协作规则文档
 - **用途**: 项目的顶层协作规则，定义 AI 与开发者的协作方式
 - **内容**: 包含核心理念、角色定义、决策分级、流程协议等完整协议
 - **更新时机**: 当协作方式演进时（通过 `vibecollab generate` 重新生成）
 - **特点**: 由 `project.yaml` 配置自动生成，是 AI 理解项目规则的主要依据
 - **与 llms.txt 的关系**: 在 `llms.txt` 中通过引用链接指向此文档
 
-#### 📄 `llms.txt` - 项目上下文文档（可选）
+####  `llms.txt` - 项目上下文文档（可选）
 - **用途**: 符合 [llmstxt.org](https://llmstxt.org) 标准的项目上下文文档
 - **内容**: 项目概述、快速开始、文档索引等
 - **生成方式**: 
@@ -288,7 +291,7 @@ my-project/
   - 如果不存在，工具会创建一个新的 `llms.txt` 文件
 - **特点**: 与 `CONTRIBUTING_AI.md` 互补，前者描述"项目是什么"，后者定义"如何协作"
 
-#### 📝 `docs/CONTEXT.md` - 当前开发上下文
+####  `docs/CONTEXT.md` - 当前开发上下文
 - **用途**: 记录当前开发进度、正在进行的工作、待解决的问题
 - **内容**: 
   - 当前任务状态
@@ -296,9 +299,9 @@ my-project/
   - 下一步计划
   - 技术债务和已知问题
 - **更新时机**: **每次对话结束时必须更新**
-- **重要性**: ⭐ AI 在对话开始时必须读取此文件以恢复上下文
+- **重要性**: [*] AI 在对话开始时必须读取此文件以恢复上下文
 
-#### 📋 `docs/DECISIONS.md` - 重要决策记录
+####  `docs/DECISIONS.md` - 重要决策记录
 - **用途**: 记录所有 S/A 级重要决策，形成项目决策历史
 - **内容格式**:
   ```markdown
@@ -314,7 +317,7 @@ my-project/
 - **更新时机**: 每次 S/A 级决策确认后
 - **价值**: 为后续决策提供参考，避免重复讨论
 
-#### 📊 `docs/CHANGELOG.md` - 版本变更日志
+####  `docs/CHANGELOG.md` - 版本变更日志
 - **用途**: 记录每次对话的产出和变更
 - **内容**: 
   - 新增功能
@@ -324,19 +327,19 @@ my-project/
 - **更新时机**: **每次有效对话后**
 - **格式**: 遵循 [Keep a Changelog](https://keepachangelog.com/) 规范
 
-#### 🗺️ `docs/ROADMAP.md` - 路线图与迭代建议池
+####  `docs/ROADMAP.md` - 路线图与迭代建议池
 - **用途**: 规划项目里程碑和收集迭代建议
 - **内容结构**:
   - **路线图**: 当前里程碑计划
   - **迭代建议池**: QA/用户反馈的功能建议
-    - ✅ 纳入当前里程碑
-    - ⏳ 延后到下个里程碑
-    - ❌ 拒绝（不符合方向）
-    - 🔄 合并其他迭代
+    - [OK] 纳入当前里程碑
+    - [..] 延后到下个里程碑
+    - [X] 拒绝（不符合方向）
+    - (~) 合并其他迭代
 - **更新时机**: 里程碑规划时、收到反馈时
 - **价值**: 帮助 PM 管理需求优先级
 
-#### ✅ `docs/QA_TEST_CASES.md` - 产品QA测试用例
+#### [OK] `docs/QA_TEST_CASES.md` - 产品QA测试用例
 - **用途**: 从用户视角编写的功能验收测试用例
 - **内容格式**:
   ```markdown
@@ -348,12 +351,12 @@ my-project/
     2. 输入用户名和密码
     3. 点击登录按钮
   - **预期结果**: 登录成功，跳转到主页
-  - **状态**: 🟢 PASS
+  - **状态**: (G) PASS
   ```
 - **更新时机**: 每个功能完成时
 - **特点**: 与单元测试互补，关注功能完整性而非代码正确性
 
-#### ⚙️ `project.yaml` - 项目配置文件
+#### [G] `project.yaml` - 项目配置文件
 - **用途**: 项目的核心配置文件，定义所有协作规则
 - **内容**: 
   - 项目基本信息
@@ -475,10 +478,16 @@ vibecollab dev init --developer <name>         # 初始化新开发者
 vibecollab dev switch <developer>              # 切换到指定开发者
 vibecollab dev conflicts [-v]                  # 检测跨开发者冲突
 
-# 协议自检与健康
-vibecollab check [--verbose] [--strict]        # 协议遵循检查
-vibecollab check --insights                    # 含 Insight 一致性校验
-vibecollab health [--json]                     # 项目健康评分 (0-100)
+# 执行计划 (v0.10.7)
+vibecollab plan run <plan.yaml> [-v] [--dry-run] [--json]
+vibecollab plan run <plan.yaml> --host auto:cursor  # Auto 适配器
+vibecollab plan validate <plan.yaml>           # 验证计划语法
+
+# Auto 驱动快捷命令 (v0.10.7 — 底层委托 plan run)
+vibecollab auto list                           # 列出预置自动化计划
+vibecollab auto init <plan.yaml> [--ide cursor] # 创建 .bat 启动脚本
+vibecollab auto status                         # 查看运行状态
+vibecollab auto stop                           # 停止运行中的进程
 
 # Config 配置管理 (v0.8.0+)
 vibecollab config setup                        # 交互式 LLM 配置向导
@@ -486,10 +495,10 @@ vibecollab config show                         # 查看当前配置
 vibecollab config set <key> <value>            # 设置配置项
 vibecollab config path                         # 显示配置文件路径
 
-# AI 人机交互 (experimental, v0.5.8+)
-vibecollab ai ask "问题"                       # 单轮 AI 提问
-vibecollab ai chat                             # 多轮对话模式
-vibecollab ai agent plan/run/serve             # Agent 自主模式 (冻结)
+# 协议自检与健康
+vibecollab check [--verbose] [--strict]        # 协议遵循检查
+vibecollab check --insights                    # 含 Insight 一致性校验
+vibecollab health [--json]                     # 项目健康评分 (0-100)
 ```
 
 ---
@@ -518,13 +527,13 @@ flowchart LR
     A[用户配置<br/>project.yaml] --> C[Pattern Engine<br/>Jinja2 渲染]
     B[内置模板<br/>27 个 .md.j2] --> C
     
-    A1[• 项目名称] -.保留.-> C
-    A2[• 自定义角色] -.保留.-> C
-    A3[• 已确认决策] -.保留.-> C
+    A1[- 项目名称] -.保留.-> C
+    A2[- 自定义角色] -.保留.-> C
+    A3[- 已确认决策] -.保留.-> C
     
-    B1[• 新增协议章节] --> C
-    B2[• manifest 控制] --> C
-    B3[• 本地模板覆盖] --> C
+    B1[- 新增协议章节] --> C
+    B2[- manifest 控制] --> C
+    B3[- 本地模板覆盖] --> C
     
     C --> D[CONTRIBUTING_AI.md]
     
@@ -560,7 +569,7 @@ flowchart LR
 - 每个决策都是**共同思考**的结果
 - 对话本身就是**设计过程**的一部分
 
-### 任务单元 (Task Unit) ⭐
+### 任务单元 (Task Unit) [*]
 
 > **开发不按日期，按对话任务单元推进**
 
@@ -578,10 +587,10 @@ flowchart LR
 ```
 
 **任务单元的优势**：
-- ✅ **对话驱动**：以对话为单位推进，而非时间线
-- ✅ **状态清晰**：每个任务都有明确的状态流转
-- ✅ **依赖管理**：支持任务间的依赖关系
-- ✅ **可追溯**：每个任务单元都有完整的对话历史
+- [OK] **对话驱动**：以对话为单位推进，而非时间线
+- [OK] **状态清晰**：每个任务都有明确的状态流转
+- [OK] **依赖管理**：支持任务间的依赖关系
+- [OK] **可追溯**：每个任务单元都有完整的对话历史
 
 **使用场景**：
 - 开始新功能开发时，创建 `TASK-DEV-001`
@@ -737,41 +746,39 @@ VibeCollab/
 ├── project.yaml                 # 本项目的配置（单一数据源）
 ├── pyproject.toml               # 包配置
 ├── src/vibecollab/
-│   ├── cli.py                   # CLI 主入口
-│   ├── cli_mcp.py               # MCP Server CLI 命令组 (serve/config/inject)
-│   ├── cli_ai.py                # AI CLI 命令 (ask/chat/agent) [experimental]
-│   ├── cli_insight.py           # Insight 沉淀 CLI (13 子命令)
-│   ├── cli_task.py              # Task 管理 CLI (create/list/show/suggest)
-│   ├── cli_guide.py             # Agent 引导 CLI (onboard/next)
-│   ├── cli_index.py             # 语义索引 CLI (index/search)
-│   ├── cli_lifecycle.py         # 项目生涯管理命令
-│   ├── cli_config.py            # Config 配置管理 CLI
-│   ├── mcp_server.py            # MCP Server (FastMCP, Tools/Resources/Prompts)
+│   ├── __init__.py              # 版本号 + 公共 API
 │   ├── _compat.py               # Windows GBK 编码兼容层
-│   ├── config_manager.py        # 三层配置管理 (env > config file > defaults)
-│   ├── pattern_engine.py        # Jinja2 Pattern Engine (manifest 驱动)
-│   ├── generator.py             # 文档生成器 (粘合层)
-│   ├── extension.py             # 扩展处理器
-│   ├── project.py               # 项目管理
-│   ├── developer.py             # 多角色管理
-│   ├── conflict_detector.py     # 冲突检测
-│   ├── insight_manager.py       # Insight 沉淀管理 (CRUD/搜索/溯源/衰减)
-│   ├── insight_signal.py        # Insight 信号收集 + 候选推荐 (v0.9.2)
-│   ├── session_store.py         # 对话 Session 持久化 (v0.9.2)
-│   ├── embedder.py              # Embedding 抽象层 (OpenAI/sentence-transformers/pure_python)
-│   ├── vector_store.py          # SQLite 向量存储 + 余弦相似度
-│   ├── indexer.py               # 文档/Insight 增量索引器
-│   ├── llm_client.py            # LLM 客户端 (OpenAI/Anthropic)
-│   ├── agent_executor.py        # Agent 执行器 (Plan→Execute→Solidify)
-│   ├── event_log.py             # 审计日志 (JSONL + SHA-256)
-│   ├── task_manager.py          # 任务生命周期管理 + Insight 自动关联
-│   ├── health.py                # 项目健康信号提取
-│   ├── protocol_checker.py      # 协议自检 + 文档一致性检查
-│   ├── prd_manager.py           # PRD 需求管理
-│   ├── templates.py             # 模板管理
-│   ├── templates/
-│   │   ├── default.project.yaml
-│   │   └── domains/             # 领域扩展
+│   ├── i18n.py                  # 国际化框架
+│   ├── cli/                     # CLI 命令 (7 子包)
+│   │   ├── main.py              # CLI 主入口 + 核心命令
+│   │   ├── ai.py                # AI CLI (已冻结，保留代码)
+│   │   ├── config.py            # Config 配置管理
+│   │   ├── guide.py             # Agent 引导 (onboard/next/prompt)
+│   │   ├── index.py             # 语义索引 (index/search)
+│   │   ├── insight.py           # Insight 沉淀 CLI
+│   │   ├── lifecycle.py         # 项目生涯管理 (保留待开发)
+│   │   ├── mcp.py               # MCP Server CLI (serve/config/inject)
+│   │   ├── roadmap.py           # Roadmap 集成
+│   │   └── task.py              # Task 管理 CLI
+│   ├── core/                    # 核心引擎
+│   │   ├── execution_plan.py    # 执行计划引擎 (PlanRunner + HostAdapter)
+│   │   ├── generator.py         # 文档生成器
+│   │   ├── pattern_engine.py    # Jinja2 Pattern Engine
+│   │   ├── pipeline.py          # Schema 验证 + Action Registry
+│   │   ├── health.py            # 项目健康信号
+│   │   └── ...
+│   ├── contrib/                 # 扩展模块
+│   │   └── auto_driver.py       # 自主 IDE 驱动 (键盘模拟)
+│   ├── domain/                  # 业务领域
+│   │   ├── developer.py         # 多角色管理
+│   │   ├── event_log.py         # 审计日志 (JSONL + SHA-256)
+│   │   ├── task_manager.py      # 任务生命周期管理
+│   │   └── ...
+│   ├── insight/                 # Insight 知识沉淀
+│   ├── agent/                   # LLM 客户端 + Agent 执行器
+│   ├── search/                  # 语义检索引擎
+│   ├── plans/                   # 预置自动化计划 (YAML)
+│   ├── templates/               # 项目模板
 │   └── patterns/                # Jinja2 模板 (.md.j2)
 │       ├── manifest.yaml        # 章节清单 + 渲染条件
 │       └── *.md.j2              # 27+ 章节模板
@@ -788,7 +795,7 @@ VibeCollab/
 │   ├── DECISIONS.md
 │   ├── PRD.md
 │   └── ROADMAP.md
-└── tests/                       # 1409 tests
+└── tests/                       # 101+ tests
 ```
 
 ---
@@ -821,9 +828,12 @@ vibecollab health
 
 | 版本 | 日期 | 主要特性 |
 |------|------|---------|
+| v0.10.6 | 2026-03-09 | CLI 清理: 移除冗余命令 (pipeline 组、export-template、version-info、ai 组)；统一版本号 |
+| v0.10.5 | 2026-03-09 | Auto Driver: 自主 IDE 键盘模拟 + 预置计划 + .bat 启动器 |
+| v0.10.4 | 2026-03-09 | 执行计划: YAML 驱动工作流 + 自主循环引擎 + 宿主适配器 (101 tests) |
 | v0.9.7 | 2026-03-03 | 源码英文化 (96 文件) + 模块重构 (7 子包) |
 | v0.9.6 | 2026-02-28 | CLI i18n 框架 (gettext) + zh_CN 翻译 + 316 可翻译字符串 |
-| v0.9.5 | 2026-02-28 | ROADMAP ↔ Task 集成 + 双语 README + MCP roadmap 工具 |
+| v0.9.5 | 2026-02-28 | ROADMAP <-> Task 集成 + 双语 README + MCP roadmap 工具 |
 | v0.9.4 | 2026-02-27 | Insight 质量生命周期 (去重、关系图、导入/导出) |
 | v0.9.3 | 2026-02-27 | Task/EventLog 核心工作流接通 + task transition/solidify/rollback + MCP 12 Tools |
 | v0.9.2 | 2026-02-27 | Insight 信号驱动沉淀 + Session 持久化 + MCP 增强 |
@@ -855,7 +865,7 @@ Cursor Rules 是 IDE 特定的静态文件。VibeCollab 从结构化 `project.ya
 不会。VibeCollab 生成协作协议文档并提供工具给 AI 助手使用，不会修改你的应用源代码。
 
 **需要 LLM API Key 吗？**
-不需要。核心功能（init、generate、check、MCP Server、Insight、Task）完全离线运行。只有实验性的 `vibecollab ai` 命令需要 API Key。
+不需要。所有功能（init、generate、check、MCP Server、Insight、Task、执行计划、Auto Driver）完全离线运行，无需 API Key。
 
 **能用在已有项目上吗？**
 可以。在项目根目录运行 `vibecollab init`，会创建 `project.yaml` 和 `docs/` 目录，不会碰你的现有文件。
@@ -881,4 +891,4 @@ MIT
 
 ---
 
-*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.9.7。*
+*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.10.7。*

@@ -2,8 +2,7 @@
 Execution Plan - YAML-driven multi-round workflow automation.
 
 A lightweight plan runner that reads a YAML execution plan and drives
-steps through existing VibeCollab CLI commands, domain APIs, and host
-adapters (LLM / subprocess / MCP).
+steps through host adapters that communicate with IDE AI or CLI tools.
 
 Design principles:
 - Single file, not a sub-package
@@ -21,14 +20,14 @@ Step actions:
 
 Host adapters (for 'prompt' and 'loop' steps):
   HostAdapter is a minimal Protocol (send + close). Built-in adapters:
-  - LLMAdapter:        Calls LLM API directly (reuses llm_client.py)
-  - SubprocessAdapter: Drives any stdin/stdout CLI tool as host
+  - FileExchangeAdapter: Drives IDE AI (Cursor/Cline) via file exchange
+  - SubprocessAdapter:   Drives any stdin/stdout CLI tool as host
 
 Plan format examples:
 
   Linear plan:
     name: "Multi-round task workflow"
-    host: llm
+    host: file_exchange
     steps:
       - action: prompt
         message: "Please call onboard, then create task TASK-DEV-001"
@@ -37,7 +36,7 @@ Plan format examples:
 
   Autonomous loop:
     name: "Iterate project 50 rounds"
-    host: llm
+    host: file_exchange
     steps:
       - action: loop
         max_rounds: 50
@@ -73,6 +72,45 @@ try:
 except ImportError:
     from typing_extensions import Protocol, runtime_checkable
 
+
+# ---------------------------------------------------------------------------
+# Public API exports
+# ---------------------------------------------------------------------------
+
+__all__ = [
+    # Constants
+    "RESPONSE_READY_MARKER",
+    "PLAN_STARTED",
+    "PLAN_STEP_OK", 
+    "PLAN_STEP_FAIL",
+    "PLAN_COMPLETED",
+    "PLAN_ABORTED",
+    # Data classes
+    "HostResponse",
+    "StepResult",
+    "PlanResult",
+    "LoopRound",
+    "LoopResult",
+    # Protocols & Adapters
+    "HostAdapter",
+    "SubprocessAdapter",
+    "FileExchangeAdapter",
+    # Core functions
+    "load_plan",
+    "validate_plan",
+    "resolve_host_adapter",
+    "run_state_command",
+    "check_goal",
+    # Runner
+    "PlanRunner",
+]
+
+# ---------------------------------------------------------------------------
+# Shared constants (used by both execution_plan and auto_driver)
+# ---------------------------------------------------------------------------
+
+RESPONSE_READY_MARKER = "<!-- VIBECOLLAB_RESPONSE_READY -->"
+"""Marker that IDE AI writes to signal response completion."""
 
 # ---------------------------------------------------------------------------
 # Event types for plan execution (extend EventLog.EventType)
@@ -113,68 +151,6 @@ class HostAdapter(Protocol):
     def close(self) -> None:
         """Release resources (connections, processes, etc.)."""
         ...
-
-
-class LLMAdapter:
-    """Host adapter that calls an LLM API via llm_client.
-
-    Lazily imports llm_client so that LLM dependencies (httpx) are only
-    required when actually using this adapter.
-
-    The adapter maintains a conversation history so that multi-round
-    prompt steps share context within a single plan run.
-    """
-
-    def __init__(
-        self,
-        project_root: Optional[Path] = None,
-        system_prompt: str = "",
-        **llm_kwargs: Any,
-    ):
-        self._project_root = project_root
-        self._system_prompt = system_prompt
-        self._llm_kwargs = llm_kwargs
-        self._client = None
-        self._messages: list = []  # conversation history
-
-    def _ensure_client(self) -> None:
-        if self._client is not None:
-            return
-        from vibecollab.agent.llm_client import (
-            LLMClient, LLMConfig, Message, build_project_context,
-        )
-        self._Message = Message
-        config = LLMConfig(**self._llm_kwargs) if self._llm_kwargs else LLMConfig()
-        self._client = LLMClient(config=config)
-
-        # Build system message with project context
-        system = self._system_prompt or (
-            "You are an AI assistant working on a VibeCollab-managed project. "
-            "Follow the project's collaboration protocol. "
-            "Use the available VibeCollab CLI commands and MCP tools as needed."
-        )
-        if self._project_root:
-            ctx = build_project_context(self._project_root)
-            system += f"\n\n# Project Context\n\n{ctx}"
-        self._messages.append(self._Message(role="system", content=system))
-
-    def send(self, message: str, context: Optional[Dict[str, Any]] = None) -> HostResponse:
-        self._ensure_client()
-        self._messages.append(self._Message(role="user", content=message))
-        try:
-            resp = self._client.chat(self._messages, temperature=0.3)
-            self._messages.append(self._Message(role="assistant", content=resp.content))
-            return HostResponse(
-                content=resp.content,
-                success=resp.ok,
-                raw=resp.raw,
-            )
-        except Exception as e:
-            return HostResponse(content="", success=False, error=str(e))
-
-    def close(self) -> None:
-        self._messages.clear()
-        self._client = None
 
 
 class SubprocessAdapter:
@@ -274,23 +250,147 @@ class SubprocessAdapter:
             self._proc = None
 
 
+# ---------------------------------------------------------------------------
+# FileExchangeAdapter — lightweight file-based host communication
+# ---------------------------------------------------------------------------
+
+class FileExchangeAdapter:
+    """Host adapter that communicates with IDE AI via file exchange.
+
+    This adapter enables vibecollab to drive Cursor/Cline AI by writing
+    instructions to a file and polling for responses. The IDE AI (with
+    tool-use capabilities) monitors the instruction file and writes
+    results back.
+
+    Design: vibecollab acts as the orchestrator, emitting structured
+    instructions; the host IDE interprets and executes with its tool-use
+    capabilities, then writes results back via the response file.
+
+    Protocol:
+        1. vibecollab writes instruction to instruction_file
+        2. IDE AI detects new instruction, executes with tool-use
+        3. IDE AI writes result to response_file
+        4. vibecollab reads response, clears files, continues
+
+    Args:
+        exchange_dir: Directory for exchange files (default: .vibecollab/loop/)
+        instruction_file: Filename for instructions (default: instruction.md)
+        response_file: Filename for responses (default: response.md)
+        poll_interval: Seconds between response checks (default: 2.0)
+        timeout: Max seconds to wait for response (default: 300)
+    """
+
+    # Use shared constant
+    READY_MARKER = RESPONSE_READY_MARKER
+
+    def __init__(
+        self,
+        exchange_dir: str = ".vibecollab/loop",
+        instruction_file: str = "instruction.md",
+        response_file: str = "response.md",
+        poll_interval: float = 2.0,
+        timeout: int = 300,
+        project_root: Optional[Path] = None,
+    ):
+        self._project_root = project_root or Path.cwd()
+        self._exchange_dir = self._project_root / exchange_dir
+        self._instruction_path = self._exchange_dir / instruction_file
+        self._response_path = self._exchange_dir / response_file
+        self._poll_interval = poll_interval
+        self._timeout = timeout
+        self._round = 0
+
+    def _ensure_dir(self) -> None:
+        """Create exchange directory if not exists."""
+        self._exchange_dir.mkdir(parents=True, exist_ok=True)
+
+    def _write_instruction(self, message: str) -> None:
+        """Write instruction file with metadata header."""
+        self._round += 1
+        header = (
+            f"<!-- VIBECOLLAB_INSTRUCTION -->\n"
+            f"<!-- round: {self._round} -->\n"
+            f"<!-- timestamp: {datetime.now(timezone.utc).isoformat()} -->\n\n"
+        )
+        self._instruction_path.write_text(
+            header + message, encoding="utf-8"
+        )
+
+    def _clear_response(self) -> None:
+        """Clear response file to prepare for new response."""
+        if self._response_path.exists():
+            self._response_path.unlink()
+
+    def _read_response(self) -> Optional[str]:
+        """Read response if ready marker is present."""
+        if not self._response_path.exists():
+            return None
+        content = self._response_path.read_text(encoding="utf-8")
+        if self.READY_MARKER not in content:
+            return None
+        # Remove the ready marker from content
+        return content.replace(self.READY_MARKER, "").strip()
+
+    def send(self, message: str, context: Optional[Dict[str, Any]] = None) -> HostResponse:
+        """Send instruction and wait for IDE AI response.
+
+        Writes instruction to file, then polls for response until timeout.
+        """
+        self._ensure_dir()
+        self._clear_response()
+        self._write_instruction(message)
+
+        # Poll for response
+        deadline = time.monotonic() + self._timeout
+        while time.monotonic() < deadline:
+            response = self._read_response()
+            if response is not None:
+                return HostResponse(content=response, success=True)
+            time.sleep(self._poll_interval)
+
+        return HostResponse(
+            content="",
+            success=False,
+            error=f"Timeout waiting for IDE response after {self._timeout}s. "
+                  f"Ensure your IDE AI is monitoring {self._instruction_path}",
+        )
+
+    def close(self) -> None:
+        """Cleanup exchange files."""
+        try:
+            if self._instruction_path.exists():
+                self._instruction_path.unlink()
+            if self._response_path.exists():
+                self._response_path.unlink()
+        except Exception:
+            pass
+
+
 # Adapter factory — resolve 'host' field from YAML plan
 ADAPTER_REGISTRY: Dict[str, type] = {
-    "llm": LLMAdapter,
     "subprocess": SubprocessAdapter,
+    "file_exchange": FileExchangeAdapter,
+    # "auto" is lazily resolved (requires optional dependencies)
 }
 
 
 def resolve_host_adapter(
     plan: Dict[str, Any],
     project_root: Optional[Path] = None,
+    verbose: bool = False,
 ) -> Optional["HostAdapter"]:
     """Create a HostAdapter from a plan's 'host' configuration.
 
     The 'host' field can be:
-      - A string: adapter type name (e.g. "llm", "subprocess")
+      - A string: adapter type name (e.g. "file_exchange", "subprocess")
+      - A string with colon: "auto:cursor", "auto:cline" (AutoAdapter with IDE)
       - A dict:   {"type": "subprocess", "command": "claude", ...}
       - Absent:   returns None (plan has no prompt steps)
+
+    AutoAdapter support (v0.10.7+):
+      - "auto" or "auto:cursor" → AutoAdapter(ide="cursor")
+      - "auto:cline"           → AutoAdapter(ide="cline")
+      - "auto:codebuddy"       → AutoAdapter(ide="codebuddy")
     """
     host_cfg = plan.get("host")
     if host_cfg is None:
@@ -305,17 +405,30 @@ def resolve_host_adapter(
     else:
         return None
 
-    if host_type == "llm":
-        return LLMAdapter(project_root=project_root, **host_opts)
+    # Handle "auto" and "auto:<ide>" syntax
+    if host_type == "auto" or host_type.startswith("auto:"):
+        ide = "cursor"  # default
+        if ":" in host_type:
+            ide = host_type.split(":", 1)[1]
+        # Lazy import to avoid requiring pyautogui at module level
+        from ..contrib.auto_driver import AutoAdapter
+        return AutoAdapter(
+            ide=ide,
+            project_root=project_root,
+            verbose=verbose,
+            **host_opts,
+        )
     elif host_type == "subprocess":
         command = host_opts.pop("command", "")
         if not command:
             raise ValueError("SubprocessAdapter requires 'command' in host config")
         return SubprocessAdapter(command=command, cwd=project_root, **host_opts)
+    elif host_type == "file_exchange":
+        return FileExchangeAdapter(project_root=project_root, **host_opts)
     else:
         raise ValueError(
             f"Unknown host adapter type: '{host_type}'. "
-            f"Available: {sorted(ADAPTER_REGISTRY.keys())}"
+            f"Available: {sorted(list(ADAPTER_REGISTRY.keys()) + ['auto'])}"
         )
 
 
@@ -467,7 +580,7 @@ def validate_plan(plan: Dict[str, Any]) -> List[str]:
     if has_prompt and "host" not in plan:
         errors.append(
             "Plan uses 'prompt' steps but missing 'host' field. "
-            "Set host to 'llm', 'subprocess', or a config dict."
+            "Set host to 'file_exchange', 'subprocess', or a config dict."
         )
 
     return errors
@@ -729,12 +842,31 @@ class LoopResult:
         }
 
 
-def _run_state_command(
+# ---------------------------------------------------------------------------
+# Public utility functions (reusable by auto_driver and other modules)
+# ---------------------------------------------------------------------------
+
+def run_state_command(
     command: str,
     project_root: Path,
     timeout: int = 30,
 ) -> str:
-    """Run a state-gathering command and return its stdout."""
+    """Run a state-gathering command and return its stdout.
+    
+    This function is used to capture the current project state before
+    each round of an autonomous loop. Common examples:
+    
+        run_state_command("vibecollab next --json", project_root)
+        run_state_command("vibecollab check --json", project_root)
+    
+    Args:
+        command: Shell command to execute
+        project_root: Working directory for the command
+        timeout: Max seconds to wait (default: 30)
+    
+    Returns:
+        Stripped stdout content, or empty string on error
+    """
     try:
         result = subprocess.run(
             command,
@@ -752,13 +884,35 @@ def _run_state_command(
         return ""
 
 
-def _check_goal(
+def check_goal(
     check_command: str,
     check_expect: Dict[str, Any],
     project_root: Path,
     timeout: int = 30,
 ) -> bool:
-    """Run a goal-check command and verify expectations."""
+    """Run a goal-check command and verify expectations.
+    
+    Used to determine if the loop's goal has been achieved. The command
+    is executed and its exit code / stdout are compared against expectations.
+    
+    Args:
+        check_command: Shell command to execute (e.g., "vibecollab check")
+        check_expect: Dict with optional keys:
+            - exit_code: Expected return code (default: 0)
+            - stdout_contains: String that must appear in stdout
+        project_root: Working directory for the command
+        timeout: Max seconds to wait (default: 30)
+    
+    Returns:
+        True if all expectations are met, False otherwise
+    
+    Example:
+        check_goal(
+            "vibecollab check",
+            {"exit_code": 0, "stdout_contains": "All checks passed"},
+            Path(".")
+        )
+    """
     try:
         result = subprocess.run(
             check_command,
@@ -786,6 +940,8 @@ def _check_goal(
         return True
     except Exception:
         return False
+
+
 
 
 def _exec_loop(
@@ -844,7 +1000,7 @@ def _exec_loop(
             cmd = state_command
             for key, value in variables.items():
                 cmd = cmd.replace("{{" + key + "}}", value)
-            state = _run_state_command(cmd, project_root, timeout=state_timeout)
+            state = run_state_command(cmd, project_root, timeout=state_timeout)
             lr.state = state
             if vlog:
                 preview = state[:150].replace("\n", " | ")
@@ -902,7 +1058,7 @@ def _exec_loop(
 
         # 4. Check goal
         if check_command:
-            goal_met = _check_goal(check_command, check_expect, project_root, timeout=state_timeout)
+            goal_met = check_goal(check_command, check_expect, project_root, timeout=state_timeout)
             lr.goal_met = goal_met
             if vlog:
                 vlog(f"  │ goal check: {'MET' if goal_met else 'not yet'}")
@@ -974,7 +1130,7 @@ class PlanRunner:
     With a host adapter for prompt steps:
         runner = PlanRunner(
             project_root=Path("."),
-            host=LLMAdapter(project_root=Path(".")),
+            host=FileExchangeAdapter(project_root=Path(".")),
         )
     """
 

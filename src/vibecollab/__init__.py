@@ -7,7 +7,7 @@ Usage:
     vibecollab validate -c project.yaml
 """
 
-__version__ = "0.9.7"
+__version__ = "0.10.7"
 __author__ = "VibeCollab Contributors"
 
 from .domain.event_log import Event, EventLog, EventType

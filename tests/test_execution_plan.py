@@ -17,19 +17,19 @@ from vibecollab.core.execution_plan import (
     PLAN_STEP_OK,
     HostAdapter,
     HostResponse,
-    LLMAdapter,
     LoopResult,
     LoopRound,
     PlanResult,
     PlanRunner,
     StepResult,
     SubprocessAdapter,
+    FileExchangeAdapter,
     create_temp_project,
     load_plan,
     resolve_host_adapter,
     validate_plan,
-    _check_goal,
-    _run_state_command,
+    check_goal,
+    run_state_command,
 )
 
 
@@ -889,10 +889,10 @@ class TestResolveHostAdapter:
         plan = {"name": "test", "steps": []}
         assert resolve_host_adapter(plan) is None
 
-    def test_llm_from_string(self):
-        plan = {"name": "test", "host": "llm", "steps": []}
-        adapter = resolve_host_adapter(plan)
-        assert isinstance(adapter, LLMAdapter)
+    def test_file_exchange_from_string(self, tmp_path):
+        plan = {"name": "test", "host": "file_exchange", "steps": []}
+        adapter = resolve_host_adapter(plan, project_root=tmp_path)
+        assert isinstance(adapter, FileExchangeAdapter)
 
     def test_subprocess_from_dict(self):
         plan = {
@@ -916,6 +916,38 @@ class TestResolveHostAdapter:
         plan = {"name": "test", "host": "unknown_host", "steps": []}
         with pytest.raises(ValueError, match="Unknown"):
             resolve_host_adapter(plan)
+
+    def test_auto_adapter_import_error(self):
+        """resolve_host_adapter raises ImportError for auto if deps missing."""
+        plan = {"name": "test", "host": "auto:cursor", "steps": []}
+        # This will try to import AutoAdapter; if pyautogui is not installed,
+        # it should raise ImportError. If it IS installed, it should succeed.
+        try:
+            adapter = resolve_host_adapter(plan, project_root=Path("."))
+            # If we get here, pyautogui is installed
+            from vibecollab.contrib.auto_driver import AutoAdapter
+            assert isinstance(adapter, AutoAdapter)
+        except ImportError:
+            # Expected on CI without pyautogui
+            pass
+
+    def test_auto_adapter_default_ide(self):
+        """auto (without colon) defaults to cursor IDE."""
+        plan = {"name": "test", "host": "auto", "steps": []}
+        try:
+            adapter = resolve_host_adapter(plan, project_root=Path("."))
+            assert adapter.ide == "cursor"
+        except ImportError:
+            pass  # pyautogui not available
+
+    def test_auto_adapter_cline_ide(self):
+        """auto:cline resolves to cline IDE."""
+        plan = {"name": "test", "host": "auto:cline", "steps": []}
+        try:
+            adapter = resolve_host_adapter(plan, project_root=Path("."))
+            assert adapter.ide == "cline"
+        except ImportError:
+            pass  # pyautogui not available
 
 
 # ---------------------------------------------------------------------------
@@ -1179,14 +1211,14 @@ class TestLoopDataStructures:
 # ---------------------------------------------------------------------------
 
 class TestRunStateCommand:
-    """Tests for _run_state_command helper."""
+    """Tests for run_state_command helper."""
 
     def test_echo_command(self, tmp_path):
-        result = _run_state_command("echo hello_state", tmp_path)
+        result = run_state_command("echo hello_state", tmp_path)
         assert "hello_state" in result
 
     def test_failing_command_returns_empty(self, tmp_path):
-        result = _run_state_command("python -c \"raise SystemExit(1)\"", tmp_path)
+        result = run_state_command("python -c \"raise SystemExit(1)\"", tmp_path)
         # Should not crash, returns empty or partial
         assert isinstance(result, str)
 
@@ -1196,10 +1228,10 @@ class TestRunStateCommand:
 # ---------------------------------------------------------------------------
 
 class TestCheckGoal:
-    """Tests for _check_goal helper."""
+    """Tests for check_goal helper."""
 
     def test_goal_met(self, tmp_path):
-        met = _check_goal(
+        met = check_goal(
             "echo All checks passed",
             {"exit_code": 0, "stdout_contains": "All checks passed"},
             tmp_path,
@@ -1207,7 +1239,7 @@ class TestCheckGoal:
         assert met is True
 
     def test_goal_not_met_exit_code(self, tmp_path):
-        met = _check_goal(
+        met = check_goal(
             "python -c \"raise SystemExit(1)\"",
             {"exit_code": 0},
             tmp_path,
@@ -1215,7 +1247,7 @@ class TestCheckGoal:
         assert met is False
 
     def test_goal_not_met_stdout(self, tmp_path):
-        met = _check_goal(
+        met = check_goal(
             "echo partial",
             {"stdout_contains": "complete"},
             tmp_path,
@@ -1224,7 +1256,7 @@ class TestCheckGoal:
 
     def test_goal_no_expectations(self, tmp_path):
         """Empty expectations just check exit_code=0 by default."""
-        met = _check_goal("echo ok", {}, tmp_path)
+        met = check_goal("echo ok", {}, tmp_path)
         assert met is True
 
 
@@ -1573,3 +1605,112 @@ class TestPlanRunnerLoop:
         assert "project_status" in sent
         assert "1" in sent
         assert "Complete setup" in sent
+
+
+# ---------------------------------------------------------------------------
+# TestAutoDriverModule
+# ---------------------------------------------------------------------------
+
+class TestAutoDriverModule:
+    """Tests for the auto_driver module (AutoAdapter, state mgmt, bat gen)."""
+
+    def test_ide_configs_exist(self):
+        """IDE_CONFIGS has expected IDE entries."""
+        from vibecollab.contrib.auto_driver import IDE_CONFIGS
+        assert "cursor" in IDE_CONFIGS
+        assert "cline" in IDE_CONFIGS
+        assert "codebuddy" in IDE_CONFIGS
+
+    def test_ide_config_fields(self):
+        """IDEConfig has required fields."""
+        from vibecollab.contrib.auto_driver import IDE_CONFIGS
+        cursor = IDE_CONFIGS["cursor"]
+        assert cursor.name == "Cursor"
+        assert cursor.window_title_pattern == "Cursor"
+        assert cursor.open_chat_hotkey == ["ctrl", "l"]
+        assert cursor.send_hotkey == ["enter"]
+
+    def test_auto_driver_state(self):
+        """AutoDriverState serializes correctly."""
+        from vibecollab.contrib.auto_driver import AutoDriverState
+        state = AutoDriverState(
+            plan_path="plans/dev.yaml",
+            ide="cursor",
+            pid=12345,
+            started_at="2025-01-01T00:00:00",
+            host_type="auto:cursor",
+            max_rounds=50,
+        )
+        d = state.to_dict()
+        assert d["plan_path"] == "plans/dev.yaml"
+        assert d["ide"] == "cursor"
+        assert d["pid"] == 12345
+        assert d["host_type"] == "auto:cursor"
+        assert d["max_rounds"] == 50
+        assert d["status"] == "running"
+
+    def test_save_and_get_status(self, tmp_path):
+        """save_state + get_status round-trip."""
+        from vibecollab.contrib.auto_driver import (
+            AutoDriverState, save_state, get_status,
+        )
+        state = AutoDriverState(
+            plan_path="test.yaml",
+            ide="cursor",
+            pid=99999,
+            started_at="2025-03-11T00:00:00",
+            host_type="auto:cursor",
+        )
+        save_state(state, project_root=tmp_path)
+        loaded = get_status(project_root=tmp_path)
+        assert loaded is not None
+        assert loaded["pid"] == 99999
+        assert loaded["ide"] == "cursor"
+        assert loaded["host_type"] == "auto:cursor"
+
+    def test_get_status_no_file(self, tmp_path):
+        """get_status returns None when no state file exists."""
+        from vibecollab.contrib.auto_driver import get_status
+        assert get_status(project_root=tmp_path) is None
+
+    def test_generate_bat_content(self, tmp_path):
+        """generate_bat_content produces valid .bat content."""
+        from vibecollab.contrib.auto_driver import generate_bat_content
+        content = generate_bat_content("plans/dev.yaml", "cursor", tmp_path)
+        assert "vibecollab plan run" in content
+        assert "--host auto:cursor" in content
+        assert "plans/dev.yaml" in content
+        assert "@echo off" in content
+
+    def test_generate_bat_cline(self, tmp_path):
+        """generate_bat_content works with cline IDE."""
+        from vibecollab.contrib.auto_driver import generate_bat_content
+        content = generate_bat_content("plans/dev.yaml", "cline", tmp_path)
+        assert "--host auto:cline" in content
+        assert "Host: auto:cline" in content
+
+    def test_auto_adapter_protocol_compliance(self):
+        """AutoAdapter satisfies HostAdapter protocol (if importable)."""
+        try:
+            from vibecollab.contrib.auto_driver import AutoAdapter
+            from vibecollab.core.execution_plan import HostAdapter
+            # Check that AutoAdapter has send and close methods
+            assert hasattr(AutoAdapter, 'send')
+            assert hasattr(AutoAdapter, 'close')
+            # Note: we can't check isinstance because pyautogui may not be installed
+        except ImportError:
+            pass  # Optional deps not available
+
+    def test_auto_adapter_invalid_ide(self):
+        """AutoAdapter raises ValueError for unknown IDE."""
+        try:
+            from vibecollab.contrib.auto_driver import AutoAdapter
+            with pytest.raises(ValueError, match="Unknown IDE"):
+                AutoAdapter(ide="unknown_ide")
+        except ImportError:
+            pass  # pyautogui not available
+
+    def test_stop_driver_no_process(self, tmp_path):
+        """stop_driver returns False when no state exists."""
+        from vibecollab.contrib.auto_driver import stop_driver
+        assert stop_driver(project_root=tmp_path) is False
