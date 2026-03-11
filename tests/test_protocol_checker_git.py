@@ -7,16 +7,12 @@ Covers uncovered lines: 89, 114-121, 131, 145, 174, 196, 228, 275, 288, 345,
 
 import os
 import subprocess
-import tempfile
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
-
-from vibecollab.core.protocol_checker import CheckResult, ProtocolChecker
-
+from vibecollab.core.protocol_checker import ProtocolChecker
 
 # ============================================================
 # Helper: create git repo

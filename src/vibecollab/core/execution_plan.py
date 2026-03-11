@@ -57,7 +57,6 @@ See DECISION-018 for architecture rationale.
 
 import os
 import subprocess
-import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -81,7 +80,7 @@ __all__ = [
     # Constants
     "RESPONSE_READY_MARKER",
     "PLAN_STARTED",
-    "PLAN_STEP_OK", 
+    "PLAN_STEP_OK",
     "PLAN_STEP_FAIL",
     "PLAN_COMPLETED",
     "PLAN_ABORTED",
@@ -852,18 +851,18 @@ def run_state_command(
     timeout: int = 30,
 ) -> str:
     """Run a state-gathering command and return its stdout.
-    
+
     This function is used to capture the current project state before
     each round of an autonomous loop. Common examples:
-    
+
         run_state_command("vibecollab next --json", project_root)
         run_state_command("vibecollab check --json", project_root)
-    
+
     Args:
         command: Shell command to execute
         project_root: Working directory for the command
         timeout: Max seconds to wait (default: 30)
-    
+
     Returns:
         Stripped stdout content, or empty string on error
     """
@@ -891,10 +890,10 @@ def check_goal(
     timeout: int = 30,
 ) -> bool:
     """Run a goal-check command and verify expectations.
-    
+
     Used to determine if the loop's goal has been achieved. The command
     is executed and its exit code / stdout are compared against expectations.
-    
+
     Args:
         check_command: Shell command to execute (e.g., "vibecollab check")
         check_expect: Dict with optional keys:
@@ -902,10 +901,10 @@ def check_goal(
             - stdout_contains: String that must appear in stdout
         project_root: Working directory for the command
         timeout: Max seconds to wait (default: 30)
-    
+
     Returns:
         True if all expectations are met, False otherwise
-    
+
     Example:
         check_goal(
             "vibecollab check",
@@ -990,7 +989,7 @@ def _exec_loop(
         lr = LoopRound(round_num=round_num)
 
         if vlog:
-            vlog(f"")
+            vlog("")
             vlog(f"  ┌── Loop Round {round_num}/{max_rounds} ──")
 
         # 1. Gather state
@@ -1185,7 +1184,7 @@ class PlanRunner:
         if host:
             self._vlog(f"  host adapter: {type(host).__name__}")
         if self.dry_run:
-            self._vlog(f"  mode: DRY RUN")
+            self._vlog("  mode: DRY RUN")
         self._vlog(f"{'='*60}")
 
         last_stdout = ""
@@ -1198,11 +1197,11 @@ class PlanRunner:
                 step.get("command", step.get("message", action)[:80] if step.get("message") else action),
             )
 
-            self._vlog(f"")
+            self._vlog("")
             self._vlog(f"--- Step {i}/{len(steps)-1}: [{action}] {description[:60]} ---")
 
             if self.dry_run:
-                self._vlog(f"  [SKIP] dry-run mode")
+                self._vlog("  [SKIP] dry-run mode")
                 sr = StepResult(
                     step_index=i,
                     action=action,
@@ -1324,7 +1323,7 @@ class PlanRunner:
         event_type = PLAN_COMPLETED if result.success else PLAN_ABORTED
         self._log_event(event_type, result.to_dict())
 
-        self._vlog(f"")
+        self._vlog("")
         self._vlog(f"{'='*60}")
         self._vlog(f"PLAN {'PASSED' if result.success else 'FAILED'}: '{name}'")
         self._vlog(f"  {result.passed}/{result.total_steps} passed, "

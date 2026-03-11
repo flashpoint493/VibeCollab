@@ -9,10 +9,10 @@ from typing import Any, Dict
 import yaml
 
 from .._compat import EMOJI
-from .generator import LLMContextGenerator
-from ..utils.git import ensure_git_repo
 from ..domain.lifecycle import LifecycleManager
+from ..utils.git import ensure_git_repo
 from ..utils.llmstxt import LLMsTxtManager
+from .generator import LLMContextGenerator
 from .templates import TemplateManager
 
 

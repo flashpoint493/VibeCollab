@@ -12,7 +12,8 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import yaml
 
-from .._compat import EMOJI as _COMPAT_EMOJI, is_windows_gbk
+from .._compat import EMOJI as _COMPAT_EMOJI
+from .._compat import is_windows_gbk
 
 USE_EMOJI = not is_windows_gbk()
 

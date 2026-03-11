@@ -17,9 +17,9 @@ from pathlib import Path
 import click
 import yaml
 
+from ..domain.task_manager import TaskManager, TaskStatus
 from ..i18n import _
 from ..insight.manager import InsightManager
-from ..domain.task_manager import TaskManager, TaskStatus
 
 
 def _load_config(config_path: str) -> dict:

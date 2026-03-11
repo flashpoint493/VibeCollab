@@ -9,8 +9,6 @@ Coverage:
 """
 
 import json
-import os
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -19,7 +17,6 @@ from click.testing import CliRunner
 
 from vibecollab.domain.event_log import EventLog
 from vibecollab.insight.manager import InsightManager
-
 
 # ======================================================================
 # Fixtures

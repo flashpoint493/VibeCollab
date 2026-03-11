@@ -9,6 +9,7 @@ from unittest import mock
 import pytest
 from click.testing import CliRunner
 
+from vibecollab.agent.llm_client import LLMConfig, LLMResponse
 from vibecollab.cli.ai import (
     DEFAULT_MAX_CYCLES,
     DEFAULT_MAX_RSS_MB,
@@ -25,7 +26,6 @@ from vibecollab.cli.ai import (
     ai,
 )
 from vibecollab.domain.event_log import Event, EventLog, EventType
-from vibecollab.agent.llm_client import LLMConfig, LLMResponse
 from vibecollab.domain.task_manager import TaskManager, TaskStatus
 
 # ---------------------------------------------------------------------------

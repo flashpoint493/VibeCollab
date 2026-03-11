@@ -18,7 +18,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-
 # ============================================================
 # Capture helpers
 # ============================================================
@@ -76,6 +75,7 @@ def _build_server(project_root: Path) -> _CaptureMCP:
 
         # Re-import to pick up our fake module
         import importlib
+
         import vibecollab.agent.mcp_server as mod
         importlib.reload(mod)
 
@@ -89,6 +89,7 @@ def _build_server(project_root: Path) -> _CaptureMCP:
                 sys.modules[key] = val
         # Reload to restore original state
         import importlib
+
         import vibecollab.agent.mcp_server as mod2
         importlib.reload(mod2)
 

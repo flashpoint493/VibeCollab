@@ -13,10 +13,10 @@ from pathlib import Path
 import click
 
 from .._compat import EMOJI
-from ..i18n import _
-from ..insight.manager import InsightManager
 from ..domain.roadmap_parser import MILESTONE_FORMAT_HINT, RoadmapParser
 from ..domain.task_manager import TaskManager
+from ..i18n import _
+from ..insight.manager import InsightManager
 
 
 def _get_parser(config: str) -> RoadmapParser:
@@ -161,7 +161,7 @@ def roadmap_sync(direction, dry_run, config, json_output):
         click.echo(f"  {icon} {a.detail}")
 
     if dry_run:
-        click.echo(f"\n(Preview mode, no changes applied. Remove --dry-run to execute sync)")
+        click.echo("\n(Preview mode, no changes applied. Remove --dry-run to execute sync)")
 
 
 @roadmap_group.command("parse")

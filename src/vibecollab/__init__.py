@@ -10,13 +10,13 @@ Usage:
 __version__ = "0.10.7"
 __author__ = "VibeCollab Contributors"
 
-from .domain.event_log import Event, EventLog, EventType
+from .agent.llm_client import LLMClient, LLMConfig, LLMResponse, Message
 from .core.extension import Context, Extension, ExtensionProcessor, Hook
 from .core.generator import LLMContextGenerator
 from .core.health import HealthExtractor, HealthReport, Signal, SignalLevel
-from .agent.llm_client import LLMClient, LLMConfig, LLMResponse, Message
 from .core.pattern_engine import PatternEngine
 from .core.project import Project
+from .domain.event_log import Event, EventLog, EventType
 from .domain.roadmap_parser import Milestone, RoadmapParser, RoadmapStatus
 from .domain.task_manager import Task, TaskManager, TaskStatus, ValidationResult
 

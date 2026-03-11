@@ -325,13 +325,15 @@ def create_mcp_server(project_root: Optional[Path] = None):
         """Get next action suggestions"""
         try:
             import subprocess as _sp
-
-            from ..cli.guide import (_check_insight_opportunity,
-                                     _check_linked_groups_freshness,
-                                     _get_update_files_list,
-                                     _suggest_commit_message)
-            from ..domain.task_manager import TaskManager
             from datetime import datetime
+
+            from ..cli.guide import (
+                _check_insight_opportunity,
+                _check_linked_groups_freshness,
+                _get_update_files_list,
+                _suggest_commit_message,
+            )
+            from ..domain.task_manager import TaskManager
 
             project_config = _safe_load_yaml(config_path)
 
@@ -339,14 +341,14 @@ def create_mcp_server(project_root: Optional[Path] = None):
             try:
                 r = _sp.run(["git", "status", "--porcelain"], cwd=str(root),
                             capture_output=True, text=True, timeout=10)
-                uncommitted = [l.strip() for l in r.stdout.strip().split("\n") if l.strip()]
+                uncommitted = [line.strip() for line in r.stdout.strip().split("\n") if line.strip()]
             except Exception:
                 uncommitted = []
 
             try:
                 r = _sp.run(["git", "diff", "--name-only", "HEAD"], cwd=str(root),
                             capture_output=True, text=True, timeout=10)
-                diff_files = [l.strip() for l in r.stdout.strip().split("\n") if l.strip()]
+                diff_files = [line.strip() for line in r.stdout.strip().split("\n") if line.strip()]
             except Exception:
                 diff_files = []
 

@@ -2,7 +2,6 @@
 Tests for Embedder — Lightweight embedding abstraction layer
 """
 
-import hashlib
 
 import pytest
 
@@ -11,7 +10,6 @@ from vibecollab.insight.embedder import (
     EmbedderConfig,
     PurePythonEmbedder,
 )
-
 
 # ---------------------------------------------------------------------------
 # PurePythonEmbedder Tests

@@ -29,10 +29,10 @@ from rich.panel import Panel
 
 from .._compat import EMOJI as _COMPAT_EMOJI
 from .._compat import is_windows_gbk, safe_console
-from ..domain.event_log import Event, EventLog, EventType
-from ..i18n import _
 from ..agent.llm_client import LLMClient, LLMConfig, LLMResponse, Message, build_project_context
+from ..domain.event_log import Event, EventLog, EventType
 from ..domain.task_manager import TaskManager, TaskStatus
+from ..i18n import _
 
 
 def _log_event(event_log: EventLog, event_type: str, summary: str,

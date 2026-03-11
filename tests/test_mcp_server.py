@@ -11,14 +11,11 @@ Testing MCP Server core functionality:
 """
 
 import json
-import os
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import yaml
 from click.testing import CliRunner
-
 
 # ============================================================
 # Helpers
@@ -257,7 +254,7 @@ class TestResources:
         assert "mcp" in insights[1]["tags"]
 
     def test_empty_project_resources(self, empty_project):
-        from vibecollab.agent.mcp_server import _safe_read_text, _get_insight_files
+        from vibecollab.agent.mcp_server import _get_insight_files, _safe_read_text
 
         assert _safe_read_text(empty_project / "CONTRIBUTING_AI.md") == ""
         assert _safe_read_text(empty_project / "docs" / "CONTEXT.md") == ""
@@ -292,7 +289,7 @@ class TestTools:
 
     def test_developer_context_exists(self, project_dir):
         """Developer context reading"""
-        from vibecollab.agent.mcp_server import _safe_read_text, _safe_load_yaml
+        from vibecollab.agent.mcp_server import _safe_load_yaml, _safe_read_text
 
         dev_dir = project_dir / "docs" / "developers" / "alice"
         context = _safe_read_text(dev_dir / "CONTEXT.md")

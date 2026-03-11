@@ -16,7 +16,6 @@ from vibecollab.domain.roadmap_parser import (
 )
 from vibecollab.domain.task_manager import Task, TaskManager, TaskStatus
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -231,7 +230,7 @@ class TestStatus:
         assert "unlinked_task_ids" in d
 
     def test_status_task_breakdown(self, parser, tm):
-        t = tm.create_task(id="TASK-DEV-001", role="DEV", feature="CLI fix")
+        tm.create_task(id="TASK-DEV-001", role="DEV", feature="CLI fix")
         tm.transition("TASK-DEV-001", TaskStatus.IN_PROGRESS, actor="test")
 
         parser._milestones = None  # force re-parse
@@ -254,8 +253,8 @@ class TestSync:
         assert actions == []
 
     def test_sync_tasks_to_roadmap(self, parser, tm):
-        """Task DONE → ROADMAP checkbox checked."""
-        t = tm.create_task(id="TASK-DEV-002", role="DEV", feature="onboard")
+        """Task DONE -> ROADMAP checkbox checked."""
+        tm.create_task(id="TASK-DEV-002", role="DEV", feature="onboard")
         tm.transition("TASK-DEV-002", TaskStatus.IN_PROGRESS, actor="test")
         tm.transition("TASK-DEV-002", TaskStatus.REVIEW, actor="test")
         tm.transition("TASK-DEV-002", TaskStatus.DONE, actor="test")
@@ -276,7 +275,7 @@ class TestSync:
         t = tm.create_task(id="TASK-DEV-001", role="DEV", feature="CLI fix")
         assert t.status == TaskStatus.TODO
 
-        actions = parser.sync(direction="roadmap_to_tasks")
+        parser.sync(direction="roadmap_to_tasks")
         # TASK-DEV-001 is [x] in ROADMAP, should be synced to DONE
         task = tm.get_task("TASK-DEV-001")
         assert task.status == TaskStatus.DONE
@@ -307,8 +306,7 @@ class TestSync:
         tm.transition("TASK-DEV-002", TaskStatus.DONE, actor="test")
 
         actions = parser.sync(direction="both")
-        types = {a.type for a in actions}
-        # TASK-DEV-001 is [x] in ROADMAP → task_to_done
+        # TASK-DEV-001 is [x] in ROADMAP -> task_to_done
         # TASK-DEV-002 is DONE → checkbox_check
         assert len(actions) >= 1
 

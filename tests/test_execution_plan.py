@@ -1,11 +1,8 @@
 """Tests for execution_plan module — YAML-driven workflow automation."""
 
-import json
-import os
 import sys
 import textwrap
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 import yaml
@@ -13,8 +10,8 @@ import yaml
 from vibecollab.core.execution_plan import (
     PLAN_COMPLETED,
     PLAN_STARTED,
-    PLAN_STEP_FAIL,
     PLAN_STEP_OK,
+    FileExchangeAdapter,
     HostAdapter,
     HostResponse,
     LoopResult,
@@ -23,15 +20,12 @@ from vibecollab.core.execution_plan import (
     PlanRunner,
     StepResult,
     SubprocessAdapter,
-    FileExchangeAdapter,
-    create_temp_project,
+    check_goal,
     load_plan,
     resolve_host_adapter,
-    validate_plan,
-    check_goal,
     run_state_command,
+    validate_plan,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -1652,7 +1646,9 @@ class TestAutoDriverModule:
     def test_save_and_get_status(self, tmp_path):
         """save_state + get_status round-trip."""
         from vibecollab.contrib.auto_driver import (
-            AutoDriverState, save_state, get_status,
+            AutoDriverState,
+            get_status,
+            save_state,
         )
         state = AutoDriverState(
             plan_path="test.yaml",
@@ -1693,8 +1689,7 @@ class TestAutoDriverModule:
         """AutoAdapter satisfies HostAdapter protocol (if importable)."""
         try:
             from vibecollab.contrib.auto_driver import AutoAdapter
-            from vibecollab.core.execution_plan import HostAdapter
-            # Check that AutoAdapter has send and close methods
+            # Check that AutoAdapter has send and close methods (HostAdapter protocol)
             assert hasattr(AutoAdapter, 'send')
             assert hasattr(AutoAdapter, 'close')
             # Note: we can't check isinstance because pyautogui may not be installed

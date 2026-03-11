@@ -18,8 +18,8 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from vibecollab.insight.manager import InsightManager
 from vibecollab.domain.task_manager import TaskManager, TaskStatus
+from vibecollab.insight.manager import InsightManager
 
 # ---------------------------------------------------------------------------
 # Fixtures

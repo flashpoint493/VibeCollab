@@ -9,10 +9,7 @@ Covers:
 
 import json
 import subprocess
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from vibecollab.insight.signal import (
     CommitSignal,
@@ -20,7 +17,6 @@ from vibecollab.insight.signal import (
     InsightSignalCollector,
     SignalSnapshot,
 )
-
 
 # ===================================================================
 # SignalSnapshot

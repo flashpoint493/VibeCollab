@@ -6,14 +6,9 @@ Covers:
 - SessionStore: save, get, list_all, list_recent, list_since, delete, count, get_summaries_text
 """
 
-import json
-import time
-from pathlib import Path
 
-import pytest
 
 from vibecollab.domain.session_store import Session, SessionStore
-
 
 # ===================================================================
 # Session dataclass

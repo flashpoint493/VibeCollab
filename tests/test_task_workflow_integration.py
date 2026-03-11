@@ -9,13 +9,10 @@ Test coverage:
 """
 
 import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
 from click.testing import CliRunner
-
 
 # ============================================================
 # Fixtures
@@ -553,12 +550,12 @@ class TestMcpNewTools:
 
     def test_start_conversation_lists_new_tools(self, project_dir):
         """start_conversation prompt should include new tools"""
-        from vibecollab.agent.mcp_server import _safe_load_yaml, _safe_read_text
 
         # Check for new tools in prompt tool list
         # Directly check strings in mcp_server.py source code
-        import vibecollab.agent.mcp_server as mod
         import inspect
+
+        import vibecollab.agent.mcp_server as mod
         source = inspect.getsource(mod)
         assert "task_create" in source
         assert "task_transition" in source

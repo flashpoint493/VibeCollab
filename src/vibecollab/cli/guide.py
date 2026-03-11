@@ -41,11 +41,11 @@ def _search_related_insights(
         return []
 
     try:
-        from ..insight.embedder import Embedder, EmbedderConfig
-        from ..search.vector_store import VectorStore
-
         # Infer dimensions from existing DB
         import sqlite3
+
+        from ..insight.embedder import Embedder, EmbedderConfig
+        from ..search.vector_store import VectorStore
 
         conn = sqlite3.connect(str(db_path))
         row = conn.execute(
@@ -519,7 +519,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
             if insight_count > 5:
                 console.print(f"  [dim]... {insight_count - 5} more (vibecollab insight list)[/dim]")
         else:
-            console.print(f"  [dim]vibecollab insight list to see all[/dim]")
+            console.print("  [dim]vibecollab insight list to see all[/dim]")
 
     # Related Insights for current task (semantic match)
     if related_insights:
@@ -1002,7 +1002,7 @@ def next_step(config: str, as_json: bool):
                     "priority": f"P1-{priority}",
                     "type": "task_solidify",
                     "action": f"Solidify task {t.id}: {t.feature}",
-                    "reason": f"Task is in REVIEW status, can attempt solidification",
+                    "reason": "Task is in REVIEW status, can attempt solidification",
                     "suggestion": f"vibecollab task solidify {t.id}",
                 })
 

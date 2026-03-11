@@ -22,8 +22,7 @@ import subprocess
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-
+from typing import Any, Dict, List
 
 # ---------------------------------------------------------------------------
 # Data structures
@@ -294,7 +293,6 @@ class InsightSignalCollector:
                    ("feat", "feature", "add", "implement"))
         ]
         if feature_commits:
-            subjects = [c.subject for c in feature_commits[:5]]
             candidates.append(InsightCandidate(
                 title=self._summarize_commits(feature_commits, "feature"),
                 tags=self._extract_tags_from_commits(feature_commits),
@@ -403,7 +401,7 @@ class InsightSignalCollector:
         # CONTEXT.md major changes -> context switch signal
         if "docs/CONTEXT.md" in changes:
             context_lines = changes["docs/CONTEXT.md"]
-            added = [l for l in context_lines if l.startswith("+")]
+            added = [line for line in context_lines if line.startswith("+")]
             if len(added) > 10:
                 candidates.append(InsightCandidate(
                     title="Development direction switch experience",

@@ -105,7 +105,7 @@ def ensure_safe_stdout() -> None:
 # Layer 2: Rich Console safe factory
 # ============================================================
 
-def safe_console(**kwargs) -> "Console":
+def safe_console(**kwargs):  # -> rich.console.Console
     """Create an encoding-safe Rich Console instance.
 
     On Windows GBK, ensures stdout is safe before creating Console.

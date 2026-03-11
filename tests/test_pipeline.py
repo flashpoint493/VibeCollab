@@ -10,10 +10,8 @@ Coverage targets:
 """
 
 import json
-import os
 import time
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
@@ -25,7 +23,6 @@ from vibecollab.core.pipeline import (
     SchemaValidator,
     ValidationReport,
 )
-
 
 # ============================================================
 # ValidationReport

@@ -14,12 +14,12 @@ from rich.table import Table
 from .. import __version__
 from .._compat import BULLET, EMOJI, is_windows_gbk, safe_console
 from ..core.generator import LLMContextGenerator
-from ..i18n import _, setup_locale
-from ..utils.git import is_git_repo
-from ..utils.llmstxt import LLMsTxtManager
 from ..core.project import Project
 from ..core.protocol_checker import ProtocolChecker
 from ..core.templates import TemplateManager
+from ..i18n import _, setup_locale
+from ..utils.git import is_git_repo
+from ..utils.llmstxt import LLMsTxtManager
 
 # Backward compatible variable names
 USE_EMOJI = not is_windows_gbk()
@@ -857,6 +857,7 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
     import json as json_mod
     import os as _os
     import signal as _signal
+
     from ..core.execution_plan import PlanRunner, load_plan, resolve_host_adapter
 
     try:
@@ -930,7 +931,7 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
             _signal.signal(_signal.SIGINT, _shutdown_handler)
             _signal.signal(_signal.SIGTERM, _shutdown_handler)
 
-            console.print(f"[bold]Starting Auto Driver[/bold]")
+            console.print("[bold]Starting Auto Driver[/bold]")
             console.print(f"  Plan: {plan_file}")
             console.print(f"  IDE: {ide_name}")
             console.print(f"  Host: auto:{ide_name}")
@@ -1057,7 +1058,6 @@ def auto_start(plan_file, ide, timeout, verbose):
         vibecollab auto start plans/dev.yaml --ide cursor -v
     """
     # Delegate to plan run with auto host
-    from click import Context as ClickContext
 
     host_str = f"auto:{ide}"
 
@@ -1216,7 +1216,7 @@ pause
     console.print(f"  1. Double-click [cyan]{output}[/cyan] to start automation")
     console.print(f"  2. Keep {ide.capitalize()} window visible")
     console.print(f"  3. The script will send instructions to {ide.capitalize()} automatically")
-    console.print(f"  4. Close the cmd window or run 'vibecollab auto stop' to stop")
+    console.print("  4. Close the cmd window or run 'vibecollab auto stop' to stop")
     console.print()
     console.print(f"[dim]Execution: vibecollab plan run {plan_file} --host auto:{ide} -v[/dim]")
     console.print("[dim]Note: Make sure the IDE is running before starting.[/dim]")

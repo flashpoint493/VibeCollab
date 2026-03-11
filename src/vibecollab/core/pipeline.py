@@ -19,12 +19,10 @@ Key capabilities:
 """
 
 import re
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
-
 
 # ---------------------------------------------------------------------------
 # Schema Validator
@@ -344,7 +342,7 @@ class Pipeline:
         """
         def on_task_complete(task: Any) -> None:
             actions = ActionRegistry.get_actions("task_completed")
-            hints = ActionRegistry.format_action_hints("task_completed")
+            ActionRegistry.format_action_hints("task_completed")
             # Store hints as metadata for AI agents to read
             if hasattr(task, 'metadata') and isinstance(task.metadata, dict):
                 task.metadata["_pipeline_actions"] = [

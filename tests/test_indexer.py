@@ -13,7 +13,6 @@ from vibecollab.search.indexer import (
 )
 from vibecollab.search.vector_store import VectorStore
 
-
 # ---------------------------------------------------------------------------
 # _split_markdown_by_heading Tests
 # ---------------------------------------------------------------------------
