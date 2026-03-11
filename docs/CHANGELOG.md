@@ -1,5 +1,18 @@
 # VibeCollab Changelog
 
+## v0.10.9 (2026-03-11) - Get-Started Rewrite
+
+### Improvement
+- **"Copy one line" onboarding**: Replaced "have your AI read skill.md" with a direct copy-paste instruction + raw GitHub link
+- **PyPI README synced**: `README.pypi.md` now uses the same "copy one line" get-started pattern
+- **Removed redundant sections**: Merged "Try It Now" / "立刻体验" into "Manual Setup" / "手动设置"
+
+### Documentation
+- README.md / README.zh-CN.md / README.pypi.md fully synchronized
+- Version bumped to 0.10.9
+
+---
+
 ## v0.10.8 (2026-03-11) - README Facade + OpenClaw Integration
 
 ### Improvement
