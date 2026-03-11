@@ -153,7 +153,9 @@ class TestGetCurrentDeveloper:
 
     def test_system_user_primary(self, project_dir):
         cfg = _base_config(primary="system_user", fallback="git_username")
-        with patch.dict(os.environ, {"USERNAME": "WinUser"}, clear=False):
+        # Mock both USER (Linux) and USERNAME (Windows) to ensure cross-platform
+        env_override = {"USER": "WinUser", "USERNAME": "WinUser"}
+        with patch.dict(os.environ, env_override, clear=False):
             mgr = DeveloperManager(project_dir, cfg)
             assert mgr.get_current_developer() == "winuser"
 

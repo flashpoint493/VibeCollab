@@ -458,10 +458,10 @@ class TestApplyChangesEdgeCases:
 
 class TestValidateChangesEdgeCases:
     def test_validate_invalid_path(self):
-        """Invalid path (NUL character) triggers error."""
+        """Path traversal attempt triggers error."""
         with tempfile.TemporaryDirectory() as tmpdir:
             exe = AgentExecutor(Path(tmpdir))
-            changes = [FileChange(file="file\x00bad", action="create", content="x")]
+            changes = [FileChange(file="../../etc/passwd", action="create", content="x")]
             errors = exe.validate_changes(changes)
             assert len(errors) > 0
 

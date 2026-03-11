@@ -32,12 +32,31 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,llm]"
 
+      - name: Show installed packages
+        run: pip list --format=columns
+
+      - name: Verify package import
+        run: python -c "import vibecollab; print(vibecollab.__version__)"
+
       - name: Lint with ruff
         run: ruff check src/vibecollab/ tests/
 
+      - name: Collect tests (dry run)
+        run: pytest tests/ --collect-only -q 2>&1 | head -20 || true
+        shell: bash
+
+      - name: Run tests
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
+        run: pytest tests/ --tb=long -q
+
       - name: Run tests with coverage
-        run: |
-          pytest tests/ -q --tb=short --cov=vibecollab --cov-report=term-missing --cov-report=xml
+        if: success()
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
+        run: pytest tests/ -q --tb=short --cov=vibecollab --cov-report=xml
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
