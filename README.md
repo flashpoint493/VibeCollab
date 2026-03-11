@@ -1,28 +1,38 @@
+<div align="center">
+
 # VibeCollab
 
+**Configurable AI collaboration protocol framework with built-in knowledge capture and MCP Server**
+
 [![PyPI version](https://badge.fury.io/py/vibe-collab.svg)](https://badge.fury.io/py/vibe-collab)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/flashpoint493/VibeCollab/actions/workflows/ci.yml/badge.svg)](https://github.com/flashpoint493/VibeCollab/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/tests-1520%20passed-brightgreen)](https://github.com/flashpoint493/VibeCollab/actions)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://pypi.org/project/vibe-collab/)
 
 **[English](README.md)** | [中文文档](README.zh-CN.md)
+
+</div>
 
 ---
 
 - **What it is**: A configurable AI collaboration protocol framework with built-in knowledge capture (Insight) and MCP Server.
 - **Pain it solves**: Turns chaotic AI-assisted development into structured, auditable, and reusable collaboration workflows.
-- **Get started**: `pip install vibe-collab` → then have your AI assistant read [`skill.md`](skill.md) for full setup guidance.
+- **Get started**: Have your AI assistant read [`skill.md`](skill.md) — it handles everything (install, init, IDE integration).
 
 ---
 
 ## Try It Now
 
+Tell your AI assistant to read [`skill.md`](skill.md) — it will install VibeCollab, initialize your project, and connect to your IDE automatically.
+
+Or set up manually:
+
 ```bash
 pip install vibe-collab
 vibecollab init -n "MyProject" -d generic -o ./my-project
 cd my-project
-
-# Connect to your AI IDE (Cursor / Cline / CodeBuddy)
-pip install vibe-collab
 vibecollab mcp inject --ide cursor   # or: cline / codebuddy / all
 ```
 
@@ -33,7 +43,7 @@ That's it. Your AI assistant now follows structured collaboration protocols, cap
 ## Who This Is For / Not For
 
 **For**
-- Teams using AI assistants (Cursor, Cline, CodeBuddy, etc.) for daily development
+- Teams using AI assistants (Cursor, Cline, CodeBuddy, OpenClaw, etc.) for daily development
 - Projects that need auditable decision trails and knowledge accumulation across sessions
 - Multi-role / multi-Agent environments requiring context isolation and conflict detection
 - Anyone tired of repeating the same context setup at the start of every AI conversation
@@ -57,12 +67,22 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 
 > This project uses its own generated collaboration rules for development (meta-implementation), and integrates with the [llmstxt.org](https://llmstxt.org) standard.
 
+### Before / After
+
+| | Without VibeCollab | With VibeCollab |
+|---|---|---|
+| **Context** | Re-explain project background every conversation | `onboard` auto-restores full context |
+| **Knowledge** | Hard-won experience lost between sessions | Insights captured, searchable, reusable |
+| **Decisions** | Scattered in chat history, forgotten | Tiered records (S/A/B/C) with audit trail |
+| **Multi-Agent** | Agents conflict, overwrite each other's work | Role-isolated contexts + conflict detection |
+| **Automation** | Manual copy-paste loops | `plan run` — YAML-driven autonomous workflows |
+
 ---
 
 ## Features
 
 ### MCP Server + AI IDE Integration (v0.9.1)
-- **MCP Server** (`vibecollab mcp serve`): Standard Model Context Protocol, auto-connects to Cursor/Cline/CodeBuddy
+- **MCP Server** (`vibecollab mcp serve`): Standard Model Context Protocol, auto-connects to Cursor/Cline/CodeBuddy/OpenClaw and any MCP-compatible agent
 - **One-command config injection** (`vibecollab mcp inject`): Zero manual setup
 - **12 Tools**: `insight_search`, `insight_add`, `insight_suggest`, `check`, `onboard`, `next_step`, `search_docs`, `task_list`, `task_create`, `task_transition`, `session_save`, etc.
 - **Resources**: Auto-exposes `CONTRIBUTING_AI.md`, `CONTEXT.md`, `DECISIONS.md`
@@ -96,6 +116,8 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 ---
 
 ## Architecture Overview
+
+> **Design principle**: One YAML config → structured protocol → MCP Server → AI IDE integration. Zero vendor lock-in, fully offline, your data stays local.
 
 VibeCollab is built on **5 core pillars**:
 
@@ -248,13 +270,15 @@ vibecollab mcp inject --ide codebuddy
 
 CodeBuddy reads the project-level `.mcp.json` config automatically -- `vibecollab mcp inject` creates it for you.
 
-### Without MCP
+### OpenClaw
+
+VibeCollab works as a standard MCP Server — any MCP-compatible agent can connect directly:
 
 ```bash
-vibecollab prompt --compact --copy   # Copy context to clipboard
+openclaw mcp add --transport stdio vibecollab vibecollab mcp serve
 ```
 
-Paste the output at the start of your AI conversation.
+OpenClaw will then have access to all VibeCollab tools (onboard, Insight, Task, check, etc.) out of the box.
 
 ### Comparison
 
@@ -419,9 +443,6 @@ No. All features (init, generate, check, MCP Server, Insights, Tasks, Execution 
 **Can I use it with an existing project?**
 Yes. Run `vibecollab init` in your project root. It creates `project.yaml` and `docs/` alongside your existing files without touching them.
 
-**What if my IDE doesn't support MCP?**
-Use `vibecollab prompt --compact --copy` to generate a context text and paste it into any AI conversation.
-
 ---
 
 ## Anti-Examples (What This Is NOT For)
@@ -438,6 +459,8 @@ Use `vibecollab prompt --compact --copy` to generate a context text and paste it
 
 | Version | Date | Highlights |
 |---------|------|-----------|
+| v0.10.8 | 2026-03-11 | README facade: centered header, rich badges (CI/Tests/Platform), Before/After table, OpenClaw integration, i18n sync |
+| v0.10.7 | 2026-03-11 | CI/CD fixes: cross-platform test fixes (4 tests), bash shell for Windows, Python 3.9 dropped |
 | v0.10.6 | 2026-03-09 | CLI cleanup: removed redundant commands (pipeline group, export-template, version-info, ai group); unified version |
 | v0.10.5 | 2026-03-09 | Auto Driver: autonomous IDE keyboard simulation + preset plans + .bat launcher |
 | v0.10.4 | 2026-03-09 | Execution Plan: YAML-driven workflow + autonomous loop engine + host adapters (101 tests) |
@@ -478,4 +501,4 @@ MIT
 
 ---
 
-*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.10.7.*
+*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.10.8.*

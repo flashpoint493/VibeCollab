@@ -1,38 +1,36 @@
 # VibeCollab Global Context
 
 > ! **Auto-generated, do not edit manually**
-> Last updated: 2026-03-09
+> Last updated: 2026-03-11
 > Aggregated from: dev
 
 ## Project Status
-- **Version**: v0.10.6 (in development)
-- **Previous release**: v0.9.7 (PyPI published)
+- **Version**: v0.10.8
+- **Previous release**: v0.10.7 (PyPI published)
 - **Active roles**: 1 (DEV)
-- **Tests**: 1413+ passed, 89% coverage
-- **Current phase**: Execution Plan Phase 5 — Auto Driver (keyboard simulation for autonomous IDE control)
+- **Tests**: 1520 passed, 85% coverage
+- **CI/CD**: 8-matrix (Ubuntu + Windows × Python 3.10-3.13), bash shell default
+- **Current phase**: README facade + OpenClaw integration + documentation cleanup
 
 ## Role Status
 
 ### DEV (Development)
-- **Last updated**: 2026-03-09
-- **Current task**: v0.10.6 Auto Driver self-test
+- **Last updated**: 2026-03-11
+- **Current task**: README facade decoration + OpenClaw integration + i18n sync
 - **Recently completed**:
-  - **Auto Driver**: Keyboard simulation for autonomous IDE control (`vibecollab auto` command group)
-  - **auto init**: Creates .bat launcher scripts for double-click automation
-  - **Self-bootstrap test**: Successfully tested auto driver on VibeCollab itself
-  - **FileExchangeAdapter**: File-based IDE AI communication for Cursor/Cline (`host: file_exchange`)
-  - **Design alignment**: Clarified vibecollab as orchestrator, IDE AI as executor (has tool-use)
-  - **Execution Plan Phase 3**: Autonomous loop engine (`loop` action), 31 new tests (101 total)
-  - **Execution Plan Phase 2**: HostAdapter protocol, variable passing, 29 new tests (70 total)
-  - **Execution Plan Phase 1**: PlanRunner, 4 step actions (cli/assert/wait/prompt), CLI, 41 tests
+  - **README facade (v0.10.8)**: Centered header, rich badges (CI/Tests/Platform), Before/After table, design philosophy blockquotes
+  - **OpenClaw integration (v0.10.8)**: Added OpenClaw to MCP Server feature description, IDE integration section, skill.md
+  - **i18n sync (v0.10.8)**: Chinese README fully synchronized with English changes
+  - **CI/CD fix (v0.10.7)**: Resolved 4 cross-platform test failures, switched Windows CI to bash shell
+  - **Python 3.9 dropped**: `requires-python >= 3.10`, `mcp` requires 3.10+
 
 ## Active Tasks
 
-- v0.10.5: Code cleanup — remove LLMAdapter (no tool-use), update tests
+- Documentation: Temp files cleaned, ready for v0.10.8 release
 - v0.10.3: Git history rewrite + GitHub facade (pending)
 - v0.10.0: External project QA validation (Phase 11 TC-E2E-001~010)
 
-## Architecture (v0.9.7+)
+## Architecture (v0.10.8)
 
 ### Role-Based Developer System (v0.11.0)
 - Directory: `docs/developers/{role_code}/` (e.g., `dev/`, `arch/`, `pm/`)

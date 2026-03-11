@@ -3,6 +3,33 @@
 You are helping a user set up VibeCollab in their project.
 Execute the following steps in order. Stop and report if any step fails.
 
+## Prerequisites
+
+VibeCollab requires **Python 3.10 or higher**. Recommended version: **Python 3.12** (best balance of performance and compatibility).
+
+Before installing, check the user's Python version:
+
+```bash
+python --version
+```
+
+If Python is not installed or is below 3.10, guide the user to install Python 3.12+ from https://www.python.org/downloads/
+
+**Virtual environment** (strongly recommended): To keep the user's system clean and avoid dependency conflicts, always create a virtual environment before installing:
+
+```bash
+# Create a virtual environment (run once)
+python -m venv .venv
+
+# Activate it
+# On Windows:
+.venv\Scripts\activate
+# On macOS/Linux:
+source .venv/bin/activate
+```
+
+> If the project already has a virtual environment (`.venv/`, `venv/`, or similar), activate it instead of creating a new one.
+
 ## Step 1: Install
 
 ```bash
@@ -34,6 +61,12 @@ If auto-detection fails, ask the user which IDE they use and run:
 
 ```bash
 vibecollab mcp inject --ide cursor   # or: cline / codebuddy
+```
+
+**OpenClaw / other MCP agents**: VibeCollab is a standard MCP Server. Any MCP-compatible agent can connect directly:
+
+```bash
+openclaw mcp add --transport stdio vibecollab vibecollab mcp serve
 ```
 
 ## Step 4: Verify

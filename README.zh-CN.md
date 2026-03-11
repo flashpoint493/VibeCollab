@@ -1,28 +1,38 @@
+<div align="center">
+
 # VibeCollab
 
+**可配置的 AI 协作协议框架，内置知识沉淀系统 + MCP Server**
+
 [![PyPI version](https://badge.fury.io/py/vibe-collab.svg)](https://badge.fury.io/py/vibe-collab)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/flashpoint493/VibeCollab/actions/workflows/ci.yml/badge.svg)](https://github.com/flashpoint493/VibeCollab/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/tests-1520%20passed-brightgreen)](https://github.com/flashpoint493/VibeCollab/actions)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://pypi.org/project/vibe-collab/)
 
 [English](README.md) | **中文文档**
+
+</div>
 
 ---
 
 - **它是什么**: 一个可配置的 AI 协作协议框架，内置知识沉淀系统 (Insight) + MCP Server
 - **解决什么痛点**: 将混乱的 AI 辅助开发变成结构化、可审计、可复用的协作工作流
-- **快速上手**: `pip install vibe-collab` → 让你的 AI 助手阅读 [`skill.md`](skill.md) 获取完整安装引导
+- **快速上手**: 让你的 AI 助手阅读 [`skill.md`](skill.md) — 它会自动处理安装、初始化和 IDE 接入
 
 ---
 
 ## 立刻体验
 
+让你的 AI 助手阅读 [`skill.md`](skill.md) — 它会自动安装 VibeCollab、初始化项目并接入你的 IDE。
+
+或者手动设置：
+
 ```bash
 pip install vibe-collab
 vibecollab init -n "MyProject" -d generic -o ./my-project
 cd my-project
-
-# 接入 AI IDE（Cursor / Cline / CodeBuddy）
-pip install vibe-collab
 vibecollab mcp inject --ide cursor   # 或: cline / codebuddy / all
 ```
 
@@ -33,7 +43,7 @@ vibecollab mcp inject --ide cursor   # 或: cline / codebuddy / all
 ## 适用 / 不适用场景
 
 **适合**
-- 使用 AI 助手（Cursor、Cline、CodeBuddy 等）进行日常开发的团队
+- 使用 AI 助手（Cursor、Cline、CodeBuddy、OpenClaw 等）进行日常开发的团队
 - 需要跨对话保留决策记录和知识积累的项目
 - 多角色 / 多 Agent 协同环境，需要上下文隔离和冲突检测
 - 厌倦了每次 AI 对话都要重新输入项目背景的人
@@ -51,9 +61,21 @@ vibecollab mcp inject --ide cursor   # 或: cline / codebuddy / all
 
 > 本项目自身也使用生成的协作规则进行开发（元实现），并支持与 [llmstxt.org](https://llmstxt.org) 标准无缝集成
 
+### Before / After
+
+| | 没有 VibeCollab | 使用 VibeCollab |
+|---|---|---|
+| **上下文** | 每次对话都要重新解释项目背景 | `onboard` 自动恢复完整上下文 |
+| **知识** | 辛苦总结的经验在对话间丢失 | Insight 沉淀、可搜索、可复用 |
+| **决策** | 散落在聊天记录里，容易遗忘 | 分级记录 (S/A/B/C) + 审计追踪 |
+| **多 Agent** | Agent 之间冲突、互相覆盖 | 角色隔离上下文 + 冲突检测 |
+| **自动化** | 手动复制粘贴循环 | `plan run` — YAML 驱动的自主工作流 |
+
 ---
 
 ## 架构概览
+
+> **设计理念**: 一份 YAML 配置 → 结构化协议 → MCP Server → AI IDE 集成。零厂商锁定，完全离线，数据留在本地。
 
 VibeCollab 围绕 **5 大核心支柱** 构建：
 
@@ -103,7 +125,7 @@ vibecollab dev list                 # 列出所有角色
 ## 特性
 
 ### MCP Server + AI IDE 无缝集成 (v0.9.1 NEW)
-- **MCP Server** (`vibecollab mcp serve`): 标准 Model Context Protocol 实现，Cursor/Cline/CodeBuddy 自动接入
+- **MCP Server** (`vibecollab mcp serve`): 标准 Model Context Protocol 实现，Cursor/Cline/CodeBuddy/OpenClaw 及任何 MCP 兼容 Agent 自动接入
 - **一键配置注入** (`vibecollab mcp inject`): 自动生成 IDE 配置文件，零手动操作
 - **Tools**: `insight_search`, `insight_add`, `insight_suggest`, `check`, `onboard`, `next_step`, `search_docs`, `task_list`, `task_create`, `task_transition`, `session_save` 等 12 个工具
 - **Resources**: 自动暴露 `CONTRIBUTING_AI.md`, `CONTEXT.md`, `DECISIONS.md` 等协议文档
@@ -710,22 +732,15 @@ vibecollab mcp inject --ide codebuddy
 
 CodeBuddy 会自动读取项目级 `.mcp.json` 配置——`vibecollab mcp inject` 会自动为你创建。
 
-### 无 MCP 的手动模式
+### OpenClaw
 
-如果你的 IDE 不支持 MCP，可以使用 `vibecollab prompt` 生成上下文文本：
+VibeCollab 是标准的 MCP Server——任何支持 MCP 的 Agent 都可以直接接入：
 
 ```bash
-# 生成精简版上下文 prompt
-vibecollab prompt --compact
-
-# 复制到剪贴板 (Windows)
-vibecollab prompt --compact --copy
-
-# 指定开发者视角
-vibecollab prompt -d dev
+openclaw mcp add --transport stdio vibecollab vibecollab mcp serve
 ```
 
-将输出粘贴到 AI 对话开头即可。
+OpenClaw 即可使用 VibeCollab 的所有工具（onboard、Insight、Task、check 等），开箱即用。
 
 ### 各方案对比
 
@@ -828,6 +843,8 @@ vibecollab health
 
 | 版本 | 日期 | 主要特性 |
 |------|------|---------|
+| v0.10.8 | 2026-03-11 | README 门面装修: 居中 header、丰富 badge (CI/Tests/Platform)、Before/After 对比表、OpenClaw 集成、i18n 同步 |
+| v0.10.7 | 2026-03-11 | CI/CD 修复: 跨平台测试修复 (4 个测试)、Windows bash shell、Python 3.9 停止支持 |
 | v0.10.6 | 2026-03-09 | CLI 清理: 移除冗余命令 (pipeline 组、export-template、version-info、ai 组)；统一版本号 |
 | v0.10.5 | 2026-03-09 | Auto Driver: 自主 IDE 键盘模拟 + 预置计划 + .bat 启动器 |
 | v0.10.4 | 2026-03-09 | 执行计划: YAML 驱动工作流 + 自主循环引擎 + 宿主适配器 (101 tests) |
@@ -870,9 +887,6 @@ Cursor Rules 是 IDE 特定的静态文件。VibeCollab 从结构化 `project.ya
 **能用在已有项目上吗？**
 可以。在项目根目录运行 `vibecollab init`，会创建 `project.yaml` 和 `docs/` 目录，不会碰你的现有文件。
 
-**我的 IDE 不支持 MCP 怎么办？**
-使用 `vibecollab prompt --compact --copy` 生成上下文文本，粘贴到任何 AI 对话开头即可。
-
 ---
 
 ## 反例（不要这样用）
@@ -891,4 +905,4 @@ MIT
 
 ---
 
-*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.10.7。*
+*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.10.8。*

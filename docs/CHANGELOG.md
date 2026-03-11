@@ -1,5 +1,59 @@
 # VibeCollab Changelog
 
+## v0.10.8 (2026-03-11) - README Facade + OpenClaw Integration
+
+### Improvement
+- **README centered header**: `<div align="center">` with project title and description
+- **Rich badge row**: Added CI status, Tests (1520 passed), Platform (Windows/macOS/Linux) badges
+- **Before/After comparison table**: 5-dimension value comparison (Context, Knowledge, Decisions, Multi-Agent, Automation)
+- **Design philosophy blockquotes**: Architecture Overview section with core design principle quote
+- **OpenClaw integration**: Added OpenClaw to MCP Server feature list, IDE integration section, and skill.md
+- **Removed "Without MCP" section**: Replaced with OpenClaw integration instructions in both READMEs
+- **Removed FAQ entry**: "What if my IDE doesn't support MCP?" removed from both READMEs
+
+### Documentation
+- README.md / README.zh-CN.md fully synchronized (i18n alignment)
+- README.zh-CN.md version history added v0.10.7 + v0.10.8 entries
+- skill.md updated with OpenClaw MCP connection instructions
+- Updated CONTEXT.md, CHANGELOG.md with v0.10.8 status
+- Cleaned 40 temporary diagnostic files from workspace root
+
+---
+
+## v0.10.7 (2026-03-11) - CI/CD Fix + Documentation Cleanup
+
+### Bug Fix
+- **Cross-platform test fixes**: Resolved 4 test failures across Ubuntu/Windows CI matrix
+  - `test_validate_invalid_path`: Replaced NUL-character test with path-traversal test (OS-independent)
+  - `test_run_full_cycle` / `test_status_no_agent`: Added Rich console mock for headless Windows 3.13
+  - `test_system_user_primary`: Mock both `USER` and `USERNAME` env vars for Linux CI compatibility
+- **Windows CI exit code fix**: Switched default shell from `pwsh` to `bash` (Git Bash) to resolve false exit code 1 on Windows runners where all 1520 tests pass but pwsh misreports the exit code
+- **Windows CI timeout fix**: Merged diagnostic + coverage pytest steps into single step to avoid timeout
+
+### Improvement
+- **Python 3.9 dropped**: `requires-python` bumped to `>=3.10` (required by `mcp>=1.0.0`)
+- **README simplified onboarding**: "Get started" now directs AI to read `skill.md` directly — no manual pip install required
+- **skill.md environment guidance**: Added Python version requirements (3.10+, recommend 3.12), virtual environment best practices
+- **pyproject.toml**: `[tool.black] target-version` updated from `py39` to `py310`
+- **GitHub Releases**: Backfilled 21 missing releases and git tags
+
+### Documentation
+- Updated CONTEXT.md, CHANGELOG.md with v0.10.7 status
+- Updated README.md / README.zh-CN.md Python badge from 3.9+ to 3.10+
+- README.md version history added v0.10.7 entry
+
+### CI/CD
+- CI matrix: Python 3.10-3.13 × Ubuntu + Windows (8 jobs)
+- Default shell: `bash` for all CI steps (consistent exit code behavior)
+- `timeout-minutes: 15` for test step
+- `PYTHONIOENCODING=utf-8` + `PYTHONUTF8=1` env vars for Windows encoding
+
+### Test
+- 1520 tests passed on Ubuntu (all 4 Python versions)
+- Windows CI verification in progress (bash shell fix)
+
+---
+
 ## v0.10.5 (2026-03-09) - IDE-Driven Automation
 
 ### New Feature
