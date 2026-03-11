@@ -325,7 +325,7 @@ class TestSuggestCommitMessage:
         assert _suggest_commit_message([".gitignore"]) == "chore:"
 
     def test_only_schema(self):
-        assert _suggest_commit_message(["schema/foo.yaml"]) == "[DESIGN]"
+        assert _suggest_commit_message(["schema/foo.yaml"]) == "design:"
 
     def test_empty(self):
         assert _suggest_commit_message([]) == "chore:"
