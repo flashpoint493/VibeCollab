@@ -97,7 +97,7 @@ def main(lang):
     default="generic",
     help=_("Business domain")
 )
-@click.option("--output", "-o", required=True, help=_("Output directory"))
+@click.option("--output", "-o", default=".", help=_("Output directory (default: current directory)"))
 @click.option("--force", "-f", is_flag=True, help=_("Force overwrite existing directory"))
 @click.option("--no-git", is_flag=True, help=_("Skip automatic Git initialization"))
 @click.option("--multi-dev", is_flag=True, help=_("Enable multi-developer mode"))
@@ -106,11 +106,13 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
 
     Examples:
 
+        vibecollab init -n "MyProject" -d web
+
         vibecollab init -n "MyProject" -d web -o ./my-project
 
-        vibecollab init -n "GameProject" -d game -o ./game --force
+        vibecollab init -n "GameProject" -d game --force
 
-        vibecollab init -n "TeamProject" -o ./team --multi-dev
+        vibecollab init -n "TeamProject" --multi-dev
     """
     output_path = Path(output)
 

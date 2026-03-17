@@ -482,5 +482,6 @@ class TestIntegration:
 
         data = json.loads(config_path.read_text())
         server_config = data["mcpServers"]["vibecollab"]
-        assert server_config["command"] == "vibecollab"
+        # command should contain "vibecollab" (either bare name or full path)
+        assert "vibecollab" in server_config["command"].lower()
         assert server_config["args"] == ["mcp", "serve"]

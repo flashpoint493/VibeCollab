@@ -51,17 +51,14 @@ This creates `project.yaml`, `CONTRIBUTING_AI.md`, and `docs/` directory with pr
 
 ## Step 3: Connect MCP to IDE
 
-```bash
-vibecollab mcp inject --ide auto
-```
-
-This auto-detects the user's IDE (Cursor / Cline / CodeBuddy) and injects MCP Server config.
-
-If auto-detection fails, ask the user which IDE they use and run:
+Ask the user which IDE they use, then run:
 
 ```bash
-vibecollab mcp inject --ide cursor   # or: cline / codebuddy
+vibecollab mcp inject --ide cursor   # or: cline / codebuddy / all
 ```
+
+This injects VibeCollab MCP Server config into the IDE config file.
+Use `--ide all` to inject config for all supported IDEs at once.
 
 **OpenClaw / other MCP agents**: VibeCollab is a standard MCP Server. Any MCP-compatible agent can connect directly:
 

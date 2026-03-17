@@ -80,6 +80,15 @@ def config(ide: str):
     Copy the output to the corresponding IDE config file to enable VibeCollab MCP.
     """
     import json as json_mod
+    import shutil
+
+    # Resolve full path to vibecollab executable
+    vibecollab_cmd = shutil.which("vibecollab")
+    if vibecollab_cmd:
+        # Normalize path separators for cross-platform compatibility
+        vibecollab_cmd = vibecollab_cmd.replace("\\", "/")
+    else:
+        vibecollab_cmd = "vibecollab"  # fallback to bare name
 
     configs = {
         "cursor": {
@@ -87,7 +96,7 @@ def config(ide: str):
             "content": {
                 "mcpServers": {
                     "vibecollab": {
-                        "command": "vibecollab",
+                        "command": vibecollab_cmd,
                         "args": ["mcp", "serve"],
                     }
                 }
@@ -98,7 +107,7 @@ def config(ide: str):
             "content": {
                 "mcpServers": {
                     "vibecollab": {
-                        "command": "vibecollab",
+                        "command": vibecollab_cmd,
                         "args": ["mcp", "serve"],
                         "disabled": False,
                     }
@@ -110,7 +119,7 @@ def config(ide: str):
             "content": {
                 "mcpServers": {
                     "vibecollab": {
-                        "command": "vibecollab",
+                        "command": vibecollab_cmd,
                         "args": ["mcp", "serve"],
                     }
                 }
@@ -143,6 +152,7 @@ def inject(ide: str, project_root: Path):
     Automatically create/update IDE MCP config files, no manual copy-paste needed.
     """
     import json as json_mod
+    import shutil
 
     root = project_root or Path.cwd()
 
@@ -152,8 +162,15 @@ def inject(ide: str, project_root: Path):
         "codebuddy": root / ".mcp.json",
     }
 
+    # Resolve full path to vibecollab executable
+    vibecollab_cmd = shutil.which("vibecollab")
+    if vibecollab_cmd:
+        vibecollab_cmd = vibecollab_cmd.replace("\\", "/")
+    else:
+        vibecollab_cmd = "vibecollab"
+
     vibecollab_entry = {
-        "command": "vibecollab",
+        "command": vibecollab_cmd,
         "args": ["mcp", "serve"],
     }
 

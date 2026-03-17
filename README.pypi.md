@@ -366,4 +366,4 @@ MIT
 
 ---
 
-*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.10.8.*
+*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.10.9.*
