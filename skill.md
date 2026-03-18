@@ -49,6 +49,30 @@ vibecollab init -n "<PROJECT_NAME>" -d <DOMAIN>
 
 This creates `project.yaml`, `CONTRIBUTING_AI.md`, and `docs/` directory with protocol documents.
 
+### For Existing Projects
+
+If the project already has code (not an empty directory), do the following **after** `vibecollab init`:
+
+1. **Backfill CONTEXT.md**: Review recent git commits and summarize the project's current state, active tasks, and recent decisions into `docs/CONTEXT.md`
+
+2. **Backfill DECISIONS.md**: Look for important architectural choices in git history and record them in `docs/DECISIONS.md` with proper decision levels (S/A/B/C)
+
+3. **Create ROADMAP.md**: If the project has future plans, create `docs/ROADMAP.md` following the milestone format (see ROADMAP Format section below)
+
+4. **Capture Insights**: If reusable development experiences are found (debugging tricks, architectural patterns, workflow optimizations), capture them using `insight_add` MCP tool
+
+### Quick Start After Init
+
+After initialization completes, tell the user:
+
+> VibeCollab is ready! Here's how to start:
+> 
+> 1. **Describe your current task** — I'll help you work on it while following the collaboration protocol
+> 2. **Or say "onboard"** — I'll read the project context and suggest what to do next
+> 3. **Or show me a file/feature** — I'll understand it within the project's structured context
+
+This gives users an immediate path forward instead of leaving them wondering "what now?"
+
 ## Step 3: Connect MCP to IDE
 
 Ask the user which IDE they use, then run:
