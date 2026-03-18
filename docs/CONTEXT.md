@@ -4,7 +4,7 @@
 > Aggregated from: dev
 
 ## Project Status
-- **Version**: v0.10.9
+- **Version**: v0.10.10
 - **Previous release**: v0.10.9 (PyPI published)
 - **Active roles**: 1 (DEV)
 - **Tests**: 1520 passed, 89% coverage
@@ -38,7 +38,7 @@
 - v0.10.0: External project QA validation (Phase 11 TC-E2E-001~010)
 - GitHub facade: Issue/PR templates, CONTRIBUTING.md, Badge, About/Topics
 
-## Architecture (v0.10.9)
+## Architecture (v0.10.10)
 
 ### Directory Structure
 36 flat modules reorganized into 7 sub-packages:

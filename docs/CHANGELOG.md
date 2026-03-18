@@ -1,5 +1,28 @@
 # VibeCollab Changelog
 
+## v0.10.10 (2026-03-17) - Bug Fixes + Version Sync Tool
+
+### Bug Fix
+- **MCP config path resolution**: `vibecollab mcp config/inject` now uses `shutil.which("vibecollab")` to resolve full executable path, fixing "command not found" for users in virtual environments
+- **init command default**: `--output/-o` changed from `required=True` to `default="."`, aligning CLI with documentation (optional, defaults to current directory)
+- **Test assertion fix**: `test_full_inject_and_verify` assertion updated to accommodate full path resolution
+
+### New Feature
+- **Version sync tool** (`scripts/bump_version.py`): One-command version synchronization across 7 files
+  - `python scripts/bump_version.py check` — Dry-run to show version drift
+  - `python scripts/bump_version.py --sync` — Sync all files to current `__version__`
+  - `python scripts/bump_version.py 0.11.0` — Bump to new version
+  - Windows GBK compatible (ASCII symbols instead of emoji)
+
+### Documentation
+- `skill.md`: Fixed invalid `--ide auto` to `--ide cursor` (auto was never a valid option)
+- Version references aligned to v0.10.9 across README.pypi.md, llms.txt, docs/CONTEXT.md
+
+### Decision
+- **DECISION-019**: v0.10.x strategic decisions — Cut Scheduler, Examples Market to independent repo, continue v0.10.x iteration
+
+---
+
 ## v0.10.9 (2026-03-11) - Get-Started Rewrite
 
 ### Improvement

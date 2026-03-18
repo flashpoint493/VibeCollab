@@ -482,6 +482,27 @@
 
 ---
 
+### DECISION-019: v0.10.x Strategic Decisions — Cut Scheduler/Examples Market, Continue Iteration
+- **Initiator**: user
+- **Participants**: user, AI
+- **Level**: S
+- **Role**: [PM] [ARCH]
+- **Problem**: After reverting 18 local commits (Scheduler 1600+ lines, Examples Market 1200+ lines, Self-Iterate 750+ lines), how should the project roadmap be re-planned?
+- **Decisions**:
+  - **D1: Cut Scheduler** — The 1600+ line Scheduler implementation is over-engineered. No immediate need. If required later, build lightweight IDE-specific adapters instead.
+  - **D2: Examples Market → Independent Repo** — Examples Market is for showcasing projects built with VibeCollab, fundamentally different from init templates. Should be a separate repository, not part of this package.
+  - **D3: Git Commit Amend** — One commit (9c7da84) had non-standard message `"v0.10.9"`. Amended to `chore(release): v0.10.9` per Conventional Commits.
+  - **D4: Keep External QA** — v0.10.0 External QA milestone remains unchanged. Will validate on 3+ real external projects.
+  - **D5: Continue v0.10.x Iteration** — Conservative version progression. No rush to v1.0.0. Focus on quality over velocity.
+- **Date**: 2026-03-17
+- **Status**: CONFIRMED
+- **Impact**:
+  - ROADMAP.md: No Scheduler/Examples Market milestones to remove (never merged to master)
+  - External QA validation scope unchanged
+  - Version progression: v0.10.9 → v0.10.10 → ... → v1.0.0
+
+---
+
 ### DECISION-016: v0.9.3 Prioritize Task/EventLog Core Workflow Integration
 - **Initiator**: user
 - **Participants**: user, AI
