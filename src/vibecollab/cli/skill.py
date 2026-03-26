@@ -55,9 +55,6 @@ def inject(ide: str, project_root: Path, force: bool):
 
         vibecollab skill inject opencode --force
     """
-    import json as json_mod
-    import shutil
-
     root = project_root or Path.cwd()
 
     if ide == "opencode":
