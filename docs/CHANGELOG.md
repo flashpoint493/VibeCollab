@@ -1,5 +1,34 @@
 # VibeCollab Changelog
 
+## v0.10.11 (2026-03-26) - OpenCode CLI Support
+
+### New Feature
+- **New CLI command**: `vibecollab skill` - Skill management for AI assistants
+  - `vibecollab skill inject opencode` - Inject VibeCollab skill into OpenCode IDE
+  - `vibecollab skill list` - List available skills
+  - Automatically creates `.opencode/package.json` with @opencode-ai/plugin 1.3.2
+  - Creates `.opencode/skills/vibecollab.md` with complete protocol documentation
+- **OpenCode 1.3.2 support**: Verified compatibility with latest opencode version
+
+### Maintenance
+- **Version bump**: Synchronized version to v0.10.11 across all files
+
+---
+
+## v0.10.10 (2026-03-17) - Bug Fixes + Version Sync Tool
+
+### Maintenance
+- **Local environment**: Created `.venv/` and installed the current repository as editable `vibe-collab`
+- **Protocol verification**: Ran `vibecollab onboard` and `vibecollab check`; both completed successfully
+- **Installer fallback**: In the fresh virtual environment, direct `pip install vibe-collab` hit a TLS CA bundle path issue, so local editable install was used because this repository is the package source itself
+
+### Documentation
+- **project.yaml**: Replaced placeholder metadata (`MyProject`, `v1.0`, `Project description`) with real VibeCollab project identity
+- **Generated artifacts**: Regenerated `CONTRIBUTING_AI.md` and refreshed `llms.txt` from the corrected config
+- **Context tracking**: Updated `docs/CONTEXT.md` and `docs/developers/dev/CONTEXT.md` for this setup session
+
+---
+
 ## v0.10.10 (2026-03-17) - Bug Fixes + Version Sync Tool
 
 ### Bug Fix

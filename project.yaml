@@ -5,10 +5,10 @@
 # Project Basic Information
 # ============================================
 project:
-  name: "MyProject"
-  version: "v1.0"
+  name: "VibeCollab"
+  version: "v0.10.11"
   domain: "generic"  # game/web/mobile/data/infra/generic
-  description: "Project description"
+  description: "Configurable AI collaboration protocol framework with built-in knowledge capture and MCP Server"
 
 # ============================================
 # Philosophy

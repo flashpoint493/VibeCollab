@@ -38,7 +38,9 @@ def _safe_load_yaml(path: Path, label: str = "config file") -> dict:
     """
     if not path.exists():
         console.print(f"[red]{_('Error:')}[/red] {label} {_('not found:')} {path}")
-        console.print(f"[dim]{_('Hint: run in the project directory or use -c to specify the path')}[/dim]")
+        console.print(
+            f"[dim]{_('Hint: run in the project directory or use -c to specify the path')}[/dim]"
+        )
         raise SystemExit(1)
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -54,7 +56,9 @@ def _safe_load_yaml(path: Path, label: str = "config file") -> dict:
         console.print(f"[red]{_('Error:')}[/red] {label} {_('is empty:')} {path}")
         raise SystemExit(1)
     if not isinstance(data, dict):
-        console.print(f"[red]{_('Error:')}[/red] {label} {_('has invalid format (expected YAML dict):')} {path}")
+        console.print(
+            f"[red]{_('Error:')}[/red] {label} {_('has invalid format (expected YAML dict):')} {path}"
+        )
         raise SystemExit(1)
     return data
 
@@ -92,12 +96,11 @@ def main(lang):
 @main.command()
 @click.option("--name", "-n", required=True, help=_("Project name"))
 @click.option(
-    "--domain", "-d",
-    type=click.Choice(DOMAINS),
-    default="generic",
-    help=_("Business domain")
+    "--domain", "-d", type=click.Choice(DOMAINS), default="generic", help=_("Business domain")
 )
-@click.option("--output", "-o", default=".", help=_("Output directory (default: current directory)"))
+@click.option(
+    "--output", "-o", default=".", help=_("Output directory (default: current directory)")
+)
 @click.option("--force", "-f", is_flag=True, help=_("Force overwrite existing directory"))
 @click.option("--no-git", is_flag=True, help=_("Skip automatic Git initialization"))
 @click.option("--multi-dev", is_flag=True, help=_("Enable multi-developer mode"))
@@ -118,18 +121,24 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
 
     if output_path.exists() and not force:
         if any(output_path.iterdir()):
-            console.print(f"[red]{_('Error:')}[/red] {_('Directory {dir} already exists and is not empty. Use --force to overwrite.').format(dir=output)}")
+            console.print(
+                f"[red]{_('Error:')}[/red] {_('Directory {dir} already exists and is not empty. Use --force to overwrite.').format(dir=output)}"
+            )
             raise SystemExit(1)
 
     with console.status(f"[bold green]{_('Initializing project {name}...').format(name=name)}"):
         try:
-            project = Project.create(name=name, domain=domain, output_dir=output_path, multi_dev=multi_dev)
+            project = Project.create(
+                name=name, domain=domain, output_dir=output_path, multi_dev=multi_dev
+            )
             project.generate_all(auto_init_git=not no_git)
         except PermissionError as e:
             console.print(f"[red]{_('Error:')}[/red] {_('Permission denied:')} {e}")
             raise SystemExit(1)
         except OSError as e:
-            console.print(f"[red]{_('Error:')}[/red] {_('File system error (disk full/invalid path):')} {e}")
+            console.print(
+                f"[red]{_('Error:')}[/red] {_('File system error (disk full/invalid path):')} {e}"
+            )
             raise SystemExit(1)
         except Exception as e:
             console.print(f"[red]{_('Error:')}[/red] {_('Project initialization failed:')} {e}")
@@ -137,13 +146,15 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
 
     console.print()
     mode_text = _("multi-developer") if multi_dev else _("single-developer")
-    console.print(Panel.fit(
-        f"[bold green]{EMOJI_MAP['success']} {_('Project {name} initialized!').format(name=name)}[/bold green]\n\n"
-        f"[dim]{_('Directory:')}[/dim] {output_path.absolute()}\n"
-        f"[dim]{_('Domain:')}[/dim] {domain}\n"
-        f"[dim]{_('Mode:')}[/dim] {mode_text}",
-        title=_("Done")
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold green]{EMOJI_MAP['success']} {_('Project {name} initialized!').format(name=name)}[/bold green]\n\n"
+            f"[dim]{_('Directory:')}[/dim] {output_path.absolute()}\n"
+            f"[dim]{_('Domain:')}[/dim] {domain}\n"
+            f"[dim]{_('Mode:')}[/dim] {mode_text}",
+            title=_("Done"),
+        )
+    )
 
     table = Table(title=_("Generated Files"), show_header=True)
     table.add_column(_("File"), style="cyan")
@@ -170,14 +181,19 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
 
     if git_auto_init:
         console.print()
-        console.print(f"[green]{EMOJI_MAP['success']} {_('Git repository initialized automatically')}[/green]")
+        console.print(
+            f"[green]{EMOJI_MAP['success']} {_('Git repository initialized automatically')}[/green]"
+        )
     elif git_warning:
         console.print()
         console.print(f"[yellow]{EMOJI_MAP['warning']} {git_warning}[/yellow]")
-        console.print(f"[dim]{_('Hint: consider initializing a Git repository to track changes')}[/dim]")
+        console.print(
+            f"[dim]{_('Hint: consider initializing a Git repository to track changes')}[/dim]"
+        )
 
     if multi_dev:
         from ..domain.developer import DeveloperManager
+
         dm = DeveloperManager(output_path, project.config)
         current_dev = dm.get_current_developer()
 
@@ -235,22 +251,27 @@ def generate(config: str, output: str, no_llmstxt: bool):
             if not no_llmstxt:
                 project_config = generator.config
                 project_name = project_config.get("project", {}).get("name", "Project")
-                project_desc = project_config.get("project", {}).get("description", "AI-assisted development project")
+                project_desc = project_config.get("project", {}).get(
+                    "description", "AI-assisted development project"
+                )
 
                 updated, llmstxt_path = LLMsTxtManager.ensure_integration(
-                    project_root,
-                    project_name,
-                    project_desc,
-                    output_path
+                    project_root, project_name, project_desc, output_path
                 )
 
                 if updated:
                     if llmstxt_path and llmstxt_path.exists():
-                        console.print(f"[green]{EMOJI_MAP['success']} {_('Updated:')}[/green] {llmstxt_path}")
+                        console.print(
+                            f"[green]{EMOJI_MAP['success']} {_('Updated:')}[/green] {llmstxt_path}"
+                        )
                     else:
-                        console.print(f"[green]{EMOJI_MAP['success']} {_('Created:')}[/green] {llmstxt_path}")
+                        console.print(
+                            f"[green]{EMOJI_MAP['success']} {_('Created:')}[/green] {llmstxt_path}"
+                        )
                 else:
-                    console.print(f"[dim]{_('Info: llms.txt already contains collaboration rules reference')}[/dim]")
+                    console.print(
+                        f"[dim]{_('Info: llms.txt already contains collaboration rules reference')}[/dim]"
+                    )
         except yaml.YAMLError as e:
             console.print(f"[red]{_('Error:')}[/red] {_('Invalid YAML in config file:')} {e}")
             raise SystemExit(1)
@@ -292,7 +313,9 @@ def validate(config: str):
             raise SystemExit(1)
 
     if errors:
-        console.print(f"[red]{EMOJI_MAP['error']} {_('Found {n} issue(s):').format(n=len(errors))}[/red]")
+        console.print(
+            f"[red]{EMOJI_MAP['error']} {_('Found {n} issue(s):').format(n=len(errors))}[/red]"
+        )
         for err in errors:
             console.print(f"  - {err}")
         raise SystemExit(1)
@@ -362,7 +385,9 @@ def upgrade(config: str, dry_run: bool, force: bool):
 
     if not config_path.exists():
         console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
-        console.print(f"[dim]{_('Hint: Run in the project directory, or use -c to specify the config file path')}[/dim]")
+        console.print(
+            f"[dim]{_('Hint: Run in the project directory, or use -c to specify the config file path')}[/dim]"
+        )
         raise SystemExit(1)
 
     # Load user config
@@ -373,7 +398,9 @@ def upgrade(config: str, dry_run: bool, force: bool):
     try:
         latest_template = yaml.safe_load(tm.get_template("default"))
         if not isinstance(latest_template, dict):
-            console.print(f"[red]{_('Error:')}[/red] {_('Built-in default template has invalid format')}")
+            console.print(
+                f"[red]{_('Error:')}[/red] {_('Built-in default template has invalid format')}"
+            )
             raise SystemExit(1)
     except yaml.YAMLError as e:
         console.print(f"[red]{_('Error:')}[/red] {_('Built-in template parse failed:')} {e}")
@@ -398,14 +425,18 @@ def upgrade(config: str, dry_run: bool, force: bool):
             new_sections.append(key)
 
     if dry_run:
-        console.print(Panel.fit(
-            f"[bold yellow]{_('Preview mode')}[/bold yellow] - {_('No files will be modified')}",
-            title=_("Dry Run")
-        ))
+        console.print(
+            Panel.fit(
+                f"[bold yellow]{_('Preview mode')}[/bold yellow] - {_('No files will be modified')}",
+                title=_("Dry Run"),
+            )
+        )
         console.print()
 
         if new_sections:
-            console.print(f"[bold]{EMOJI['package']} {_('New config sections to be added:')}[/bold]")
+            console.print(
+                f"[bold]{EMOJI['package']} {_('New config sections to be added:')}[/bold]"
+            )
             for section in new_sections:
                 console.print(f"  [green]+ {section}[/green]")
         else:
@@ -413,12 +444,18 @@ def upgrade(config: str, dry_run: bool, force: bool):
 
         console.print()
         console.print(f"[bold]{EMOJI_MAP['lock']} {_('User config to be preserved:')}[/bold]")
-        console.print(f"  {BULLET} project.name: {user_preserved['project'].get('name', _('(not set)'))}")
-        console.print(f"  {BULLET} project.domain: {user_preserved['project'].get('domain', _('(not set)'))}")
-        if user_preserved.get('roles'):
+        console.print(
+            f"  {BULLET} project.name: {user_preserved['project'].get('name', _('(not set)'))}"
+        )
+        console.print(
+            f"  {BULLET} project.domain: {user_preserved['project'].get('domain', _('(not set)'))}"
+        )
+        if user_preserved.get("roles"):
             console.print(f"  {BULLET} roles: {len(user_preserved['roles'])} {_('role(s)')}")
-        if user_preserved.get('confirmed_decisions'):
-            console.print(f"  {BULLET} confirmed_decisions: {len(user_preserved['confirmed_decisions'])} {_('decision(s)')}")
+        if user_preserved.get("confirmed_decisions"):
+            console.print(
+                f"  {BULLET} confirmed_decisions: {len(user_preserved['confirmed_decisions'])} {_('decision(s)')}"
+            )
 
         console.print()
         console.print(f"[dim]{_('Remove --dry-run to perform the actual upgrade')}[/dim]")
@@ -455,10 +492,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
     project_name = merged.get("project", {}).get("name", "Project")
     project_desc = merged.get("project", {}).get("description", "AI-assisted development project")
     LLMsTxtManager.ensure_integration(
-        config_path.parent,
-        project_name,
-        project_desc,
-        contributing_ai_path
+        config_path.parent, project_name, project_desc, contributing_ai_path
     )
 
     # Check and initialize multi-developer directory structure
@@ -484,12 +518,16 @@ def upgrade(config: str, dry_run: bool, force: bool):
             dev_dir = developers_dir / dev_id
             if not dev_dir.exists():
                 dm.init_developer_context(dev_id)
-                console.print(f"  [green]{EMOJI_MAP['sparkles']} {_('Initialized developer directory:')} docs/developers/{dev_id}/[/green]")
+                console.print(
+                    f"  [green]{EMOJI_MAP['sparkles']} {_('Initialized developer directory:')} docs/developers/{dev_id}/[/green]"
+                )
                 initialized = True
 
         # Create COLLABORATION.md
-        collab_config = multi_dev_config.get('collaboration', {})
-        collab_file = config_path.parent / collab_config.get('file', 'docs/developers/COLLABORATION.md')
+        collab_config = multi_dev_config.get("collaboration", {})
+        collab_file = config_path.parent / collab_config.get(
+            "file", "docs/developers/COLLABORATION.md"
+        )
 
         if not collab_file.exists():
             collab_file.parent.mkdir(parents=True, exist_ok=True)
@@ -524,8 +562,10 @@ def upgrade(config: str, dry_run: bool, force: bool):
 ---
 *Last updated: {today}*
 """
-            collab_file.write_text(collab_content, encoding='utf-8')
-            console.print(f"  [green]{EMOJI_MAP['sparkles']} {_('Created collaboration document:')} {collab_config.get('file', 'docs/developers/COLLABORATION.md')}[/green]")
+            collab_file.write_text(collab_content, encoding="utf-8")
+            console.print(
+                f"  [green]{EMOJI_MAP['sparkles']} {_('Created collaboration document:')} {collab_config.get('file', 'docs/developers/COLLABORATION.md')}[/green]"
+            )
             initialized = True
 
         # Generate global aggregated CONTEXT.md
@@ -533,14 +573,18 @@ def upgrade(config: str, dry_run: bool, force: bool):
         global_context = config_path.parent / "docs" / "CONTEXT.md"
         if not global_context.exists() or initialized:
             aggregator.generate_and_save()
-            console.print(f"  [green]{EMOJI_MAP['sparkles']} {_('Generated global context aggregation:')} docs/CONTEXT.md[/green]")
+            console.print(
+                f"  [green]{EMOJI_MAP['sparkles']} {_('Generated global context aggregation:')} docs/CONTEXT.md[/green]"
+            )
 
     # Success message
     console.print()
-    console.print(Panel.fit(
-        f"[bold green]{EMOJI_MAP['success']} {_('Protocol upgraded to v{version}').format(version=__version__)}[/bold green]",
-        title=_("Upgrade Complete")
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold green]{EMOJI_MAP['success']} {_('Protocol upgraded to v{version}').format(version=__version__)}[/bold green]",
+            title=_("Upgrade Complete"),
+        )
+    )
 
     if new_sections:
         console.print()
@@ -560,7 +604,9 @@ def upgrade(config: str, dry_run: bool, force: bool):
 @main.command()
 @click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 @click.option("--strict", is_flag=True, help=_("Strict mode: treat warnings as failures"))
-@click.option("--insights/--no-insights", default=True, help=_("Run Insight consistency check (default: on)"))
+@click.option(
+    "--insights/--no-insights", default=True, help=_("Run Insight consistency check (default: on)")
+)
 def check(config: str, strict: bool, insights: bool):
     """Check protocol compliance
 
@@ -582,7 +628,9 @@ def check(config: str, strict: bool, insights: bool):
 
     if not config_path.exists():
         console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
-        console.print(f"[dim]{_('Hint: Run in the project directory, or use -c to specify the config file path')}[/dim]")
+        console.print(
+            f"[dim]{_('Hint: Run in the project directory, or use -c to specify the config file path')}[/dim]"
+        )
         raise SystemExit(1)
 
     # Load config
@@ -598,6 +646,7 @@ def check(config: str, strict: bool, insights: bool):
     schema_warnings_list = []
     try:
         from ..core.pipeline import Pipeline
+
         pipeline = Pipeline(project_root, config_path=config)
         schema_report = pipeline.validate_config()
         schema_errors_list = schema_report.errors
@@ -607,10 +656,9 @@ def check(config: str, strict: bool, insights: bool):
 
     # Display results
     console.print()
-    console.print(Panel.fit(
-        f"[bold]{_('Protocol Compliance Check')}[/bold]",
-        title=_("Protocol Check")
-    ))
+    console.print(
+        Panel.fit(f"[bold]{_('Protocol Compliance Check')}[/bold]", title=_("Protocol Check"))
+    )
     console.print()
 
     # Group by severity
@@ -644,10 +692,7 @@ def check(config: str, strict: bool, insights: bool):
 
     # Schema validation results
     if schema_errors_list or schema_warnings_list:
-        console.print(Panel.fit(
-            f"[bold]{_('Schema Validation')}[/bold]",
-            title=_("Schema Check")
-        ))
+        console.print(Panel.fit(f"[bold]{_('Schema Validation')}[/bold]", title=_("Schema Check")))
         console.print()
         if schema_errors_list:
             console.print(f"[bold red]{EMOJI_MAP['error']} {_('Schema Errors:')}[/bold red]")
@@ -655,7 +700,9 @@ def check(config: str, strict: bool, insights: bool):
                 console.print(f"  {BULLET} {err}")
             console.print()
         if schema_warnings_list:
-            console.print(f"[bold yellow]{EMOJI_MAP['warning']} {_('Schema Warnings:')}[/bold yellow]")
+            console.print(
+                f"[bold yellow]{EMOJI_MAP['warning']} {_('Schema Warnings:')}[/bold yellow]"
+            )
             for warn in schema_warnings_list:
                 console.print(f"  {BULLET} {warn}")
             console.print()
@@ -664,14 +711,17 @@ def check(config: str, strict: bool, insights: bool):
     insight_errors = 0
     insight_warnings = 0
     if insights:
-        console.print(Panel.fit(
-            f"[bold]{_('Insight System Consistency Check')}[/bold]",
-            title=_("Insight Consistency Check")
-        ))
+        console.print(
+            Panel.fit(
+                f"[bold]{_('Insight System Consistency Check')}[/bold]",
+                title=_("Insight Consistency Check"),
+            )
+        )
         console.print()
         try:
             from ..domain.event_log import EventLog
             from ..insight.manager import InsightManager
+
             event_log = EventLog(project_root / ".vibecollab" / "events.jsonl")
             mgr = InsightManager(project_root=project_root, event_log=event_log)
             report = mgr.check_consistency()
@@ -684,43 +734,67 @@ def check(config: str, strict: bool, insights: bool):
                 console.print()
             if report.warnings:
                 insight_warnings = len(report.warnings)
-                console.print(f"[bold yellow]{EMOJI_MAP['warning']} {_('Insight Warnings:')}[/bold yellow]")
+                console.print(
+                    f"[bold yellow]{EMOJI_MAP['warning']} {_('Insight Warnings:')}[/bold yellow]"
+                )
                 for warn in report.warnings:
                     console.print(f"  {BULLET} {warn}")
                 console.print()
             if report.ok and not report.warnings:
-                console.print(f"  [green]{EMOJI_MAP['success']} {_('Insight consistency check passed')}[/green]")
+                console.print(
+                    f"  [green]{EMOJI_MAP['success']} {_('Insight consistency check passed')}[/green]"
+                )
                 console.print()
         except Exception as e:
-            console.print(f"  [yellow]{EMOJI_MAP['warning']} {_('Insight check skipped:')} {e}[/yellow]")
+            console.print(
+                f"  [yellow]{EMOJI_MAP['warning']} {_('Insight check skipped:')} {e}[/yellow]"
+            )
             console.print()
 
     # Merge statistics
     total_errors = len(errors) + insight_errors + len(schema_errors_list)
     total_warnings = len(warnings) + insight_warnings + len(schema_warnings_list)
-    total_checks = summary["total"] + (1 if insights else 0) + (1 if schema_errors_list or schema_warnings_list else 0)
+    total_checks = (
+        summary["total"]
+        + (1 if insights else 0)
+        + (1 if schema_errors_list or schema_warnings_list else 0)
+    )
 
     # Display summary
     if total_errors == 0 and not (strict and total_warnings > 0):
-        console.print(Panel.fit(
-            f"[bold green]{EMOJI_MAP['success']} {_('All checks passed')}[/bold green]\n\n"
-            f"{_('Total:')} {total_checks} {_('check(s)')}",
-            title=_("Check Complete")
-        ))
+        console.print(
+            Panel.fit(
+                f"[bold green]{EMOJI_MAP['success']} {_('All checks passed')}[/bold green]\n\n"
+                f"{_('Total:')} {total_checks} {_('check(s)')}",
+                title=_("Check Complete"),
+            )
+        )
     else:
-        status = _("Failed") if total_errors > 0 or (strict and total_warnings > 0) else _("Has Warnings")
+        status = (
+            _("Failed")
+            if total_errors > 0 or (strict and total_warnings > 0)
+            else _("Has Warnings")
+        )
         color = "red" if total_errors > 0 or (strict and total_warnings > 0) else "yellow"
-        emoji = EMOJI_MAP['error'] if total_errors > 0 or (strict and total_warnings > 0) else EMOJI_MAP['warning']
-        console.print(Panel.fit(
-            f"[bold {color}]{emoji} {_('Check')} {status}[/bold {color}]\n\n"
-            f"{_('Total:')} {total_checks} {_('check(s)')}\n"
-            f"{_('Errors:')} {total_errors}\n"
-            f"{_('Warnings:')} {total_warnings}",
-            title=_("Check Complete")
-        ))
+        emoji = (
+            EMOJI_MAP["error"]
+            if total_errors > 0 or (strict and total_warnings > 0)
+            else EMOJI_MAP["warning"]
+        )
+        console.print(
+            Panel.fit(
+                f"[bold {color}]{emoji} {_('Check')} {status}[/bold {color}]\n\n"
+                f"{_('Total:')} {total_checks} {_('check(s)')}\n"
+                f"{_('Errors:')} {total_errors}\n"
+                f"{_('Warnings:')} {total_warnings}",
+                title=_("Check Complete"),
+            )
+        )
         if strict and total_warnings > 0:
             console.print()
-            console.print(f"[dim]{_('Hint: In --strict mode, warnings are treated as failures')}[/dim]")
+            console.print(
+                f"[dim]{_('Hint: In --strict mode, warnings are treated as failures')}[/dim]"
+            )
 
     # Return exit code
     if total_errors > 0 or (strict and total_warnings > 0):
@@ -742,6 +816,7 @@ def health(config: str, as_json: bool):
     cfg = _safe_load_yaml(config_path)
 
     from ..core.health import HealthExtractor
+
     ext = HealthExtractor(config_path.parent, cfg)
     report = ext.extract()
 
@@ -751,13 +826,17 @@ def health(config: str, as_json: bool):
 
     grade = report.summary.get("grade", "?")
     score = report.score
-    grade_color = {"A": "green", "B": "blue", "C": "yellow", "D": "red", "F": "red"}.get(grade, "white")
+    grade_color = {"A": "green", "B": "blue", "C": "yellow", "D": "red", "F": "red"}.get(
+        grade, "white"
+    )
 
-    console.print(Panel(
-        f"[bold {grade_color}]{_('Grade:')} {grade} ({score:.0f}/100)[/bold {grade_color}]\n"
-        f"CRITICAL: {report.critical_count}  WARNING: {report.warning_count}  INFO: {report.info_count}",
-        title=_("Project Health")
-    ))
+    console.print(
+        Panel(
+            f"[bold {grade_color}]{_('Grade:')} {grade} ({score:.0f}/100)[/bold {grade_color}]\n"
+            f"CRITICAL: {report.critical_count}  WARNING: {report.warning_count}  INFO: {report.info_count}",
+            title=_("Project Health"),
+        )
+    )
 
     level_style = {"critical": "red bold", "warning": "yellow", "info": "dim"}
     for signal in report.signals:
@@ -815,11 +894,16 @@ from .roadmap import roadmap_group  # noqa: E402
 
 main.add_command(roadmap_group)
 
+# Import Skill management commands (v0.10.11+)
+from .skill import skill_group  # noqa: E402
+
+main.add_command(skill_group)
 
 
 # ============================================
 # Execution Plan commands (v0.10.4+)
 # ============================================
+
 
 @main.group("plan")
 def plan_group():
@@ -835,7 +919,11 @@ def plan_group():
 @click.option("--dry-run", is_flag=True, help=_("Preview plan without executing"))
 @click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 @click.option("--timeout", default=120, help=_("Step timeout in seconds"))
-@click.option("--host", default=None, help=_("Host adapter: file_exchange, subprocess:cmd, auto:cursor, auto:cline"))
+@click.option(
+    "--host",
+    default=None,
+    help=_("Host adapter: file_exchange, subprocess:cmd, auto:cursor, auto:cline"),
+)
 @click.option("--verbose", "-v", is_flag=True, help=_("Verbose step-by-step logging"))
 def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
     """Execute a YAML automation plan
@@ -874,6 +962,7 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
     if vibecollab_dir.exists():
         try:
             from ..domain.event_log import EventLog
+
             event_log = EventLog(Path("."))
         except Exception:
             pass
@@ -884,14 +973,17 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
         # CLI override: "file_exchange", "subprocess:command", "auto:cursor", etc.
         if host.startswith("subprocess:"):
             from ..core.execution_plan import SubprocessAdapter
+
             host_adapter = SubprocessAdapter(
-                command=host[len("subprocess:"):],
+                command=host[len("subprocess:") :],
                 cwd=Path(".").resolve(),
             )
         else:
             override_plan = {**plan, "host": host}
             host_adapter = resolve_host_adapter(
-                override_plan, Path(".").resolve(), verbose=verbose,
+                override_plan,
+                Path(".").resolve(),
+                verbose=verbose,
             )
 
     # If using auto adapter, set up process state tracking and signal handlers
@@ -956,6 +1048,7 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
     if auto_state:
         try:
             from ..contrib.auto_driver import save_state as _save
+
             auto_state.status = "completed" if result.success else "failed"
             if not result.success and result.abort_reason:
                 auto_state.error = result.abort_reason
@@ -967,18 +1060,20 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
         click.echo(json_mod.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
         # Rich output
-        status_emoji = EMOJI_MAP['success'] if result.success else EMOJI_MAP['error']
+        status_emoji = EMOJI_MAP["success"] if result.success else EMOJI_MAP["error"]
         status_color = "green" if result.success else "red"
 
         console.print()
-        console.print(Panel.fit(
-            f"[bold]{result.name}[/bold]\n\n"
-            f"Status: [{status_color}]{status_emoji} {'PASSED' if result.success else 'FAILED'}[/{status_color}]\n"
-            f"Steps: {result.passed}/{result.total_steps} passed, "
-            f"{result.failed} failed, {result.skipped} skipped\n"
-            f"Duration: {result.duration_ms}ms",
-            title="Plan Result"
-        ))
+        console.print(
+            Panel.fit(
+                f"[bold]{result.name}[/bold]\n\n"
+                f"Status: [{status_color}]{status_emoji} {'PASSED' if result.success else 'FAILED'}[/{status_color}]\n"
+                f"Steps: {result.passed}/{result.total_steps} passed, "
+                f"{result.failed} failed, {result.skipped} skipped\n"
+                f"Duration: {result.duration_ms}ms",
+                title="Plan Result",
+            )
+        )
 
         if result.failed > 0 or result.aborted:
             console.print()
@@ -1023,6 +1118,7 @@ def plan_validate(plan_file):
 # ============================================
 # Auto Driver commands (v0.10.7+ — thin wrappers over plan run)
 # ============================================
+
 
 @main.group("auto")
 def auto_group():
@@ -1106,7 +1202,7 @@ def auto_status():
     console.print(f"  Status: {status.get('status')}")
     console.print(f"  Round: {status.get('current_round')}/{status.get('max_rounds')}")
     console.print(f"  Started: {status.get('started_at')}")
-    if status.get('error'):
+    if status.get("error"):
         console.print(f"  Error: [red]{status.get('error')}[/red]")
 
 
@@ -1136,7 +1232,9 @@ def auto_stop():
 @click.argument("plan_file", type=click.Path(exists=False))  # Allow non-existing for presets
 @click.option("--ide", default="cursor", help=_("IDE to drive (cursor, cline, codebuddy)"))
 @click.option("--output", "-o", default=None, help=_("Output path for .bat file"))
-@click.option("--preset", "-p", is_flag=True, help=_("Treat plan_file as preset name (e.g., dev-loop)"))
+@click.option(
+    "--preset", "-p", is_flag=True, help=_("Treat plan_file as preset name (e.g., dev-loop)")
+)
 def auto_init(plan_file, ide, output, preset):
     """Create a .bat launcher script for autonomous automation
 
@@ -1159,29 +1257,33 @@ def auto_init(plan_file, ide, output, preset):
     # Handle preset plans
     if preset or not Path(plan_file).exists():
         # Try to copy from package
-        preset_name = plan_file.replace('.yaml', '') + '.yaml'
-        if not preset_name.endswith('.yaml'):
-            preset_name += '.yaml'
+        preset_name = plan_file.replace(".yaml", "") + ".yaml"
+        if not preset_name.endswith(".yaml"):
+            preset_name += ".yaml"
 
         try:
-            if hasattr(importlib.resources, 'files'):
-                plans_path = importlib.resources.files('vibecollab') / 'plans'
+            if hasattr(importlib.resources, "files"):
+                plans_path = importlib.resources.files("vibecollab") / "plans"
                 source_plan = plans_path / preset_name
                 if source_plan.is_file():
                     # Copy to local plans directory
-                    local_plans = project_root / 'plans'
+                    local_plans = project_root / "plans"
                     local_plans.mkdir(exist_ok=True)
                     dest_plan = local_plans / preset_name
 
-                    dest_plan.write_text(source_plan.read_text(encoding='utf-8'), encoding='utf-8')
-                    console.print(f"[green]{EMOJI_MAP['success']} Copied preset plan to: {dest_plan}[/green]")
+                    dest_plan.write_text(source_plan.read_text(encoding="utf-8"), encoding="utf-8")
+                    console.print(
+                        f"[green]{EMOJI_MAP['success']} Copied preset plan to: {dest_plan}[/green]"
+                    )
                     plan_file = str(dest_plan)
                 else:
-                    console.print(f"[red]{EMOJI_MAP['error']} Preset plan not found: {preset_name}[/red]")
+                    console.print(
+                        f"[red]{EMOJI_MAP['error']} Preset plan not found: {preset_name}[/red]"
+                    )
                     console.print("[dim]Run 'vibecollab auto list' to see available presets[/dim]")
                     raise SystemExit(1)
         except Exception as e:
-            if 'not found' not in str(e).lower():
+            if "not found" not in str(e).lower():
                 console.print(f"[yellow]Warning: Could not copy preset: {e}[/yellow]")
             if not Path(plan_file).exists():
                 console.print(f"[red]{EMOJI_MAP['error']} Plan file not found: {plan_file}[/red]")
@@ -1199,6 +1301,7 @@ def auto_init(plan_file, ide, output, preset):
     # Generate .bat content using the refactored generator
     try:
         from ..contrib.auto_driver import generate_bat_content
+
         bat_content = generate_bat_content(plan_file, ide, project_root)
     except ImportError:
         # Fallback if auto_driver can't be imported (shouldn't happen)
@@ -1242,38 +1345,35 @@ def auto_list():
 
     # Try to find plans in package
     try:
-        if hasattr(importlib.resources, 'files'):
+        if hasattr(importlib.resources, "files"):
             # Python 3.9+
-            plans_path = importlib.resources.files('vibecollab') / 'plans'
+            plans_path = importlib.resources.files("vibecollab") / "plans"
             if plans_path.is_dir():
                 plans = []
                 for item in plans_path.iterdir():
-                    if item.name.endswith('.yaml') and not item.name.startswith('self-test'):
+                    if item.name.endswith(".yaml") and not item.name.startswith("self-test"):
                         # Read plan to get description
-                        content = item.read_text(encoding='utf-8')
+                        content = item.read_text(encoding="utf-8")
                         plan_data = yaml.safe_load(content)
-                        name = plan_data.get('name', item.name)
-                        host = plan_data.get('host', 'file_exchange')
-                        steps = plan_data.get('steps', [])
+                        name = plan_data.get("name", item.name)
+                        host = plan_data.get("host", "file_exchange")
+                        steps = plan_data.get("steps", [])
                         max_rounds = 0
                         for step in steps:
-                            if step.get('action') == 'loop':
-                                max_rounds = step.get('max_rounds', 0)
+                            if step.get("action") == "loop":
+                                max_rounds = step.get("max_rounds", 0)
                                 break
-                        plans.append({
-                            'file': item.name,
-                            'name': name,
-                            'host': host,
-                            'rounds': max_rounds
-                        })
+                        plans.append(
+                            {"file": item.name, "name": name, "host": host, "rounds": max_rounds}
+                        )
 
                 if plans:
                     table_data = [
                         ("Plan File", "Description", "Host", "Rounds"),
                         *[
-                            (f"[cyan]{p['file']}[/cyan]", p['name'], p['host'], str(p['rounds']))
-                            for p in sorted(plans, key=lambda x: x['file'])
-                        ]
+                            (f"[cyan]{p['file']}[/cyan]", p["name"], p["host"], str(p["rounds"]))
+                            for p in sorted(plans, key=lambda x: x["file"])
+                        ],
                     ]
 
                     for i, row in enumerate(table_data):
@@ -1315,6 +1415,7 @@ def auto_list():
 # Multi-developer management commands (v0.5.0+)
 # ============================================
 
+
 @main.group()
 def dev():
     """Multi-developer management commands
@@ -1349,23 +1450,25 @@ def dev_whoami(config: str):
     current_dev = dm.get_current_developer()
     identity_source = dm.get_identity_source()
 
-    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
 
     # Friendly display for identity source
     source_display = {
-        'local_switch': f'[green]{_("CLI switch")}[/green] (.vibecollab.local.yaml)',
-        'env_var': f'[yellow]{_("Environment variable")}[/yellow] (VIBECOLLAB_DEVELOPER)',
-        'git_username': _('Git username (git config user.name)'),
-        'system_user': _('System username'),
+        "local_switch": f"[green]{_('CLI switch')}[/green] (.vibecollab.local.yaml)",
+        "env_var": f"[yellow]{_('Environment variable')}[/yellow] (VIBECOLLAB_DEVELOPER)",
+        "git_username": _("Git username (git config user.name)"),
+        "system_user": _("System username"),
     }.get(identity_source, identity_source)
 
     console.print()
-    console.print(Panel.fit(
-        f"[bold cyan]{current_dev}[/bold cyan]\n\n"
-        f"{_('Multi-developer mode:')} {'[green]' + _('Enabled') + '[/green]' if multi_dev_enabled else '[yellow]' + _('Not enabled') + '[/yellow]'}\n"
-        f"{_('Identity source:')} {source_display}",
-        title=_("Current Developer")
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold cyan]{current_dev}[/bold cyan]\n\n"
+            f"{_('Multi-developer mode:')} {'[green]' + _('Enabled') + '[/green]' if multi_dev_enabled else '[yellow]' + _('Not enabled') + '[/yellow]'}\n"
+            f"{_('Identity source:')} {source_display}",
+            title=_("Current Developer"),
+        )
+    )
     console.print()
 
 
@@ -1390,9 +1493,11 @@ def dev_list(config: str):
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
-    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]")
+        console.print(
+            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]"
+        )
         console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
         raise SystemExit(1)
 
@@ -1417,11 +1522,15 @@ def dev_list(config: str):
     for dev in developers:
         status_info = dm.get_developer_status(dev)
         is_current = f" ({_('current')})" if dev == current_dev else ""
-        status = f"{EMOJI_MAP['success']} {_('Active')}{is_current}" if status_info['exists'] else f"{EMOJI_MAP['warning']} {_('Not initialized')}"
-        last_updated = status_info.get('last_updated', '-') or '-'
-        if last_updated != '-' and len(last_updated) > 19:
+        status = (
+            f"{EMOJI_MAP['success']} {_('Active')}{is_current}"
+            if status_info["exists"]
+            else f"{EMOJI_MAP['warning']} {_('Not initialized')}"
+        )
+        last_updated = status_info.get("last_updated", "-") or "-"
+        if last_updated != "-" and len(last_updated) > 19:
             last_updated = last_updated[:19]
-        total_updates = str(status_info.get('total_updates', 0))
+        total_updates = str(status_info.get("total_updates", 0))
 
         table.add_row(dev, status, last_updated, total_updates)
 
@@ -1454,9 +1563,11 @@ def dev_status(developer: Optional[str], config: str):
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
-    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]")
+        console.print(
+            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]"
+        )
         raise SystemExit(1)
 
     dm = DeveloperManager(project_root, project_config)
@@ -1476,24 +1587,23 @@ def dev_status(developer: Optional[str], config: str):
         context_file = dm.get_developer_context_file(dev)
         if context_file.exists():
             console.print()
-            console.print(Panel.fit(
-                f"[bold]{dev}[/bold]",
-                title=_("Developer Status")
-            ))
+            console.print(Panel.fit(f"[bold]{dev}[/bold]", title=_("Developer Status")))
             console.print()
 
             try:
-                content = context_file.read_text(encoding='utf-8')
-                lines = content.split('\n')[:20]
-                console.print('\n'.join(lines))
-                if len(content.split('\n')) > 20:
+                content = context_file.read_text(encoding="utf-8")
+                lines = content.split("\n")[:20]
+                console.print("\n".join(lines))
+                if len(content.split("\n")) > 20:
                     console.print(f"\n[dim]... ({_('more at')} {context_file})[/dim]")
             except Exception as e:
                 console.print(f"[red]{_('Read failed:')}[/red] {e}")
 
             console.print()
         else:
-            console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Developer {name} not initialized').format(name=dev)}[/yellow]")
+            console.print(
+                f"[yellow]{EMOJI_MAP['warning']} {_('Developer {name} not initialized').format(name=dev)}[/yellow]"
+            )
 
 
 @dev.command("sync")
@@ -1517,9 +1627,11 @@ def dev_sync(config: str):
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
-    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]")
+        console.print(
+            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]"
+        )
         raise SystemExit(1)
 
     console.print()
@@ -1529,7 +1641,9 @@ def dev_sync(config: str):
         aggregator = ContextAggregator(project_root, project_config)
         output_file = aggregator.generate_and_save()
 
-        console.print(f"[green]{EMOJI_MAP['success']} {_('Aggregation complete:')}[/green] {output_file}")
+        console.print(
+            f"[green]{EMOJI_MAP['success']} {_('Aggregation complete:')}[/green] {output_file}"
+        )
         console.print()
     except Exception as e:
         console.print(f"[red]{_('Aggregation failed:')}[/red] {e}")
@@ -1560,9 +1674,11 @@ def dev_init(config: str, developer: Optional[str]):
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
-    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]")
+        console.print(
+            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]"
+        )
         console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
         raise SystemExit(1)
 
@@ -1616,9 +1732,11 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
-    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]")
+        console.print(
+            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]"
+        )
         console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
         raise SystemExit(1)
 
@@ -1630,7 +1748,9 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
         if dm.clear_switch():
             default_dev = dm.get_current_developer()
             console.print(f"[green]{EMOJI_MAP['success']} {_('Switch setting cleared')}[/green]")
-            console.print(f"  {BULLET} {_('Current identity:')} [cyan]{default_dev}[/cyan] ({_('detected via default strategy')})")
+            console.print(
+                f"  {BULLET} {_('Current identity:')} [cyan]{default_dev}[/cyan] ({_('detected via default strategy')})"
+            )
         else:
             console.print(f"[red]{_('Clear failed')}[/red]")
             raise SystemExit(1)
@@ -1658,7 +1778,7 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
         for i, dev in enumerate(developers, 1):
             status_info = dm.get_developer_status(dev)
             is_current = f" [green]({_('current')})[/green]" if dev == current_dev else ""
-            last_update = status_info.get('last_updated', _('unknown'))
+            last_update = status_info.get("last_updated", _("unknown"))
             console.print(f"  {i}. [bold]{dev}[/bold]{is_current}")
             console.print(f"     {_('Last updated:')} {last_update}")
 
@@ -1684,8 +1804,8 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
         developer = developers[choice - 1]
 
     # Normalize developer name
-    identity_config = project_config.get('multi_developer', {}).get('identity', {})
-    if identity_config.get('normalize', True):
+    identity_config = project_config.get("multi_developer", {}).get("identity", {})
+    if identity_config.get("normalize", True):
         developer = dm._normalize_developer_name(developer)
 
     # Check if developer exists
@@ -1696,7 +1816,9 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
         console.print()
 
         # Ask whether to initialize
-        create = click.confirm(_("Initialize context for '{name}'?").format(name=developer), default=True)
+        create = click.confirm(
+            _("Initialize context for '{name}'?").format(name=developer), default=True
+        )
         if create:
             dm.init_developer_context(developer)
             msg = _("Initialized context for '{name}'").format(name=developer)
@@ -1708,7 +1830,9 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
     # Execute switch
     console.print()
     if dm.switch_developer(developer):
-        console.print(f"[green]{EMOJI_MAP['success']} {_('Switched to developer:')} [bold cyan]{developer}[/bold cyan][/green]")
+        console.print(
+            f"[green]{EMOJI_MAP['success']} {_('Switched to developer:')} [bold cyan]{developer}[/bold cyan][/green]"
+        )
         console.print()
         console.print(f"  {BULLET} {_('Context file:')} {dm.get_developer_context_file(developer)}")
         console.print(f"  {BULLET} {_('Persisted to:')} .vibecollab.local.yaml")
@@ -1725,7 +1849,9 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
 @dev.command("conflicts")
 @click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 @click.option("--verbose", "-v", is_flag=True, help=_("Show detailed conflict info"))
-@click.option("--between", nargs=2, help=_("Detect conflicts between two roles (e.g. --between dev qa)"))
+@click.option(
+    "--between", nargs=2, help=_("Detect conflicts between two roles (e.g. --between dev qa)")
+)
 def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]):
     """Detect cross-developer work conflicts
 
@@ -1752,9 +1878,11 @@ def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
-    multi_dev_enabled = project_config.get('multi_developer', {}).get('enabled', False)
+    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
     if not multi_dev_enabled:
-        console.print(f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode not enabled')}[/yellow]")
+        console.print(
+            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode not enabled')}[/yellow]"
+        )
         console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
         raise SystemExit(1)
 
@@ -1765,10 +1893,7 @@ def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]
     try:
         detector = ConflictDetector(project_root, project_config)
 
-        conflicts = detector.detect_all_conflicts(
-            target_developer=None,
-            between_developers=between
-        )
+        conflicts = detector.detect_all_conflicts(target_developer=None, between_developers=between)
 
         report = detector.generate_conflict_report(conflicts, verbose=verbose)
         console.print(report)
@@ -1780,10 +1905,9 @@ def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]
         console.print(f"[red]{_('Conflict detection failed:')}[/red] {e}")
         if verbose:
             import traceback
+
             console.print(traceback.format_exc())
         raise SystemExit(1)
-
-
 
 
 if __name__ == "__main__":
