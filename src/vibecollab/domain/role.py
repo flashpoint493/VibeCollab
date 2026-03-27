@@ -248,6 +248,135 @@ class RoleManager:
         # Save switch
         return self.set_local_role(role)
 
+    # Methods for backward compatibility (from original DeveloperManager)
+    def get_role_dir(self, role: str) -> Path:
+        """Get directory for a role"""
+        return self.roles_dir / role
+
+    def ensure_role_dir(self, role: str) -> Path:
+        """Ensure role directory exists"""
+        role_dir = self.get_role_dir(role)
+        role_dir.mkdir(parents=True, exist_ok=True)
+        return role_dir
+
+    def get_role_metadata_file(self, role: str) -> Path:
+        """Get metadata file path for a role"""
+        return self.get_role_dir(role) / ".metadata.yaml"
+
+    def _read_metadata(self, role: str) -> Dict:
+        """Read metadata for a role"""
+        meta_file = self.get_role_metadata_file(role)
+        if meta_file.exists():
+            try:
+                with open(meta_file, "r", encoding="utf-8") as f:
+                    return yaml.safe_load(f) or {}
+            except Exception:
+                pass
+        return {}
+
+    def _write_metadata(self, role: str, metadata: Dict) -> bool:
+        """Write metadata for a role"""
+        meta_file = self.get_role_metadata_file(role)
+        try:
+            self.ensure_role_dir(role)
+            with open(meta_file, "w", encoding="utf-8") as f:
+                yaml.dump(metadata, f, allow_unicode=True)
+            return True
+        except Exception:
+            return False
+
+    def update_metadata(self, role: str, updates: Dict) -> bool:
+        """Update metadata for a role"""
+        metadata = self._read_metadata(role)
+        metadata.update(updates)
+        return self._write_metadata(role, metadata)
+
+    # Bookmark methods
+    def add_bookmark(self, insight_id: str, role: str) -> bool:
+        """Add bookmark for an insight"""
+        metadata = self._read_metadata(role)
+        bookmarks = metadata.get("bookmarks", [])
+        if insight_id not in bookmarks:
+            bookmarks.append(insight_id)
+            metadata["bookmarks"] = bookmarks
+            return self._write_metadata(role, metadata)
+        return True
+
+    def remove_bookmark(self, insight_id: str, role: str) -> bool:
+        """Remove bookmark for an insight"""
+        metadata = self._read_metadata(role)
+        bookmarks = metadata.get("bookmarks", [])
+        if insight_id in bookmarks:
+            bookmarks.remove(insight_id)
+            metadata["bookmarks"] = bookmarks
+            return self._write_metadata(role, metadata)
+        return True
+
+    def get_bookmarks(self, role: str) -> List[str]:
+        """Get all bookmarks for a role"""
+        metadata = self._read_metadata(role)
+        return metadata.get("bookmarks", [])
+
+    # Contributed methods
+    def add_contributed(self, insight_id: str, role: str) -> bool:
+        """Add contributed insight for a role"""
+        metadata = self._read_metadata(role)
+        contributed = metadata.get("contributed", [])
+        if insight_id not in contributed:
+            contributed.append(insight_id)
+            metadata["contributed"] = contributed
+            return self._write_metadata(role, metadata)
+        return True
+
+    def remove_contributed(self, insight_id: str, role: str) -> bool:
+        """Remove contributed insight for a role"""
+        metadata = self._read_metadata(role)
+        contributed = metadata.get("contributed", [])
+        if insight_id in contributed:
+            contributed.remove(insight_id)
+            metadata["contributed"] = contributed
+            return self._write_metadata(role, metadata)
+        return True
+
+    def get_contributed(self, role: str) -> List[str]:
+        """Get all contributed insights for a role"""
+        metadata = self._read_metadata(role)
+        return metadata.get("contributed", [])
+
+    # Tag methods
+    def get_tags(self, role: str) -> List[str]:
+        """Get tags for a role"""
+        metadata = self._read_metadata(role)
+        return metadata.get("tags", [])
+
+    def set_tags(self, role: str, tags: List[str]) -> bool:
+        """Set tags for a role"""
+        return self.update_metadata(role, {"tags": tags})
+
+    def add_tag(self, role: str, tag: str) -> bool:
+        """Add tag to a role"""
+        tags = self.get_tags(role)
+        if tag not in tags:
+            tags.append(tag)
+            return self.set_tags(role, tags)
+        return True
+
+    def remove_tag(self, role: str, tag: str) -> bool:
+        """Remove tag from a role"""
+        tags = self.get_tags(role)
+        if tag in tags:
+            tags.remove(tag)
+            return self.set_tags(role, tags)
+        return True
+
+    def _normalize_role_name(self, name: str) -> str:
+        """Normalize role name"""
+        # Replace special characters with underscore
+        import re
+
+        normalized = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
+        return normalized.lower()
+
 
 class ContextAggregator:
     """Aggregate context from multiple roles into global context"""
