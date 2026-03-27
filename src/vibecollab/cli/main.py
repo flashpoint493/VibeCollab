@@ -1493,17 +1493,19 @@ def dev_list(config: str):
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
-    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
-    if not multi_dev_enabled:
-        console.print(
-            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]"
-        )
-        console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
-        raise SystemExit(1)
-
     dm = DeveloperManager(project_root, project_config)
     developers = dm.list_developers()
     current_dev = dm.get_current_developer()
+
+    # In single-developer mode, show current developer only
+    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
+    if not multi_dev_enabled:
+        if not developers:
+            # Show current developer from identity detection
+            console.print()
+            console.print(f"[cyan]{current_dev}[/cyan] {_('(Single-developer mode)')}")
+            console.print()
+            return
 
     if not developers:
         console.print()
@@ -1563,16 +1565,20 @@ def dev_status(developer: Optional[str], config: str):
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
+    dm = DeveloperManager(project_root, project_config)
+    current_dev = dm.get_current_developer()
+
+    # Handle single-developer mode
     multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
     if not multi_dev_enabled:
-        console.print(
-            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]"
-        )
-        raise SystemExit(1)
-
-    dm = DeveloperManager(project_root, project_config)
-
-    if developer:
+        if developer and developer != current_dev:
+            console.print(
+                f"[yellow]{_('Single-developer mode: only {dev} is available').format(dev=current_dev)}[/yellow]"
+            )
+            return
+        # Show current developer status
+        developers = [current_dev]
+    elif developer:
         developers = [developer]
     else:
         developers = dm.list_developers()
@@ -1674,18 +1680,15 @@ def dev_init(config: str, developer: Optional[str]):
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
-    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
-    if not multi_dev_enabled:
-        console.print(
-            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]"
-        )
-        console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
-        raise SystemExit(1)
-
     dm = DeveloperManager(project_root, project_config)
 
     if developer is None:
         developer = dm.get_current_developer()
+
+    # In single-developer mode, just show warning but allow init
+    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
+    if not multi_dev_enabled:
+        console.print(f"[dim]{_('Single-developer mode: initializing current identity')}[/dim]")
 
     console.print()
     console.print(f"[cyan]{_('Initializing developer:')}[/cyan] {developer}")
@@ -1732,15 +1735,18 @@ def dev_switch(developer: Optional[str], config: str, clear: bool):
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
+    dm = DeveloperManager(project_root, project_config)
+
+    # Handle single-developer mode
     multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
     if not multi_dev_enabled:
-        console.print(
-            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]"
-        )
-        console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
-        raise SystemExit(1)
-
-    dm = DeveloperManager(project_root, project_config)
+        console.print()
+        current_dev = dm.get_current_developer()
+        console.print(f"[yellow]{_('Single-developer mode: cannot switch identity')}[/yellow]")
+        console.print(f"  {BULLET} {_('Current identity:')} [cyan]{current_dev}[/cyan]")
+        console.print(f"  {BULLET} {_('Enable multi_developer in project.yaml to switch')}")
+        console.print()
+        return
 
     # Handle clear switch
     if clear:
@@ -1879,14 +1885,22 @@ def dev_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]
         project_config = yaml.safe_load(f)
 
     multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
-    if not multi_dev_enabled:
-        console.print(
-            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode not enabled')}[/yellow]"
-        )
-        console.print(f"[dim]{_('Set multi_developer.enabled: true in project.yaml')}[/dim]")
-        raise SystemExit(1)
 
     console.print()
+
+    # In single-developer mode, no conflicts possible
+    if not multi_dev_enabled:
+        from ..domain.developer import DeveloperManager
+
+        dm = DeveloperManager(project_root, project_config)
+        current_dev = dm.get_current_developer()
+        console.print(
+            f"[green]{EMOJI_MAP['success']} {_('Single-developer mode: no conflicts possible')}[/green]"
+        )
+        console.print(f"  {BULLET} {_('Current developer:')} {current_dev}")
+        console.print()
+        return
+
     console.print(f"[cyan]{_('Detecting cross-developer conflicts...')}[/cyan]")
     console.print()
 
