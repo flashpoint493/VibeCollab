@@ -23,6 +23,24 @@
 
 ---
 
+## [v0.10.13] - 2026-03-27
+
+### Fixed
+- Role-based architecture: Complete DeveloperManager → RoleManager migration
+- Test suite: Fix 33 failing tests, achieve 99.7% pass rate (1510/1515)
+- Conflict detector: Update parameter names (developers → roles)
+- Pattern engine: Update section titles and conditions for role_context
+- Context aggregator: Update terminology (developer → role)
+- CLI commands: Rename dev → role throughout codebase
+- Default paths: Update docs/developers → docs/roles
+
+### Changed
+- BREAKING: vibecollab dev → vibecollab role CLI commands
+- BREAKING: docs/developers/ → docs/roles/ directory structure
+- Metadata keys: 'developer' → 'role' in context files
+
+---
+
 ## [v0.10.12] - 2026-03-27
 
 ### Added
