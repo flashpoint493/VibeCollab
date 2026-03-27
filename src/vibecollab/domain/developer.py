@@ -5,7 +5,7 @@ DEPRECATED: This module is kept for backward compatibility.
 Use role.RoleManager instead for new code.
 """
 
-from .role import RoleManager, ContextAggregator
+from .role import ContextAggregator, RoleManager
 
 # Backward compatibility: DeveloperManager is now an alias for RoleManager
 DeveloperManager = RoleManager
