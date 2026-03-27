@@ -1,5 +1,5 @@
 # VibeCollab AI Collaboration Rules
-## LLM Collaboration Protocol v0.10.11
+## LLM Collaboration Protocol v1.0
 
 ---
 
@@ -312,8 +312,8 @@ AI after clarification:
 
 **Pre-Acceptance Checklist**:
 ```
-[ ] 1. hatch build
-[ ] 2. Open dist/ to test
+[ ] 1. npm run build
+[ ] 2. Open dist/index.html to test
 [ ] 3. Confirm normal operation
 [ ] 4. Update instructions (if new features added)
 ```
@@ -374,7 +374,7 @@ After feature development, the AI must provide a **quick acceptance checklist** 
 ```markdown
 ## Quick Acceptance
 
-**Start**: `pip install -e . && vibecollab check`
+**Start**: `npm run dev`
 
 **Acceptance Items**:
 - [ ] Feature A: {operation} -> {expected}
@@ -407,15 +407,15 @@ main                 # stable release
 
 ### Commit Prefixes
 ```
-design:  Design document changes
-arch:  Architecture adjustments
-feat:  New features
-fix:  Bug fixes
-chore:  Config adjustments (no logic changes)
-refactor:  Refactoring
-docs:  Documentation updates
-test:  Test related
-ci:  Collaboration workflow updates
+[DESIGN]  Design document changes
+[ARCH]  Architecture adjustments
+[FEAT]  New features
+[FIX]  Bug fixes
+[CONFIG]  Config adjustments (no logic changes)
+[REFACTOR]  Refactoring
+[DOC]  Documentation updates
+[TEST]  Test related
+[VIBE]  Collaboration workflow updates
 ```
 
 ### Git Commit Requirements (important)
@@ -434,10 +434,10 @@ Git history is not just code versioning -- it is a **record of design thinking e
 
 | Config | Value |
 |--------|-------|
-| Framework | pytest |
+| Framework | jest |
 | Coverage Target | 80% |
-| File Patterns | tests/test_*.py |
-| Run Timing | ci |
+| File Patterns | **/*.test.ts, **/*.spec.ts |
+| Run Timing | pre-commit, ci |
 
 **Unit Test Principles**:
 - Each module should have a corresponding test file
@@ -580,26 +580,26 @@ The project development process is divided into 4 lifecycle phases, each with di
 
 Project lifecycle phases evolve sequentially, each with clear definitions and rules:
 
-### Prototype (demo)
+### Prototype Validation (demo)
 
-**Description**: Rapidly validate core concepts and feasibility
+**Description**: Quickly validate core concepts and feasibility
 
 **Phase Focus**:
 - Rapid iteration
-- Proof of concept
+- Concept validation
 - Core features
 
 **Phase Principles**:
 - Fail fast, adjust fast
 - Prioritize core features, defer optimization
-- Technical debt is acceptable but must be documented
+- Technical debt is acceptable, but must be documented
 - Detailed Git development iteration records
 - Record important decisions in DECISIONS.md
-- Establish CI/CD
+- Set up CI/CD
 
 ### Production (production)
 
-**Description**: Production-ready development, preparing for scale
+**Description**: Productization development, preparing for scale
 
 **Phase Focus**:
 - Stability
@@ -608,23 +608,23 @@ Project lifecycle phases evolve sequentially, each with clear definitions and ru
 
 **Phase Principles**:
 - Code quality first
-- Prepare release and distribution, define target platform support
-- Full code review before launch, establish robust code structure
+- Prepare for release and announcements, define and refine target platform support
+- Full code review before launch, build more stable and robust code structure
 - Complete QA product test coverage
 - Define performance standards
-- Unit test and code standard enforcement
-- Finalize release platform standards
+- Unit tests, coding standards checks
+- Complete release platform standards
 
-### Commercial (commercial)
+### Commercialization (commercial)
 
 **Description**: Market-facing, pursuing growth
 
 **Phase Focus**:
 - User experience
 - Market adaptation
-- Extensibility
+- Scalability
 - Plugin-based incremental development
-- Data hot-reload
+- Data hot-update
 
 **Phase Principles**:
 - User feedback driven
@@ -1147,5 +1147,5 @@ vibecollab insight show INS-001
 ---
 
 *This is a living document that records the evolution of human-AI collaboration.*
-*Generated at: 2026-03-27 12:54:22*
+*Generated at: 2026-03-27 13:26:32*
 *The most precious thing is not the result, but the journey of thinking together.*

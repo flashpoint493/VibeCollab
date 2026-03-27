@@ -286,14 +286,15 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [x] CodeBuddy MCP integration ✅ — `.mcp.json` project-level config
 - [x] 35 unit tests, 1074 full passed ✅
 
-#### IDE Adaptation (To Be Completed)
-- [ ] Cursor Skill auto-generation — `vibecollab export cursor-skill`
-  - Auto-generate `.cursor/skills/vibecollab/SKILL.md` from `project.yaml` + `CONTRIBUTING_AI.md`
-  - Auto-regenerate on project config changes
-- [ ] Cline Custom Instructions adaptation — `vibecollab export cline`
-  - Generate `.cline/custom_instructions.md`
-- [ ] CodeBuddy Rule adaptation — `vibecollab export codebuddy`
-  - Generate `.codebuddy/rules/vibecollab.md`
+#### IDE Adaptation ✅ (v0.10.11 - Unified as `skill inject`)
+- [x] Unified skill injection — `vibecollab skill inject <ide>`
+  - Auto-generate IDE-specific skill configuration files
+  - Supports: `opencode`, `cursor`, `cline`, `codebuddy`, `all`
+  - OpenCode: `.opencode/skills/vibecollab.md` + `package.json`
+  - Cursor: `.cursor/rules/vibecollab.mdc`
+  - Cline: `.cline/skills/vibecollab.md`
+  - CodeBuddy: `.codebuddy/skills/vibecollab.md`
+  - 25+ unit tests, full CLI coverage ✅
 
 ### v0.9.2 - Insight Solidification Signal Enhancement
 

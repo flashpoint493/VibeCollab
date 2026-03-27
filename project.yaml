@@ -1,522 +1,450 @@
-# LLM Collaboration Protocol - Project Configuration Template
-# Use this template to configure your project, then generate CONTRIBUTING_AI.md via the generator
-
-# ============================================
-# Project Basic Information
-# ============================================
 project:
-  name: "VibeCollab"
-  version: "v0.10.11"
-  domain: "generic"  # game/web/mobile/data/infra/generic
-  description: "Configurable AI collaboration protocol framework with built-in knowledge capture and MCP Server"
-
-# ============================================
-# Philosophy
-# ============================================
+  name: VibeCollab
+  version: v1.0
+  domain: generic
+  description: Project description
 philosophy:
   vibe_development:
     enabled: true
     principles:
-      - "AI is not an executor but a collaboration partner"
-      - "Don't rush to produce code -- first align understanding"
-      - "Every decision is a result of shared thinking"
-      - "The conversation itself is part of the design process"
+    - AI is not an executor but a collaboration partner
+    - Don't rush to produce code -- first align understanding
+    - Every decision is a result of shared thinking
+    - The conversation itself is part of the design process
   decision_quality:
     target_rate: 0.9
     critical_tolerance: 0
   long_term_dialogue: true
-
-# ============================================
-# Role Definitions
-# ============================================
 roles:
-  - code: "DESIGN"
-    name: "Product Design"
-    focus: ["requirements", "experience", "interaction"]
-    triggers: ["design", "requirements", "product"]
-    is_gatekeeper: false
-
-  - code: "ARCH"
-    name: "Architecture"
-    focus: ["infrastructure", "performance", "extensibility"]
-    triggers: ["architecture", "infrastructure", "refactor"]
-    is_gatekeeper: false
-
-  - code: "DEV"
-    name: "Development"
-    focus: ["implementation", "bug fixing"]
-    triggers: ["develop", "implement", "code"]
-    is_gatekeeper: false
-
-  - code: "PM"
-    name: "Project Management"
-    focus: ["milestones", "priorities", "progress"]
-    triggers: ["plan", "schedule", "priority"]
-    is_gatekeeper: false
-
-  - code: "QA"
-    name: "Product Quality Assurance"
-    focus: ["acceptance testing", "user experience validation", "edge cases"]
-    triggers: ["acceptance", "experience testing", "feature verification"]
-    is_gatekeeper: true
-
-  - code: "TEST"
-    name: "Unit Testing"
-    focus: ["code testing", "coverage", "automated testing"]
-    triggers: ["unit test", "test case", "coverage"]
-    is_gatekeeper: false
-
-# ============================================
-# Decision Levels
-# ============================================
+- code: DESIGN
+  name: Product Design
+  focus:
+  - requirements
+  - experience
+  - interaction
+  triggers:
+  - design
+  - requirements
+  - product
+  is_gatekeeper: false
+- code: ARCH
+  name: Architecture
+  focus:
+  - infrastructure
+  - performance
+  - extensibility
+  triggers:
+  - architecture
+  - infrastructure
+  - refactor
+  is_gatekeeper: false
+- code: DEV
+  name: Development
+  focus:
+  - implementation
+  - bug fixing
+  triggers:
+  - develop
+  - implement
+  - code
+  is_gatekeeper: false
+- code: PM
+  name: Project Management
+  focus:
+  - milestones
+  - priorities
+  - progress
+  triggers:
+  - plan
+  - schedule
+  - priority
+  is_gatekeeper: false
+- code: QA
+  name: Product Quality Assurance
+  focus:
+  - acceptance testing
+  - user experience validation
+  - edge cases
+  triggers:
+  - acceptance
+  - experience testing
+  - feature verification
+  is_gatekeeper: true
+- code: TEST
+  name: Unit Testing
+  focus:
+  - code testing
+  - coverage
+  - automated testing
+  triggers:
+  - unit test
+  - test case
+  - coverage
+  is_gatekeeper: false
 decision_levels:
-  - level: "S"
-    name: "Strategic Decision"
-    scope: "Overall direction, core features"
-    review:
-      required: true
-      mode: "sync"
-      human_confirm: true
-
-  - level: "A"
-    name: "Architecture Decision"
-    scope: "System design, data structures"
-    review:
-      required: true
-      mode: "async"
-      human_confirm: true
-
-  - level: "B"
-    name: "Implementation Decision"
-    scope: "Specific approach selection"
-    review:
-      required: false
-      mode: "auto"
-      human_confirm: false
-
-  - level: "C"
-    name: "Detail Decision"
-    scope: "Parameters, naming, formatting"
-    review:
-      required: false
-      mode: "none"
-      human_confirm: false
-
-# ============================================
-# Task Unit
-# ============================================
+- level: S
+  name: Strategic Decision
+  scope: Overall direction, core features
+  review:
+    required: true
+    mode: sync
+    human_confirm: true
+- level: A
+  name: Architecture Decision
+  scope: System design, data structures
+  review:
+    required: true
+    mode: async
+    human_confirm: true
+- level: B
+  name: Implementation Decision
+  scope: Specific approach selection
+  review:
+    required: false
+    mode: auto
+    human_confirm: false
+- level: C
+  name: Detail Decision
+  scope: Parameters, naming, formatting
+  review:
+    required: false
+    mode: none
+    human_confirm: false
 task_unit:
-  id_pattern: "TASK-{role}-{seq}"
+  id_pattern: TASK-{role}-{seq}
   statuses:
-    - "TODO"
-    - "IN_PROGRESS"
-    - "REVIEW"
-    - "DONE"
+  - TODO
+  - IN_PROGRESS
+  - REVIEW
+  - DONE
   required_fields:
-    - "id"
-    - "role"
-    - "feature"
-    - "dependencies"
-    - "output"
-    - "status"
-    - "dialogue_rounds"
-
-# ============================================
-# Dialogue Protocol
-# ============================================
+  - id
+  - role
+  - feature
+  - dependencies
+  - output
+  - status
+  - dialogue_rounds
 dialogue_protocol:
   on_start:
     read_files:
-      - "docs/CONTEXT.md"
-      - "CONTRIBUTING_AI.md"
+    - docs/CONTEXT.md
+    - CONTRIBUTING_AI.md
     actions:
-      - "Understand current progress"
-      - "Confirm user's goal for this conversation"
-
+    - Understand current progress
+    - Confirm user's goal for this conversation
   on_end:
     update_files:
-      - "docs/CONTEXT.md"
-      - "docs/CHANGELOG.md"
+    - docs/CONTEXT.md
+    - docs/CHANGELOG.md
     git_commit: true
-
   standard_flow:
-    - step: 1
-      actor: "human"
-      action: "Raise a requirement or question"
-    - step: 2
-      actor: "ai"
-      action: "Identify role, analyze the problem"
-    - step: 3
-      actor: "ai"
-      action: "Request confirmation for S/A level decisions, execute B/C autonomously"
-      condition: "decision_level in [S, A]"
-    - step: 4
-      actor: "ai"
-      action: "Execute task, produce output"
-    - step: 5
-      actor: "ai"
-      action: "Update test cases (if feature development)"
-      condition: "task_type == feature"
-    - step: 6
-      actor: "ai"
-      action: "Summarize progress, suggest next steps"
-    - step: 7
-      actor: "human"
-      action: "Confirm / correct / continue"
-    - step: 8
-      actor: "ai"
-      action: "Git commit record"
-
-# ============================================
-# Requirements Clarification Protocol
-# ============================================
+  - step: 1
+    actor: human
+    action: Raise a requirement or question
+  - step: 2
+    actor: ai
+    action: Identify role, analyze the problem
+  - step: 3
+    actor: ai
+    action: Request confirmation for S/A level decisions, execute B/C autonomously
+    condition: decision_level in [S, A]
+  - step: 4
+    actor: ai
+    action: Execute task, produce output
+  - step: 5
+    actor: ai
+    action: Update test cases (if feature development)
+    condition: task_type == feature
+  - step: 6
+    actor: ai
+    action: Summarize progress, suggest next steps
+  - step: 7
+    actor: human
+    action: Confirm / correct / continue
+  - step: 8
+    actor: ai
+    action: Git commit record
 requirement_clarification:
   enabled: true
   trigger_conditions:
-    - "Description is vague or incomplete"
-    - "Missing specific acceptance criteria"
-    - "Could be interpreted in multiple ways"
-    - "Involves S/A level decisions"
+  - Description is vague or incomplete
+  - Missing specific acceptance criteria
+  - Could be interpreted in multiple ways
+  - Involves S/A level decisions
   clarification_questions:
-    - "What outcome are you hoping to achieve?"
-    - "Do you have any reference examples?"
-    - "Who will use this feature? In what scenario?"
-    - "How would you verify this feature is complete?"
-    - "Are there time or resource constraints?"
-
-# ============================================
-# Git Workflow
-# ============================================
+  - What outcome are you hoping to achieve?
+  - Do you have any reference examples?
+  - Who will use this feature? In what scenario?
+  - How would you verify this feature is complete?
+  - Are there time or resource constraints?
 git_workflow:
   branches:
-    main: "main"
-    dev: "dev"
-    feature_prefix: "feature/"
-    fix_prefix: "fix/"
-    design_prefix: "design/"
-    refactor_prefix: "refactor/"
-
+    main: main
+    dev: dev
+    feature_prefix: feature/
+    fix_prefix: fix/
+    design_prefix: design/
+    refactor_prefix: refactor/
   commit_prefixes:
-    - prefix: "design:"
-      description: "Design document changes"
-      roles: ["DESIGN"]
-    - prefix: "arch:"
-      description: "Architecture adjustments"
-      roles: ["ARCH"]
-    - prefix: "feat:"
-      description: "New features"
-      roles: ["DEV"]
-    - prefix: "fix:"
-      description: "Bug fixes"
-      roles: ["DEV", "QA"]
-    - prefix: "chore:"
-      description: "Config adjustments (no logic changes)"
-      roles: ["DEV"]
-    - prefix: "refactor:"
-      description: "Refactoring"
-      roles: ["ARCH", "DEV"]
-    - prefix: "docs:"
-      description: "Documentation updates"
-      roles: ["PM", "DESIGN"]
-    - prefix: "test:"
-      description: "Test related"
-      roles: ["TEST", "QA"]
-    - prefix: "ci:"
-      description: "Collaboration workflow updates"
-      roles: ["PM"]
-
+  - prefix: '[DESIGN]'
+    description: Design document changes
+    roles:
+    - DESIGN
+  - prefix: '[ARCH]'
+    description: Architecture adjustments
+    roles:
+    - ARCH
+  - prefix: '[FEAT]'
+    description: New features
+    roles:
+    - DEV
+  - prefix: '[FIX]'
+    description: Bug fixes
+    roles:
+    - DEV
+    - QA
+  - prefix: '[CONFIG]'
+    description: Config adjustments (no logic changes)
+    roles:
+    - DEV
+  - prefix: '[REFACTOR]'
+    description: Refactoring
+    roles:
+    - ARCH
+    - DEV
+  - prefix: '[DOC]'
+    description: Documentation updates
+    roles:
+    - PM
+    - DESIGN
+  - prefix: '[TEST]'
+    description: Test related
+    roles:
+    - TEST
+    - QA
+  - prefix: '[VIBE]'
+    description: Collaboration workflow updates
+    roles:
+    - PM
   commit_required: true
-
-# ============================================
-# Testing
-# ============================================
 testing:
-  # Unit Test (developer perspective - code correctness)
   unit_test:
     enabled: true
-    framework: "pytest"
+    framework: jest
     coverage_target: 0.8
     patterns:
-      - "tests/test_*.py"
+    - '**/*.test.ts'
+    - '**/*.spec.ts'
     run_on:
-      - "ci"
+    - pre-commit
+    - ci
     required_for_merge: true
-
-  # Product QA (user perspective - feature acceptance)
   product_qa:
     enabled: true
-    test_case_file: "docs/QA_TEST_CASES.md"
-    case_id_pattern: "TC-{module}-{seq}"
+    test_case_file: docs/QA_TEST_CASES.md
+    case_id_pattern: TC-{module}-{seq}
     required_fields:
-      - "id"
-      - "feature"
-      - "precondition"
-      - "steps"
-      - "expected"
-      - "status"
+    - id
+    - feature
+    - precondition
+    - steps
+    - expected
+    - status
     statuses:
-      - symbol: "🟢"
-        meaning: "PASS"
-      - symbol: "🟡"
-        meaning: "PARTIAL"
-      - symbol: "🔴"
-        meaning: "FAIL"
-      - symbol: "⚪"
-        meaning: "SKIP"
-
-# ============================================
-# Milestone
-# ============================================
+    - symbol: 🟢
+      meaning: PASS
+    - symbol: 🟡
+      meaning: PARTIAL
+    - symbol: 🔴
+      meaning: FAIL
+    - symbol: ⚪
+      meaning: SKIP
 milestone:
   lifecycle:
-    - phase: "feature_dev"
-      description: "Feature development period"
-      exit_criteria:
-        - "All planned features completed"
-        - "Quick acceptance passed"
-
-    - phase: "feature_freeze"
-      description: "Feature freeze"
-      exit_criteria:
-        - "No new features added"
-        - "Build successful"
-
-    - phase: "bug_fix"
-      description: "Bug fix period"
-      exit_criteria:
-        - "P0/P1 issues cleared"
-        - "Test pass rate meets target"
-
-    - phase: "acceptance"
-      description: "Milestone acceptance"
-      exit_criteria:
-        - "QA full test pass"
-        - "Unit test coverage meets target"
-        - "Known issues cleared or deferred"
-
-    - phase: "retrospective"
-      description: "Version retrospective"
-      exit_criteria:
-        - "Review test performance"
-        - "Collect user feedback"
-        - "Add new requirements to next phase"
-
-  tag_pattern: "v{major}.{minor}.{patch}"
-  roadmap_file: "docs/ROADMAP.md"
+  - phase: feature_dev
+    description: Feature development period
+    exit_criteria:
+    - All planned features completed
+    - Quick acceptance passed
+  - phase: feature_freeze
+    description: Feature freeze
+    exit_criteria:
+    - No new features added
+    - Build successful
+  - phase: bug_fix
+    description: Bug fix period
+    exit_criteria:
+    - P0/P1 issues cleared
+    - Test pass rate meets target
+  - phase: acceptance
+    description: Milestone acceptance
+    exit_criteria:
+    - QA full test pass
+    - Unit test coverage meets target
+    - Known issues cleared or deferred
+  - phase: retrospective
+    description: Version retrospective
+    exit_criteria:
+    - Review test performance
+    - Collect user feedback
+    - Add new requirements to next phase
+  tag_pattern: v{major}.{minor}.{patch}
+  roadmap_file: docs/ROADMAP.md
   bug_priority:
-    - level: "P0"
-      description: "Crash / blocker"
-    - level: "P1"
-      description: "Feature malfunction"
-    - level: "P2"
-      description: "Experience issue"
-    - level: "P3"
-      description: "Optimization suggestion"
-
-# ============================================
-# Iteration Management
-# ============================================
+  - level: P0
+    description: Crash / blocker
+  - level: P1
+    description: Feature malfunction
+  - level: P2
+    description: Experience issue
+  - level: P3
+    description: Optimization suggestion
 iteration:
   suggestion_pool:
-    file: "docs/ROADMAP.md"
-    section: "Iteration Suggestion Pool"
+    file: docs/ROADMAP.md
+    section: Iteration Suggestion Pool
     categories:
-      - symbol: "✅"
-        meaning: "Include in current milestone"
-      - symbol: "⏳"
-        meaning: "Defer to next milestone"
-      - symbol: "❌"
-        meaning: "Reject (doesn't align with direction)"
-      - symbol: "🔄"
-        meaning: "Merge with other iteration"
-
+    - symbol: ✅
+      meaning: Include in current milestone
+    - symbol: ⏳
+      meaning: Defer to next milestone
+    - symbol: ❌
+      meaning: Reject (doesn't align with direction)
+    - symbol: 🔄
+      meaning: Merge with other iteration
   config_level_iteration:
     enabled: true
-    commit_prefix: "chore:"
+    commit_prefix: 'chore:'
     skip_pm_review: true
     examples:
-      - "Numeric parameter adjustments"
-      - "Config file modifications"
-      - "Style / theme changes"
-      - "Copy / text modifications"
-
+    - Numeric parameter adjustments
+    - Config file modifications
+    - Style / theme changes
+    - Copy / text modifications
   review_dimensions:
-    - "Dependency / conflict with current tasks"
-    - "Impact on user experience"
-    - "Development cost and technical complexity"
-    - "Remaining time constraints for milestone"
-
-# ============================================
-# Version Review
-# ============================================
+  - Dependency / conflict with current tasks
+  - Impact on user experience
+  - Development cost and technical complexity
+  - Remaining time constraints for milestone
 version_review:
   enabled: true
-  timing: "After milestone acceptance is complete"
+  timing: After milestone acceptance is complete
   review_items:
-    - "Test performance (pass rate, issue distribution)"
-    - "User experience feedback"
-    - "Technical debt"
-    - "Iteration suggestion pool"
-
-# ============================================
-# Build Configuration
-# ============================================
+  - Test performance (pass rate, issue distribution)
+  - User experience feedback
+  - Technical debt
+  - Iteration suggestion pool
 build:
   enabled: true
-  command: "hatch build"
-  dist_entry: "dist/"
+  command: npm run build
+  dist_entry: dist/index.html
   timing:
-    - "Before milestone full acceptance"
-    - "During bug fix period for concentrated testing"
-    - "When preparing PyPI release"
-
-# ============================================
-# Quick Acceptance
-# ============================================
+  - Before milestone full acceptance
+  - During bug fix period for concentrated testing
+  - When preparing distribution / demo version
 quick_acceptance:
   enabled: true
-  start_command: "pip install -e . && vibecollab check"
+  start_command: npm run dev
   reply_formats:
-    pass: "✅"
-    issue: "⚠️ Issue:"
-    skip: "Skip"
-
-# ============================================
-# Prompt Engineering
-# ============================================
+    pass: ✅
+    issue: '⚠️ Issue:'
+    skip: Skip
 prompt_engineering:
   enabled: true
   role_templates:
-    DESIGN: |
-      [DESIGN] I'd like to discuss the design of {system_name}
+    DESIGN: '[DESIGN] I''d like to discuss the design of {system_name}
+
       Current thinking: {description}
+
       Main concerns: {concerns}
+
       Please analyze from a user experience perspective
-    ARCH: |
-      [ARCH] I need to design the architecture for {module_name}
+
+      '
+    ARCH: '[ARCH] I need to design the architecture for {module_name}
+
       Requirements: {functional_requirements}
+
       Constraints: {performance_compatibility_constraints}
+
       Please provide 2-3 approaches for comparison
-    DEV: |
-      [DEV] Please implement {feature}
+
+      '
+    DEV: '[DEV] Please implement {feature}
+
       Input: {input_description}
+
       Output: {expected_output}
+
       Related files: {file_paths}
 
-# ============================================
-# Confirmed Decisions (populated during project runtime)
-# ============================================
+      '
 confirmed_decisions: []
-# Example:
-# - id: "001"
-#   title: "Technology framework selection"
-#   choice: "React + TypeScript"
-#   reason: "Team familiarity, mature ecosystem"
-
-# ============================================
-# Document Iteration Log (CONTRIBUTING_AI.md version history)
-# ============================================
 contributing_ai_changelog: []
-# Example:
-# - version: "v1.0"
-#   date: "2026-01-20"
-#   changes: "Initial version"
-
-# ============================================
-# Documentation
-# ============================================
 documentation:
   key_files:
-    - path: "CONTRIBUTING_AI.md"
-      purpose: "AI collaboration rules, top-level guidance"
-      update_trigger: "When collaboration approach evolves"
-
-    - path: "llms.txt"
-      purpose: "Project context summary (llmstxt.org standard)"
-      update_trigger: "When project info changes"
-
-    - path: "docs/CONTEXT.md"
-      purpose: "Current development context"
-      update_trigger: "End of every conversation"
-
-    - path: "docs/DECISIONS.md"
-      purpose: "Important decision records"
-      update_trigger: "After every S/A level decision"
-
-    - path: "docs/CHANGELOG.md"
-      purpose: "Version changelog"
-      update_trigger: "After every productive conversation"
-
-    - path: "docs/QA_TEST_CASES.md"
-      purpose: "Product QA test cases"
-      update_trigger: "When each feature is completed"
-
-    - path: "docs/PRD.md"
-      purpose: "Product requirements document"
-      update_trigger: "When requirements change"
-
-    - path: "docs/ROADMAP.md"
-      purpose: "Roadmap + iteration suggestions"
-      update_trigger: "During milestone planning / feedback"
-
-  context_file: "docs/CONTEXT.md"
-  changelog_file: "docs/CHANGELOG.md"
-  decisions_file: "docs/DECISIONS.md"
-
-# ============================================
-# Multi-Developer Support (v0.5.0+)
-# ============================================
+  - path: CONTRIBUTING_AI.md
+    purpose: AI collaboration rules, top-level guidance
+    update_trigger: When collaboration approach evolves
+  - path: llms.txt
+    purpose: Project context summary (llmstxt.org standard)
+    update_trigger: When project info changes
+  - path: docs/CONTEXT.md
+    purpose: Current development context
+    update_trigger: End of every conversation
+  - path: docs/DECISIONS.md
+    purpose: Important decision records
+    update_trigger: After every S/A level decision
+  - path: docs/CHANGELOG.md
+    purpose: Version changelog
+    update_trigger: After every productive conversation
+  - path: docs/QA_TEST_CASES.md
+    purpose: Product QA test cases
+    update_trigger: When each feature is completed
+  - path: docs/PRD.md
+    purpose: Product requirements document
+    update_trigger: When requirements change
+  - path: docs/ROADMAP.md
+    purpose: Roadmap + iteration suggestions
+    update_trigger: During milestone planning / feedback
+  context_file: docs/CONTEXT.md
+  changelog_file: docs/CHANGELOG.md
+  decisions_file: docs/DECISIONS.md
 multi_developer:
-  enabled: false  # Disabled by default, enable via --multi-dev
-
-  # Developer identity detection strategy
+  enabled: true
   identity:
-    primary: "git_username"        # git_username / system_user / manual
-    fallback: "system_user"        # Fallback when primary strategy fails
-    normalize: true                # Normalize names (lowercase, replace spaces with underscores)
-
-  # Context management
+    primary: git_username
+    fallback: system_user
+    normalize: true
   context:
-    per_developer_dir: "docs/developers"     # Per-developer context directory
-    global_aggregation: true                 # Whether to generate global aggregated view
-    aggregation_file: "docs/CONTEXT.md"      # Global aggregation file path
-    metadata_file: ".metadata.yaml"          # Metadata file name
-    auto_sync: true                          # Auto-trigger aggregation at conversation end
-
-  # Collaboration management
+    per_developer_dir: docs/developers
+    global_aggregation: true
+    aggregation_file: docs/CONTEXT.md
+    metadata_file: .metadata.yaml
+    auto_sync: true
   collaboration:
     enabled: true
-    file: "docs/developers/COLLABORATION.md"
-    track_dependencies: true       # Track task dependencies
-    track_handoffs: true           # Track task handoffs
-
-  # Dialogue protocol changes (in multi-developer mode)
+    file: docs/developers/COLLABORATION.md
+    track_dependencies: true
+    track_handoffs: true
   dialogue_protocol:
     on_start:
       read_files:
-        - "docs/CONTEXT.md"                           # Read global aggregated view
-        - "docs/developers/{role_code}/CONTEXT.md"    # Read own role context
-        - "docs/developers/COLLABORATION.md"          # Read collaboration document
-        - "CONTRIBUTING_AI.md"
+      - docs/CONTEXT.md
+      - docs/developers/{developer}/CONTEXT.md
+      - docs/developers/COLLABORATION.md
+      - CONTRIBUTING_AI.md
     on_end:
       update_files:
-        - "docs/developers/{role_code}/CONTEXT.md"    # Update own role context
-        - "docs/CHANGELOG.md"                         # Update global CHANGELOG
-      aggregate_context: true                         # Regenerate global aggregation
+      - docs/developers/{developer}/CONTEXT.md
+      - docs/CHANGELOG.md
+      aggregate_context: true
       git_commit: true
-
-# ============================================
-# Insight System (v0.7.0+)
-# ============================================
 insight:
-  enabled: true  # Enabled by default; Insight system is the project's "organizational memory"
-
-# ============================================
-# Protocol Self-Check
-# ============================================
+  enabled: true
 protocol_check:
   enabled: true
-  # Check item configuration
   checks:
     git:
       enabled: true
@@ -530,96 +458,128 @@ protocol_check:
     dialogue:
       enabled: true
       check_required_files: true
-  # Trigger words (used to trigger self-check in conversation)
   trigger_words:
-    - "check protocol"
-    - "protocol check"
-    - "verify protocol compliance"
-    - "self-check"
-
-# ============================================
-# PRD Management
-# ============================================
+  - check protocol
+  - protocol check
+  - verify protocol compliance
+  - self-check
 prd_management:
   enabled: true
-  prd_file: "docs/PRD.md"
-  # Requirement status definitions
+  prd_file: docs/PRD.md
   requirement_statuses:
-    - "draft"        # Draft
-    - "confirmed"    # Confirmed
-    - "in_progress"  # In progress
-    - "completed"    # Completed
-    - "cancelled"    # Cancelled
-  # Priority definitions
+  - draft
+  - confirmed
+  - in_progress
+  - completed
+  - cancelled
   priorities:
-    - "high"
-    - "medium"
-    - "low"
-  # Trigger words (used to trigger PRD management in conversation)
+  - high
+  - medium
+  - low
   trigger_words:
-    - "record requirement"
-    - "update PRD"
-    - "view requirements"
-    - "requirement status"
-    - "PRD"
-    - "requirements document"
-
-# ============================================
-# Symbology System
-# ============================================
+  - record requirement
+  - update PRD
+  - view requirements
+  - requirement status
+  - PRD
+  - requirements document
 symbology:
   decision_status:
-    - symbol: "PENDING"
-      meaning: "Pending confirmation"
-    - symbol: "CONFIRMED"
-      meaning: "Confirmed"
-    - symbol: "REVISED"
-      meaning: "Revised"
-
+  - symbol: PENDING
+    meaning: Pending confirmation
+  - symbol: CONFIRMED
+    meaning: Confirmed
+  - symbol: REVISED
+    meaning: Revised
   task_status:
-    - symbol: "TODO"
-      meaning: "Not started"
-    - symbol: "IN_PROGRESS"
-      meaning: "In progress"
-    - symbol: "REVIEW"
-      meaning: "Pending review"
-    - symbol: "DONE"
-      meaning: "Completed"
-
+  - symbol: TODO
+    meaning: Not started
+  - symbol: IN_PROGRESS
+    meaning: In progress
+  - symbol: REVIEW
+    meaning: Pending review
+  - symbol: DONE
+    meaning: Completed
   test_status:
-    - symbol: "🟢"
-      meaning: "Pass"
-    - symbol: "🟡"
-      meaning: "Partial pass"
-    - symbol: "🔴"
-      meaning: "Fail"
-    - symbol: "⚪"
-      meaning: "Skip"
-
+  - symbol: 🟢
+    meaning: Pass
+  - symbol: 🟡
+    meaning: Partial pass
+  - symbol: 🔴
+    meaning: Fail
+  - symbol: ⚪
+    meaning: Skip
   priority:
-    - symbol: "P0"
-      meaning: "Highest priority / blocker"
-    - symbol: "P1"
-      meaning: "High priority"
-    - symbol: "P2"
-      meaning: "Medium priority"
-    - symbol: "P3"
-      meaning: "Low priority"
-
-# ============================================
-# Domain Extensions
-# Add domain-specific extension configurations here
-# ============================================
-domain_extensions:
-  # Example: Game domain extension
-  # game:
-  #   gm_console:
-  #     enabled: true
-  #     trigger_key: "/"
-  #     commands: [...]
-  #
-  # Example: Web domain extension
-  # web:
-  #   api_docs:
-  #     format: "openapi"
-  #     file: "docs/api.yaml"
+  - symbol: P0
+    meaning: Highest priority / blocker
+  - symbol: P1
+    meaning: High priority
+  - symbol: P2
+    meaning: Medium priority
+  - symbol: P3
+    meaning: Low priority
+domain_extensions: null
+lifecycle:
+  current_stage: demo
+  stage_history:
+  - stage: demo
+    started_at: '2026-03-27'
+    milestones_completed: []
+  stages:
+    demo:
+      name: Prototype Validation
+      description: Quickly validate core concepts and feasibility
+      focus:
+      - Rapid iteration
+      - Concept validation
+      - Core features
+      principles:
+      - Fail fast, adjust fast
+      - Prioritize core features, defer optimization
+      - Technical debt is acceptable, but must be documented
+      - Detailed Git development iteration records
+      - Record important decisions in DECISIONS.md
+      - Set up CI/CD
+      milestones: []
+    production:
+      name: Production
+      description: Productization development, preparing for scale
+      focus:
+      - Stability
+      - Performance optimization
+      - Maintainability
+      principles:
+      - Code quality first
+      - Prepare for release and announcements, define and refine target platform support
+      - Full code review before launch, build more stable and robust code structure
+      - Complete QA product test coverage
+      - Define performance standards
+      - Unit tests, coding standards checks
+      - Complete release platform standards
+      milestones: []
+    commercial:
+      name: Commercialization
+      description: Market-facing, pursuing growth
+      focus:
+      - User experience
+      - Market adaptation
+      - Scalability
+      - Plugin-based incremental development
+      - Data hot-update
+      principles:
+      - User feedback driven
+      - Data-driven decisions
+      - Fast market response
+      milestones: []
+    stable:
+      name: Stable Operations
+      description: Mature product, stable maintenance
+      focus:
+      - Stability
+      - Maintenance cost
+      - Long-term planning
+      principles:
+      - Changes require caution
+      - Backward compatibility first
+      - Complete documentation
+      milestones: []
