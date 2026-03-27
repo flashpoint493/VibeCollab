@@ -14,7 +14,7 @@ class LLMsTxtManager:
 
 - [AI Collaboration Guidelines](CONTRIBUTING_AI.md):
   Collaboration protocol, decision levels, task units, and workflow rules for AI-assisted development.
-  This document defines how AI assistants should work with developers on this project.
+  This document defines how AI assistants should work with roles on this project.
 """
 
     @staticmethod
@@ -119,7 +119,7 @@ See [AI Collaboration Guidelines]({rel_path}) for how to work with AI assistants
 
 - [AI Collaboration Guidelines]({rel_path}):
   Collaboration protocol, decision levels, task units, and workflow rules for AI-assisted development.
-  This document defines how AI assistants should work with developers on this project.
+  This document defines how AI assistants should work with roles on this project.
 """
 
         with open(llmstxt_path, "w", encoding="utf-8") as f:

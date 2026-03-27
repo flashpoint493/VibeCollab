@@ -76,14 +76,14 @@ def project_dir(tmp_path):
         "# Changelog\n\n## v1.0.0\n- Initial release\n", encoding="utf-8"
     )
 
-    # Developer directory
-    dev_dir = docs / "developers" / "alice"
+    # Role directory
+    dev_dir = docs / "roles" / "alice"
     dev_dir.mkdir(parents=True)
     (dev_dir / "CONTEXT.md").write_text(
         "# Alice Context\n\n## Current Task\n- Developing MCP Server\n", encoding="utf-8"
     )
     (dev_dir / ".metadata.yaml").write_text(
-        yaml.dump({"id": "alice", "role": "developer"}), encoding="utf-8"
+        yaml.dump({"id": "alice", "role": "role"}), encoding="utf-8"
     )
 
     # .vibecollab/insights/
@@ -287,19 +287,19 @@ class TestTools:
         assert tm is not None
         assert el is not None
 
-    def test_developer_context_exists(self, project_dir):
-        """Developer context reading"""
+    def test_role_context_exists(self, project_dir):
+        """Role context reading"""
         from vibecollab.agent.mcp_server import _safe_load_yaml, _safe_read_text
 
-        dev_dir = project_dir / "docs" / "developers" / "alice"
+        dev_dir = project_dir / "docs" / "roles" / "alice"
         context = _safe_read_text(dev_dir / "CONTEXT.md")
         metadata = _safe_load_yaml(dev_dir / ".metadata.yaml")
 
         assert "Alice Context" in context
         assert metadata["id"] == "alice"
 
-    def test_developer_context_missing(self, project_dir):
-        dev_dir = project_dir / "docs" / "developers" / "nonexistent"
+    def test_role_context_missing(self, project_dir):
+        dev_dir = project_dir / "docs" / "roles" / "nonexistent"
         assert not dev_dir.exists()
 
 
@@ -321,11 +321,11 @@ class TestPrompts:
         assert proj["name"] == "TestProject"
         assert "Project Context" in context_text
 
-    def test_start_conversation_with_developer(self, project_dir):
+    def test_start_conversation_with_role(self, project_dir):
         from vibecollab.agent.mcp_server import _safe_read_text
 
         dev_context = _safe_read_text(
-            project_dir / "docs" / "developers" / "alice" / "CONTEXT.md"
+            project_dir / "docs" / "roles" / "alice" / "CONTEXT.md"
         )
         assert "Alice Context" in dev_context
         assert "MCP Server" in dev_context

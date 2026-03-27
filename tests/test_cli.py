@@ -96,14 +96,14 @@ class TestCLI:
             assert result.exit_code == 0
             assert (output_dir / "llm-new.txt").exists()
 
-    def test_upgrade_with_multi_developer(self):
-        """Test upgrade command auto-initializes multi-developer directory structure"""
+    def test_upgrade_with_role_context(self):
+        """Test upgrade command auto-initializes multi-role directory structure"""
         import yaml
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_dir = Path(tmpdir) / "test-project"
 
-            # 1. Initialize single-developer project
+            # 1. Initialize single-role project
             self.runner.invoke(main, [
                 "init",
                 "-n", "TestProject",
@@ -111,19 +111,19 @@ class TestCLI:
                 "-o", str(output_dir)
             ])
 
-            # 2. Manually modify config to enable multi-developer mode
+            # 2. Manually modify config to enable multi-role mode
             config_path = output_dir / "project.yaml"
             with open(config_path, "r", encoding="utf-8") as f:
                 config = yaml.safe_load(f)
 
-            config["multi_developer"] = {
+            config["role_context"] = {
                 "enabled": True,
-                "developers": [
+                "roles": [
                     {"id": "alice", "name": "Alice", "role": "backend"},
                     {"id": "bob", "name": "Bob", "role": "frontend"}
                 ],
                 "collaboration": {
-                    "file": "docs/developers/COLLABORATION.md"
+                    "file": "docs/roles/COLLABORATION.md"
                 }
             }
 
@@ -137,12 +137,12 @@ class TestCLI:
                 "--force"
             ])
 
-            # 4. Verify multi-developer directory structure is created
+            # 4. Verify multi-role directory structure is created
             assert result.exit_code == 0
 
-            # Check developer directories
-            alice_dir = output_dir / "docs" / "developers" / "alice"
-            bob_dir = output_dir / "docs" / "developers" / "bob"
+            # Check role directories
+            alice_dir = output_dir / "docs" / "roles" / "alice"
+            bob_dir = output_dir / "docs" / "roles" / "bob"
             assert alice_dir.exists(), "Alice directory should be created"
             assert bob_dir.exists(), "Bob directory should be created"
 
@@ -155,7 +155,7 @@ class TestCLI:
             assert (bob_dir / ".metadata.yaml").exists(), "Bob's .metadata.yaml should be created"
 
             # Check collaboration doc
-            collab_file = output_dir / "docs" / "developers" / "COLLABORATION.md"
+            collab_file = output_dir / "docs" / "roles" / "COLLABORATION.md"
             assert collab_file.exists(), "COLLABORATION.md should be created"
 
             # Check global aggregated CONTEXT.md
@@ -349,15 +349,15 @@ class TestComplexProject:
         config_path = out / "project.yaml"
         config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
-        # Add multi-developer
-        config["multi_developer"] = {
+        # Add multi-role
+        config["role_context"] = {
             "enabled": True,
-            "developers": [
+            "roles": [
                 {"id": "alice", "name": "Alice", "role": "backend"},
                 {"id": "bob", "name": "Bob", "role": "frontend"},
                 {"id": "charlie", "name": "Charlie", "role": "devops"},
             ],
-            "collaboration": {"file": "docs/developers/COLLABORATION.md"},
+            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
         }
 
         # Add extension domain
@@ -388,11 +388,11 @@ class TestComplexProject:
 
         # Create necessary files
         (out / "docs").mkdir(exist_ok=True)
-        (out / "docs" / "developers").mkdir(exist_ok=True)
+        (out / "docs" / "roles").mkdir(exist_ok=True)
         (out / "docs" / "ROADMAP.md").write_text("# Roadmap\n", encoding="utf-8")
         (out / "docs" / "CHANGELOG.md").write_text("# Changelog\n", encoding="utf-8")
         (out / "README.md").write_text("# ComplexProject\n", encoding="utf-8")
-        (out / "docs" / "developers" / "COLLABORATION.md").write_text(
+        (out / "docs" / "roles" / "COLLABORATION.md").write_text(
             "# Collaboration\n", encoding="utf-8"
         )
 

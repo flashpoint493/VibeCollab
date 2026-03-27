@@ -154,7 +154,7 @@ class TestProject:
             "documentation": {
                 "key_files": []
             },
-            "multi_developer": {
+            "role_context": {
                 "enabled": True,
                 "identity": {
                     "primary": "git_username",
@@ -193,7 +193,7 @@ class TestProject:
             "# VII. Iteration Management",
             "# VIII. Phase-Based Collaboration Rules",
             "# IX. Context Management",
-            "# X. Multi-Developer/Agent Collaboration Protocol",
+            "# X. Multi-Role/Agent Collaboration Protocol",
             "# XI. Symbology Annotation System",
             "# XII. Protocol Self-Check Mechanism",
         ]
@@ -211,10 +211,10 @@ class TestProject:
         duplicates = [ch for ch, count in chapter_counts.items() if count > 1]
         assert len(duplicates) == 0, f"Found duplicate chapter numbering: {duplicates}"
 
-        # Verify sub-chapter numbering (multi-developer section)
+        # Verify sub-chapter numbering (multi-role section)
         assert "## 10.1 Collaboration Mode Overview" in content
         assert "## 10.2 Directory Structure" in content
-        assert "## 10.3 Developer Identity Detection" in content
+        assert "## 10.3 Role Identity Detection" in content
         assert "## 10.4 Context Management" in content
 
         # Verify phase-based collaboration sub-chapters

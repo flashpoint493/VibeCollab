@@ -281,17 +281,17 @@ def create_mcp_server(project_root: Optional[Path] = None):
             return json.dumps({"error": str(e)}, ensure_ascii=False)
 
     @mcp.tool()
-    def onboard(developer: str = "", output_json: bool = True) -> str:
+    def onboard(role: str = "", output_json: bool = True) -> str:
         """Get project context guidance -- call at conversation start
 
         Args:
-            developer: Developer ID (optional)
+            role: Role ID (optional)
             output_json: Whether to output JSON format (default True)
         """
         try:
             from ..cli.guide import _collect_project_context
 
-            ctx = _collect_project_context(config_path, developer=developer or None)
+            ctx = _collect_project_context(config_path, role=role or None)
 
             if output_json:
                 safe_ctx = {}
@@ -528,17 +528,17 @@ def create_mcp_server(project_root: Optional[Path] = None):
             return json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False)
 
     @mcp.tool()
-    def project_prompt(developer: str = "", compact: bool = True) -> str:
+    def project_prompt(role: str = "", compact: bool = True) -> str:
         """Generate complete project context prompt text
 
         Args:
-            developer: Developer ID (optional)
+            role: Role ID (optional)
             compact: Whether to use compact mode (default True)
         """
         try:
             from ..cli.guide import _build_prompt_text, _collect_project_context
 
-            ctx = _collect_project_context(config_path, developer=developer or None)
+            ctx = _collect_project_context(config_path, role=role or None)
             sections = ["protocol", "context", "insight"]
             if not compact:
                 sections = ["protocol", "roles", "context", "insight", "git"]
@@ -547,16 +547,16 @@ def create_mcp_server(project_root: Optional[Path] = None):
             return json.dumps({"error": str(e)}, ensure_ascii=False)
 
     @mcp.tool()
-    def developer_context(developer: str) -> str:
-        """Get context info for a specific developer
+    def role_context(role: str) -> str:
+        """Get context info for a specific role
 
         Args:
-            developer: Developer ID
+            role: Role ID
         """
-        dev_dir = root / "docs" / "developers" / developer
+        dev_dir = root / "docs" / "roles" / role
         if not dev_dir.exists():
             return json.dumps(
-                {"error": f"Developer '{developer}' does not exist"},
+                {"error": f"Role '{role}' does not exist"},
                 ensure_ascii=False,
             )
 
@@ -565,7 +565,7 @@ def create_mcp_server(project_root: Optional[Path] = None):
 
         return json.dumps(
             {
-                "developer": developer,
+                "role": role,
                 "context": context_text,
                 "metadata": metadata,
             },
@@ -629,7 +629,7 @@ def create_mcp_server(project_root: Optional[Path] = None):
     @mcp.tool()
     def session_save(
         summary: str,
-        developer: str = "",
+        role: str = "",
         key_decisions: str = "",
         files_changed: str = "",
         insights_added: str = "",
@@ -639,7 +639,7 @@ def create_mcp_server(project_root: Optional[Path] = None):
 
         Args:
             summary: Conversation summary text (required)
-            developer: Developer ID (optional)
+            role: Role ID (optional)
             key_decisions: Key decisions, comma-separated (optional)
             files_changed: Files involved, comma-separated (optional)
             insights_added: New Insight IDs, comma-separated (optional)
@@ -650,7 +650,7 @@ def create_mcp_server(project_root: Optional[Path] = None):
 
             store = SessionStore(root)
             session = Session(
-                developer=developer,
+                role=role,
                 summary=summary,
                 key_decisions=[
                     d.strip() for d in key_decisions.split(",") if d.strip()
@@ -789,7 +789,7 @@ def create_mcp_server(project_root: Optional[Path] = None):
     # ================================================================
 
     @mcp.prompt()
-    def start_conversation(developer: str = "") -> str:
+    def start_conversation(role: str = "") -> str:
         """Context injection template at conversation start -- called automatically by IDE"""
         parts = [
             "# VibeCollab Protocol Context",
@@ -840,15 +840,15 @@ def create_mcp_server(project_root: Optional[Path] = None):
                 "",
             ])
 
-        # Developer context
-        if developer:
+        # Role context
+        if role:
             dev_context = _safe_read_text(
-                root / "docs" / "developers" / developer / "CONTEXT.md"
+                root / "docs" / "roles" / role / "CONTEXT.md"
             )
             if dev_context:
                 dev_lines = dev_context.strip().split("\n")[:15]
                 parts.extend([
-                    f"## Developer {developer}'s Context",
+                    f"## Role {role}'s Context",
                     *dev_lines,
                     "",
                 ])

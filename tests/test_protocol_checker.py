@@ -18,15 +18,15 @@ class TestProtocolChecker:
             project_root = Path(tmpdir)
 
             # Create basic directory structure
-            docs_dir = project_root / "docs" / "developers"
+            docs_dir = project_root / "docs" / "roles"
             docs_dir.mkdir(parents=True)
 
-            # Configure multi-developer mode
+            # Configure multi-role mode
             config = {
-                "multi_developer": {
+                "role_context": {
                     "enabled": True,
                     "collaboration": {
-                        "file": "docs/developers/COLLABORATION.md"
+                        "file": "docs/roles/COLLABORATION.md"
                     }
                 },
                 "dialogue_protocol": {
@@ -54,15 +54,15 @@ class TestProtocolChecker:
             project_root = Path(tmpdir)
 
             # Create COLLABORATION.md
-            collab_file = project_root / "docs" / "developers" / "COLLABORATION.md"
+            collab_file = project_root / "docs" / "roles" / "COLLABORATION.md"
             collab_file.parent.mkdir(parents=True)
             collab_file.write_text("# Collaboration\n", encoding="utf-8")
 
             config = {
-                "multi_developer": {
+                "role_context": {
                     "enabled": True,
                     "collaboration": {
-                        "file": "docs/developers/COLLABORATION.md"
+                        "file": "docs/roles/COLLABORATION.md"
                     }
                 },
                 "dialogue_protocol": {
@@ -86,12 +86,12 @@ class TestProtocolChecker:
             assert len(collab_errors) == 0
 
     def test_check_collaboration_disabled(self):
-        """Test that COLLABORATION.md is not checked when multi-developer mode is disabled"""
+        """Test that COLLABORATION.md is not checked when multi-role mode is disabled"""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
 
             config = {
-                "multi_developer": {
+                "role_context": {
                     "enabled": False
                 },
                 "dialogue_protocol": {
@@ -149,21 +149,21 @@ class TestProtocolChecker:
             assert summary["infos"] == 1
             assert summary["all_passed"] is False
 
-    def test_check_developer_contexts(self):
-        """Test checking developer context files"""
+    def test_check_role_contexts(self):
+        """Test checking role context files"""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
 
-            # Configure multi-developer
+            # Configure multi-role
             config = {
-                "multi_developer": {
+                "role_context": {
                     "enabled": True,
-                    "developers": [
+                    "roles": [
                         {"id": "alice", "name": "Alice", "role": "backend"},
                         {"id": "bob", "name": "Bob", "role": "frontend"}
                     ],
                     "collaboration": {
-                        "file": "docs/developers/COLLABORATION.md"
+                        "file": "docs/roles/COLLABORATION.md"
                     }
                 },
                 "dialogue_protocol": {
@@ -173,7 +173,7 @@ class TestProtocolChecker:
             }
 
             # Only create alice's context
-            alice_dir = project_root / "docs" / "developers" / "alice"
+            alice_dir = project_root / "docs" / "roles" / "alice"
             alice_dir.mkdir(parents=True)
             (alice_dir / "CONTEXT.md").write_text("# Alice Context\n", encoding="utf-8")
             (alice_dir / ".metadata.yaml").write_text("role: backend\n", encoding="utf-8")
@@ -190,15 +190,15 @@ class TestProtocolChecker:
                                    if "Alice" in r.message and "CONTEXT.md" in r.message]
             assert any(r.passed for r in alice_context_checks)
 
-    def test_check_developer_missing_id(self):
-        """Test checking developer missing ID"""
+    def test_check_role_missing_id(self):
+        """Test checking role missing ID"""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
 
             config = {
-                "multi_developer": {
+                "role_context": {
                     "enabled": True,
-                    "developers": [
+                    "roles": [
                         {"name": "Alice"}  # missing id
                     ]
                 },
@@ -211,20 +211,20 @@ class TestProtocolChecker:
             checker = ProtocolChecker(project_root, config)
             results = checker.check_all()
 
-            # Should have developer ID error
-            id_errors = [r for r in results if "Developer ID" in r.name]
+            # Should have role ID error
+            id_errors = [r for r in results if "Role ID" in r.name]
             assert len(id_errors) > 0
             assert id_errors[0].severity == "error"
 
-    def test_check_developer_no_developers(self):
-        """Test multi-developer mode enabled but no developer config"""
+    def test_check_role_no_roles(self):
+        """Test multi-role mode enabled but no role config"""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
 
             config = {
-                "multi_developer": {
+                "role_context": {
                     "enabled": True,
-                    "developers": []  # empty list
+                    "roles": []  # empty list
                 },
                 "dialogue_protocol": {
                     "on_end": {"update_files": []},
@@ -235,8 +235,8 @@ class TestProtocolChecker:
             checker = ProtocolChecker(project_root, config)
             results = checker.check_all()
 
-            # Should have config warning (no static config and no developer dirs)
-            config_errors = [r for r in results if "Developer Config" in r.name]
+            # Should have config warning (no static config and no role dirs)
+            config_errors = [r for r in results if "Role Config" in r.name]
             assert len(config_errors) > 0
             assert config_errors[0].severity == "warning"
 
@@ -245,20 +245,20 @@ class TestProtocolChecker:
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
 
-            # Create developer directory
-            alice_dir = project_root / "docs" / "developers" / "alice"
+            # Create role directory
+            alice_dir = project_root / "docs" / "roles" / "alice"
             alice_dir.mkdir(parents=True)
             (alice_dir / "CONTEXT.md").write_text("# Alice\n", encoding="utf-8")
 
             config = {
-                "multi_developer": {
+                "role_context": {
                     "enabled": True,
-                    "developers": [{"id": "alice", "name": "Alice"}],
+                    "roles": [{"id": "alice", "name": "Alice"}],
                     "conflict_detection": {
                         "enabled": False  # disable conflict detection
                     },
                     "collaboration": {
-                        "file": "docs/developers/COLLABORATION.md"
+                        "file": "docs/roles/COLLABORATION.md"
                     }
                 },
                 "dialogue_protocol": {
@@ -268,7 +268,7 @@ class TestProtocolChecker:
             }
 
             # Create collaboration document
-            collab_file = project_root / "docs" / "developers" / "COLLABORATION.md"
+            collab_file = project_root / "docs" / "roles" / "COLLABORATION.md"
             collab_file.write_text("# Collab\n", encoding="utf-8")
 
             checker = ProtocolChecker(project_root, config)

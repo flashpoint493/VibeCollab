@@ -123,20 +123,20 @@ class TestPatternEngineRender:
             assert section in output, f"Missing section: {section}"
 
     def test_render_conditional_sections_excluded(self, minimal_config):
-        """multi_developer not enabled should not render section X."""
+        """role_context not enabled should not render section X."""
         engine = PatternEngine(minimal_config)
         output = engine.render()
-        assert "# X. Multi-Developer/Agent Collaboration Protocol" not in output
+        assert "# X. Multi-Role/Agent Collaboration Protocol" not in output
 
     def test_render_conditional_sections_included(self, minimal_config):
-        """multi_developer enabled should render section X."""
-        minimal_config["multi_developer"] = {
+        """role_context enabled should render section X."""
+        minimal_config["role_context"] = {
             "enabled": True,
             "identity": {"primary": "git_username", "fallback": "system_user", "normalize": True},
         }
         engine = PatternEngine(minimal_config)
         output = engine.render()
-        assert "# X. Multi-Developer/Agent Collaboration Protocol" in output
+        assert "# X. Multi-Role/Agent Collaboration Protocol" in output
 
     def test_render_default_true_conditions(self, minimal_config):
         """protocol_check not in config but enabled by default."""
@@ -164,14 +164,14 @@ class TestPatternEngineRender:
 
 class TestConditionEvaluation:
     def test_simple_bool_true(self, minimal_config):
-        minimal_config["multi_developer"] = {"enabled": True}
+        minimal_config["role_context"] = {"enabled": True}
         engine = PatternEngine(minimal_config)
-        assert engine._evaluate_condition("config.multi_developer.enabled") is True
+        assert engine._evaluate_condition("config.role_context.enabled") is True
 
     def test_simple_bool_false(self, minimal_config):
-        minimal_config["multi_developer"] = {"enabled": False}
+        minimal_config["role_context"] = {"enabled": False}
         engine = PatternEngine(minimal_config)
-        assert engine._evaluate_condition("config.multi_developer.enabled") is False
+        assert engine._evaluate_condition("config.role_context.enabled") is False
 
     def test_missing_key_returns_false(self, minimal_config):
         engine = PatternEngine(minimal_config)
@@ -379,9 +379,9 @@ class TestTemplateOverlay:
         local_manifest = {
             "sections": [
                 {
-                    "id": "multi_developer",
-                    "template": "16_multi_developer.md.j2",
-                    "description": "Multi-developer collaboration (forced enabled)",
+                    "id": "role_context",
+                    "template": "16_role_context.md.j2",
+                    "description": "Multi-role collaboration (forced enabled)",
                 }
             ]
         }
@@ -394,7 +394,7 @@ class TestTemplateOverlay:
             project_root=overlay_project["root"],
         )
         for entry in engine.manifest["sections"]:
-            if entry["id"] == "multi_developer":
+            if entry["id"] == "role_context":
                 assert entry.get("condition") is None
                 break
 

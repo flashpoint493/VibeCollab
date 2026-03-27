@@ -11,32 +11,32 @@ from click.testing import CliRunner
 from vibecollab.cli import main
 
 
-def _make_multi_dev_project(tmp_path: Path) -> Path:
-    """Create a multi-developer project with alice and bob."""
+def _make_role_based_project(tmp_path: Path) -> Path:
+    """Create a multi-role project with alice and bob."""
     config = {
         "project": {"name": "TestProject", "version": "v1.0.0"},
-        "multi_developer": {
+        "role_context": {
             "enabled": True,
-            "developers": [
+            "roles": [
                 {"id": "alice", "name": "Alice", "role": "backend"},
                 {"id": "bob", "name": "Bob", "role": "frontend"},
             ],
-            "collaboration": {"file": "docs/developers/COLLABORATION.md"},
+            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
         },
     }
     config_path = tmp_path / "project.yaml"
     config_path.write_text(yaml.dump(config, allow_unicode=True), encoding="utf-8")
 
-    # Create developer directories
+    # Create role directories
     for dev in ("alice", "bob"):
-        dev_dir = tmp_path / "docs" / "developers" / dev
+        dev_dir = tmp_path / "docs" / "roles" / dev
         dev_dir.mkdir(parents=True, exist_ok=True)
         (dev_dir / "CONTEXT.md").write_text(
             f"# {dev} Context\nWorking on stuff", encoding="utf-8"
         )
         (dev_dir / ".metadata.yaml").write_text(
             yaml.dump({
-                "developer": dev,
+                "role": dev,
                 "created_at": "2026-02-20",
                 "last_updated": "2026-02-26",
                 "total_updates": 5,
@@ -45,14 +45,14 @@ def _make_multi_dev_project(tmp_path: Path) -> Path:
         )
 
     # Collaboration doc
-    collab_dir = tmp_path / "docs" / "developers"
+    collab_dir = tmp_path / "docs" / "roles"
     (collab_dir / "COLLABORATION.md").write_text("# Collaboration\n", encoding="utf-8")
 
     return config_path
 
 
 def _make_single_dev_project(tmp_path: Path) -> Path:
-    """Create a single-developer project (multi_developer disabled)."""
+    """Create a single-role project (role_context disabled)."""
     config = {
         "project": {"name": "TestProject", "version": "v1.0.0"},
     }
@@ -67,10 +67,10 @@ class TestDevWhoami:
 
     def test_whoami_basic(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = _make_multi_dev_project(Path(tmpdir))
+            config_path = _make_role_based_project(Path(tmpdir))
             result = self.runner.invoke(main, ["dev", "whoami", "-c", str(config_path)])
             assert result.exit_code == 0
-            assert "Current developer" in result.output.lower() or "Current Developer" in result.output
+            assert "Current role" in result.output.lower() or "Current Role" in result.output
 
     def test_whoami_no_config(self):
         result = self.runner.invoke(main, ["dev", "whoami", "-c", "/nonexistent/project.yaml"])
@@ -84,9 +84,9 @@ class TestDevList:
     def setup_method(self):
         self.runner = CliRunner()
 
-    def test_list_developers(self):
+    def test_list_roles(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = _make_multi_dev_project(Path(tmpdir))
+            config_path = _make_role_based_project(Path(tmpdir))
             result = self.runner.invoke(main, ["dev", "list", "-c", str(config_path)])
             assert result.exit_code == 0
             assert "alice" in result.output
@@ -106,15 +106,15 @@ class TestDevStatus:
 
     def test_status_all(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = _make_multi_dev_project(Path(tmpdir))
+            config_path = _make_role_based_project(Path(tmpdir))
             result = self.runner.invoke(main, ["dev", "status", "-c", str(config_path)])
             assert result.exit_code == 0
             assert "alice" in result.output
             assert "bob" in result.output
 
-    def test_status_specific_developer(self):
+    def test_status_specific_role(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = _make_multi_dev_project(Path(tmpdir))
+            config_path = _make_role_based_project(Path(tmpdir))
             result = self.runner.invoke(main, ["dev", "status", "alice", "-c", str(config_path)])
             assert result.exit_code == 0
             assert "alice" in result.output.lower()
@@ -133,7 +133,7 @@ class TestDevSync:
 
     def test_sync_basic(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = _make_multi_dev_project(Path(tmpdir))
+            config_path = _make_role_based_project(Path(tmpdir))
             result = self.runner.invoke(main, ["dev", "sync", "-c", str(config_path)])
             assert result.exit_code == 0
             assert "Aggregation complete" in result.output
@@ -153,15 +153,15 @@ class TestDevInit:
     def setup_method(self):
         self.runner = CliRunner()
 
-    def test_init_new_developer(self):
+    def test_init_new_role(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = _make_multi_dev_project(Path(tmpdir))
+            config_path = _make_role_based_project(Path(tmpdir))
             result = self.runner.invoke(
                 main, ["dev", "init", "-d", "charlie", "-c", str(config_path)]
             )
             assert result.exit_code == 0
             assert "Initialization complete" in result.output
-            charlie_ctx = Path(tmpdir) / "docs" / "developers" / "charlie" / "CONTEXT.md"
+            charlie_ctx = Path(tmpdir) / "docs" / "roles" / "charlie" / "CONTEXT.md"
             assert charlie_ctx.exists()
 
     def test_init_disabled(self):
@@ -178,9 +178,9 @@ class TestDevSwitch:
     def setup_method(self):
         self.runner = CliRunner()
 
-    def test_switch_to_developer(self):
+    def test_switch_to_role(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = _make_multi_dev_project(Path(tmpdir))
+            config_path = _make_role_based_project(Path(tmpdir))
             result = self.runner.invoke(
                 main, ["dev", "switch", "bob", "-c", str(config_path)]
             )
@@ -192,7 +192,7 @@ class TestDevSwitch:
 
     def test_switch_clear(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = _make_multi_dev_project(Path(tmpdir))
+            config_path = _make_role_based_project(Path(tmpdir))
             # First switch to bob
             self.runner.invoke(main, ["dev", "switch", "bob", "-c", str(config_path)])
             # Then clear
@@ -218,7 +218,7 @@ class TestDevConflicts:
 
     def test_conflicts_no_conflicts(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = _make_multi_dev_project(Path(tmpdir))
+            config_path = _make_role_based_project(Path(tmpdir))
             result = self.runner.invoke(
                 main, ["dev", "conflicts", "-c", str(config_path)]
             )
@@ -226,7 +226,7 @@ class TestDevConflicts:
 
     def test_conflicts_between(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = _make_multi_dev_project(Path(tmpdir))
+            config_path = _make_role_based_project(Path(tmpdir))
             result = self.runner.invoke(
                 main, ["dev", "conflicts", "--between", "alice", "bob",
                        "-c", str(config_path)]

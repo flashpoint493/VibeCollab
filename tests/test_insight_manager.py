@@ -23,7 +23,7 @@ from vibecollab.insight.manager import (
 @pytest.fixture
 def project_dir(tmp_path):
     (tmp_path / ".vibecollab" / "insights").mkdir(parents=True)
-    (tmp_path / "docs" / "developers").mkdir(parents=True)
+    (tmp_path / "docs" / "roles").mkdir(parents=True)
     return tmp_path
 
 
@@ -549,60 +549,60 @@ class TestFullTrace:
 
 
 # ===========================================================================
-# InsightManager - Cross-developer Sharing
+# InsightManager - Cross-role Sharing
 # ===========================================================================
 
-class TestCrossDeveloper:
-    def test_get_insight_developers(self, mgr, project_dir):
+class TestCrossRole:
+    def test_get_insight_roles(self, mgr, project_dir):
         mgr.create(title="T", tags=["a"], category="technique",
                     body=_body(), created_by="alice")
         mgr.record_use("INS-001", used_by="bob")
-        # Setup developer metadata
-        alice_dir = project_dir / "docs" / "developers" / "alice"
+        # Setup role metadata
+        alice_dir = project_dir / "docs" / "roles" / "alice"
         alice_dir.mkdir(parents=True, exist_ok=True)
         (alice_dir / ".metadata.yaml").write_text(
-            "developer: alice\ncontributed:\n  - INS-001\nbookmarks: []\n",
+            "role: alice\ncontributed:\n  - INS-001\nbookmarks: []\n",
             encoding="utf-8",
         )
-        bob_dir = project_dir / "docs" / "developers" / "bob"
+        bob_dir = project_dir / "docs" / "roles" / "bob"
         bob_dir.mkdir(parents=True, exist_ok=True)
         (bob_dir / ".metadata.yaml").write_text(
-            "developer: bob\ncontributed: []\nbookmarks:\n  - INS-001\n",
+            "role: bob\ncontributed: []\nbookmarks:\n  - INS-001\n",
             encoding="utf-8",
         )
-        info = mgr.get_insight_developers("INS-001")
+        info = mgr.get_insight_roles("INS-001")
         assert info["created_by"] == "alice"
         assert "bob" in info["used_by"]
         assert "bob" in info["bookmarked_by"]
         assert "alice" in info["contributed_by"]
 
-    def test_get_insight_developers_nonexistent(self, mgr):
-        info = mgr.get_insight_developers("INS-999")
+    def test_get_insight_roles_nonexistent(self, mgr):
+        info = mgr.get_insight_roles("INS-999")
         assert info["created_by"] is None
         assert info["used_by"] == []
 
-    def test_get_cross_developer_stats(self, mgr, project_dir):
+    def test_get_cross_role_stats(self, mgr, project_dir):
         mgr.create(title="A", tags=["a"], category="technique",
                     body=_body(), created_by="alice")
         mgr.create(title="B", tags=["b"], category="workflow",
                     body=_body(), created_by="bob")
         mgr.record_use("INS-001", used_by="bob")
         mgr.record_use("INS-001", used_by="charlie")
-        # Setup developer directories
+        # Setup role directories
         for dev in ("alice", "bob"):
-            d = project_dir / "docs" / "developers" / dev
+            d = project_dir / "docs" / "roles" / dev
             d.mkdir(parents=True, exist_ok=True)
             (d / ".metadata.yaml").write_text(
-                f"developer: {dev}\ncontributed: []\nbookmarks: []\n",
+                f"role: {dev}\ncontributed: []\nbookmarks: []\n",
                 encoding="utf-8",
             )
-        stats = mgr.get_cross_developer_stats()
+        stats = mgr.get_cross_role_stats()
         assert stats["summary"]["total_insights"] == 2
         assert stats["summary"]["total_uses"] == 2
         assert stats["summary"]["most_used"] == "INS-001"
 
-    def test_cross_developer_stats_empty(self, mgr):
-        stats = mgr.get_cross_developer_stats()
+    def test_cross_role_stats_empty(self, mgr):
+        stats = mgr.get_cross_role_stats()
         assert stats["summary"]["total_insights"] == 0
         assert stats["summary"]["total_uses"] == 0
         assert stats["summary"]["most_used"] is None
@@ -648,14 +648,14 @@ class TestConsistency:
         assert report.ok is False
         assert any("does not exist" in e for e in report.errors)
 
-    def test_developer_metadata_bad_ref(self, mgr, project_dir):
+    def test_role_metadata_bad_ref(self, mgr, project_dir):
         mgr.create(title="T", tags=["a"], category="technique",
                     body=_body(), created_by="alice")
-        dev_dir = project_dir / "docs" / "developers" / "alice"
+        dev_dir = project_dir / "docs" / "roles" / "alice"
         dev_dir.mkdir(parents=True, exist_ok=True)
         meta = dev_dir / ".metadata.yaml"
         meta.write_text(
-            "developer: alice\ncontributed:\n  - INS-001\nbookmarks:\n  - INS-999\n",
+            "role: alice\ncontributed:\n  - INS-001\nbookmarks:\n  - INS-999\n",
             encoding="utf-8",
         )
         report = mgr.check_consistency()

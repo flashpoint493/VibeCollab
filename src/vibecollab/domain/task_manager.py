@@ -91,7 +91,7 @@ class Task:
         role: Responsible role code (DEV, PM, ARCH, etc.)
         feature: Feature or goal description
         status: Current task status
-        assignee: Developer assigned to this task
+        assignee: Role assigned to this task
         dependencies: List of prerequisite task IDs
         output: Expected deliverables
         description: Detailed task description
@@ -253,7 +253,7 @@ class TaskManager:
             id: Task ID (must match TASK-{ROLE}-{SEQ} pattern)
             role: Role code
             feature: Feature description
-            assignee: Optional developer name
+            assignee: Optional role name
             actor: Who is creating this task
             **kwargs: Additional Task fields
 

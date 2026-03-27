@@ -88,16 +88,16 @@ class TestDocProtocol:
 
     def test_collab_doc_stale(self, tmp_path):
         """Line 174: collaboration doc exists but > 7 days old."""
-        (tmp_path / "docs" / "developers").mkdir(parents=True)
-        collab = tmp_path / "docs" / "developers" / "COLLABORATION.md"
+        (tmp_path / "docs" / "roles").mkdir(parents=True)
+        collab = tmp_path / "docs" / "roles" / "COLLABORATION.md"
         collab.write_text("old collab", encoding="utf-8")
         old_time = time.time() - 8 * 86400
         os.utime(collab, (old_time, old_time))
 
         config = _base_config()
-        config["multi_developer"] = {
+        config["role_context"] = {
             "enabled": True,
-            "collaboration": {"file": "docs/developers/COLLABORATION.md"},
+            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
         }
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_documentation_protocol()
@@ -124,56 +124,56 @@ class TestDialogueProtocol:
 
 
 # ============================================================
-# _check_multi_developer_protocol gaps
+# _check_role_context_protocol gaps
 # ============================================================
 
 
 class TestMultiDevProtocol:
-    def test_discover_developers_from_fs(self, tmp_path):
-        """Line 228: dynamic developer discovery from filesystem."""
-        dev_dir = tmp_path / "docs" / "developers" / "alice"
+    def test_discover_roles_from_fs(self, tmp_path):
+        """Line 228: dynamic role discovery from filesystem."""
+        dev_dir = tmp_path / "docs" / "roles" / "alice"
         dev_dir.mkdir(parents=True)
         (dev_dir / "CONTEXT.md").write_text("# Alice", encoding="utf-8")
         (dev_dir / ".metadata.yaml").write_text("id: alice", encoding="utf-8")
 
         config = _base_config()
-        config["multi_developer"] = {
+        config["role_context"] = {
             "enabled": True,
-            "developers": [],  # empty → trigger filesystem discovery
-            "collaboration": {"file": "docs/developers/COLLABORATION.md"},
+            "roles": [],  # empty → trigger filesystem discovery
+            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
         }
         # Create COLLABORATION.md
-        (tmp_path / "docs" / "developers" / "COLLABORATION.md").write_text("collab", encoding="utf-8")
+        (tmp_path / "docs" / "roles" / "COLLABORATION.md").write_text("collab", encoding="utf-8")
 
         checker = ProtocolChecker(tmp_path, config)
-        results = checker._check_multi_developer_protocol()
+        results = checker._check_role_context_protocol()
         # Should have found alice via fs
         alice_results = [r for r in results if "alice" in r.message.lower() or "alice" in r.name.lower()]
         assert len(alice_results) > 0
 
     def test_context_md_missing(self, tmp_path):
-        """Line 275: developer dir exists but CONTEXT.md doesn't."""
-        dev_dir = tmp_path / "docs" / "developers" / "bob"
+        """Line 275: role dir exists but CONTEXT.md doesn't."""
+        dev_dir = tmp_path / "docs" / "roles" / "bob"
         dev_dir.mkdir(parents=True)
         # No CONTEXT.md
 
         config = _base_config()
-        config["multi_developer"] = {
+        config["role_context"] = {
             "enabled": True,
-            "developers": [{"id": "bob", "name": "Bob"}],
-            "collaboration": {"file": "docs/developers/COLLABORATION.md"},
+            "roles": [{"id": "bob", "name": "Bob"}],
+            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
         }
-        (tmp_path / "docs" / "developers" / "COLLABORATION.md").write_text("c", encoding="utf-8")
+        (tmp_path / "docs" / "roles" / "COLLABORATION.md").write_text("c", encoding="utf-8")
 
         checker = ProtocolChecker(tmp_path, config)
-        results = checker._check_multi_developer_protocol()
+        results = checker._check_role_context_protocol()
         ctx_missing = [r for r in results if "CONTEXT.md does not exist" in r.message]
         assert len(ctx_missing) == 1
         assert ctx_missing[0].severity == "error"
 
     def test_context_md_stale(self, tmp_path):
-        """Line 288: developer CONTEXT.md > 7 days old."""
-        dev_dir = tmp_path / "docs" / "developers" / "alice"
+        """Line 288: role CONTEXT.md > 7 days old."""
+        dev_dir = tmp_path / "docs" / "roles" / "alice"
         dev_dir.mkdir(parents=True)
         ctx = dev_dir / "CONTEXT.md"
         ctx.write_text("# Alice", encoding="utf-8")
@@ -182,40 +182,40 @@ class TestMultiDevProtocol:
         os.utime(ctx, (old_time, old_time))
 
         config = _base_config()
-        config["multi_developer"] = {
+        config["role_context"] = {
             "enabled": True,
-            "developers": [{"id": "alice", "name": "Alice"}],
-            "collaboration": {"file": "docs/developers/COLLABORATION.md"},
+            "roles": [{"id": "alice", "name": "Alice"}],
+            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
         }
-        (tmp_path / "docs" / "developers" / "COLLABORATION.md").write_text("c", encoding="utf-8")
+        (tmp_path / "docs" / "roles" / "COLLABORATION.md").write_text("c", encoding="utf-8")
 
         checker = ProtocolChecker(tmp_path, config)
-        results = checker._check_multi_developer_protocol()
+        results = checker._check_role_context_protocol()
         stale = [r for r in results if "days" in r.message and "alice" in r.message.lower()]
         assert len(stale) == 1
         assert stale[0].severity == "info"
 
-    def test_collab_doc_stale_in_multi_dev(self, tmp_path):
+    def test_collab_doc_stale_in_role_based(self, tmp_path):
         """Line 345: collaboration doc > 7 days in multi-dev check."""
-        dev_dir = tmp_path / "docs" / "developers" / "alice"
+        dev_dir = tmp_path / "docs" / "roles" / "alice"
         dev_dir.mkdir(parents=True)
         (dev_dir / "CONTEXT.md").write_text("# Alice", encoding="utf-8")
         (dev_dir / ".metadata.yaml").write_text("id: alice", encoding="utf-8")
 
-        collab = tmp_path / "docs" / "developers" / "COLLABORATION.md"
+        collab = tmp_path / "docs" / "roles" / "COLLABORATION.md"
         collab.write_text("old collab", encoding="utf-8")
         old_time = time.time() - 10 * 86400
         os.utime(collab, (old_time, old_time))
 
         config = _base_config()
-        config["multi_developer"] = {
+        config["role_context"] = {
             "enabled": True,
-            "developers": [{"id": "alice", "name": "Alice"}],
-            "collaboration": {"file": "docs/developers/COLLABORATION.md"},
+            "roles": [{"id": "alice", "name": "Alice"}],
+            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
         }
 
         checker = ProtocolChecker(tmp_path, config)
-        results = checker._check_multi_developer_protocol()
+        results = checker._check_role_context_protocol()
         stale = [r for r in results if "Collaboration Doc Update Frequency" in r.name]
         assert len(stale) == 1
         assert stale[0].severity == "info"

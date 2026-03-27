@@ -12,7 +12,7 @@ Storage structure:
 
 Each session file contains:
 - session_id: Auto-generated timestamp ID
-- developer: Developer name
+- role: Role name
 - summary: Conversation summary text
 - key_decisions: List of key decisions
 - files_changed: List of files involved
@@ -31,7 +31,7 @@ class Session:
     """Conversation session record"""
 
     session_id: str = ""
-    developer: str = ""
+    role: str = ""
     summary: str = ""
     key_decisions: List[str] = field(default_factory=list)
     files_changed: List[str] = field(default_factory=list)
@@ -57,7 +57,7 @@ class Session:
     def from_dict(cls, data: Dict[str, Any]) -> "Session":
         return cls(
             session_id=data.get("session_id", ""),
-            developer=data.get("developer", ""),
+            role=data.get("role", ""),
             summary=data.get("summary", ""),
             key_decisions=data.get("key_decisions", []),
             files_changed=data.get("files_changed", []),
@@ -74,7 +74,7 @@ class SessionStore:
     Usage:
         store = SessionStore(project_root=Path("."))
         session = store.save(Session(
-            developer="dev",
+            role="dev",
             summary="Implemented MCP Server + AI IDE integration",
             key_decisions=["DECISION-015: Removed self-bootstrap capability"],
             files_changed=["mcp_server.py", "cli_mcp.py"],

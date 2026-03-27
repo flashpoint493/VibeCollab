@@ -32,7 +32,7 @@ class Project:
             name: Project name
             domain: Business domain
             output_dir: Output directory
-            role_based: Whether to enable multi-developer mode
+            role_based: Whether to enable multi-role mode
         """
         tm = TemplateManager()
 
@@ -43,7 +43,7 @@ class Project:
         config["project"]["name"] = name
         config["project"]["domain"] = domain
 
-        # Enable multi-developer mode
+        # Enable multi-role mode
         if role_based:
             if "role_context" not in config:
                 config["role_context"] = {}
@@ -178,22 +178,22 @@ class Project:
         today = datetime.now().strftime("%Y-%m-%d")
         role_based_enabled = self.config.get("role_context", {}).get("enabled", False)
 
-        # Multi-developer mode: initialize developer context
+        # Multi-role mode: initialize role context
         if role_based_enabled:
-            from ..domain.developer import ContextAggregator, DeveloperManager
+            from ..domain.role import ContextAggregator, RoleManager
 
-            dm = DeveloperManager(self.output_dir, self.config)
-            current_dev = dm.get_current_developer()
+            dm = RoleManager(self.output_dir, self.config)
+            current_dev = dm.get_current_role()
 
-            # Initialize current developer's context
-            dm.init_developer_context(current_dev)
+            # Initialize current role's context
+            dm.init_role_context(current_dev)
 
             # Create COLLABORATION.md
             collab_config = self.config.get('role_context', {}).get('collaboration', {})
-            collab_file = self.output_dir / collab_config.get('file', 'docs/developers/COLLABORATION.md')
+            collab_file = self.output_dir / collab_config.get('file', 'docs/roles/COLLABORATION.md')
             collab_file.parent.mkdir(parents=True, exist_ok=True)
 
-            collab_content = f"""# {project_name} Developer Collaboration Record
+            collab_content = f"""# {project_name} Role Collaboration Record
 
 ## Current Collaboration
 
@@ -345,7 +345,7 @@ This document records the project's original requirements and requirement change
 
         # Write files
         if not role_based_enabled:
-            # Single developer mode writes CONTEXT.md (multi-dev mode generates via aggregation)
+            # Single role mode writes CONTEXT.md (multi-dev mode generates via aggregation)
             context_content = f"""# {project_name} Current Context
 
 ## Current Status

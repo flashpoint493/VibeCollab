@@ -64,10 +64,10 @@ def project_dir(tmp_path):
         },
         "protocol_check": {"checks": {"documentation": {"update_threshold_hours": 0.25}}},
         "prd_management": {"enabled": True, "prd_file": "docs/PRD.md"},
-        "multi_developer": {
+        "role_context": {
             "enabled": True,
             "identity": {"primary": "git_username"},
-            "context": {"per_developer_dir": "docs/developers", "metadata_file": ".metadata.yaml"},
+            "context": {"per_role_dir": "docs/roles", "metadata_file": ".metadata.yaml"},
         },
     }
     (tmp_path / "project.yaml").write_text(yaml.dump(config, allow_unicode=True), encoding="utf-8")
@@ -87,11 +87,11 @@ def project_dir(tmp_path):
     (tmp_path / "docs" / "PRD.md").write_text("# PRD", encoding="utf-8")
     (tmp_path / "CONTRIBUTING_AI.md").write_text("# AI Rules", encoding="utf-8")
 
-    # Developer directory
-    dev_dir = tmp_path / "docs" / "developers" / "testdev"
+    # Role directory
+    dev_dir = tmp_path / "docs" / "roles" / "testdev"
     dev_dir.mkdir(parents=True)
     (dev_dir / "CONTEXT.md").write_text("# testdev context", encoding="utf-8")
-    meta = {"developer": "testdev", "tags": ["lang:python"], "contributed": ["INS-001"], "bookmarks": ["INS-003"]}
+    meta = {"role": "testdev", "tags": ["lang:python"], "contributed": ["INS-001"], "bookmarks": ["INS-003"]}
     (dev_dir / ".metadata.yaml").write_text(yaml.dump(meta), encoding="utf-8")
 
     # Insights
@@ -195,19 +195,19 @@ class TestOnboard:
         assert data["insight_count"] == 2
         assert "docs/CONTEXT.md" in data["key_files"]
 
-    def test_onboard_with_developer(self, runner, chdir_project):
+    def test_onboard_with_role(self, runner, chdir_project):
         result = runner.invoke(onboard, ["-d", "testdev", "--json"])
         assert result.exit_code == 0
         data = json.loads(result.output)
-        assert data["developer"]["id"] == "testdev"
-        assert data["developer"]["has_context"] is True
-        assert data["developer"]["has_metadata"] is True
+        assert data["role"]["id"] == "testdev"
+        assert data["role"]["has_context"] is True
+        assert data["role"]["has_metadata"] is True
 
-    def test_onboard_nonexistent_developer(self, runner, chdir_project):
+    def test_onboard_nonexistent_role(self, runner, chdir_project):
         result = runner.invoke(onboard, ["-d", "nobody", "--json"])
         assert result.exit_code == 0
         data = json.loads(result.output)
-        assert data["developer"]["has_context"] is False
+        assert data["role"]["has_context"] is False
 
     def test_onboard_no_config(self, runner, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
@@ -471,11 +471,11 @@ class TestCollectProjectContext:
         assert isinstance(ctx["key_files"], list)
         assert ctx["insight_count"] == 2
 
-    def test_collect_with_developer(self, chdir_project, project_dir):
-        ctx = _collect_project_context(project_dir / "project.yaml", developer="testdev")
-        assert ctx["developer_info"] is not None
-        assert ctx["developer_info"]["id"] == "testdev"
-        assert "testdev context" in ctx["developer_info"]["context"]
+    def test_collect_with_role(self, chdir_project, project_dir):
+        ctx = _collect_project_context(project_dir / "project.yaml", role="testdev")
+        assert ctx["role_info"] is not None
+        assert ctx["role_info"]["id"] == "testdev"
+        assert "testdev context" in ctx["role_info"]["context"]
 
     def test_collect_missing_config(self, tmp_path):
         ctx = _collect_project_context(tmp_path / "nope.yaml")
@@ -543,7 +543,7 @@ class TestPromptCmd:
         # protocol and insight should not appear
         assert "Collaboration Protocol" not in result.output
 
-    def test_prompt_with_developer(self, runner, chdir_project):
+    def test_prompt_with_role(self, runner, chdir_project):
         result = runner.invoke(prompt_cmd, ["-d", "testdev"])
         assert result.exit_code == 0
         assert "testdev" in result.output
@@ -763,8 +763,8 @@ class TestOnboardSemanticEnhancement:
         ctx = _collect_project_context(project_dir / "project.yaml")
         assert ctx["related_insights"] == []
 
-    def test_onboard_with_developer_uses_dev_context(self, runner, project_with_index, monkeypatch):
-        """Uses developer context as query when developer is specified"""
+    def test_onboard_with_role_uses_dev_context(self, runner, project_with_index, monkeypatch):
+        """Uses role context as query when role is specified"""
         monkeypatch.chdir(project_with_index)
         result = runner.invoke(onboard, ["-d", "testdev", "--json"])
         assert result.exit_code == 0

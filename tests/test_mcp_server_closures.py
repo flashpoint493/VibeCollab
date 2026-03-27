@@ -127,7 +127,7 @@ def project_dir(tmp_path):
     (docs / "ROADMAP.md").write_text("# Roadmap\n", encoding="utf-8")
     (docs / "CHANGELOG.md").write_text("# Changelog\n", encoding="utf-8")
 
-    dev_dir = docs / "developers" / "alice"
+    dev_dir = docs / "roles" / "alice"
     dev_dir.mkdir(parents=True)
     (dev_dir / "CONTEXT.md").write_text(
         "# Alice Context\nWorking on feature X\n", encoding="utf-8"
@@ -254,8 +254,8 @@ class TestApiTools:
         data = json.loads(result)
         assert isinstance(data, dict)
 
-    def test_onboard_with_developer(self, mcp):
-        result = mcp.tools["onboard"](developer="alice")
+    def test_onboard_with_role(self, mcp):
+        result = mcp.tools["onboard"](role="alice")
         data = json.loads(result)
         assert isinstance(data, dict)
 
@@ -297,8 +297,8 @@ class TestApiTools:
         # Returns text or JSON error
         assert isinstance(result, str)
 
-    def test_project_prompt_with_developer(self, mcp):
-        result = mcp.tools["project_prompt"](developer="alice")
+    def test_project_prompt_with_role(self, mcp):
+        result = mcp.tools["project_prompt"](role="alice")
         assert isinstance(result, str)
 
     def test_search_docs(self, mcp):
@@ -341,14 +341,14 @@ class TestApiTools:
 class TestDirectTools:
     """Tools that use direct Python API calls."""
 
-    def test_developer_context_exists(self, mcp):
-        result = json.loads(mcp.tools["developer_context"](developer="alice"))
-        assert result["developer"] == "alice"
+    def test_role_context_exists(self, mcp):
+        result = json.loads(mcp.tools["role_context"](role="alice"))
+        assert result["role"] == "alice"
         assert "Alice Context" in result["context"]
         assert result["metadata"]["id"] == "alice"
 
-    def test_developer_context_missing(self, mcp):
-        result = json.loads(mcp.tools["developer_context"](developer="unknown"))
+    def test_role_context_missing(self, mcp):
+        result = json.loads(mcp.tools["role_context"](role="unknown"))
         assert "error" in result
 
     def test_session_save_basic(self, mcp):
@@ -359,7 +359,7 @@ class TestDirectTools:
     def test_session_save_with_all_fields(self, mcp):
         result = json.loads(mcp.tools["session_save"](
             summary="Full session",
-            developer="alice",
+            role="alice",
             key_decisions="D1, D2",
             files_changed="file1.py, file2.py",
             insights_added="INS-001, INS-002",
@@ -386,8 +386,8 @@ class TestPrompts:
         assert "TestProject" in text
         assert "Context" in text
 
-    def test_start_conversation_with_developer(self, mcp):
-        text = mcp.prompts["start_conversation"](developer="alice")
+    def test_start_conversation_with_role(self, mcp):
+        text = mcp.prompts["start_conversation"](role="alice")
         assert "alice" in text
         assert "Alice Context" in text
 
@@ -396,8 +396,8 @@ class TestPrompts:
         assert "VibeCollab" in text
         assert "Empty" in text
 
-    def test_start_conversation_unknown_developer(self, mcp):
-        text = mcp.prompts["start_conversation"](developer="nonexistent")
+    def test_start_conversation_unknown_role(self, mcp):
+        text = mcp.prompts["start_conversation"](role="nonexistent")
         assert "VibeCollab" in text
 
 

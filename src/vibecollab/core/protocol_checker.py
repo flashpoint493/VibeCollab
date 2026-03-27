@@ -47,8 +47,8 @@ class ProtocolChecker:
         # Check dialogue flow protocol
         results.extend(self._check_dialogue_protocol())
 
-        # Check multi-developer protocol
-        results.extend(self._check_multi_developer_protocol())
+        # Check multi-role protocol
+        results.extend(self._check_role_context_protocol())
 
         # Check document consistency
         results.extend(self._check_document_consistency())
@@ -150,20 +150,20 @@ class ProtocolChecker:
                     suggestion="Create docs/PRD.md to record project requirements and requirement changes"
                 ))
 
-        # Check multi-developer collaboration document (if multi-developer mode enabled)
-        multi_dev_config = self.config.get("multi_developer", {})
-        if multi_dev_config.get("enabled", False):
-            collab_config = multi_dev_config.get("collaboration", {})
-            collab_file = collab_config.get("file", "docs/developers/COLLABORATION.md")
+        # Check multi-role collaboration document (if multi-role mode enabled)
+        role_context_config = self.config.get("role_context", {})
+        if role_context_config.get("enabled", False):
+            collab_config = role_context_config.get("collaboration", {})
+            collab_file = collab_config.get("file", "docs/roles/COLLABORATION.md")
             collab_path = self.project_root / collab_file
 
             if not collab_path.exists():
                 results.append(CheckResult(
                     name="Collaboration Doc",
                     passed=False,
-                    message=f"Multi-developer collaboration document does not exist: {collab_file}",
+                    message=f"Multi-role collaboration document does not exist: {collab_file}",
                     severity="warning",
-                    suggestion=f"Create {collab_file} to record developer collaboration, task assignments and dependencies"
+                    suggestion=f"Create {collab_file} to record role collaboration, task assignments and dependencies"
                 ))
             else:
                 # Check if file was recently updated (within 7 days)
@@ -203,69 +203,69 @@ class ProtocolChecker:
 
         return results
 
-    def _check_multi_developer_protocol(self) -> List[CheckResult]:
-        """Check multi-developer protocol compliance"""
+    def _check_role_context_protocol(self) -> List[CheckResult]:
+        """Check multi-role protocol compliance"""
         results = []
 
-        multi_dev_config = self.config.get("multi_developer", {})
-        if not multi_dev_config.get("enabled", False):
-            # Multi-developer mode not enabled, skip checks
+        role_context_config = self.config.get("role_context", {})
+        if not role_context_config.get("enabled", False):
+            # Multi-role mode not enabled, skip checks
             return results
 
-        developers = multi_dev_config.get("developers", [])
+        roles = role_context_config.get("roles", [])
 
-        developers_dir_name = multi_dev_config.get("context", {}).get(
-            "per_developer_dir", "docs/developers"
+        roles_dir_name = role_context_config.get("context", {}).get(
+            "per_role_dir", "docs/roles"
         )
-        developers_dir = self.project_root / developers_dir_name
+        roles_dir = self.project_root / roles_dir_name
 
-        # If no static developer list, discover dynamically from filesystem
-        if not developers:
-            if developers_dir.exists():
+        # If no static role list, discover dynamically from filesystem
+        if not roles:
+            if roles_dir.exists():
                 discovered = []
-                for d in sorted(developers_dir.iterdir()):
+                for d in sorted(roles_dir.iterdir()):
                     if d.is_dir() and not d.name.startswith("."):
                         discovered.append({"id": d.name, "name": d.name})
-                developers = discovered
+                roles = discovered
 
-            if not developers:
+            if not roles:
                 results.append(CheckResult(
-                    name="Developer Config",
+                    name="Role Config",
                     passed=False,
-                    message="Multi-developer mode is enabled but no developers were found",
+                    message="Multi-role mode is enabled but no roles were found",
                     severity="warning",
                     suggestion=(
-                        "Use 'vibecollab dev init -d <name>' to initialize a developer, "
-                        "or configure statically in multi_developer.developers"
+                        "Use 'vibecollab dev init -d <name>' to initialize a role, "
+                        "or configure statically in role_context.roles"
                     )
                 ))
                 return results
 
-        # Check each developer's context files
-        for dev in developers:
+        # Check each role's context files
+        for dev in roles:
             dev_id = dev.get("id") if isinstance(dev, dict) else dev
             dev_name = (dev.get("name", dev_id) if isinstance(dev, dict) else dev)
 
             if not dev_id:
                 results.append(CheckResult(
-                    name="Developer ID",
+                    name="Role ID",
                     passed=False,
-                    message=f"Developer '{dev_name}' is missing the required 'id' field",
+                    message=f"Role '{dev_name}' is missing the required 'id' field",
                     severity="error",
-                    suggestion="Configure a unique id identifier for each developer"
+                    suggestion="Configure a unique id identifier for each role"
                 ))
                 continue
 
-            dev_dir = developers_dir / dev_id
+            dev_dir = roles_dir / dev_id
 
-            # Check if developer directory exists
+            # Check if role directory exists
             if not dev_dir.exists():
                 results.append(CheckResult(
-                    name=f"Developer Dir: {dev_name}",
+                    name=f"Role Dir: {dev_name}",
                     passed=False,
-                    message=f"Developer '{dev_name}' directory does not exist: docs/developers/{dev_id}",
+                    message=f"Role '{dev_name}' directory does not exist: docs/roles/{dev_id}",
                     severity="error",
-                    suggestion=f"Create directory docs/developers/{dev_id} and add CONTEXT.md and .metadata.yaml"
+                    suggestion=f"Create directory docs/roles/{dev_id} and add CONTEXT.md and .metadata.yaml"
                 ))
                 continue
 
@@ -273,11 +273,11 @@ class ProtocolChecker:
             context_file = dev_dir / "CONTEXT.md"
             if not context_file.exists():
                 results.append(CheckResult(
-                    name=f"Developer Context: {dev_name}",
+                    name=f"Role Context: {dev_name}",
                     passed=False,
-                    message=f"Developer '{dev_name}' CONTEXT.md does not exist",
+                    message=f"Role '{dev_name}' CONTEXT.md does not exist",
                     severity="error",
-                    suggestion=f"Create docs/developers/{dev_id}/CONTEXT.md to record the developer's work context"
+                    suggestion=f"Create docs/roles/{dev_id}/CONTEXT.md to record the role's work context"
                 ))
             else:
                 # Check if CONTEXT.md was recently updated (activity within 7 days)
@@ -286,17 +286,17 @@ class ProtocolChecker:
 
                 if days_since_update > 7:
                     results.append(CheckResult(
-                        name=f"Developer Context Update: {dev_name}",
+                        name=f"Role Context Update: {dev_name}",
                         passed=True,
-                        message=f"Developer '{dev_name}' CONTEXT.md has not been updated for {int(days_since_update)} days",
+                        message=f"Role '{dev_name}' CONTEXT.md has not been updated for {int(days_since_update)} days",
                         severity="info",
                         suggestion=f"If {dev_name} has had recent development activity, remember to update their CONTEXT.md"
                     ))
                 else:
                     results.append(CheckResult(
-                        name=f"Developer Context Update: {dev_name}",
+                        name=f"Role Context Update: {dev_name}",
                         passed=True,
-                        message=f"Developer '{dev_name}' CONTEXT.md was updated {int(days_since_update)} days ago",
+                        message=f"Role '{dev_name}' CONTEXT.md was updated {int(days_since_update)} days ago",
                         severity="info"
                     ))
 
@@ -304,33 +304,33 @@ class ProtocolChecker:
             metadata_file = dev_dir / ".metadata.yaml"
             if not metadata_file.exists():
                 results.append(CheckResult(
-                    name=f"Developer Metadata: {dev_name}",
+                    name=f"Role Metadata: {dev_name}",
                     passed=False,
-                    message=f"Developer '{dev_name}' .metadata.yaml does not exist",
+                    message=f"Role '{dev_name}' .metadata.yaml does not exist",
                     severity="warning",
-                    suggestion=f"Create docs/developers/{dev_id}/.metadata.yaml to record developer info (role, expertise, etc.)"
+                    suggestion=f"Create docs/roles/{dev_id}/.metadata.yaml to record role info (role, expertise, etc.)"
                 ))
 
-            # Check if developer's context update is in Git commits
+            # Check if role's context update is in Git commits
             if context_file.exists():
                 git_tracked = self._is_file_tracked_in_git(context_file)
                 if not git_tracked:
                     results.append(CheckResult(
                         name=f"Git Tracking: {dev_name} CONTEXT.md",
                         passed=False,
-                        message=f"Developer '{dev_name}' CONTEXT.md is not tracked in Git version control",
+                        message=f"Role '{dev_name}' CONTEXT.md is not tracked in Git version control",
                         severity="warning",
-                        suggestion=f"Run 'git add docs/developers/{dev_id}/CONTEXT.md' and commit"
+                        suggestion=f"Run 'git add docs/roles/{dev_id}/CONTEXT.md' and commit"
                     ))
 
         # Check collaboration document
-        collab_config = multi_dev_config.get("collaboration", {})
-        collab_file = collab_config.get("file", "docs/developers/COLLABORATION.md")
+        collab_config = role_context_config.get("collaboration", {})
+        collab_file = collab_config.get("file", "docs/roles/COLLABORATION.md")
         collab_path = self.project_root / collab_file
 
         if not collab_path.exists():
             results.append(CheckResult(
-                name="Multi-Developer Collaboration Doc",
+                name="Multi-Role Collaboration Doc",
                 passed=False,
                 message=f"Collaboration document does not exist: {collab_file}",
                 severity="error",
@@ -351,14 +351,14 @@ class ProtocolChecker:
                 ))
 
         # Check conflict detection config
-        conflict_config = multi_dev_config.get("conflict_detection", {})
+        conflict_config = role_context_config.get("conflict_detection", {})
         if not conflict_config.get("enabled", True):
             results.append(CheckResult(
                 name="Conflict Detection",
                 passed=True,
-                message="Multi-developer conflict detection is disabled",
+                message="Multi-role conflict detection is disabled",
                 severity="warning",
-                suggestion="Recommend enabling conflict detection to avoid multiple developers modifying the same files"
+                suggestion="Recommend enabling conflict detection to avoid multiple roles modifying the same files"
             ))
 
         return results

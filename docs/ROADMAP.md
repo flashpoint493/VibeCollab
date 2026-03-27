@@ -528,16 +528,76 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [ ] `vibecollab insight graph --show-derivation` visualization
 - [ ] Automatic derivation detection from task transitions
 
-### v0.13.0 - Insight-First CLI Optimization
+### v0.12.0 - Insight Automation & Intelligence (Zero-Touch)
 
-> Objective: Strengthen Insight integration into all CLI workflows
+> Objective: Transform Insight from "manual curation" to "automatic capture". 
+> Core principle: **Insights create themselves during Vibe workflow, auto-link, auto-activate.**
 
-- [ ] Optimize skill injection for IDE/Agent to proactively call `vibecollab insight`
-- [ ] `vibecollab onboard` auto-suggest relevant Insights via semantic search
-- [ ] `vibecollab next` prioritize actions based on Insight registry
-- [ ] MCP tools enhancement: insight proactive suggestions
-- [ ] Task creation auto-link Insights with improved matching algorithm
-- [ ] Session summary auto-extract Insight candidates
+#### Auto-Creation (No Manual Confirmation)
+- [ ] Auto-create Insight on task solidification
+  - When `vibecollab task solidify` succeeds → auto-extract pattern from task metadata
+  - Skip confirmation dialog, create with "auto-generated" flag
+  - Store: task_id, feature, output_files, decisions made
+- [ ] Auto-create Insight on git commit (with pattern detection)
+  - Detect commit patterns: "fix: X after Y", "refactor: extract Z"
+  - Auto-generate title from commit message, tags from changed files
+  - Threshold: only if confidence > 0.7
+- [ ] Auto-create Insight on decision record
+  - When DECISIONS.md updated → auto-capture decision context
+  - Link to related Insights via semantic similarity
+
+#### Auto-Relationship (No Manual `derived_from`)
+- [ ] Semantic similarity auto-linking
+  - Compare new Insight embedding with existing → auto-link if similarity > 0.85
+  - Relationship type: "related" (not "derived", preserve accuracy)
+- [ ] Task→Insight inheritance
+  - Task A creates Task B → auto-link Insights of A to B
+  - Solidify task → auto-mark linked Insights as "validated"
+- [ ] Session→Insight chaining
+  - Same developer, similar context sessions → auto-suggest chain
+  - `vibecollab session_save` triggers auto-link analysis
+
+#### Auto-Context Injection (Proactive, Not On-Demand)
+- [ ] `onboard` auto-injects top-3 related Insights (no search needed)
+  - Pre-compute related Insights at task creation time
+  - Cache in tasks.json: `related_insight_ids`
+- [ ] `next` auto-considers Insight history
+  - "You previously solved X using Y (INS-012), similar problem detected"
+- [ ] IDE auto-awareness via MCP (background push)
+  - MCP Server pushes relevant Insights when task context changes
+  - No need for IDE to call `insight search`
+
+#### Smart Query (Beyond Keyword Search)
+- [ ] Context-aware search ranking
+  - Current task feature boosts matching Insights
+  - Developer history personalizes results
+- [ ] Failure pattern detection
+  - Detect repeated similar errors → auto-suggest "anti-pattern" Insight
+- [ ] Success pattern replication
+  - Detect similar successful tasks → auto-suggest "apply same approach"
+
+#### Visualization & Management
+- [ ] Auto-clustered graph view
+  - Semantic clustering instead of manual relations
+  - `vibecollab insight clusters` → shows knowledge domains
+- [ ] Insight health dashboard
+  - Auto-detect stale Insights (unused for N days)
+  - Auto-suggest merges for near-duplicates
+  - Auto-flag contradictions between Insights
+
+### v0.13.0 - Insight-First Ecosystem (Post-v1.0)
+
+> Objective: Insight becomes the central nervous system of VibeCollab
+
+- [ ] Insight marketplace: `vibecollab insight install <pack>`
+  - Pre-built Insight packs: "Python Best Practices", "React Patterns", "API Design"
+- [ ] Cross-project Insight federation
+  - Import Insights from other projects with auto-validation
+- [ ] Insight-driven code generation
+  - LLM uses Insight patterns to generate code matching project conventions
+- [ ] Insight quality scoring
+  - Usage count, success rate, developer feedback → quality score
+  - Auto-promote high-quality Insights, archive low-quality ones
 
 ### v1.0.0 - Official Release
 

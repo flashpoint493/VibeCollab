@@ -235,7 +235,7 @@ class PatternEngine:
             "version_review", "build", "quick_acceptance",
             "prompt_engineering", "confirmed_decisions",
             "contributing_ai_changelog", "documentation",
-            "multi_developer", "protocol_check", "prd_management",
+            "role_context", "protocol_check", "prd_management",
             "symbology", "domain_extensions",
         ]:
             ctx[key] = self.config.get(key, {} if key not in (
@@ -275,7 +275,7 @@ class PatternEngine:
         """Evaluate manifest condition expression.
 
         Supported conditions:
-        - "config.multi_developer.enabled" -> self.config["multi_developer"]["enabled"]
+        - "config.role_context.enabled" -> self.config["role_context"]["enabled"]
         - "config.protocol_check.enabled|true" -> default True (when key missing)
         - "config.testing.product_qa.enabled" -> ...
         - "has_extensions" -> whether extensions are loaded

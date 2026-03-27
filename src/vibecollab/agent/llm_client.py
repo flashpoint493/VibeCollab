@@ -147,7 +147,7 @@ def build_project_context(project_root: Path,
     Args:
         project_root: Project root directory.
         include_contributing: Include CONTRIBUTING_AI.md (truncated).
-        include_context: Include developer/global CONTEXT.md.
+        include_context: Include role/global CONTEXT.md.
         include_tasks: Include active tasks from tasks.json.
         max_chars: Maximum total context characters.
 

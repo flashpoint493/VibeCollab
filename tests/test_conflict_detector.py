@@ -1,7 +1,7 @@
 """
 ConflictDetector module unit tests
 
-Tests for cross-developer conflict detection functionality.
+Tests for cross-role conflict detection functionality.
 """
 
 # Import built-in modules
@@ -78,13 +78,13 @@ class TestConflict:
         conflict = Conflict(
             conflict_type=ConflictType.FILE,
             severity="high",
-            developers=["alice", "bob"],
+            roles=["alice", "bob"],
             description="Test conflict"
         )
 
         assert conflict.type == "file"
         assert conflict.severity == "high"
-        assert conflict.developers == ["alice", "bob"]
+        assert conflict.roles == ["alice", "bob"]
         assert conflict.description == "Test conflict"
         assert conflict.details == {}
         assert isinstance(conflict.detected_at, datetime)
@@ -95,7 +95,7 @@ class TestConflict:
         conflict = Conflict(
             conflict_type=ConflictType.FILE,
             severity="medium",
-            developers=["alice"],
+            roles=["alice"],
             description="File conflict",
             details=details
         )
@@ -107,7 +107,7 @@ class TestConflict:
         conflict = Conflict(
             conflict_type=ConflictType.TASK,
             severity="high",
-            developers=["alice", "bob"],
+            roles=["alice", "bob"],
             description="Task conflict",
             details={"task_id": "TASK-001"}
         )
@@ -116,7 +116,7 @@ class TestConflict:
 
         assert result["type"] == "task"
         assert result["severity"] == "high"
-        assert result["developers"] == ["alice", "bob"]
+        assert result["roles"] == ["alice", "bob"]
         assert result["description"] == "Task conflict"
         assert result["details"] == {"task_id": "TASK-001"}
         assert "detected_at" in result
@@ -126,7 +126,7 @@ class TestConflict:
         conflict = Conflict(
             conflict_type=ConflictType.DEPENDENCY,
             severity="medium",
-            developers=["alice", "bob"],
+            roles=["alice", "bob"],
             description="Circular dependency"
         )
 
@@ -151,21 +151,21 @@ class TestConflictDetector:
         """Create temporary project directory"""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            developers_dir = project_root / "docs" / "developers"
-            developers_dir.mkdir(parents=True)
+            roles_dir = project_root / "docs" / "roles"
+            roles_dir.mkdir(parents=True)
             yield project_root
 
     @pytest.fixture
     def basic_config(self):
         """Basic config"""
         return {
-            "multi_developer": {
+            "role_context": {
                 "enabled": True,
                 "context": {
-                    "per_developer_dir": "docs/developers"
+                    "per_role_dir": "docs/roles"
                 },
                 "collaboration": {
-                    "file": "docs/developers/COLLABORATION.md"
+                    "file": "docs/roles/COLLABORATION.md"
                 }
             }
         }
@@ -176,7 +176,7 @@ class TestConflictDetector:
 
         assert detector.project_root == temp_project
         assert detector.config == basic_config
-        assert detector.developers_dir == temp_project / "docs" / "developers"
+        assert detector.roles_dir == temp_project / "docs" / "roles"
 
     def test_detect_all_conflicts_empty_project(self, temp_project, basic_config):
         """Empty project should have no conflicts"""
@@ -185,31 +185,31 @@ class TestConflictDetector:
 
         assert conflicts == []
 
-    def test_detect_all_conflicts_with_target_developer(self, temp_project, basic_config):
-        """Test conflict detection for a specific developer"""
-        # Create developer directory and context
-        alice_dir = temp_project / "docs" / "developers" / "alice"
+    def test_detect_all_conflicts_with_target_role(self, temp_project, basic_config):
+        """Test conflict detection for a specific role"""
+        # Create role directory and context
+        alice_dir = temp_project / "docs" / "roles" / "alice"
         alice_dir.mkdir(parents=True)
         (alice_dir / "CONTEXT.md").write_text("## Current Tasks\n- Task 1", encoding="utf-8")
 
         detector = ConflictDetector(temp_project, basic_config)
-        conflicts = detector.detect_all_conflicts(target_developer="alice")
+        conflicts = detector.detect_all_conflicts(target_role="alice")
 
-        # Only one developer, should have no conflicts
+        # Only one role, should have no conflicts
         assert conflicts == []
 
-    def test_detect_all_conflicts_nonexistent_developer(self, temp_project, basic_config):
-        """Test non-existent developer"""
+    def test_detect_all_conflicts_nonexistent_role(self, temp_project, basic_config):
+        """Test non-existent role"""
         detector = ConflictDetector(temp_project, basic_config)
-        conflicts = detector.detect_all_conflicts(target_developer="nonexistent")
+        conflicts = detector.detect_all_conflicts(target_role="nonexistent")
 
         assert conflicts == []
 
-    def test_detect_all_conflicts_between_developers(self, temp_project, basic_config):
-        """Test conflict detection between two developers"""
-        # Create two developer directories
+    def test_detect_all_conflicts_between_roles(self, temp_project, basic_config):
+        """Test conflict detection between two roles"""
+        # Create two role directories
         for dev in ["alice", "bob"]:
-            dev_dir = temp_project / "docs" / "developers" / dev
+            dev_dir = temp_project / "docs" / "roles" / dev
             dev_dir.mkdir(parents=True)
             (dev_dir / "CONTEXT.md").write_text(
                 f"## Current Tasks\n- {dev} task",
@@ -217,7 +217,7 @@ class TestConflictDetector:
             )
 
         detector = ConflictDetector(temp_project, basic_config)
-        conflicts = detector.detect_all_conflicts(between_developers=("alice", "bob"))
+        conflicts = detector.detect_all_conflicts(between_roles=("alice", "bob"))
 
         # Tasks are not similar, should have no task conflicts
         assert isinstance(conflicts, list)
@@ -228,13 +228,13 @@ class TestConflictDetectorFileConflicts:
 
     @pytest.fixture
     def temp_project_with_devs(self):
-        """Create temporary project with developers"""
+        """Create temporary project with roles"""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            developers_dir = project_root / "docs" / "developers"
+            roles_dir = project_root / "docs" / "roles"
 
             for dev in ["alice", "bob"]:
-                dev_dir = developers_dir / dev
+                dev_dir = roles_dir / dev
                 dev_dir.mkdir(parents=True)
 
             yield project_root
@@ -242,10 +242,10 @@ class TestConflictDetectorFileConflicts:
     @pytest.fixture
     def basic_config(self):
         return {
-            "multi_developer": {
+            "role_context": {
                 "enabled": True,
-                "context": {"per_developer_dir": "docs/developers"},
-                "collaboration": {"file": "docs/developers/COLLABORATION.md"}
+                "context": {"per_role_dir": "docs/roles"},
+                "collaboration": {"file": "docs/roles/COLLABORATION.md"}
             }
         }
 
@@ -255,13 +255,13 @@ class TestConflictDetectorFileConflicts:
 
         # Alice modified main.py
         alice_ctx = "## Recently Completed\n- Modified `main.py` and `utils.py`"
-        (project / "docs" / "developers" / "alice" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
             alice_ctx, encoding="utf-8"
         )
 
         # Bob also modified main.py
         bob_ctx = "## Recently Completed\n- Updated `main.py` and `config.py`"
-        (project / "docs" / "developers" / "bob" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
             bob_ctx, encoding="utf-8"
         )
 
@@ -277,10 +277,10 @@ class TestConflictDetectorFileConflicts:
         """Test no conflict when no common files modified"""
         project = temp_project_with_devs
 
-        (project / "docs" / "developers" / "alice" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
             "## Recently Completed\n- Modified `alice.py`", encoding="utf-8"
         )
-        (project / "docs" / "developers" / "bob" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
             "## Recently Completed\n- Modified `bob.py`", encoding="utf-8"
         )
 
@@ -299,17 +299,17 @@ class TestConflictDetectorTaskConflicts:
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             for dev in ["alice", "bob"]:
-                dev_dir = project_root / "docs" / "developers" / dev
+                dev_dir = project_root / "docs" / "roles" / dev
                 dev_dir.mkdir(parents=True)
             yield project_root
 
     @pytest.fixture
     def basic_config(self):
         return {
-            "multi_developer": {
+            "role_context": {
                 "enabled": True,
-                "context": {"per_developer_dir": "docs/developers"},
-                "collaboration": {"file": "docs/developers/COLLABORATION.md"}
+                "context": {"per_role_dir": "docs/roles"},
+                "collaboration": {"file": "docs/roles/COLLABORATION.md"}
             }
         }
 
@@ -319,10 +319,10 @@ class TestConflictDetectorTaskConflicts:
 
         # Two people have very similar tasks (using English for \w+ tokenization, exceeds 60% threshold)
         # Jaccard: {user, login, auth, module} / {implement, user, login, auth, module, develop} = 4/6 = 0.67
-        (project / "docs" / "developers" / "alice" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
             "## Current Tasks\n- implement user login auth module", encoding="utf-8"
         )
-        (project / "docs" / "developers" / "bob" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
             "## Current Tasks\n- develop user login auth module", encoding="utf-8"
         )
 
@@ -338,10 +338,10 @@ class TestConflictDetectorTaskConflicts:
         project = temp_project_with_devs
 
         # Using English for proper tokenization
-        (project / "docs" / "developers" / "alice" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
             "## Current Tasks\n- implement user authentication", encoding="utf-8"
         )
-        (project / "docs" / "developers" / "bob" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
             "## Current Tasks\n- optimize database query performance", encoding="utf-8"
         )
 
@@ -359,16 +359,16 @@ class TestConflictDetectorDependencyConflicts:
     def temp_project(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            (project_root / "docs" / "developers").mkdir(parents=True)
+            (project_root / "docs" / "roles").mkdir(parents=True)
             yield project_root
 
     @pytest.fixture
     def basic_config(self):
         return {
-            "multi_developer": {
+            "role_context": {
                 "enabled": True,
-                "context": {"per_developer_dir": "docs/developers"},
-                "collaboration": {"file": "docs/developers/COLLABORATION.md"}
+                "context": {"per_role_dir": "docs/roles"},
+                "collaboration": {"file": "docs/roles/COLLABORATION.md"}
             }
         }
 
@@ -381,7 +381,7 @@ class TestConflictDetectorDependencyConflicts:
 | TASK-DEV-001: Feature A | alice | - | IN_PROGRESS | TASK-DEV-002 |
 | TASK-DEV-002: Feature B | bob | - | IN_PROGRESS | TASK-DEV-001 |
 """
-        collab_file = temp_project / "docs" / "developers" / "COLLABORATION.md"
+        collab_file = temp_project / "docs" / "roles" / "COLLABORATION.md"
         collab_file.write_text(collab_content, encoding="utf-8")
 
         detector = ConflictDetector(temp_project, basic_config)
@@ -401,7 +401,7 @@ class TestConflictDetectorDependencyConflicts:
 | TASK-DEV-001: Feature A | alice | - | IN_PROGRESS | - |
 | TASK-DEV-002: Feature B | bob | - | IN_PROGRESS | TASK-DEV-001 |
 """
-        collab_file = temp_project / "docs" / "developers" / "COLLABORATION.md"
+        collab_file = temp_project / "docs" / "roles" / "COLLABORATION.md"
         collab_file.write_text(collab_content, encoding="utf-8")
 
         detector = ConflictDetector(temp_project, basic_config)
@@ -419,17 +419,17 @@ class TestConflictDetectorNamingConflicts:
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             for dev in ["alice", "bob"]:
-                dev_dir = project_root / "docs" / "developers" / dev
+                dev_dir = project_root / "docs" / "roles" / dev
                 dev_dir.mkdir(parents=True)
             yield project_root
 
     @pytest.fixture
     def basic_config(self):
         return {
-            "multi_developer": {
+            "role_context": {
                 "enabled": True,
-                "context": {"per_developer_dir": "docs/developers"},
-                "collaboration": {"file": "docs/developers/COLLABORATION.md"}
+                "context": {"per_role_dir": "docs/roles"},
+                "collaboration": {"file": "docs/roles/COLLABORATION.md"}
             }
         }
 
@@ -450,10 +450,10 @@ class UserManager:
         pass
 ```
 """
-        (project / "docs" / "developers" / "alice" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
             alice_ctx, encoding="utf-8"
         )
-        (project / "docs" / "developers" / "bob" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
             bob_ctx, encoding="utf-8"
         )
 
@@ -480,10 +480,10 @@ def process_data(data):
     return data
 ```
 """
-        (project / "docs" / "developers" / "alice" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
             alice_ctx, encoding="utf-8"
         )
-        (project / "docs" / "developers" / "bob" / "CONTEXT.md").write_text(
+        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
             bob_ctx, encoding="utf-8"
         )
 
@@ -505,7 +505,7 @@ class TestConflictDetectorHelpers:
 
     @pytest.fixture
     def basic_config(self):
-        return {"multi_developer": {"enabled": True}}
+        return {"role_context": {"enabled": True}}
 
     def test_extract_section_content(self, temp_project, basic_config):
         """Test section content extraction"""
@@ -608,7 +608,7 @@ class TestConflictDetectorReport:
 
     @pytest.fixture
     def basic_config(self):
-        return {"multi_developer": {"enabled": True}}
+        return {"role_context": {"enabled": True}}
 
     def test_generate_report_no_conflicts(self, temp_project, basic_config):
         """Test report when no conflicts"""
@@ -625,13 +625,13 @@ class TestConflictDetectorReport:
             Conflict(
                 conflict_type=ConflictType.FILE,
                 severity="high",
-                developers=["alice", "bob"],
+                roles=["alice", "bob"],
                 description="File conflict"
             ),
             Conflict(
                 conflict_type=ConflictType.TASK,
                 severity="medium",
-                developers=["alice", "charlie"],
+                roles=["alice", "charlie"],
                 description="Task overlap"
             )
         ]
@@ -652,7 +652,7 @@ class TestConflictDetectorReport:
             Conflict(
                 conflict_type=ConflictType.FILE,
                 severity="high",
-                developers=["alice", "bob"],
+                roles=["alice", "bob"],
                 description="File conflict",
                 details={"files": ["main.py", "utils.py"]}
             )
@@ -671,7 +671,7 @@ class TestConflictDetectorReport:
             Conflict(
                 conflict_type=ConflictType.TASK,
                 severity="low",
-                developers=["alice"],
+                roles=["alice"],
                 description="Minor conflict"
             )
         ]
@@ -689,22 +689,22 @@ class TestConflictDetectorMetadata:
     def temp_project(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            dev_dir = project_root / "docs" / "developers" / "alice"
+            dev_dir = project_root / "docs" / "roles" / "alice"
             dev_dir.mkdir(parents=True)
             yield project_root
 
     @pytest.fixture
     def basic_config(self):
         return {
-            "multi_developer": {
+            "role_context": {
                 "enabled": True,
-                "context": {"per_developer_dir": "docs/developers"}
+                "context": {"per_role_dir": "docs/roles"}
             }
         }
 
     def test_load_context_with_metadata(self, temp_project, basic_config):
         """Test loading context with metadata"""
-        dev_dir = temp_project / "docs" / "developers" / "alice"
+        dev_dir = temp_project / "docs" / "roles" / "alice"
 
         # Create CONTEXT.md
         (dev_dir / "CONTEXT.md").write_text(
@@ -717,14 +717,14 @@ class TestConflictDetectorMetadata:
         (dev_dir / ".metadata.yaml").write_text(metadata_content, encoding="utf-8")
 
         detector = ConflictDetector(temp_project, basic_config)
-        detector._load_developer_contexts()
+        detector._load_role_contexts()
 
-        assert "alice" in detector._developer_contexts
-        assert detector._developer_contexts["alice"]["metadata"].get("status") == "active"
+        assert "alice" in detector._role_contexts
+        assert detector._role_contexts["alice"]["metadata"].get("status") == "active"
 
     def test_skip_hidden_directories(self, temp_project, basic_config):
         """Test skipping hidden directories"""
-        devs_dir = temp_project / "docs" / "developers"
+        devs_dir = temp_project / "docs" / "roles"
 
         # Create hidden directory
         hidden_dir = devs_dir / ".hidden"
@@ -732,9 +732,9 @@ class TestConflictDetectorMetadata:
         (hidden_dir / "CONTEXT.md").write_text("Hidden", encoding="utf-8")
 
         detector = ConflictDetector(temp_project, basic_config)
-        detector._load_developer_contexts()
+        detector._load_role_contexts()
 
-        assert ".hidden" not in detector._developer_contexts
+        assert ".hidden" not in detector._role_contexts
 
 
 class TestCollaborationDataParsing:
@@ -744,15 +744,15 @@ class TestCollaborationDataParsing:
     def temp_project(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            (project_root / "docs" / "developers").mkdir(parents=True)
+            (project_root / "docs" / "roles").mkdir(parents=True)
             yield project_root
 
     @pytest.fixture
     def basic_config(self):
         return {
-            "multi_developer": {
+            "role_context": {
                 "enabled": True,
-                "collaboration": {"file": "docs/developers/COLLABORATION.md"}
+                "collaboration": {"file": "docs/roles/COLLABORATION.md"}
             }
         }
 
@@ -766,7 +766,7 @@ class TestCollaborationDataParsing:
 | TASK-DEV-002: DB Design | bob | - | DONE | - |
 | TASK-DEV-003: API Dev | alice | charlie | TODO | TASK-DEV-002 |
 """
-        collab_file = temp_project / "docs" / "developers" / "COLLABORATION.md"
+        collab_file = temp_project / "docs" / "roles" / "COLLABORATION.md"
         collab_file.write_text(collab_content, encoding="utf-8")
 
         detector = ConflictDetector(temp_project, basic_config)
@@ -785,8 +785,8 @@ class TestCollaborationDataParsing:
 
         assert detector._collaboration_data == {"tasks": {}, "dependencies": {}}
 
-    def test_get_developers_for_tasks(self, temp_project, basic_config):
-        """Test getting developers for tasks"""
+    def test_get_roles_for_tasks(self, temp_project, basic_config):
+        """Test getting roles for tasks"""
         collab_content = """## Task Assignment Matrix
 
 | Task | Owner | Collaborators | Status | Dependencies |
@@ -794,11 +794,11 @@ class TestCollaborationDataParsing:
 | TASK-DEV-001: Task A | alice | - | IN_PROGRESS | - |
 | TASK-DEV-002: Task B | bob | - | DONE | - |
 """
-        collab_file = temp_project / "docs" / "developers" / "COLLABORATION.md"
+        collab_file = temp_project / "docs" / "roles" / "COLLABORATION.md"
         collab_file.write_text(collab_content, encoding="utf-8")
 
         detector = ConflictDetector(temp_project, basic_config)
         detector._load_collaboration_data()
 
-        devs = detector._get_developers_for_tasks(["TASK-DEV-001", "TASK-DEV-002"])
+        devs = detector._get_roles_for_tasks(["TASK-DEV-001", "TASK-DEV-002"])
         assert set(devs) == {"alice", "bob"}

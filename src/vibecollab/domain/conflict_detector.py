@@ -1,7 +1,7 @@
 """
-Cross-developer conflict detection module
+Cross-role conflict detection module
 
-Provides conflict detection capabilities in multi-developer collaboration.
+Provides conflict detection capabilities in role-based collaboration.
 """
 
 import re
@@ -33,7 +33,7 @@ class Conflict:
     """Conflict object"""
 
     def __init__(self, conflict_type: str, severity: str,
-                 developers: List[str], description: str,
+                 roles: List[str], description: str,
                  details: Optional[Dict] = None):
         """
         Initialize conflict object
@@ -41,13 +41,13 @@ class Conflict:
         Args:
             conflict_type: Conflict type (file/task/dependency/naming)
             severity: Severity level (high/medium/low)
-            developers: List of involved developers
+            roles: List of involved roles
             description: Conflict description
             details: Detail info (optional)
         """
         self.type = conflict_type
         self.severity = severity
-        self.developers = developers
+        self.roles = roles
         self.description = description
         self.details = details or {}
         self.detected_at = datetime.now()
@@ -57,7 +57,7 @@ class Conflict:
         return {
             'type': self.type,
             'severity': self.severity,
-            'developers': self.developers,
+            'roles': self.roles,
             'description': self.description,
             'details': self.details,
             'detected_at': self.detected_at.isoformat()
@@ -65,12 +65,12 @@ class Conflict:
 
     def __str__(self) -> str:
         """String representation"""
-        devs = ', '.join(self.developers)
-        return f"[{self.severity.upper()}] {self.type}: {self.description} (developers: {devs})"
+        devs = ', '.join(self.roles)
+        return f"[{self.severity.upper()}] {self.type}: {self.description} (roles: {devs})"
 
 
 class ConflictDetector:
-    """Cross-developer conflict detector"""
+    """Cross-role conflict detector"""
 
     def __init__(self, project_root: Path, config: dict):
         """
@@ -82,26 +82,26 @@ class ConflictDetector:
         """
         self.project_root = project_root
         self.config = config
-        self.multi_dev_config = config.get('multi_developer', {})
+        self.role_context_config = config.get('multi_developer', {})
 
         # Developer directory
-        self.developers_dir = project_root / self.multi_dev_config.get('context', {}).get(
-            'per_developer_dir', 'docs/developers'
+        self.roles_dir = project_root / self.role_context_config.get('context', {}).get(
+            'per_role_dir', 'docs/roles'
         )
 
         # Cache
-        self._developer_contexts = {}
+        self._role_contexts = {}
         self._collaboration_data = None
         self._git_changed_files = {}
 
-    def detect_all_conflicts(self, target_developer: Optional[str] = None,
-                            between_developers: Optional[Tuple[str, str]] = None) -> List[Conflict]:
+    def detect_all_conflicts(self, target_role: Optional[str] = None,
+                            between_roles: Optional[Tuple[str, str]] = None) -> List[Conflict]:
         """
         Detect all types of conflicts
 
         Args:
-            target_developer: Target developer (None to detect current developer)
-            between_developers: Detect conflicts between two specific developers
+            target_role: Target developer (None to detect current developer)
+            between_roles: Detect conflicts between two specific developers
 
         Returns:
             List of conflicts
@@ -109,24 +109,24 @@ class ConflictDetector:
         conflicts = []
 
         # Load data
-        self._load_developer_contexts()
+        self._load_role_contexts()
         self._load_collaboration_data()
         self._load_git_changes()
 
         # Determine developer scope to check
-        if between_developers:
-            dev1, dev2 = between_developers
-            if dev1 not in self._developer_contexts or dev2 not in self._developer_contexts:
+        if between_roles:
+            dev1, dev2 = between_roles
+            if dev1 not in self._role_contexts or dev2 not in self._role_contexts:
                 return conflicts
             check_pairs = [(dev1, dev2)]
-        elif target_developer:
-            if target_developer not in self._developer_contexts:
+        elif target_role:
+            if target_role not in self._role_contexts:
                 return conflicts
-            other_devs = [d for d in self._developer_contexts.keys() if d != target_developer]
-            check_pairs = [(target_developer, other) for other in other_devs]
+            other_devs = [d for d in self._role_contexts.keys() if d != target_role]
+            check_pairs = [(target_role, other) for other in other_devs]
         else:
             # Detect conflicts among all developers
-            devs = list(self._developer_contexts.keys())
+            devs = list(self._role_contexts.keys())
             check_pairs = [(devs[i], devs[j]) for i in range(len(devs)) for j in range(i+1, len(devs))]
 
         # Execute conflict detection for each type
@@ -140,12 +140,12 @@ class ConflictDetector:
 
         return conflicts
 
-    def _load_developer_contexts(self):
+    def _load_role_contexts(self):
         """Load all developer contexts"""
-        if not self.developers_dir.exists():
+        if not self.roles_dir.exists():
             return
 
-        for dev_dir in self.developers_dir.iterdir():
+        for dev_dir in self.roles_dir.iterdir():
             if not dev_dir.is_dir() or dev_dir.name.startswith('.'):
                 continue
 
@@ -166,7 +166,7 @@ class ConflictDetector:
                     with open(metadata_file, 'r', encoding='utf-8') as f:
                         metadata = yaml.safe_load(f) or {}
 
-                self._developer_contexts[developer] = {
+                self._role_contexts[developer] = {
                     'tasks': current_tasks,
                     'recent_work': recent_work,
                     'issues': issues,
@@ -176,8 +176,8 @@ class ConflictDetector:
 
     def _load_collaboration_data(self):
         """Load collaboration document data"""
-        collab_config = self.multi_dev_config.get('collaboration', {})
-        collab_file = self.project_root / collab_config.get('file', 'docs/developers/COLLABORATION.md')
+        collab_config = self.role_context_config.get('collaboration', {})
+        collab_file = self.project_root / collab_config.get('file', 'docs/roles/COLLABORATION.md')
 
         if not collab_file.exists():
             self._collaboration_data = {'tasks': {}, 'dependencies': {}}
@@ -209,7 +209,7 @@ class ConflictDetector:
     def _load_git_changes(self):
         """Load Git changed files (inferred from each developer's CONTEXT)"""
         # Simplified: extract file paths from the "Recently Completed" section of CONTEXT.md
-        for developer, ctx_data in self._developer_contexts.items():
+        for developer, ctx_data in self._role_contexts.items():
             recent = ctx_data.get('recent_work', '')
 
             # Extract possible file paths (simple regex)
@@ -240,8 +240,8 @@ class ConflictDetector:
         """Detect task conflicts"""
         conflicts = []
 
-        tasks1 = self._developer_contexts.get(dev1, {}).get('tasks', [])
-        tasks2 = self._developer_contexts.get(dev2, {}).get('tasks', [])
+        tasks1 = self._role_contexts.get(dev1, {}).get('tasks', [])
+        tasks2 = self._role_contexts.get(dev2, {}).get('tasks', [])
 
         # Detect similar task descriptions (simple string matching)
         for task1 in tasks1:
@@ -312,8 +312,8 @@ class ConflictDetector:
         conflicts = []
 
         # Extract possible names from CONTEXT (simplified)
-        ctx1 = self._developer_contexts.get(dev1, {}).get('raw_content', '')
-        ctx2 = self._developer_contexts.get(dev2, {}).get('raw_content', '')
+        ctx1 = self._role_contexts.get(dev1, {}).get('raw_content', '')
+        ctx2 = self._role_contexts.get(dev2, {}).get('raw_content', '')
 
         # Extract class/function names from code blocks
         names1 = self._extract_code_names(ctx1)

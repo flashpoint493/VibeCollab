@@ -6,7 +6,7 @@ Manages reusable knowledge units (Insights) distilled from development practices
 - Registry: Project-level usage state management (weight, count, decay)
 - Tag matching: Tag-based insight recommendations
 - Traceability: Track insight origin and derivation relationships
-- Consistency check: Insight entity <-> registry <-> Developer metadata sync verification
+- Consistency check: Insight entity <-> registry <-> Role metadata sync verification
 - Fingerprint: SHA-256 content integrity
 
 Storage structure:
@@ -24,7 +24,7 @@ Design principles:
 - Insight entity and project registry are strictly separated
 - Insight entity is a portable knowledge package without project-specific state
 - Registry records project usage state of insights
-- Developer .metadata.yaml records personal contributions and bookmarks
+- Role .metadata.yaml records personal contributions and bookmarks
 - Consistency check covers all associated data synchronization
 """
 
@@ -633,11 +633,11 @@ class InsightManager:
         }
 
     # ------------------------------------------------------------------
-    # Cross-developer sharing
+    # Cross-role sharing
     # ------------------------------------------------------------------
 
-    def get_insight_developers(self, insight_id: str) -> Dict[str, Any]:
-        """Get cross-developer info for a given insight
+    def get_insight_roles(self, insight_id: str) -> Dict[str, Any]:
+        """Get cross-role info for a given insight
 
         Returns:
             {
@@ -665,10 +665,10 @@ class InsightManager:
         if entry:
             result["used_by"] = list(entry.used_by)
 
-        # Reverse lookup contributed and bookmarks from developer metadata
-        developers_dir = self.project_root / "docs" / "developers"
-        if developers_dir.exists():
-            for dev_dir in sorted(developers_dir.iterdir()):
+        # Reverse lookup contributed and bookmarks from role metadata
+        roles_dir = self.project_root / "docs" / "roles"
+        if roles_dir.exists():
+            for dev_dir in sorted(roles_dir.iterdir()):
                 if not dev_dir.is_dir() or dev_dir.name.startswith("."):
                     continue
                 meta_path = dev_dir / ".metadata.yaml"
@@ -685,12 +685,12 @@ class InsightManager:
 
         return result
 
-    def get_cross_developer_stats(self) -> Dict[str, Any]:
-        """Aggregate cross-developer sharing statistics
+    def get_cross_role_stats(self) -> Dict[str, Any]:
+        """Aggregate cross-role sharing statistics
 
         Returns:
             {
-                "developers": {
+                "roles": {
                     "dev": {"contributed": [...], "bookmarks": [...], "used": [...]},
                     "qa": {...},
                 },
@@ -699,7 +699,7 @@ class InsightManager:
                 },
                 "summary": {
                     "total_insights": N,
-                    "total_developers": N,
+                    "total_roles": N,
                     "total_uses": N,
                     "most_used": "INS-001",
                     "most_shared": "INS-002",
@@ -709,11 +709,11 @@ class InsightManager:
         all_insights = self.list_all()
         entries, _ = self.get_registry()
 
-        # Collect developer metadata
+        # Collect role metadata
         dev_stats: Dict[str, Dict[str, list]] = {}
-        developers_dir = self.project_root / "docs" / "developers"
-        if developers_dir.exists():
-            for dev_dir in sorted(developers_dir.iterdir()):
+        roles_dir = self.project_root / "docs" / "roles"
+        if roles_dir.exists():
+            for dev_dir in sorted(roles_dir.iterdir()):
                 if not dev_dir.is_dir() or dev_dir.name.startswith("."):
                     continue
                 meta_path = dev_dir / ".metadata.yaml"
@@ -769,11 +769,11 @@ class InsightManager:
             )[0]
 
         return {
-            "developers": dev_stats,
+            "roles": dev_stats,
             "insights": insight_stats,
             "summary": {
                 "total_insights": len(all_insights),
-                "total_developers": len(dev_stats),
+                "total_roles": len(dev_stats),
                 "total_uses": total_uses,
                 "most_used": most_used,
                 "most_shared": most_shared,
@@ -791,7 +791,7 @@ class InsightManager:
         1. All IDs in registry have corresponding insight files
         2. All insight files are registered in registry
         3. derived_from referenced IDs all exist
-        4. Developer .metadata.yaml contributed/bookmarks IDs all exist
+        4. Role .metadata.yaml contributed/bookmarks IDs all exist
         5. Fingerprint consistency (file content not tampered)
         """
         errors: List[str] = []
@@ -823,8 +823,8 @@ class InsightManager:
                         f"Insight '{ins.id}' derives from '{ref_id}' which does not exist"
                     )
 
-        # 4. Developer metadata reference check
-        dev_meta_errors = self._check_developer_metadata(file_ids)
+        # 4. Role metadata reference check
+        dev_meta_errors = self._check_role_metadata(file_ids)
         errors.extend(dev_meta_errors)
 
         # 5. Fingerprint consistency
@@ -850,14 +850,14 @@ class InsightManager:
             warnings=warnings,
         )
 
-    def _check_developer_metadata(self, valid_ids: set) -> List[str]:
-        """Check insight references in developer .metadata.yaml"""
+    def _check_role_metadata(self, valid_ids: set) -> List[str]:
+        """Check insight references in role .metadata.yaml"""
         errors = []
-        developers_dir = self.project_root / "docs" / "developers"
-        if not developers_dir.exists():
+        roles_dir = self.project_root / "docs" / "roles"
+        if not roles_dir.exists():
             return errors
 
-        for dev_dir in developers_dir.iterdir():
+        for dev_dir in roles_dir.iterdir():
             if not dev_dir.is_dir() or dev_dir.name.startswith("."):
                 continue
             meta_path = dev_dir / ".metadata.yaml"
@@ -869,7 +869,7 @@ class InsightManager:
                     for ref_id in meta.get(field_name, []):
                         if ref_id not in valid_ids:
                             errors.append(
-                                f"Developer '{dev_dir.name}' {field_name} "
+                                f"Role '{dev_dir.name}' {field_name} "
                                 f"references '{ref_id}' which does not exist"
                             )
             except Exception:

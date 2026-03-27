@@ -25,20 +25,20 @@ def project_dir(tmp_path):
     """Create a temp project with project.yaml and basic directories"""
     config = {
         "project": {"name": "TestProject", "version": "v1.0"},
-        "multi_developer": {
+        "role_context": {
             "enabled": True,
             "identity": {"primary": "git_username", "fallback": "system_user", "normalize": True},
-            "context": {"per_developer_dir": "docs/developers", "metadata_file": ".metadata.yaml"},
+            "context": {"per_role_dir": "docs/roles", "metadata_file": ".metadata.yaml"},
         },
     }
     (tmp_path / "project.yaml").write_text(
         yaml.dump(config, allow_unicode=True), encoding="utf-8"
     )
     (tmp_path / ".vibecollab").mkdir()
-    (tmp_path / "docs" / "developers" / "testdev").mkdir(parents=True)
-    # Initialize developer metadata
-    meta = {"developer": "testdev", "created_at": "2026-01-01", "total_updates": 0}
-    meta_path = tmp_path / "docs" / "developers" / "testdev" / ".metadata.yaml"
+    (tmp_path / "docs" / "roles" / "testdev").mkdir(parents=True)
+    # Initialize role metadata
+    meta = {"role": "testdev", "created_at": "2026-01-01", "total_updates": 0}
+    meta_path = tmp_path / "docs" / "roles" / "testdev" / ".metadata.yaml"
     meta_path.write_text(yaml.dump(meta), encoding="utf-8")
     return tmp_path
 
@@ -60,7 +60,7 @@ class TestListInsights:
         assert result.exit_code == 0
         assert "No insight entries yet" in result.output
 
-    @patch("vibecollab.cli.insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_role_manager")
     def test_list_with_items(self, mock_dm, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
         mgr = _load_insight_manager()
@@ -155,14 +155,14 @@ class TestShowInsight:
 # ---------------------------------------------------------------------------
 
 class TestAddInsight:
-    @patch("vibecollab.cli.insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_role_manager")
     def test_add_basic(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.domain.developer import DeveloperManager
-        # Mock developer manager with fixed identity
-        dm = DeveloperManager(project_dir, yaml.safe_load(
+        from vibecollab.domain.role import RoleManager
+        # Mock role manager with fixed identity
+        dm = RoleManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
-        with patch.object(dm, "get_current_developer", return_value="testdev"):
+        with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, [
                 "add",
@@ -176,13 +176,13 @@ class TestAddInsight:
         assert "INS-001" in result.output
         assert "CLI Created" in result.output
 
-    @patch("vibecollab.cli.insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_role_manager")
     def test_add_with_all_options(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.domain.developer import DeveloperManager
-        dm = DeveloperManager(project_dir, yaml.safe_load(
+        from vibecollab.domain.role import RoleManager
+        dm = RoleManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
-        with patch.object(dm, "get_current_developer", return_value="testdev"):
+        with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, [
                 "add",
@@ -245,19 +245,19 @@ class TestSearchInsights:
 # ---------------------------------------------------------------------------
 
 class TestUseInsight:
-    @patch("vibecollab.cli.insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_role_manager")
     def test_use_existing(self, mock_dm_factory, runner, chdir_project, project_dir):
         from vibecollab.cli.insight import _load_insight_manager
-        from vibecollab.domain.developer import DeveloperManager
+        from vibecollab.domain.role import RoleManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Use Me", tags=["test"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
 
-        dm = DeveloperManager(project_dir, yaml.safe_load(
+        dm = RoleManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
-        with patch.object(dm, "get_current_developer", return_value="testdev"):
+        with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, ["use", "INS-001"])
 
@@ -265,13 +265,13 @@ class TestUseInsight:
         assert "Usage recorded" in result.output
         assert "INS-001" in result.output
 
-    @patch("vibecollab.cli.insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_role_manager")
     def test_use_not_found(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.domain.developer import DeveloperManager
-        dm = DeveloperManager(project_dir, yaml.safe_load(
+        from vibecollab.domain.role import RoleManager
+        dm = RoleManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
-        with patch.object(dm, "get_current_developer", return_value="testdev"):
+        with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, ["use", "INS-999"])
         assert result.exit_code != 0
@@ -346,19 +346,19 @@ class TestCheckInsights:
 # ---------------------------------------------------------------------------
 
 class TestDeleteInsight:
-    @patch("vibecollab.cli.insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_role_manager")
     def test_delete_with_yes(self, mock_dm_factory, runner, chdir_project, project_dir):
         from vibecollab.cli.insight import _load_insight_manager
-        from vibecollab.domain.developer import DeveloperManager
+        from vibecollab.domain.role import RoleManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Delete Me", tags=["test"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
 
-        dm = DeveloperManager(project_dir, yaml.safe_load(
+        dm = RoleManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
-        with patch.object(dm, "get_current_developer", return_value="testdev"):
+        with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, ["delete", "INS-001", "-y"])
 
@@ -377,38 +377,38 @@ class TestDeleteInsight:
 # ---------------------------------------------------------------------------
 
 class TestBookmarkInsight:
-    @patch("vibecollab.cli.insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_role_manager")
     def test_bookmark_existing(self, mock_dm_factory, runner, chdir_project, project_dir):
         from vibecollab.cli.insight import _load_insight_manager
-        from vibecollab.domain.developer import DeveloperManager
+        from vibecollab.domain.role import RoleManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Bookmark Me", tags=["test"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
 
-        dm = DeveloperManager(project_dir, yaml.safe_load(
+        dm = RoleManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
-        with patch.object(dm, "get_current_developer", return_value="testdev"):
+        with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, ["bookmark", "INS-001"])
 
         assert result.exit_code == 0
         assert "Bookmarked" in result.output
 
-    @patch("vibecollab.cli.insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_role_manager")
     def test_bookmark_duplicate(self, mock_dm_factory, runner, chdir_project, project_dir):
         from vibecollab.cli.insight import _load_insight_manager
-        from vibecollab.domain.developer import DeveloperManager
+        from vibecollab.domain.role import RoleManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Bookmark Me", tags=["test"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
 
-        dm = DeveloperManager(project_dir, yaml.safe_load(
+        dm = RoleManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
-        with patch.object(dm, "get_current_developer", return_value="testdev"):
+        with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             runner.invoke(insight, ["bookmark", "INS-001"])
             result = runner.invoke(insight, ["bookmark", "INS-001"])
@@ -423,19 +423,19 @@ class TestBookmarkInsight:
 
 
 class TestUnbookmarkInsight:
-    @patch("vibecollab.cli.insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_role_manager")
     def test_unbookmark_existing(self, mock_dm_factory, runner, chdir_project, project_dir):
         from vibecollab.cli.insight import _load_insight_manager
-        from vibecollab.domain.developer import DeveloperManager
+        from vibecollab.domain.role import RoleManager
 
         mgr = _load_insight_manager()
         mgr.create(title="Unbookmark Me", tags=["test"], category="technique",
                     body={"scenario": "s", "approach": "a"}, created_by="testdev")
 
-        dm = DeveloperManager(project_dir, yaml.safe_load(
+        dm = RoleManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
-        with patch.object(dm, "get_current_developer", return_value="testdev"):
+        with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             # First bookmark, then unbookmark
             runner.invoke(insight, ["bookmark", "INS-001"])
@@ -444,14 +444,14 @@ class TestUnbookmarkInsight:
         assert result.exit_code == 0
         assert "Bookmark removed" in result.output
 
-    @patch("vibecollab.cli.insight._load_developer_manager")
+    @patch("vibecollab.cli.insight._load_role_manager")
     def test_unbookmark_nonexistent(self, mock_dm_factory, runner, chdir_project, project_dir):
-        from vibecollab.domain.developer import DeveloperManager
+        from vibecollab.domain.role import RoleManager
 
-        dm = DeveloperManager(project_dir, yaml.safe_load(
+        dm = RoleManager(project_dir, yaml.safe_load(
             (project_dir / "project.yaml").read_text(encoding="utf-8")
         ))
-        with patch.object(dm, "get_current_developer", return_value="testdev"):
+        with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, ["unbookmark", "INS-999"])
 
@@ -567,5 +567,5 @@ class TestStatsInsight:
         assert result.exit_code == 0
         data = json.loads(result.output)
         assert "summary" in data
-        assert "developers" in data
+        assert "roles" in data
         assert "insights" in data

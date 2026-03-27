@@ -26,27 +26,27 @@ class TestSession:
     def test_explicit_fields(self):
         s = Session(
             session_id="test-001",
-            developer="ocarina",
+            role="ocarina",
             summary="MCP Server implementation",
             key_decisions=["DECISION-015"],
             files_changed=["mcp_server.py"],
             created_at="2026-02-27T10:00:00",
         )
         assert s.session_id == "test-001"
-        assert s.developer == "ocarina"
+        assert s.role == "ocarina"
         assert len(s.key_decisions) == 1
 
     def test_roundtrip(self):
         s = Session(
             session_id="test-002",
-            developer="alice",
+            role="alice",
             summary="Test session",
             tags=["test", "demo"],
         )
         d = s.to_dict()
         s2 = Session.from_dict(d)
         assert s2.session_id == "test-002"
-        assert s2.developer == "alice"
+        assert s2.role == "alice"
         assert s2.tags == ["test", "demo"]
 
     def test_from_dict_missing_fields(self):
@@ -65,13 +65,13 @@ class TestSessionStore:
         store = SessionStore(tmp_path)
         session = Session(
             session_id="s-001",
-            developer="ocarina",
+            role="ocarina",
             summary="Test session",
         )
         store.save(session)
         loaded = store.get("s-001")
         assert loaded is not None
-        assert loaded.developer == "ocarina"
+        assert loaded.role == "ocarina"
         assert loaded.summary == "Test session"
 
     def test_get_nonexistent(self, tmp_path):

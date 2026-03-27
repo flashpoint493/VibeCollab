@@ -472,7 +472,7 @@ class TestCLI:
 SAMPLE_ROADMAP_H4_ONLY = """\
 # Project Roadmap
 
-## Phase 2 - Multi-developer
+## Phase 2 - Multi-role
 
 #### v0.5.9 - Pattern Engine ✅
 

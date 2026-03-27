@@ -2,7 +2,7 @@
 Event Log - Append-only audit trail for project operations.
 
 Provides an immutable, append-only JSONL event log that records
-all significant project operations (task changes, developer actions,
+all significant project operations (task changes, role actions,
 conflict detections, validations, etc.) for full traceability.
 
 Design principles:
@@ -30,9 +30,9 @@ class EventType(str, Enum):
     TASK_STATUS_CHANGED = "task_status_changed"
     TASK_COMPLETED = "task_completed"
 
-    # Developer actions
-    DEVELOPER_REGISTERED = "developer_registered"
-    DEVELOPER_SYNC = "developer_sync"
+    # Role actions
+    ROLE_REGISTERED = "role_registered"
+    ROLE_SYNC = "role_sync"
 
     # Collaboration
     CONFLICT_DETECTED = "conflict_detected"
@@ -61,7 +61,7 @@ class Event:
 
     Attributes:
         event_type: categorised event type
-        actor: who triggered the event (developer name, "system", etc.)
+        actor: who triggered the event (role name, "system", etc.)
         summary: one-line human-readable description
         payload: arbitrary structured data for this event
         timestamp: ISO-8601 UTC timestamp (auto-filled)
