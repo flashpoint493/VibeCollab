@@ -31,16 +31,16 @@ def _make_role_based_project(tmp_path: Path) -> Path:
     for dev in ("alice", "bob"):
         dev_dir = tmp_path / "docs" / "roles" / dev
         dev_dir.mkdir(parents=True, exist_ok=True)
-        (dev_dir / "CONTEXT.md").write_text(
-            f"# {dev} Context\nWorking on stuff", encoding="utf-8"
-        )
+        (dev_dir / "CONTEXT.md").write_text(f"# {dev} Context\nWorking on stuff", encoding="utf-8")
         (dev_dir / ".metadata.yaml").write_text(
-            yaml.dump({
-                "role": dev,
-                "created_at": "2026-02-20",
-                "last_updated": "2026-02-26",
-                "total_updates": 5,
-            }),
+            yaml.dump(
+                {
+                    "role": dev,
+                    "created_at": "2026-02-20",
+                    "last_updated": "2026-02-26",
+                    "total_updates": 5,
+                }
+            ),
             encoding="utf-8",
         )
 
@@ -68,16 +68,14 @@ class TestDevWhoami:
     def test_whoami_basic(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_role_based_project(Path(tmpdir))
-            result = self.runner.invoke(main, ["dev", "whoami", "-c", str(config_path)])
+            result = self.runner.invoke(main, ["role", "whoami", "-c", str(config_path)])
             assert result.exit_code == 0
             assert "Current role" in result.output.lower() or "Current Role" in result.output
 
     def test_whoami_no_config(self):
-        result = self.runner.invoke(main, ["dev", "whoami", "-c", "/nonexistent/project.yaml"])
+        result = self.runner.invoke(main, ["role", "whoami", "-c", "/nonexistent/project.yaml"])
         assert result.exit_code != 0
         assert "not found" in result.output.lower()
-
-
 
 
 class TestDevList:
@@ -87,7 +85,7 @@ class TestDevList:
     def test_list_roles(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_role_based_project(Path(tmpdir))
-            result = self.runner.invoke(main, ["dev", "list", "-c", str(config_path)])
+            result = self.runner.invoke(main, ["role", "list", "-c", str(config_path)])
             assert result.exit_code == 0
             assert "alice" in result.output
             assert "bob" in result.output
@@ -95,9 +93,10 @@ class TestDevList:
     def test_list_single_dev_project(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_single_dev_project(Path(tmpdir))
-            result = self.runner.invoke(main, ["dev", "list", "-c", str(config_path)])
-            assert result.exit_code != 0
-            assert "not enabled" in result.output.lower()
+            result = self.runner.invoke(main, ["role", "list", "-c", str(config_path)])
+            # Single-role projects now work by default
+            assert result.exit_code == 0
+            assert "No roles yet" in result.output or "dev" in result.output.lower()
 
 
 class TestDevStatus:
@@ -107,7 +106,7 @@ class TestDevStatus:
     def test_status_all(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_role_based_project(Path(tmpdir))
-            result = self.runner.invoke(main, ["dev", "status", "-c", str(config_path)])
+            result = self.runner.invoke(main, ["role", "status", "-c", str(config_path)])
             assert result.exit_code == 0
             assert "alice" in result.output
             assert "bob" in result.output
@@ -115,16 +114,17 @@ class TestDevStatus:
     def test_status_specific_role(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_role_based_project(Path(tmpdir))
-            result = self.runner.invoke(main, ["dev", "status", "alice", "-c", str(config_path)])
+            result = self.runner.invoke(main, ["role", "status", "alice", "-c", str(config_path)])
             assert result.exit_code == 0
             assert "alice" in result.output.lower()
 
     def test_status_disabled(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_single_dev_project(Path(tmpdir))
-            result = self.runner.invoke(main, ["dev", "status", "-c", str(config_path)])
-            assert result.exit_code != 0
-            assert "not enabled" in result.output.lower()
+            result = self.runner.invoke(main, ["role", "status", "-c", str(config_path)])
+            # Single-role projects now work by default
+            assert result.exit_code == 0
+            assert "Current Role" in result.output or "dev" in result.output.lower()
 
 
 class TestDevSync:
@@ -134,7 +134,7 @@ class TestDevSync:
     def test_sync_basic(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_role_based_project(Path(tmpdir))
-            result = self.runner.invoke(main, ["dev", "sync", "-c", str(config_path)])
+            result = self.runner.invoke(main, ["role", "sync", "-c", str(config_path)])
             assert result.exit_code == 0
             assert "Aggregation complete" in result.output
             # Verify global CONTEXT.md was created
@@ -144,9 +144,9 @@ class TestDevSync:
     def test_sync_disabled(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_single_dev_project(Path(tmpdir))
-            result = self.runner.invoke(main, ["dev", "sync", "-c", str(config_path)])
-            assert result.exit_code != 0
-            assert "not enabled" in result.output.lower()
+            result = self.runner.invoke(main, ["role", "sync", "-c", str(config_path)])
+            assert result.exit_code == 0
+            assert "Current Role" in result.output or "dev" in result.output.lower()
 
 
 class TestDevInit:
@@ -157,7 +157,7 @@ class TestDevInit:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_role_based_project(Path(tmpdir))
             result = self.runner.invoke(
-                main, ["dev", "init", "-d", "charlie", "-c", str(config_path)]
+                main, ["role", "init", "-d", "charlie", "-c", str(config_path)]
             )
             assert result.exit_code == 0
             assert "Initialization complete" in result.output
@@ -168,10 +168,10 @@ class TestDevInit:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_single_dev_project(Path(tmpdir))
             result = self.runner.invoke(
-                main, ["dev", "init", "-d", "charlie", "-c", str(config_path)]
+                main, ["role", "init", "-d", "charlie", "-c", str(config_path)]
             )
-            assert result.exit_code != 0
-            assert "not enabled" in result.output.lower()
+            assert result.exit_code == 0
+            assert "Current Role" in result.output or "dev" in result.output.lower()
 
 
 class TestDevSwitch:
@@ -181,9 +181,7 @@ class TestDevSwitch:
     def test_switch_to_role(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_role_based_project(Path(tmpdir))
-            result = self.runner.invoke(
-                main, ["dev", "switch", "bob", "-c", str(config_path)]
-            )
+            result = self.runner.invoke(main, ["role", "switch", "bob", "-c", str(config_path)])
             assert result.exit_code == 0
             assert "bob" in result.output
             # Verify local config written
@@ -194,22 +192,18 @@ class TestDevSwitch:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_role_based_project(Path(tmpdir))
             # First switch to bob
-            self.runner.invoke(main, ["dev", "switch", "bob", "-c", str(config_path)])
+            self.runner.invoke(main, ["role", "switch", "bob", "-c", str(config_path)])
             # Then clear
-            result = self.runner.invoke(
-                main, ["dev", "switch", "--clear", "-c", str(config_path)]
-            )
+            result = self.runner.invoke(main, ["role", "switch", "--clear", "-c", str(config_path)])
             assert result.exit_code == 0
             assert "cleared" in result.output.lower()
 
     def test_switch_disabled(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_single_dev_project(Path(tmpdir))
-            result = self.runner.invoke(
-                main, ["dev", "switch", "alice", "-c", str(config_path)]
-            )
-            assert result.exit_code != 0
-            assert "not enabled" in result.output.lower()
+            result = self.runner.invoke(main, ["role", "switch", "alice", "-c", str(config_path)])
+            assert result.exit_code == 0
+            assert "Current Role" in result.output or "dev" in result.output.lower()
 
 
 class TestDevConflicts:
@@ -219,24 +213,19 @@ class TestDevConflicts:
     def test_conflicts_no_conflicts(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_role_based_project(Path(tmpdir))
-            result = self.runner.invoke(
-                main, ["dev", "conflicts", "-c", str(config_path)]
-            )
+            result = self.runner.invoke(main, ["role", "conflicts", "-c", str(config_path)])
             assert result.exit_code == 0
 
     def test_conflicts_between(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_role_based_project(Path(tmpdir))
             result = self.runner.invoke(
-                main, ["dev", "conflicts", "--between", "alice", "bob",
-                       "-c", str(config_path)]
+                main, ["role", "conflicts", "--between", "alice", "bob", "-c", str(config_path)]
             )
             assert result.exit_code == 0
 
     def test_conflicts_disabled(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = _make_single_dev_project(Path(tmpdir))
-            result = self.runner.invoke(
-                main, ["dev", "conflicts", "-c", str(config_path)]
-            )
-            assert result.exit_code != 0
+            result = self.runner.invoke(main, ["role", "conflicts", "-c", str(config_path)])
+            assert result.exit_code == 0

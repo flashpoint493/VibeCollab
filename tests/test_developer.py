@@ -138,7 +138,7 @@ class TestGetCurrentRole:
         assert mgr.get_current_role() == "alice"
 
     def test_env_var_over_git(self, project_dir, config):
-        with patch.dict(os.environ, {"VIBECOLLAB_DEVELOPER": "EnvDev"}):
+        with patch.dict(os.environ, {"VIBECOLLAB_ROLE": "EnvDev"}):
             mgr = RoleManager(project_dir, config)
             assert mgr.get_current_role() == "envdev"  # normalized
 
@@ -169,13 +169,13 @@ class TestGetCurrentRole:
 
     def test_no_normalize(self, project_dir):
         cfg = _base_config(normalize=False)
-        with patch.dict(os.environ, {"VIBECOLLAB_DEVELOPER": "MixedCase"}):
+        with patch.dict(os.environ, {"VIBECOLLAB_ROLE": "MixedCase"}):
             mgr = RoleManager(project_dir, cfg)
             assert mgr.get_current_role() == "MixedCase"
 
     def test_manual_primary_uses_env(self, project_dir):
         cfg = _base_config(primary="manual")
-        with patch.dict(os.environ, {"VIBECOLLAB_DEVELOPER": "ManualDev"}):
+        with patch.dict(os.environ, {"VIBECOLLAB_ROLE": "ManualDev"}):
             mgr = RoleManager(project_dir, cfg)
             assert mgr.get_current_role() == "manualdev"
 
@@ -193,7 +193,7 @@ class TestGetIdentitySource:
         assert mgr.get_identity_source() == "local_switch"
 
     def test_env_var_source(self, project_dir, config):
-        with patch.dict(os.environ, {"VIBECOLLAB_DEVELOPER": "test"}):
+        with patch.dict(os.environ, {"VIBECOLLAB_ROLE": "test"}):
             mgr = RoleManager(project_dir, config)
             assert mgr.get_identity_source() == "env_var"
 
