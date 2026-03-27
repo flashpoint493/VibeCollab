@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-020
+title: 'Host Adapter Pattern: File Exchange & Subprocess'
+summary: Host communication abstraction pattern
+tags:
+- host-adapter
+- file-exchange
+- subprocess
+- automation
+- ide
+category: technique
+body:
+  scenario: Abstracting different host communication mechanisms for workflow automation
+  approach: 'HostAdapter protocol: send(message) → HostResponse + close(). Three implementations:
+    (1) FileExchangeAdapter - file polling with IDE AI via instruction.md/response.md
+    markers (2) SubprocessAdapter - stdin/stdout CLI tools (aider, etc.) (3) AutoAdapter
+    - keyboard simulation for IDE. Unified interface, pluggable backends'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.10.4 Host Adapter system
+    ref: TASK-DEV-host-adapter
+fingerprint: 27cb6103e89aded288db9cae44d42af64c1ec5fa67cbbee517c4ff310e968637

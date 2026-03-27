@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-024
+title: Project Lifecycle Stage Management
+summary: Project lifecycle phase management
+tags:
+- lifecycle
+- stages
+- milestone
+- project-management
+category: decision
+body:
+  scenario: 'Defining project phases: prototype, demo, production with different constraints'
+  approach: 'Stages: (1) Prototype - explore feasibility, no tests (2) Demo - working
+    features, no edge cases, manual testing (3) Production - full QA, CI/CD, documentation.
+    Place in ROADMAP.md (PM-focused), not CONTRIBUTING_AI.md. Stage transitions are
+    strategic decisions'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-004: Lifecycle Stage Info Placement'
+    ref: DECISION-004
+fingerprint: d439548bf640fc4af70ec8e1128dbe226e92050d2f866ed238ed377f26016b0a

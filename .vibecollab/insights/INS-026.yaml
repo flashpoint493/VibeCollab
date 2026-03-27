@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-026
+title: Three-Layer Configuration Management
+summary: Hierarchical configuration system
+tags:
+- configuration
+- env-vars
+- config-file
+- defaults
+- settings
+category: technique
+body:
+  scenario: 'Managing configuration with precedence: Environment > Config File > Defaults'
+  approach: 'Layers: (1) Environment variables (VIBECOLLAB_*) (2) Config file (~/.vibecollab/config.yaml)
+    (3) Default values. CLI: config setup (interactive wizard), config show, config
+    set, config path. LLMConfig, AgentConfig use same pattern. No secrets in code,
+    use env vars'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.8.0 config system
+    ref: TASK-DEV-config-system
+fingerprint: 846a74b0f3c1b11eb36e1211b32988ee730d53855fbff3f2fc7c0d2060aa38ce

@@ -1,0 +1,28 @@
+kind: insight
+version: '1'
+id: INS-009
+title: 'Release Engineering Roadmap: v0.10.x Strategy'
+summary: Open-source release engineering
+tags:
+- release-engineering
+- i18n
+- git-history
+- open-source
+- versioning
+category: decision
+body:
+  scenario: Transitioning from working project to professional open-source
+  approach: '5-phase sequential execution: (1) v0.10.0 - Feature freeze + QA validation
+    + 85% coverage (2) v0.10.1 - Code i18n (36 files translated) (3) v0.10.2 - Doc
+    bilingual (README EN) (4) v0.10.3 - Git history rewrite + GitHub facade (5) v1.0.0
+    - Stable release. Strict order: features first, then polish. Each version independently
+    releasable'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-017: v0.10.x Release Engineering'
+    ref: DECISION-017
+fingerprint: 1076d7c841ca74b2b68fcd540a4d8e49201ffe435fc3638ceea3d65ac9bc4034

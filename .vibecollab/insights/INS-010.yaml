@@ -1,0 +1,28 @@
+kind: insight
+version: '1'
+id: INS-010
+title: 'Semantic Search: Three-Tier Embedding Backend'
+summary: Multi-backend semantic search architecture
+tags:
+- semantic-search
+- embedding
+- vector-store
+- sqlite
+- openai
+category: technique
+body:
+  scenario: Implementing semantic search with zero external dependencies fallback
+  approach: 'Three backends: (1) sentence-transformers (local, preferred) (2) OpenAI
+    API (cloud) (3) Pure Python trigram hash (zero dependency). Auto-selection: local
+    > openai > pure_python. VectorStore: SQLite persistence with struct pack blob,
+    pure Python cosine similarity. Indexer: Markdown heading chunk split, incremental/rebuild
+    indexing'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.9.0 semantic search engine implementation
+    ref: TASK-DEV-semantic-search
+fingerprint: a86f12542fc96ef7f1cb1bdc8e018e659c9247035cc4e7ec5adaab57c0d71f49

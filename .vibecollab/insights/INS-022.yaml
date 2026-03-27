@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-022
+title: GitHub/PyPI Automated Publishing Workflow
+summary: Python package automated publishing
+tags:
+- ci-cd
+- github-actions
+- pypi
+- publishing
+- automation
+category: workflow
+body:
+  scenario: Setting up automated release pipeline from GitHub to PyPI
+  approach: 'Workflow: .github/workflows/publish.yml. Trigger: workflow_dispatch or
+    release. Steps: checkout, setup Python, install hatch, build with hatchling, publish
+    to PyPI (trusted publishing). Permissions: id-token: write, contents: read. Backfill:
+    create GitHub Releases for historical versions. Tags: git tag -a vX.Y.Z'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.9.8 automated publishing
+    ref: TASK-DEV-auto-publish
+fingerprint: d41209e677711106c2afe13c8e9c60588e5837b413b8f6179d8ec391e01bef09

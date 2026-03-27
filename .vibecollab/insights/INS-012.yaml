@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-012
+title: Signal-Driven Insight Harvesting
+summary: Automated knowledge distillation from development activity
+tags:
+- insight-harvesting
+- git-analysis
+- signals
+- automation
+category: workflow
+body:
+  scenario: Automatically suggesting candidate Insights from development signals
+  approach: 'Collect signals from: (1) Git commits (feat/fix/refactor patterns) (2)
+    Document changes (DECISIONS.md, ROADMAP.md diffs) (3) Task completions. SignalSnapshot
+    tracks last_commit/timestamp. Candidates extracted with confidence scores. Interactive
+    confirmation before creation. Auto-updates snapshot after harvest'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.9.2 Insight Signal Collector
+    ref: TASK-DEV-insight-signals
+fingerprint: e4fc17cab37c79c5a3e0de98a3abe05460dac765f1e96974c67b37ff9f051402

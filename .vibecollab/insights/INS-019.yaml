@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-019
+title: CLI i18n Framework with gettext
+summary: Python CLI internationalization
+tags:
+- i18n
+- gettext
+- localization
+- cli
+- translation
+category: technique
+body:
+  scenario: Implementing internationalization for CLI tools with Python gettext
+  approach: 'Structure: locale files in i18n/locales/{lang}/LC_MESSAGES/, .po/.mo
+    format. CLI support: --lang flag, auto-detect from env. Runtime: gettext.translation()
+    with fallback. Mark strings: _(''...'') wrapper. Extract: xgettext, Update: msgmerge,
+    Compile: msgfmt. Support zh_CN, en'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.9.6 CLI i18n framework
+    ref: TASK-DEV-cli-i18n
+fingerprint: 84354b582c94510710dce5d0d0ab6f59ef097d1183379d9dc2046e74225058ab

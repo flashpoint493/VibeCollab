@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-027
+title: 'Consistency Check Protocol: 5-Item Verification'
+summary: Data integrity verification protocol
+tags:
+- consistency
+- verification
+- integrity
+- fingerprint
+- validation
+category: workflow
+body:
+  scenario: Ensuring Insight system integrity through comprehensive checks
+  approach: 'Check items: (1) Registry↔file bidirectional consistency (2) derived_from
+    reference integrity (3) Developer metadata reference integrity (4) SHA-256 fingerprint
+    verification (5) Low weight warnings. CLI: insight check [--json]. Auto-run on
+    CRUD operations. Report: ok, errors[], warnings[]'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: Insight consistency check implementation
+    ref: TASK-DEV-consistency-check
+fingerprint: b3fc39a270e118bf25c064543d8ec6cb8a0ba8ca3e4c6a76c7044445b49282b1

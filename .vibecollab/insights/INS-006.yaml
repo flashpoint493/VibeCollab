@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-006
+title: 'Insight System Architecture: Body-Registry Separation'
+summary: Knowledge distillation system design
+tags:
+- insight
+- knowledge-management
+- architecture
+- separation-of-concerns
+category: decision
+body:
+  scenario: Designing a knowledge solidification system for AI collaboration
+  approach: 'Separate Body (INS-xxx.yaml - portable knowledge) from Registry (registry.yaml
+    - project state). Body: title/tags/category/body/artifacts/origin/fingerprint.
+    Registry: weight/used_count/active + decay settings. Body is cross-project reusable,
+    Registry tracks this project''s usage. Tag-driven open descriptions, SHA-256 fingerprint
+    verification'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-012: Insight Solidification System'
+    ref: DECISION-012
+fingerprint: 7c646f7d39b9efb9ca1d402e54d5e26321c2d69b92e46d7ebe65dcec16937647

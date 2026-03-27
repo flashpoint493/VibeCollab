@@ -1,0 +1,28 @@
+kind: insight
+version: '1'
+id: INS-008
+title: 'Execution Plan: YAML-Driven Multi-Round Automation'
+summary: Declarative workflow automation
+tags:
+- automation
+- yaml
+- workflow
+- execution-plan
+- mcp
+category: decision
+body:
+  scenario: Automating multi-round workflows for E2E testing and protocol automation
+  approach: 'Use YAML execution plan + thin runner + host adapters (file_exchange,
+    subprocess, auto). Plan is human-written YAML, not LLM-generated. Steps: cli,
+    assert, wait, prompt, loop. Variable passing via store_as/{{var}}. Host adapters:
+    FileExchange (IDE AI), Subprocess (CLI tools), Auto (keyboard simulation). Zero
+    new dependencies, uses only subprocess.run + PyYAML'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-018: Execution Plan Protocol'
+    ref: DECISION-018
+fingerprint: 1f8e1556b4d62e2e8cb12a45065a5204b9440656452308560c289d9618178dba

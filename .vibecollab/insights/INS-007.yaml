@@ -1,0 +1,28 @@
+kind: insight
+version: '1'
+id: INS-007
+title: 'Three-Mode AI Architecture: IDE + CLI + Agent'
+summary: Multi-modal AI interaction architecture
+tags:
+- ai-architecture
+- ide
+- cli
+- agent
+- modes
+category: decision
+body:
+  scenario: 'Supporting different AI interaction scenarios: IDE dialogue, CLI human-machine,
+    Agent autonomous'
+  approach: 'Implement three-mode coexistence: (1) IDE dialogue - direct collaboration
+    in Cursor/CodeBuddy (2) CLI human-machine - vibecollab ai ask/chat without IDE
+    (3) Agent autonomous - server deployment with API Key. Agent has safety gates:
+    PID lock, pending-solidify, max cycles, adaptive backoff, circuit breaker'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-010: Three-Mode AI Architecture'
+    ref: DECISION-010
+fingerprint: fca4fe5d14e1ee1cf7f8abb3a11dedc30778e52ea83f64ccd1c1104884d09068

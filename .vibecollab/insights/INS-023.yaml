@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-023
+title: Skill Injection for AI Assistants (OpenCode)
+summary: AI assistant skill distribution
+tags:
+- skill
+- injection
+- opencode
+- ide-integration
+- ai
+category: technique
+body:
+  scenario: Distributing VibeCollab as a skill for AI assistant platforms
+  approach: 'OpenCode integration: vibecollab skill inject opencode. Creates: .opencode/package.json
+    (@opencode-ai/plugin 1.3.2), .opencode/skills/vibecollab.md (protocol docs). Pattern:
+    Skill as distributable knowledge package. IDE auto-discovers and loads. Support:
+    Cursor rules, Cline settings, CodeBuddy config, OpenCode skills'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.10.12 skill command
+    ref: TASK-DEV-skill-injection
+fingerprint: 6c61b314f12706af15daa88549b6710121b1cc96a5e3c8d88a23423d8b5d8850

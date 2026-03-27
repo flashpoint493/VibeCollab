@@ -1,0 +1,91 @@
+{
+  "TASK-DEV-025": {
+    "assignee": null,
+    "created_at": "2026-03-27T06:05:53.189478+00:00",
+    "dependencies": [],
+    "description": "Implement git hooks framework: install/uninstall/run commands, pre-commit/pre-push/post-commit hooks, configurable rules in project.yaml",
+    "dialogue_rounds": 0,
+    "feature": "FP-001 Git Hooks Framework",
+    "id": "TASK-DEV-025",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-028",
+          "score": 0.0432,
+          "title": "Git Auto-Initialization Protocol"
+        },
+        {
+          "id": "INS-008",
+          "score": 0.0413,
+          "title": "Execution Plan: YAML-Driven Multi-Round Automation"
+        }
+      ]
+    },
+    "milestone": "v0.11.0",
+    "output": "",
+    "role": "DEV",
+    "status": "TODO",
+    "updated_at": "2026-03-27T06:05:53.189478+00:00"
+  },
+  "TASK-DEV-026": {
+    "assignee": null,
+    "created_at": "2026-03-27T06:05:55.209234+00:00",
+    "dependencies": [],
+    "description": "Implement guard rules engine for pre/post-action protection, integrate into check command, MCP guard_check tool",
+    "dialogue_rounds": 0,
+    "feature": "FP-008 Guard Protection Engine",
+    "id": "TASK-DEV-026",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-008",
+          "score": 0.0475,
+          "title": "Execution Plan: YAML-Driven Multi-Round Automation"
+        }
+      ]
+    },
+    "milestone": "v0.11.0",
+    "output": "",
+    "role": "DEV",
+    "status": "TODO",
+    "updated_at": "2026-03-27T06:05:55.209234+00:00"
+  },
+  "TASK-DEV-027": {
+    "assignee": null,
+    "created_at": "2026-03-27T06:05:57.698180+00:00",
+    "dependencies": [],
+    "description": "Fix role/dev separation: Developer-Role binding, role permissions, dynamic skill registration from Insights, permission checking",
+    "dialogue_rounds": 0,
+    "feature": "Role-Driven Architecture Fix",
+    "id": "TASK-DEV-027",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-004",
+          "score": 0.05,
+          "title": "Multi-Developer Architecture: Isolated Contexts + Global Aggregation"
+        },
+        {
+          "id": "INS-006",
+          "score": 0.05,
+          "title": "Insight System Architecture: Body-Registry Separation"
+        },
+        {
+          "id": "INS-017",
+          "score": 0.05,
+          "title": "Module Restructuring: Flat to Subpackages"
+        },
+        {
+          "id": "INS-023",
+          "score": 0.0475,
+          "title": "Skill Injection for AI Assistants (OpenCode)"
+        }
+      ]
+    },
+    "milestone": "v0.11.0",
+    "output": "",
+    "role": "ARCH",
+    "status": "TODO",
+    "updated_at": "2026-03-27T06:05:57.698180+00:00"
+  }
+}

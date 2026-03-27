@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-011
+title: 'MCP Server: 12 Tools + 6 Resources + 1 Prompt Pattern'
+summary: AI IDE integration via Model Context Protocol
+tags:
+- mcp-server
+- ide-integration
+- cursor
+- cline
+- tools
+category: technique
+body:
+  scenario: Building MCP Server for AI IDE integration (Cursor, Cline, CodeBuddy)
+  approach: 'MCP Server provides: 12 Tools (insight_search, task_create, check, onboard,
+    etc.), 6 Resources (CONTRIBUTING_AI.md, CONTEXT.md, DECISIONS.md exposed), 1 Prompt
+    (auto-inject project context). Transport: stdio/sse. Auto-connect via vibecollab
+    mcp inject --ide cursor|cline|codebuddy|all'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.9.1 MCP Server implementation
+    ref: TASK-DEV-mcp-server
+fingerprint: 2caeddd9e3b6d4820b763b3c3829892319176285c23d38bd110090fe1fd402fb

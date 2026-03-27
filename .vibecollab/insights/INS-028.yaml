@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-028
+title: Git Auto-Initialization Protocol
+summary: Version control initialization strategy
+tags:
+- git
+- initialization
+- version-control
+- protocol
+category: decision
+body:
+  scenario: Enforcing version control from project inception
+  approach: 'Auto-check Git status during project init. Option: auto-initialize or
+    prompt. First commit: git add -A && git commit -m ''init''. Constraint is protocol-level,
+    not in package scripts. Reinforces Git sync habits in subsequent conversations.
+    Provides --no-git option for special cases'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-007: Automatic Git Check'
+    ref: DECISION-007
+fingerprint: 78d8deb9ab270e4f8ecf980d58d3c7ffb7c3da95084dcc09959833cff4f2494c

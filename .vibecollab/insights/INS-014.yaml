@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-014
+title: ROADMAP-Task Bidirectional Sync
+summary: Milestone-task synchronization pattern
+tags:
+- roadmap
+- task-sync
+- milestone
+- integration
+category: technique
+body:
+  scenario: Keeping ROADMAP.md milestones and Task status synchronized
+  approach: 'RoadmapParser parses milestones and extracts inline TASK-ID references.
+    Bidirectional sync: ROADMAP [x] ↔ Task DONE status. Modes: roadmap_to_tasks, tasks_to_roadmap,
+    both. Task dataclass has milestone field. CLI: roadmap status/sync/parse + task
+    create --milestone'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.9.5 ROADMAP integration
+    ref: TASK-DEV-roadmap-sync
+fingerprint: cecb54613e8a1eb6123b60828376bffd161342692b2825246a1aedcabf034de0

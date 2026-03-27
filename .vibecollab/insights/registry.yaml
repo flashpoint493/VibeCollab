@@ -1,0 +1,135 @@
+schema_version: '1'
+entries:
+  INS-001:
+    weight: 1.33
+    used_count: 4
+    active: true
+    last_used_at: '2026-03-27T05:34:50.307864+00:00'
+    last_used_by: ocarina
+    used_by:
+    - ocarina
+  INS-002:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-003:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-004:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-005:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-006:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-007:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-008:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-009:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-010:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-011:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-012:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-013:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-014:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-015:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-016:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-017:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-018:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-019:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-020:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-021:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-022:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-023:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-024:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-025:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-026:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-027:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-028:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-029:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-030:
+    weight: 0.95
+    used_count: 0
+    active: true
+  INS-035:
+    weight: 1.0
+    used_count: 0
+    active: true
+settings:
+  decay_rate: 0.95
+  decay_interval_days: 30
+  use_reward: 0.1
+  deactivate_threshold: 0.1

@@ -1,0 +1,28 @@
+kind: insight
+version: '1'
+id: INS-015
+title: Architecture Pattern Borrowing Strategy
+summary: Gradual architecture pattern adoption
+tags:
+- architecture-patterns
+- incremental
+- adoption
+- design
+category: decision
+body:
+  scenario: Selectively adopting proven architectural patterns with VibeCollab-native
+    naming
+  approach: 'Direction: Selectively adopt 10 proven patterns, mapped to native concepts,
+    introduced incrementally with unit tests per iteration. Examples: State separation
+    → multi-file split, Append-only event log → EventLog, Validate-solidify-rollback
+    → Task solidify, Content-addressable hashing → SHA-256 fingerprint. Avoid external
+    framework coupling'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-009: Pattern Borrowing Strategy'
+    ref: DECISION-009
+fingerprint: 77e82bb40adfb062046fadca92349143858558d9252247520b9e21f163e9e6ba

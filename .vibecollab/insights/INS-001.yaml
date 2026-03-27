@@ -1,0 +1,25 @@
+kind: insight
+version: '1'
+id: INS-001
+title: 'File Naming: CONTRIBUTING_AI.md over llm.txt'
+summary: GitHub-native naming for AI collaboration files
+tags:
+- naming
+- convention
+- ai-collaboration
+- github
+category: decision
+body:
+  scenario: Choosing the right filename for AI collaboration protocol documentation
+  approach: Use CONTRIBUTING_AI.md instead of llm.txt to align with GitHub conventions
+    (similar to CONTRIBUTING.md) and clearly indicate this is an AI collaboration
+    guide
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-001: Rename llm.txt to CONTRIBUTING_AI.md'
+    ref: DECISION-001
+fingerprint: 99db332e9248bbc704081cc1ba658b621b13ec306978460e7cdf4c9299fbff35

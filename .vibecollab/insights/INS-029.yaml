@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-029
+title: Vibe Development Philosophy
+summary: AI collaboration philosophy
+tags:
+- philosophy
+- vibe-development
+- collaboration
+- ai-human
+category: decision
+body:
+  scenario: Core principles for AI-human collaboration
+  approach: 'Principles: (1) AI is not an executor but a collaboration partner (2)
+    Don''t rush to produce code - first align understanding (3) Every decision is
+    a result of shared thinking (4) The conversation itself is part of the design
+    process. Implementation: dialogue-driven task units, decision tiers (S/A/B/C),
+    long-term dialogue engineering with persistent context'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: Vibe Development core philosophy
+    ref: PHILOSOPHY-001
+fingerprint: 7de1d5a62a301982d87e312e78ff863079d9a25bae8ece688af76868202a0f3c

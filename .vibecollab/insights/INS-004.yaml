@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-004
+title: 'Multi-Developer Architecture: Isolated Contexts + Global Aggregation'
+summary: Multi-developer support pattern
+tags:
+- multi-developer
+- architecture
+- context-management
+- collaboration
+category: decision
+body:
+  scenario: How to support multiple developers/agents collaborating without conflicts
+  approach: 'Use Option C: Independent developer contexts (docs/developers/{role}/CONTEXT.md)
+    + global auto-aggregation (docs/CONTEXT.md). Benefits: isolation per developer,
+    global view for coordination, extensible for new developers, backward compatible.
+    Identity via git config user.name. Collaboration tracked in COLLABORATION.md'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-008: Multi-Developer Support Architecture'
+    ref: DECISION-008
+fingerprint: 2d723f94a12c1b3544e07c4d232b2e284d83344bb633af1420aac71af71ba294

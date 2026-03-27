@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-002
+title: 'Dual Documentation Strategy: CONTRIBUTING_AI.md + llms.txt'
+summary: Coexistence of custom protocol and industry standard
+tags:
+- documentation
+- llmstxt
+- standard
+- integration
+category: decision
+body:
+  scenario: How to integrate with llmstxt.org standard while maintaining custom collaboration
+    protocol
+  approach: 'Keep CONTRIBUTING_AI.md as primary collaboration rules file. Add AI Collaboration
+    section in llms.txt referencing CONTRIBUTING_AI.md. Separation of concerns: llms.txt
+    describes the project, CONTRIBUTING_AI.md defines collaboration rules'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-002: Integrate llms.txt Standard'
+    ref: DECISION-002
+fingerprint: a5a28c394707cca3365b53a5ffe8ec2091659f855f3ba925cd80328e355fbbf3

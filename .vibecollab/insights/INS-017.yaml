@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-017
+title: 'Module Restructuring: Flat to Subpackages'
+summary: Codebase modularization strategy
+tags:
+- refactoring
+- module-structure
+- organization
+- architecture
+category: technique
+body:
+  scenario: Restructuring 36 flat modules into 7 subpackages for better maintainability
+  approach: 'From: 36 flat modules in src/vibecollab/. To: 7 subpackages (cli/, core/,
+    domain/, insight/, search/, patterns/, i18n/). Benefits: clear separation of concerns,
+    easier navigation, reduced cognitive load. Process: group by functionality, update
+    imports, maintain backward compatibility'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.9.7 module restructure
+    ref: TASK-DEV-module-restructure
+fingerprint: 7250d9c92360d653130c3a47a110e841c97df6a0a62a3721ad8e30eb1f6029b7

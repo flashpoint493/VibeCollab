@@ -1,0 +1,28 @@
+kind: insight
+version: '1'
+id: INS-018
+title: 'Insight Quality: Duplicate Detection & Graph Visualization'
+summary: Insight quality assurance and visualization
+tags:
+- insight-quality
+- deduplication
+- graph
+- mermaid
+- visualization
+category: technique
+body:
+  scenario: Ensuring Insight quality through duplicate detection and relationship
+    visualization
+  approach: 'Three-level dedup: (1) Fingerprint exact match (2) Title Jaccard similarity
+    (3) Tag overlap. Combined score = 0.5*title + 0.5*tags. Graph: build_graph() creates
+    nodes/edges from derived_from. to_mermaid() generates flowchart. Export/Import:
+    cross-project portability with skip/rename/overwrite strategies'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.9.4 Insight quality features
+    ref: TASK-DEV-insight-quality
+fingerprint: c7b16a19f241801b9b442a568f7b145b68f386ba810b63bd5f1ed53d134766f2

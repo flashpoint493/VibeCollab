@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-030
+title: 'Decision Tier System: S/A/B/C Classification'
+summary: Hierarchical decision management
+tags:
+- decision-making
+- tiers
+- review-process
+- classification
+category: workflow
+body:
+  scenario: Classifying decisions by scope and review requirements
+  approach: 'Tiers: S (Strategic) - overall direction, human confirm required. A (Architecture)
+    - system design, human review. B (Implementation) - approach selection, AI suggests,
+    human quick-confirm. C (Detail) - naming/formatting, AI decides autonomously.
+    Format: DECISION-{number} with level, role, problem, options, decision, rationale,
+    date, status fields'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: Decision classification system
+    ref: DECISION-TIER-SYSTEM
+fingerprint: 7dba2a03d7826b75441b52c5604cab87506bb828924ad70542663a4402ea27cd

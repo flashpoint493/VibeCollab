@@ -42,8 +42,7 @@ _sensitive_detail.txt
 # pytest cache
 .pytest_cache/
 
-# VibeCollab local runtime data (insights, sessions, events, etc.)
-.vibecollab/
+# VibeCollab local runtime data
 .vibecollab.local.yaml
 docs/developers/**/.metadata.yaml
 

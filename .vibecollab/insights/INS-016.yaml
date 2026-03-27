@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-016
+title: Windows GBK Compatibility Layer
+summary: Cross-platform terminal encoding handling
+tags:
+- windows
+- encoding
+- gbk
+- compatibility
+- i18n
+category: technique
+body:
+  scenario: Handling Windows terminal encoding issues for cross-platform CLI tools
+  approach: Extract is_windows_gbk()/EMOJI/BULLET to shared _compat.py (DRY principle).
+    Add GBK compat to all CLI modules. Fix hardcoded emoji that crash on GBK terminals.
+    Use ASCII symbols as fallback. Unify error handling patterns (raise SystemExit
+    vs sys.exit)
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: Windows GBK compatibility refactoring
+    ref: TASK-DEV-windows-compat
+fingerprint: d401017055c09aecfed27f0c10286a92eae54bbc30bf86610536f7c70e900465

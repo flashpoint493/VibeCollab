@@ -1,11 +1,12 @@
 """
-Role-based context management module
+Multi-developer support module
 
-Provides role identity management, context isolation, and collaboration tracking.
-Replaces the old DeveloperManager which was person-based.
+Provides role identity recognition, context management, collaboration document generation, etc.
 """
 
 import os
+import re
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -14,16 +15,16 @@ import yaml
 
 from .._compat import EMOJI as _EMOJI
 
-# Local config file for storing current role selection
+# Local config file for storing current developer selection
 LOCAL_CONFIG_FILE = ".vibecollab.local.yaml"
 
 
 class RoleManager:
-    """Role manager, responsible for role identity and context management"""
+    """Role manager, responsible for identity recognition and directory management"""
 
     def __init__(self, project_root: Path, config: dict):
         """
-        Initialize role manager
+        Initialize developer manager
 
         Args:
             project_root: Project root directory
@@ -31,12 +32,12 @@ class RoleManager:
         """
         self.project_root = project_root
         self.config = config
-        self.role_context_config = config.get("role_context", {})
-        self.enabled = self.role_context_config.get("enabled", True)
+        self.role_context_config = config.get('role_context', config.get('multi_developer', {}))
+        self.enabled = self.role_context_config.get('enabled', False)
 
-        # Role directory
-        self.roles_dir = project_root / self.role_context_config.get("context", {}).get(
-            "per_role_dir", "docs/roles"
+        # Developer directory
+        self.roles_dir = project_root / self.role_context_config.get('context', {}).get(
+            'per_role_dir', 'docs/developers'
         )
 
     def get_current_role(self) -> str:
@@ -46,400 +47,769 @@ class RoleManager:
         Priority order:
         1. Local config file (.vibecollab.local.yaml)
         2. Environment variable (VIBECOLLAB_ROLE)
-        3. Configured current_role in project.yaml
-        4. Default: first available role
+        3. Primary strategy (git_username / system_user)
+        4. Fallback strategy
+        5. Default value
 
         Returns:
-            Role code (e.g., 'dev', 'insight_collector')
+            Role identifier (normalized string)
         """
-        role = None
+        identity_config = self.role_context_config.get('identity', {})
+        primary = identity_config.get('primary', 'git_username')
+        fallback = identity_config.get('fallback', 'system_user')
+        normalize = identity_config.get('normalize', True)
 
-        # 1. First check local config file
+        role_val = None
+
+        # 1. First check local config file (set by CLI switch)
         local_role = self._get_local_role()
         if local_role:
-            role = local_role
+            role_val = local_role
 
         # 2. Check environment variable
-        if not role:
-            role = os.environ.get("VIBECOLLAB_ROLE")
+        if not role_val:
+            role_val = os.environ.get('VIBECOLLAB_ROLE')
 
-        # 3. Use configured current_role
-        if not role:
-            role = self.role_context_config.get("current_role")
+        # 3. Try primary strategy
+        if not role_val:
+            if primary == 'git_username':
+                role_val = self._get_git_username()
+            elif primary == 'system_user':
+                role_val = self._get_system_user()
+            elif primary == 'manual':
+                # Manual mode already handled above
+                pass
 
-        # 4. Fallback to first available role
-        if not role:
-            roles = self.list_roles()
-            if roles:
-                role = roles[0]
-            else:
-                role = "dev"  # Ultimate fallback
+        # 4. Fall back to backup strategy
+        if not role_val:
+            if fallback == 'git_username':
+                role_val = self._get_git_username()
+            elif fallback == 'system_user':
+                role_val = self._get_system_user()
 
-        return role
+        # 5. Final fallback: use default value
+        if not role_val:
+            role_val = 'unknown_role'
+
+        # Normalize
+        if normalize:
+            role_val = self._normalize_role_name(role_val)
+
+        return role_val
 
     def _get_local_role(self) -> Optional[str]:
-        """Get role from local config file"""
+        """Get role identity from local config file"""
         local_config_path = self.project_root / LOCAL_CONFIG_FILE
         if local_config_path.exists():
             try:
-                with open(local_config_path, "r", encoding="utf-8") as f:
+                with open(local_config_path, 'r', encoding='utf-8') as f:
                     local_config = yaml.safe_load(f) or {}
-                return local_config.get("current_role")
+                    return local_config.get('current_role')
             except Exception:
                 pass
         return None
 
-    def set_local_role(self, role: str) -> bool:
-        """Set current role in local config"""
+    def switch_role(self, developer: str) -> bool:
+        """
+        Switch current role identity (persisted to local config file)
+
+        Args:
+            developer: Target developer identifier
+
+        Returns:
+            Whether the switch was successful
+        """
+        identity_config = self.role_context_config.get('identity', {})
+        normalize = identity_config.get('normalize', True)
+
+        # Normalize developer name
+        if normalize:
+            role_val = self._normalize_role_name(role_val)
+
         local_config_path = self.project_root / LOCAL_CONFIG_FILE
-        try:
-            local_config = {}
-            if local_config_path.exists():
-                with open(local_config_path, "r", encoding="utf-8") as f:
+
+        # Read existing config
+        local_config = {}
+        if local_config_path.exists():
+            try:
+                with open(local_config_path, 'r', encoding='utf-8') as f:
                     local_config = yaml.safe_load(f) or {}
+            except Exception:
+                pass
 
-            local_config["current_role"] = role
-            local_config["switched_at"] = datetime.now().isoformat()
+        # Update developer
+        local_config['current_role'] = developer
+        local_config['switched_at'] = datetime.now().isoformat()
 
-            with open(local_config_path, "w", encoding="utf-8") as f:
-                yaml.dump(local_config, f, allow_unicode=True)
+        # Write config
+        try:
+            with open(local_config_path, 'w', encoding='utf-8') as f:
+                yaml.dump(local_config, f, allow_unicode=True, sort_keys=False)
             return True
         except Exception:
             return False
 
     def clear_switch(self) -> bool:
-        """Clear role switch, restore default"""
+        """
+        Clear developer switch setting, restore default identification strategy
+
+        Returns:
+            Whether the clear was successful
+        """
         local_config_path = self.project_root / LOCAL_CONFIG_FILE
+
+        if not local_config_path.exists():
+            return True
+
         try:
-            if local_config_path.exists():
-                with open(local_config_path, "r", encoding="utf-8") as f:
-                    local_config = yaml.safe_load(f) or {}
+            with open(local_config_path, 'r', encoding='utf-8') as f:
+                local_config = yaml.safe_load(f) or {}
 
-                local_config.pop("current_role", None)
-                local_config["cleared_at"] = datetime.now().isoformat()
+            # Remove developer settings
+            if 'current_role' in local_config:
+                del local_config['current_role']
+            if 'switched_at' in local_config:
+                del local_config['switched_at']
 
-                with open(local_config_path, "w", encoding="utf-8") as f:
-                    yaml.dump(local_config, f, allow_unicode=True)
+            # If config is empty, delete the file
+            if not local_config:
+                local_config_path.unlink()
+            else:
+                with open(local_config_path, 'w', encoding='utf-8') as f:
+                    yaml.dump(local_config, f, allow_unicode=True, sort_keys=False)
+
             return True
         except Exception:
             return False
 
-    def list_roles(self) -> List[str]:
-        """List all available roles"""
-        assignments = self.role_context_config.get("role_assignments", [])
-        return [a.get("role") for a in assignments if a.get("role")]
-
-    def get_role_config(self, role: str) -> Optional[Dict]:
-        """Get configuration for a specific role"""
-        assignments = self.role_context_config.get("role_assignments", [])
-        for assignment in assignments:
-            if assignment.get("role") == role:
-                return assignment
-        return None
-
     def get_identity_source(self) -> str:
-        """Get the source of current role identity"""
-        local_config_path = self.project_root / LOCAL_CONFIG_FILE
-        if local_config_path.exists():
-            try:
-                with open(local_config_path, "r", encoding="utf-8") as f:
-                    local_config = yaml.safe_load(f) or {}
-                if "current_role" in local_config:
-                    return "local_switch"
-            except Exception:
-                pass
+        """
+        Get the source of the current role identity
 
-        if os.environ.get("VIBECOLLAB_ROLE"):
+        Returns:
+            Identity source description
+        """
+        # Check local config
+        if self._get_local_role():
+            return "local_switch"
+
+        # Check environment variable
+        if os.environ.get('VIBECOLLAB_ROLE'):
             return "env_var"
 
-        if self.role_context_config.get("current_role"):
-            return "config_default"
+        # Return primary strategy
+        identity_config = self.role_context_config.get('identity', {})
+        return identity_config.get('primary', 'git_username')
 
-        return "fallback"
+    def _get_git_username(self) -> Optional[str]:
+        """Get username from Git config"""
+        try:
+            result = subprocess.run(
+                ['git', 'config', 'user.name'],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                return result.stdout.strip()
+        except BaseException:
+            pass
+        return None
 
-    def get_role_context_file(self, role: str) -> Path:
-        """Get context file path for a role"""
-        return self.roles_dir / role / "CONTEXT.md"
+    def _get_system_user(self) -> Optional[str]:
+        """Get system username"""
+        return os.environ.get('USER') or os.environ.get('USERNAME')
 
-    def init_role_context(self, role: str) -> None:
-        """Initialize context directory and file for a role"""
-        role_dir = self.roles_dir / role
-        role_dir.mkdir(parents=True, exist_ok=True)
+    def _normalize_role_name(self, name: str) -> str:
+        """
+        Normalize developer name
 
-        context_file = role_dir / "CONTEXT.md"
-        if not context_file.exists():
-            project_name = self.config.get("project", {}).get("name", "Project")
-            today = datetime.now().strftime("%Y-%m-%d")
+        Rules:
+        - Convert to lowercase
+        - Replace spaces with underscores
+        - Remove special characters, keep only letters, digits, underscores
 
-            content = f"""# {project_name} - {role} Context
+        Args:
+            name: Original name
+
+        Returns:
+            Normalized name
+        """
+        # Convert to lowercase
+        name = name.lower()
+        # Replace spaces with underscores
+        name = name.replace(' ', '_')
+        # Remove special characters
+        name = re.sub(r'[^a-z0-9_]', '', name)
+        return name
+
+    def get_role_dir(self, developer: Optional[str] = None) -> Path:
+        """
+        Get developer's working directory
+
+        Args:
+            developer: Role identifier, None uses current developer
+
+        Returns:
+            Developer working directory path
+        """
+        if developer is None:
+            developer = self.get_current_role()
+        return self.roles_dir / developer
+
+    def get_role_context_file(self, developer: Optional[str] = None) -> Path:
+        """
+        Get developer's CONTEXT.md file path
+
+        Args:
+            developer: Role identifier, None uses current developer
+
+        Returns:
+            CONTEXT.md file path
+        """
+        return self.get_role_dir(developer) / "CONTEXT.md"
+
+    def get_role_metadata_file(self, developer: Optional[str] = None) -> Path:
+        """
+        Get developer's metadata file path
+
+        Args:
+            developer: Role identifier, None uses current developer
+
+        Returns:
+            Metadata file path
+        """
+        metadata_filename = self.role_context_config.get('context', {}).get(
+            'metadata_file', '.metadata.yaml'
+        )
+        return self.get_role_dir(developer) / metadata_filename
+
+    def list_roles(self) -> List[str]:
+        """
+        List all developers
+
+        Returns:
+            List of developer identifiers
+        """
+        if not self.roles_dir.exists():
+            return []
+
+        developers = []
+        for item in self.roles_dir.iterdir():
+            if item.is_dir() and not item.name.startswith('.'):
+                developers.append(item.name)
+
+        return sorted(developers)
+
+    def ensure_role_dir(self, developer: Optional[str] = None) -> Path:
+        """
+        Ensure developer directory exists, create if not
+
+        Args:
+            developer: Role identifier, None uses current developer
+
+        Returns:
+            Developer working directory path
+        """
+        dev_dir = self.get_role_dir(developer)
+        dev_dir.mkdir(parents=True, exist_ok=True)
+        return dev_dir
+
+    def init_role_context(self, developer: Optional[str] = None, force: bool = False):
+        """
+        Initialize developer's context files
+
+        Args:
+            developer: Role identifier, None uses current developer
+            force: Whether to force re-initialization (overwrite existing files)
+        """
+        if developer is None:
+            developer = self.get_current_role()
+
+        self.ensure_role_dir(developer)
+        context_file = self.get_role_context_file(developer)
+        metadata_file = self.get_role_metadata_file(developer)
+
+        # Initialize CONTEXT.md
+        if not context_file.exists() or force:
+            project_name = self.config.get('project', {}).get('name', 'MyProject')
+            project_version = self.config.get('project', {}).get('version', 'v1.0')
+
+            context_content = f"""# {project_name} - {developer}'s Working Context
 
 ## Current Status
-- **Role**: {role}
-- **Last Updated**: {today}
-- **Status**: Active
+- **Version**: {project_version}
+- **Developer**: {developer}
+- **Last Updated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 ## Current Tasks
-(None)
+(No tasks yet)
 
-## Pending Decisions
-(None)
+## Recently Completed
+(No records yet)
 
-## Completed Items
-(None)
+## Pending Issues
+(No issues yet)
 
-## Role-Specific Configuration
-{self._get_role_config_summary(role)}
+## Technical Debt
+(No debt yet)
 
 ---
-*This file is auto-managed by VibeCollab*
+*This file is maintained by {developer}*
 """
-            context_file.write_text(content, encoding="utf-8")
+            context_file.write_text(context_content, encoding='utf-8')
 
-    def _get_role_config_summary(self, role: str) -> str:
-        """Get role configuration summary for context file"""
-        role_config = self.get_role_config(role)
-        if not role_config:
-            return "(No specific configuration)"
+        # Initialize metadata
+        if not metadata_file.exists() or force:
+            metadata = {
+                'developer': developer,
+                'created_at': datetime.now().isoformat(),
+                'last_updated': datetime.now().isoformat(),
+                'total_updates': 0
+            }
+            with open(metadata_file, 'w', encoding='utf-8') as f:
+                yaml.dump(metadata, f, allow_unicode=True, sort_keys=False)
 
-        lines = []
-        if role_config.get("description"):
-            lines.append(f"**Description**: {role_config['description']}")
-        if role_config.get("insights"):
-            lines.append(f"**Associated Insights**: {', '.join(role_config['insights'])}")
-        if role_config.get("preferences"):
-            lines.append(f"**Preferences**: {role_config['preferences']}")
+    def update_metadata(self, developer: Optional[str] = None):
+        """
+        Update developer's metadata
 
-        return "\n".join(lines) if lines else "(No specific configuration)"
+        Args:
+            developer: Role identifier, None uses current developer
+        """
+        if developer is None:
+            developer = self.get_current_role()
 
-    def get_role_status(self, role: str) -> Dict:
-        """Get status information for a role"""
-        context_file = self.get_role_context_file(role)
+        metadata_file = self.get_role_metadata_file(developer)
+
+        if metadata_file.exists():
+            with open(metadata_file, 'r', encoding='utf-8') as f:
+                metadata = yaml.safe_load(f) or {}
+        else:
+            metadata = {
+                'developer': developer,
+                'created_at': datetime.now().isoformat(),
+                'total_updates': 0
+            }
+
+        metadata['last_updated'] = datetime.now().isoformat()
+        metadata['total_updates'] = metadata.get('total_updates', 0) + 1
+
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            yaml.dump(metadata, f, allow_unicode=True, sort_keys=False)
+
+    def get_role_status(self, developer: str) -> Dict:
+        """
+        Get developer's status information
+
+        Args:
+            developer: Role identifier
+
+        Returns:
+            Dictionary containing status information
+        """
+        context_file = self.get_role_context_file(developer)
+        metadata_file = self.get_role_metadata_file(developer)
 
         status = {
-            "exists": context_file.exists(),
-            "last_updated": None,
-            "total_updates": 0,
-            "raw_content": "",
+            'developer': developer,
+            'exists': context_file.exists(),
+            'context_file': str(context_file),
+            'last_updated': None,
+            'total_updates': 0
         }
 
-        if context_file.exists():
-            try:
-                content = context_file.read_text(encoding="utf-8")
-                status["raw_content"] = content
+        if metadata_file.exists():
+            with open(metadata_file, 'r', encoding='utf-8') as f:
+                metadata = yaml.safe_load(f) or {}
+                status['last_updated'] = metadata.get('last_updated')
+                status['total_updates'] = metadata.get('total_updates', 0)
 
-                # Parse last updated
-                for line in content.split("\n"):
-                    if "**Last Updated**:" in line:
-                        status["last_updated"] = line.split(":", 1)[1].strip()
+        return status
+
+    # ------------------------------------------------------------------
+    # Tag system extension
+    # ------------------------------------------------------------------
+
+    def _read_metadata(self, developer: Optional[str] = None) -> Dict:
+        """Read developer's metadata, returns dict (returns empty dict if not exists)"""
+        if developer is None:
+            developer = self.get_current_role()
+        metadata_file = self.get_role_metadata_file(developer)
+        if not metadata_file.exists():
+            return {}
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            return yaml.safe_load(f) or {}
+
+    def _write_metadata(self, metadata: Dict, developer: Optional[str] = None) -> None:
+        """Write developer's metadata"""
+        if developer is None:
+            developer = self.get_current_role()
+        metadata_file = self.get_role_metadata_file(developer)
+        metadata_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            yaml.dump(metadata, f, allow_unicode=True, sort_keys=False)
+
+    def get_tags(self, developer: Optional[str] = None) -> List[str]:
+        """Get developer's tag list"""
+        meta = self._read_metadata(developer)
+        return meta.get('tags', [])
+
+    def set_tags(self, tags: List[str], developer: Optional[str] = None) -> None:
+        """Set developer's tag list (full overwrite)"""
+        meta = self._read_metadata(developer)
+        meta['tags'] = tags
+        self._write_metadata(meta, developer)
+
+    def add_tag(self, tag: str, developer: Optional[str] = None) -> bool:
+        """Add a tag (add if not duplicate, returns whether added)"""
+        meta = self._read_metadata(developer)
+        tags = meta.get('tags', [])
+        if tag in tags:
+            return False
+        tags.append(tag)
+        meta['tags'] = tags
+        self._write_metadata(meta, developer)
+        return True
+
+    def remove_tag(self, tag: str, developer: Optional[str] = None) -> bool:
+        """Remove a tag (remove if exists, returns whether removed)"""
+        meta = self._read_metadata(developer)
+        tags = meta.get('tags', [])
+        if tag not in tags:
+            return False
+        tags.remove(tag)
+        meta['tags'] = tags
+        self._write_metadata(meta, developer)
+        return True
+
+    def get_contributed(self, developer: Optional[str] = None) -> List[str]:
+        """Get list of insight IDs contributed by developer"""
+        meta = self._read_metadata(developer)
+        return meta.get('contributed', [])
+
+    def add_contributed(self, insight_id: str, developer: Optional[str] = None) -> bool:
+        """Record developer contributed an insight (add if not duplicate)"""
+        meta = self._read_metadata(developer)
+        contributed = meta.get('contributed', [])
+        if insight_id in contributed:
+            return False
+        contributed.append(insight_id)
+        meta['contributed'] = contributed
+        self._write_metadata(meta, developer)
+        return True
+
+    def remove_contributed(self, insight_id: str, developer: Optional[str] = None) -> bool:
+        """Remove a contributed record"""
+        meta = self._read_metadata(developer)
+        contributed = meta.get('contributed', [])
+        if insight_id not in contributed:
+            return False
+        contributed.remove(insight_id)
+        meta['contributed'] = contributed
+        self._write_metadata(meta, developer)
+        return True
+
+    def get_bookmarks(self, developer: Optional[str] = None) -> List[str]:
+        """Get list of insight IDs bookmarked by developer"""
+        meta = self._read_metadata(developer)
+        return meta.get('bookmarks', [])
+
+    def add_bookmark(self, insight_id: str, developer: Optional[str] = None) -> bool:
+        """Bookmark an insight (add if not duplicate)"""
+        meta = self._read_metadata(developer)
+        bookmarks = meta.get('bookmarks', [])
+        if insight_id in bookmarks:
+            return False
+        bookmarks.append(insight_id)
+        meta['bookmarks'] = bookmarks
+        self._write_metadata(meta, developer)
+        return True
+
+    def remove_bookmark(self, insight_id: str, developer: Optional[str] = None) -> bool:
+        """Remove a bookmarked insight"""
+        meta = self._read_metadata(developer)
+        bookmarks = meta.get('bookmarks', [])
+        if insight_id not in bookmarks:
+            return False
+        bookmarks.remove(insight_id)
+        meta['bookmarks'] = bookmarks
+        self._write_metadata(meta, developer)
+        return True
+
+
+class ContextAggregator:
+    """Context aggregator, responsible for generating global CONTEXT.md"""
+
+    def __init__(self, project_root: Path, config: dict):
+        """
+        Initialize context aggregator
+
+        Args:
+            project_root: Project root directory
+            config: Project configuration (project.yaml)
+        """
+        self.project_root = project_root
+        self.config = config
+        self.role_context_config = config.get('role_context', config.get('multi_developer', {}))
+        self.developer_manager = RoleManager(project_root, config)
+
+    def aggregate(self) -> str:
+        """
+        Aggregate all developers' contexts, generate global CONTEXT.md
+
+        Returns:
+            Aggregated global CONTEXT content
+        """
+        project_name = self.config.get('project', {}).get('name', 'MyProject')
+        project_version = self.config.get('project', {}).get('version', 'v1.0')
+
+        developers = self.developer_manager.list_roles()
+
+        # Build global CONTEXT
+        sections = []
+
+        # Title and warning
+        sections.append(f"# {project_name} Global Context")
+        sections.append("")
+        sections.append(f"> {_EMOJI['warning']} **This file is auto-generated, do not edit manually**")
+        sections.append(f"> Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        sections.append(f"> Aggregated from: {', '.join(developers) if developers else '(no developers)'}")
+        sections.append("")
+
+        # Project overall status
+        sections.append("## Project Overall Status")
+        sections.append(f"- **Version**: {project_version}")
+        sections.append(f"- **Active roles**: {len(developers)} ({', '.join(developers)})")
+        sections.append("")
+
+        # Each developer's work status
+        if developers:
+            sections.append("## Role Work Status")
+            sections.append("")
+
+            for dev in developers:
+                dev_status = self._extract_role_summary(dev)
+                sections.append(f"### {dev}")
+                sections.append(f"- **Last updated**: {dev_status['last_updated']}")
+                sections.append(f"- **Current task**: {dev_status['current_task']}")
+                sections.append(f"- **Progress**: {dev_status['progress']}")
+                sections.append(f"- **Pending issues**: {dev_status['issues']}")
+                sections.append(f"- **Next steps**: {dev_status['next_steps']}")
+                sections.append("")
+        else:
+            sections.append("## Developer Status")
+            sections.append("(No developers yet)")
+            sections.append("")
+
+        # Cross-developer dependencies (extracted from COLLABORATION.md)
+        collaboration_info = self._extract_collaboration_info()
+        if collaboration_info:
+            sections.append("## Cross-developer Collaboration")
+            sections.append(collaboration_info)
+            sections.append("")
+
+        # Global technical debt (merged from all developers)
+        global_debts = self._merge_technical_debts(developers)
+        if global_debts:
+            sections.append("## Global Technical Debt")
+            for debt in global_debts:
+                sections.append(f"- {debt}")
+            sections.append("")
+
+        sections.append("---")
+        sections.append("*This file is auto-aggregated from multi-role contexts*")
+
+        return "\n".join(sections)
+
+    def _extract_role_summary(self, developer: str) -> Dict:
+        """
+        Extract summary info from developer's CONTEXT.md
+
+        Args:
+            developer: Role identifier
+
+        Returns:
+            Summary info dictionary
+        """
+        context_file = self.developer_manager.get_role_context_file(developer)
+
+        summary = {
+            'last_updated': 'Unknown',
+            'current_task': '(No tasks)',
+            'progress': '(None)',
+            'issues': '(None)',
+            'next_steps': '(None)'
+        }
+
+        if not context_file.exists():
+            return summary
+
+        try:
+            content = context_file.read_text(encoding='utf-8')
+
+            # Extract last updated time
+            if '上次更新' in content:
+                match = re.search(r'上次更新.*?(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})', content)
+                if match:
+                    summary['last_updated'] = match.group(1)
+            elif 'Last Updated' in content:
+                match = re.search(r'Last Updated.*?(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})', content)
+                if match:
+                    summary['last_updated'] = match.group(1)
+
+            # Extract current tasks (simple extraction of first non-empty line)
+            for header in ('## Current Tasks', '## 当前任务'):
+                if header in content:
+                    task_section = re.search(rf'{re.escape(header)}\n(.*?)(?=\n##|\Z)', content, re.DOTALL)
+                    if task_section:
+                        lines = [ln.strip() for ln in task_section.group(1).split('\n') if ln.strip() and not ln.strip().startswith('(')]
+                        if lines:
+                            summary['current_task'] = lines[0][:100]  # Limit length
+                    break
+
+            # Extract other info (simplified)
+            # Can further refine extraction logic as needed
+
+        except Exception:
+            pass
+
+        return summary
+
+    def _extract_collaboration_info(self) -> Optional[str]:
+        """
+        Extract collaboration info from COLLABORATION.md
+
+        Returns:
+            Collaboration info string, or None if not available
+        """
+        collab_config = self.role_context_config.get('collaboration', {})
+        collab_file_path = self.project_root / collab_config.get('file', 'docs/developers/COLLABORATION.md')
+
+        if not collab_file_path.exists():
+            return None
+
+        try:
+            collab_file_path.read_text(encoding='utf-8')
+            # Extract key collaboration info (simplified)
+            # Can parse task dependency matrices, etc.
+            return "(See docs/developers/COLLABORATION.md for details)"
+        except Exception:
+            return None
+
+    def _merge_technical_debts(self, developers: List[str]) -> List[str]:
+        """
+        Merge technical debts from all developers
+
+        Args:
+            developers: List of developers
+
+        Returns:
+            Technical debt list
+        """
+        debts = []
+
+        for dev in developers:
+            context_file = self.developer_manager.get_role_context_file(dev)
+            if not context_file.exists():
+                continue
+
+            try:
+                content = context_file.read_text(encoding='utf-8')
+                for header in ('## Technical Debt', '## 技术债务'):
+                    if header in content:
+                        debt_section = re.search(rf'{re.escape(header)}\n(.*?)(?=\n##|\Z)', content, re.DOTALL)
+                        if debt_section:
+                            lines = [ln.strip() for ln in debt_section.group(1).split('\n') if ln.strip() and ln.strip().startswith('-')]
+                            for line in lines:
+                                debts.append(f"[{dev}] {line}")
                         break
             except Exception:
                 pass
 
-        return status
-
-    def switch_role(self, role: str) -> bool:
-        """Switch to a different role"""
-        if role not in self.list_roles():
-            return False
-
-        # Initialize context if needed
-        self.init_role_context(role)
-
-        # Save switch
-        return self.set_local_role(role)
-
-    # Methods for backward compatibility (from original DeveloperManager)
-    def get_role_dir(self, role: str) -> Path:
-        """Get directory for a role"""
-        return self.roles_dir / role
-
-    def ensure_role_dir(self, role: str) -> Path:
-        """Ensure role directory exists"""
-        role_dir = self.get_role_dir(role)
-        role_dir.mkdir(parents=True, exist_ok=True)
-        return role_dir
-
-    def get_role_metadata_file(self, role: str) -> Path:
-        """Get metadata file path for a role"""
-        return self.get_role_dir(role) / ".metadata.yaml"
-
-    def _read_metadata(self, role: str) -> Dict:
-        """Read metadata for a role"""
-        meta_file = self.get_role_metadata_file(role)
-        if meta_file.exists():
-            try:
-                with open(meta_file, "r", encoding="utf-8") as f:
-                    return yaml.safe_load(f) or {}
-            except Exception:
-                pass
-        return {}
-
-    def _write_metadata(self, role: str, metadata: Dict) -> bool:
-        """Write metadata for a role"""
-        meta_file = self.get_role_metadata_file(role)
-        try:
-            self.ensure_role_dir(role)
-            with open(meta_file, "w", encoding="utf-8") as f:
-                yaml.dump(metadata, f, allow_unicode=True)
-            return True
-        except Exception:
-            return False
-
-    def update_metadata(self, role: str, updates: Dict) -> bool:
-        """Update metadata for a role"""
-        metadata = self._read_metadata(role)
-        metadata.update(updates)
-        return self._write_metadata(role, metadata)
-
-    # Bookmark methods
-    def add_bookmark(self, insight_id: str, role: str) -> bool:
-        """Add bookmark for an insight"""
-        metadata = self._read_metadata(role)
-        bookmarks = metadata.get("bookmarks", [])
-        if insight_id not in bookmarks:
-            bookmarks.append(insight_id)
-            metadata["bookmarks"] = bookmarks
-            return self._write_metadata(role, metadata)
-        return True
-
-    def remove_bookmark(self, insight_id: str, role: str) -> bool:
-        """Remove bookmark for an insight"""
-        metadata = self._read_metadata(role)
-        bookmarks = metadata.get("bookmarks", [])
-        if insight_id in bookmarks:
-            bookmarks.remove(insight_id)
-            metadata["bookmarks"] = bookmarks
-            return self._write_metadata(role, metadata)
-        return True
-
-    def get_bookmarks(self, role: str) -> List[str]:
-        """Get all bookmarks for a role"""
-        metadata = self._read_metadata(role)
-        return metadata.get("bookmarks", [])
-
-    # Contributed methods
-    def add_contributed(self, insight_id: str, role: str) -> bool:
-        """Add contributed insight for a role"""
-        metadata = self._read_metadata(role)
-        contributed = metadata.get("contributed", [])
-        if insight_id not in contributed:
-            contributed.append(insight_id)
-            metadata["contributed"] = contributed
-            return self._write_metadata(role, metadata)
-        return True
-
-    def remove_contributed(self, insight_id: str, role: str) -> bool:
-        """Remove contributed insight for a role"""
-        metadata = self._read_metadata(role)
-        contributed = metadata.get("contributed", [])
-        if insight_id in contributed:
-            contributed.remove(insight_id)
-            metadata["contributed"] = contributed
-            return self._write_metadata(role, metadata)
-        return True
-
-    def get_contributed(self, role: str) -> List[str]:
-        """Get all contributed insights for a role"""
-        metadata = self._read_metadata(role)
-        return metadata.get("contributed", [])
-
-    # Tag methods
-    def get_tags(self, role: str) -> List[str]:
-        """Get tags for a role"""
-        metadata = self._read_metadata(role)
-        return metadata.get("tags", [])
-
-    def set_tags(self, role: str, tags: List[str]) -> bool:
-        """Set tags for a role"""
-        return self.update_metadata(role, {"tags": tags})
-
-    def add_tag(self, role: str, tag: str) -> bool:
-        """Add tag to a role"""
-        tags = self.get_tags(role)
-        if tag not in tags:
-            tags.append(tag)
-            return self.set_tags(role, tags)
-        return True
-
-    def remove_tag(self, role: str, tag: str) -> bool:
-        """Remove tag from a role"""
-        tags = self.get_tags(role)
-        if tag in tags:
-            tags.remove(tag)
-            return self.set_tags(role, tags)
-        return True
-
-    def _normalize_role_name(self, name: str) -> str:
-        """Normalize role name"""
-        # Replace special characters with underscore
-        import re
-
-        normalized = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
-        return normalized.lower()
-
-
-class ContextAggregator:
-    """Aggregate context from multiple roles into global context"""
-
-    def __init__(self, project_root: Path, config: dict):
-        self.project_root = project_root
-        self.config = config
-        self.role_manager = RoleManager(project_root, config)
+        return debts
 
     def generate_and_save(self) -> Path:
-        """Generate global aggregated context"""
-        aggregation_config = self.config.get("role_context", {}).get("context", {})
-        output_file = self.project_root / aggregation_config.get(
-            "aggregation_file", "docs/CONTEXT.md"
-        )
+        """
+        Generate and save global CONTEXT.md
 
-        content = self._aggregate_content()
-        output_file.write_text(content, encoding="utf-8")
+        Returns:
+            Saved file path
+        """
+        context_config = self.role_context_config.get('context', {})
+        output_file = self.project_root / context_config.get('aggregation_file', 'docs/CONTEXT.md')
+
+        content = self.aggregate()
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        output_file.write_text(content, encoding='utf-8')
+
         return output_file
 
-    def aggregate(self) -> str:
-        """Generate aggregated context content (returns content string)"""
-        return self._aggregate_content()
 
-    def _aggregate_content(self) -> str:
-        """Generate aggregated context content"""
-        project_name = self.config.get("project", {}).get("name", "Project")
-        today = datetime.now().strftime("%Y-%m-%d")
+def migrate_to_role_context(project_root: Path, config: dict, developer_name: Optional[str] = None):
+    """
+    Migrate to role-based context mode
 
-        roles = self.role_manager.list_roles()
-        current_role = self.role_manager.get_current_role()
+    Args:
+        project_root: Project root directory
+        config: Project configuration
+        developer_name: Initial developer name, None for auto-detection
+    """
+    dm = RoleManager(project_root, config)
 
-        lines = [
-            f"# {project_name} - Global Context",
-            "",
-            f"> ⚠️ **This file is auto-generated, do not edit manually**",
-            f"> Last updated: {today}",
-            f"> Current role: {current_role}",
-            f"> Active roles: {', '.join(roles)}",
-            "",
-            "## Active Roles",
-            "",
-        ]
+    if developer_name is None:
+        developer_name = dm.get_current_role()
 
-        for role in roles:
-            status = self.role_manager.get_role_status(role)
-            is_current = " (current)" if role == current_role else ""
-            status_emoji = _EMOJI["success"] if status["exists"] else _EMOJI["warning"]
-            lines.append(f"- {status_emoji} **{role}**{is_current}")
+    # 1. Create developer directory
+    dev_dir = dm.ensure_role_dir(developer_name)
 
-        lines.extend(
-            [
-                "",
-                "## Cross-Role Collaboration",
-                "(See docs/roles/COLLABORATION.md for details)",
-                "",
-                "---",
-                "*This file is auto-aggregated from role contexts*",
-            ]
-        )
+    # 2. Move existing CONTEXT.md
+    old_context = project_root / "docs" / "CONTEXT.md"
+    new_context = dm.get_role_context_file(developer_name)
 
-        return "\n".join(lines)
+    if old_context.exists() and not new_context.exists():
+        # Move file
+        new_context.write_text(old_context.read_text(encoding='utf-8'), encoding='utf-8')
 
+        # Backup original file
+        backup = project_root / "docs" / "CONTEXT.md.backup"
+        old_context.rename(backup)
 
-# Backward compatibility alias
-DeveloperManager = RoleManager
+    # 3. Initialize metadata
+    dm.init_role_context(developer_name)
+
+    # 4. Generate COLLABORATION.md
+    collab_config = config.get('role_context', config.get('multi_developer', {})).get('collaboration', {})
+    collab_file = project_root / collab_config.get('file', 'docs/developers/COLLABORATION.md')
+
+    if not collab_file.exists():
+        collab_content = f"""# Developer Collaboration Record
+
+## Current Collaboration
+
+(No collaboration records yet)
+
+## Task Assignment Matrix
+
+| Task | Owner | Collaborator | Status | Dependency |
+|------|-------|--------------|--------|------------|
+| - | {developer_name} | - | - | - |
+
+## Handover Records
+
+(No handover records yet)
+
+---
+*Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+"""
+        collab_file.parent.mkdir(parents=True, exist_ok=True)
+        collab_file.write_text(collab_content, encoding='utf-8')
+
+    # 5. Generate new global aggregated CONTEXT.md
+    aggregator = ContextAggregator(project_root, config)
+    aggregator.generate_and_save()
+
+    print(f"{_EMOJI['success']} Successfully migrated to role-based mode")
+    print(f"   Developer: {developer_name}")
+    print(f"   Context directory: {dev_dir}")

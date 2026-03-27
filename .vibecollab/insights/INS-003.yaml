@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-003
+title: 'Package Naming: vibe-collab Philosophy'
+summary: Package naming for open-source projects
+tags:
+- naming
+- branding
+- philosophy
+- pypi
+category: decision
+body:
+  scenario: Choosing a memorable, conflict-free package name that embodies project
+    philosophy
+  approach: 'Use ''vibe-collab'' to emphasize Vibe Development philosophy and collaboration
+    features. Check PyPI for conflicts beforehand. Choose names that are: memorable,
+    philosophy-aligned, conflict-free, and simple'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-003: Rename Package to vibe-collab'
+    ref: DECISION-003
+fingerprint: 5c7ba9b901bf7446e673c8d35dd2e570c3c2f51a5be3e67b1538c8da3c6778b5

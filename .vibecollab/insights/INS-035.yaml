@@ -1,0 +1,22 @@
+kind: insight
+version: '1'
+id: INS-035
+title: Milestone completion experience
+summary: Added 3 completed items in ROADMAP.md
+tags:
+- milestone
+- planning
+category: workflow
+body:
+  scenario: Added 3 completed items in ROADMAP.md
+  approach: Milestone completion experience
+  validation: 'signal: doc_roadmap'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  context: auto-suggest via doc_roadmap
+  source:
+    type: signal
+    description: doc_roadmap
+fingerprint: 3a5e0c55ac1e89942241e8c5483c88a7cc00091d358333ffc9a5e77a28698dc4

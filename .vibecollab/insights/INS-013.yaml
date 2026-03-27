@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-013
+title: 'Task Lifecycle: Validate → Solidify → Rollback'
+summary: Robust task state management
+tags:
+- task-management
+- lifecycle
+- validation
+- workflow
+category: workflow
+body:
+  scenario: Managing task state transitions with validation gates
+  approach: 'Task statuses: TODO → IN_PROGRESS → REVIEW → DONE. Transition validation:
+    check prerequisites, conflicts, scope limits. Solidify: confirm task completion,
+    update artifacts, record Insights. Rollback: safe state reversal with cleanup.
+    Onboard injection: auto-load active tasks into conversation context'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.9.3 Task workflow implementation
+    ref: TASK-DEV-task-lifecycle
+fingerprint: a26fa8b1d046d90c3abdcabb2dd65eceade54deb249da25f9f2d849f13d285e5

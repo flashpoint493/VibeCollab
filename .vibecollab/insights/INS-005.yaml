@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-005
+title: 'Pattern Engine: Manifest-Driven Jinja2 Template System'
+summary: Declarative document generation architecture
+tags:
+- pattern-engine
+- templates
+- jinja2
+- code-generation
+- manifest
+category: decision
+body:
+  scenario: Replacing hardcoded generation methods with maintainable template system
+  approach: Use manifest.yaml + Jinja2 templates + local override mechanism. Each
+    section is an independent .md.j2 template. manifest.yaml defines section order,
+    conditions, template mapping. Template Overlay allows customization in .vibecollab/patterns/.
+    Reduces generator.py from 1713 to 83 lines
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: decision
+    description: 'DECISION-011: Pattern Engine Architecture'
+    ref: DECISION-011
+fingerprint: 843633b7de5fed3468fd268dc88873d2720685ca1ae655d411825662001a04c7

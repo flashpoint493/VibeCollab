@@ -1,0 +1,27 @@
+kind: insight
+version: '1'
+id: INS-025
+title: Weight Decay & Reward Mechanism for Knowledge
+summary: Knowledge relevance lifecycle algorithm
+tags:
+- insight-lifecycle
+- weight
+- decay
+- reward
+- algorithm
+category: technique
+body:
+  scenario: Implementing time-based decay and usage-based reward for Insight relevance
+  approach: 'Settings: decay_rate=0.95, decay_interval_days=30, use_reward=0.1, deactivate_threshold=0.1.
+    Formula: weight *= decay_rate periodically. Reward: weight += use_reward on each
+    use. Deactivation: weight < threshold → active=false. Reactivation: use sets active=true.
+    Prevents stale knowledge accumulation'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: Insight registry mechanism
+    ref: TASK-DEV-weight-lifecycle
+fingerprint: ebb3821d20e43fcc8bd22e92f168f2c7b131207609745cefe6f1ed7f142cb8bf

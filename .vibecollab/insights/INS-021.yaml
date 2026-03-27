@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-021
+title: Version Synchronization Across Multiple Files
+summary: Multi-file version management
+tags:
+- versioning
+- automation
+- synchronization
+- release
+category: workflow
+body:
+  scenario: Keeping version numbers consistent across 7+ files during release
+  approach: 'Files to sync: __init__.py, pyproject.toml, README.md, README.pypi.md,
+    docs/CONTEXT.md, docs/CHANGELOG.md, skill.md. Tool: scripts/bump_version.py. Commands:
+    check (dry-run), --sync (apply), <version> (bump). Windows GBK compatible output.
+    Single source of truth via CLI'
+artifacts: []
+origin:
+  created_by: architect
+  created_at: '2026-03-27'
+  source:
+    type: task
+    description: v0.10.10 version sync tool
+    ref: TASK-DEV-version-sync
+fingerprint: d5ad6394d43981a073271282ae94ce938fc32df6dec935750bc3428fc5e5e472
