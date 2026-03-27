@@ -67,7 +67,7 @@ sections:
   - id: multi_developer
     template: 16_multi_developer.md.j2
     description: "Multi-developer/Agent collaboration protocol"
-    condition: "config.multi_developer.enabled"
+    condition: "config.role_context.enabled"
 
   - id: prompt_engineering
     template: 17_prompt_engineering.md.j2

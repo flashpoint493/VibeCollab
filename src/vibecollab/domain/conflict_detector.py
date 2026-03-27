@@ -20,21 +20,26 @@ USE_EMOJI = not is_windows_gbk()
 EMOJI_MAP = _COMPAT_EMOJI
 
 
-
 class ConflictType:
     """Conflict type enum"""
-    FILE = "file"              # File conflict
-    TASK = "task"              # Task conflict
+
+    FILE = "file"  # File conflict
+    TASK = "task"  # Task conflict
     DEPENDENCY = "dependency"  # Dependency conflict
-    NAMING = "naming"          # Naming conflict
+    NAMING = "naming"  # Naming conflict
 
 
 class Conflict:
     """Conflict object"""
 
-    def __init__(self, conflict_type: str, severity: str,
-                 roles: List[str], description: str,
-                 details: Optional[Dict] = None):
+    def __init__(
+        self,
+        conflict_type: str,
+        severity: str,
+        roles: List[str],
+        description: str,
+        details: Optional[Dict] = None,
+    ):
         """
         Initialize conflict object
 
@@ -55,17 +60,17 @@ class Conflict:
     def to_dict(self) -> Dict:
         """Convert to dict format"""
         return {
-            'type': self.type,
-            'severity': self.severity,
-            'roles': self.roles,
-            'description': self.description,
-            'details': self.details,
-            'detected_at': self.detected_at.isoformat()
+            "type": self.type,
+            "severity": self.severity,
+            "roles": self.roles,
+            "description": self.description,
+            "details": self.details,
+            "detected_at": self.detected_at.isoformat(),
         }
 
     def __str__(self) -> str:
         """String representation"""
-        devs = ', '.join(self.roles)
+        devs = ", ".join(self.roles)
         return f"[{self.severity.upper()}] {self.type}: {self.description} (roles: {devs})"
 
 
@@ -82,11 +87,11 @@ class ConflictDetector:
         """
         self.project_root = project_root
         self.config = config
-        self.role_context_config = config.get('multi_developer', {})
+        self.role_context_config = config.get("multi_developer", {})
 
         # Developer directory
-        self.roles_dir = project_root / self.role_context_config.get('context', {}).get(
-            'per_role_dir', 'docs/roles'
+        self.roles_dir = project_root / self.role_context_config.get("context", {}).get(
+            "per_role_dir", "docs/roles"
         )
 
         # Cache
@@ -94,8 +99,9 @@ class ConflictDetector:
         self._collaboration_data = None
         self._git_changed_files = {}
 
-    def detect_all_conflicts(self, target_role: Optional[str] = None,
-                            between_roles: Optional[Tuple[str, str]] = None) -> List[Conflict]:
+    def detect_all_conflicts(
+        self, target_role: Optional[str] = None, between_roles: Optional[Tuple[str, str]] = None
+    ) -> List[Conflict]:
         """
         Detect all types of conflicts
 
@@ -127,7 +133,9 @@ class ConflictDetector:
         else:
             # Detect conflicts among all developers
             devs = list(self._role_contexts.keys())
-            check_pairs = [(devs[i], devs[j]) for i in range(len(devs)) for j in range(i+1, len(devs))]
+            check_pairs = [
+                (devs[i], devs[j]) for i in range(len(devs)) for j in range(i + 1, len(devs))
+            ]
 
         # Execute conflict detection for each type
         for dev1, dev2 in check_pairs:
@@ -146,7 +154,7 @@ class ConflictDetector:
             return
 
         for dev_dir in self.roles_dir.iterdir():
-            if not dev_dir.is_dir() or dev_dir.name.startswith('.'):
+            if not dev_dir.is_dir() or dev_dir.name.startswith("."):
                 continue
 
             developer = dev_dir.name
@@ -154,7 +162,7 @@ class ConflictDetector:
             metadata_file = dev_dir / ".metadata.yaml"
 
             if context_file.exists():
-                context_content = context_file.read_text(encoding='utf-8')
+                context_content = context_file.read_text(encoding="utf-8")
 
                 # Extract key info
                 current_tasks = self._extract_current_tasks(context_content)
@@ -163,31 +171,33 @@ class ConflictDetector:
 
                 metadata = {}
                 if metadata_file.exists():
-                    with open(metadata_file, 'r', encoding='utf-8') as f:
+                    with open(metadata_file, "r", encoding="utf-8") as f:
                         metadata = yaml.safe_load(f) or {}
 
                 self._role_contexts[developer] = {
-                    'tasks': current_tasks,
-                    'recent_work': recent_work,
-                    'issues': issues,
-                    'metadata': metadata,
-                    'raw_content': context_content
+                    "tasks": current_tasks,
+                    "recent_work": recent_work,
+                    "issues": issues,
+                    "metadata": metadata,
+                    "raw_content": context_content,
                 }
 
     def _load_collaboration_data(self):
         """Load collaboration document data"""
-        collab_config = self.role_context_config.get('collaboration', {})
-        collab_file = self.project_root / collab_config.get('file', 'docs/roles/COLLABORATION.md')
+        collab_config = self.role_context_config.get("collaboration", {})
+        collab_file = self.project_root / collab_config.get("file", "docs/roles/COLLABORATION.md")
 
         if not collab_file.exists():
-            self._collaboration_data = {'tasks': {}, 'dependencies': {}}
+            self._collaboration_data = {"tasks": {}, "dependencies": {}}
             return
 
-        content = collab_file.read_text(encoding='utf-8')
+        content = collab_file.read_text(encoding="utf-8")
 
         # Parse task assignment matrix
         tasks = {}
-        task_pattern = r'\| (TASK-[A-Z]+-\d+)[:\s]([^\|]+) \| ([^\|]+) \| ([^\|]*) \| ([^\|]+) \| ([^\|]+) \|'
+        task_pattern = (
+            r"\| (TASK-[A-Z]+-\d+)[:\s]([^\|]+) \| ([^\|]+) \| ([^\|]*) \| ([^\|]+) \| ([^\|]+) \|"
+        )
         for match in re.finditer(task_pattern, content):
             task_id = match.group(1).strip()
             task_name = match.group(2).strip()
@@ -197,23 +207,27 @@ class ConflictDetector:
             dependencies = match.group(6).strip()
 
             tasks[task_id] = {
-                'name': task_name,
-                'owner': owner,
-                'collaborators': [c.strip() for c in collaborators.split(',') if c.strip() and c.strip() != '-'],
-                'status': status,
-                'dependencies': [d.strip() for d in dependencies.split(',') if d.strip() and d.strip() != '-']
+                "name": task_name,
+                "owner": owner,
+                "collaborators": [
+                    c.strip() for c in collaborators.split(",") if c.strip() and c.strip() != "-"
+                ],
+                "status": status,
+                "dependencies": [
+                    d.strip() for d in dependencies.split(",") if d.strip() and d.strip() != "-"
+                ],
             }
 
-        self._collaboration_data = {'tasks': tasks}
+        self._collaboration_data = {"tasks": tasks}
 
     def _load_git_changes(self):
         """Load Git changed files (inferred from each developer's CONTEXT)"""
         # Simplified: extract file paths from the "Recently Completed" section of CONTEXT.md
         for developer, ctx_data in self._role_contexts.items():
-            recent = ctx_data.get('recent_work', '')
+            recent = ctx_data.get("recent_work", "")
 
             # Extract possible file paths (simple regex)
-            file_patterns = re.findall(r'`([^\`]+\.[a-z]{2,4})`', recent)
+            file_patterns = re.findall(r"`([^\`]+\.[a-z]{2,4})`", recent)
             self._git_changed_files[developer] = set(file_patterns)
 
     def _detect_file_conflicts(self, dev1: str, dev2: str) -> List[Conflict]:
@@ -226,13 +240,15 @@ class ConflictDetector:
         common_files = files1 & files2
 
         if common_files:
-            conflicts.append(Conflict(
-                conflict_type=ConflictType.FILE,
-                severity="medium",
-                developers=[dev1, dev2],
-                description="Modified the same files simultaneously",
-                details={'files': list(common_files)}
-            ))
+            conflicts.append(
+                Conflict(
+                    conflict_type=ConflictType.FILE,
+                    severity="medium",
+                    roles=[dev1, dev2],
+                    description="Modified the same files simultaneously",
+                    details={"files": list(common_files)},
+                )
+            )
 
         return conflicts
 
@@ -240,25 +256,27 @@ class ConflictDetector:
         """Detect task conflicts"""
         conflicts = []
 
-        tasks1 = self._role_contexts.get(dev1, {}).get('tasks', [])
-        tasks2 = self._role_contexts.get(dev2, {}).get('tasks', [])
+        tasks1 = self._role_contexts.get(dev1, {}).get("tasks", [])
+        tasks2 = self._role_contexts.get(dev2, {}).get("tasks", [])
 
         # Detect similar task descriptions (simple string matching)
         for task1 in tasks1:
             for task2 in tasks2:
                 similarity = self._calculate_similarity(task1, task2)
                 if similarity > 0.6:  # 60% similarity threshold
-                    conflicts.append(Conflict(
-                        conflict_type=ConflictType.TASK,
-                        severity="high",
-                        developers=[dev1, dev2],
-                        description="Possible duplicate or overlapping tasks",
-                        details={
-                            f'{dev1}_task': task1,
-                            f'{dev2}_task': task2,
-                            'similarity': similarity
-                        }
-                    ))
+                    conflicts.append(
+                        Conflict(
+                            conflict_type=ConflictType.TASK,
+                            severity="high",
+                            roles=[dev1, dev2],
+                            description="Possible duplicate or overlapping tasks",
+                            details={
+                                f"{dev1}_task": task1,
+                                f"{dev2}_task": task2,
+                                "similarity": similarity,
+                            },
+                        )
+                    )
 
         return conflicts
 
@@ -266,12 +284,12 @@ class ConflictDetector:
         """Detect dependency conflicts (circular deps, inconsistent deps)"""
         conflicts = []
 
-        tasks = self._collaboration_data.get('tasks', {})
+        tasks = self._collaboration_data.get("tasks", {})
 
         # Build dependency graph
         dep_graph = defaultdict(set)
         for task_id, task_data in tasks.items():
-            for dep in task_data.get('dependencies', []):
+            for dep in task_data.get("dependencies", []):
                 dep_graph[task_id].add(dep)
 
         # Detect circular dependencies (depth-first search)
@@ -288,14 +306,16 @@ class ConflictDetector:
                         return True
                 elif neighbor in rec_stack:
                     # Found cycle
-                    cycle = path[path.index(neighbor):] + [neighbor]
-                    conflicts.append(Conflict(
-                        conflict_type=ConflictType.DEPENDENCY,
-                        severity="high",
-                        developers=self._get_developers_for_tasks(cycle),
-                        description="Circular dependency detected",
-                        details={'cycle': ' → '.join(cycle)}
-                    ))
+                    cycle = path[path.index(neighbor) :] + [neighbor]
+                    conflicts.append(
+                        Conflict(
+                            conflict_type=ConflictType.DEPENDENCY,
+                            severity="high",
+                            roles=self._get_roles_for_tasks(cycle),
+                            description="Circular dependency detected",
+                            details={"cycle": " → ".join(cycle)},
+                        )
+                    )
                     return True
 
             rec_stack.remove(node)
@@ -312,8 +332,8 @@ class ConflictDetector:
         conflicts = []
 
         # Extract possible names from CONTEXT (simplified)
-        ctx1 = self._role_contexts.get(dev1, {}).get('raw_content', '')
-        ctx2 = self._role_contexts.get(dev2, {}).get('raw_content', '')
+        ctx1 = self._role_contexts.get(dev1, {}).get("raw_content", "")
+        ctx2 = self._role_contexts.get(dev2, {}).get("raw_content", "")
 
         # Extract class/function names from code blocks
         names1 = self._extract_code_names(ctx1)
@@ -322,13 +342,15 @@ class ConflictDetector:
         common_names = names1 & names2
 
         if common_names:
-            conflicts.append(Conflict(
-                conflict_type=ConflictType.NAMING,
-                severity="low",
-                developers=[dev1, dev2],
-                description="Using identical naming",
-                details={'names': list(common_names)}
-            ))
+            conflicts.append(
+                Conflict(
+                    conflict_type=ConflictType.NAMING,
+                    severity="low",
+                    roles=[dev1, dev2],
+                    description="Using identical naming",
+                    details={"names": list(common_names)},
+                )
+            )
 
         return conflicts
 
@@ -340,19 +362,19 @@ class ConflictDetector:
         section = self._extract_section_content(content, "Current Tasks")
 
         # Extract list items
-        lines = section.split('\n')
+        lines = section.split("\n")
         for line in lines:
             line = line.strip()
-            if line.startswith('-') or line.startswith('*'):
-                task = line.lstrip('-*').strip()
-                if task and not task.startswith('('):
+            if line.startswith("-") or line.startswith("*"):
+                task = line.lstrip("-*").strip()
+                if task and not task.startswith("("):
                     tasks.append(task)
 
         return tasks
 
     def _extract_section_content(self, content: str, section_header: str) -> str:
         """Extract content of a specified section from Markdown"""
-        pattern = rf'##\s+{re.escape(section_header)}\s*\n(.*?)(?=\n##|\Z)'
+        pattern = rf"##\s+{re.escape(section_header)}\s*\n(.*?)(?=\n##|\Z)"
         match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
 
         if match:
@@ -364,15 +386,15 @@ class ConflictDetector:
         names = set()
 
         # Extract code blocks
-        code_blocks = re.findall(r'```[a-z]*\n(.*?)\n```', content, re.DOTALL)
+        code_blocks = re.findall(r"```[a-z]*\n(.*?)\n```", content, re.DOTALL)
 
         for code in code_blocks:
             # Extract class names (class ClassName)
-            class_names = re.findall(r'class\s+([A-Z][a-zA-Z0-9_]*)', code)
+            class_names = re.findall(r"class\s+([A-Z][a-zA-Z0-9_]*)", code)
             names.update(class_names)
 
             # Extract function names (def function_name or function functionName)
-            func_names = re.findall(r'(?:def|function)\s+([a-z_][a-zA-Z0-9_]*)', code)
+            func_names = re.findall(r"(?:def|function)\s+([a-z_][a-zA-Z0-9_]*)", code)
             names.update(func_names)
 
         return names
@@ -383,8 +405,8 @@ class ConflictDetector:
             return 0.0
 
         # Convert to lowercase and tokenize
-        words1 = set(re.findall(r'\w+', str1.lower()))
-        words2 = set(re.findall(r'\w+', str2.lower()))
+        words1 = set(re.findall(r"\w+", str1.lower()))
+        words2 = set(re.findall(r"\w+", str2.lower()))
 
         if not words1 or not words2:
             return 0.0
@@ -395,14 +417,14 @@ class ConflictDetector:
 
         return len(intersection) / len(union)
 
-    def _get_developers_for_tasks(self, task_ids: List[str]) -> List[str]:
+    def _get_roles_for_tasks(self, task_ids: List[str]) -> List[str]:
         """Get developers associated with tasks"""
-        tasks = self._collaboration_data.get('tasks', {})
+        tasks = self._collaboration_data.get("tasks", {})
         developers = set()
 
         for task_id in task_ids:
             task = tasks.get(task_id, {})
-            owner = task.get('owner', '')
+            owner = task.get("owner", "")
             if owner:
                 developers.add(owner)
 
@@ -430,11 +452,11 @@ class ConflictDetector:
         for conflict in conflicts:
             by_severity[conflict.severity].append(conflict)
 
-        severity_order = ['high', 'medium', 'low']
+        severity_order = ["high", "medium", "low"]
         severity_icons = {
-            'high': EMOJI_MAP['high'],
-            'medium': EMOJI_MAP['medium'],
-            'low': EMOJI_MAP['low']
+            "high": EMOJI_MAP["high"],
+            "medium": EMOJI_MAP["medium"],
+            "low": EMOJI_MAP["low"],
         }
 
         for severity in severity_order:
@@ -442,13 +464,15 @@ class ConflictDetector:
             if not items:
                 continue
 
-            lines.append(f"\n{severity_icons[severity]} {severity.upper()} priority ({len(items)} items):")
+            lines.append(
+                f"\n{severity_icons[severity]} {severity.upper()} priority ({len(items)} items):"
+            )
             lines.append("-" * 60)
 
             for i, conflict in enumerate(items, 1):
-                devs = ', '.join(conflict.developers)
+                devs = ", ".join(conflict.roles)
                 lines.append(f"{i}. [{conflict.type.upper()}] {conflict.description}")
-                lines.append(f"   Developers: {devs}")
+                lines.append(f"   Roles: {devs}")
 
                 if verbose and conflict.details:
                     lines.append("   Details:")
@@ -463,4 +487,4 @@ class ConflictDetector:
         lines.append("  2. Update COLLABORATION.md to record collaboration decisions")
         lines.append("  3. Consider task reassignment or merging")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)

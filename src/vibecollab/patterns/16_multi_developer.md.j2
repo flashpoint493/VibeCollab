@@ -1,4 +1,4 @@
-{%- set md = multi_developer if multi_developer else {} -%}
+{%- set md = role_context if role_context else multi_developer if multi_developer else {} -%}
 {%- set identity_cfg = md.get('identity', {}) -%}
 {%- set context_cfg = md.get('context', {}) -%}
 {%- set collab_cfg = md.get('collaboration', {}) -%}
@@ -8,8 +8,8 @@
 {%- set normalize = identity_cfg.get('normalize', True) -%}
 {%- set agg_file = context_cfg.get('aggregation_file', 'docs/CONTEXT.md') -%}
 {%- set auto_sync = context_cfg.get('auto_sync', True) -%}
-{%- set collab_file = collab_cfg.get('file', 'docs/developers/COLLABORATION.md') -%}
-# X. Multi-Developer/Agent Collaboration Protocol
+{%- set collab_file = collab_cfg.get('file', 'docs/roles/COLLABORATION.md') -%}
+# X. Multi-Role/Agent Collaboration Protocol
 
 > **v0.5.0+ supports multiple developers or AI Agents collaborating on the same project**
 
@@ -50,7 +50,7 @@ project/
             +-- .metadata.yaml
 ```
 
-## 10.3 Developer Identity Detection
+## 10.3 Role Identity Detection
 
 The system automatically identifies developer identity through the following strategies:
 
@@ -64,7 +64,7 @@ The system automatically identifies developer identity through the following str
 
 **Use CLI to check current identity**:
 ```bash
-vibecollab dev whoami
+vibecollab role whoami
 ```
 
 ## 10.4 Context Management
@@ -80,7 +80,7 @@ Each developer maintains their own `CONTEXT.md`, recording:
 **Update command**:
 ```bash
 # Manually update timestamp (usually auto-executed at dialogue end)
-vibecollab dev sync
+vibecollab role sync
 ```
 
 ### 10.4.2 Global Context Aggregation
@@ -93,11 +93,11 @@ The system automatically aggregates all developer contexts into a global view (`
   - Each developer's work progress
   - Cross-developer dependencies
   - Global technical debt
-- **Update timing**: {{ 'Auto-updated at dialogue end' if auto_sync else 'Manual via `vibecollab dev sync`' }}
+- **Update timing**: {{ 'Auto-updated at dialogue end' if auto_sync else 'Manual via `vibecollab role sync`' }}
 
 **Manually trigger aggregation**:
 ```bash
-vibecollab dev sync --aggregate
+vibecollab role sync --aggregate
 ```
 
 ## 10.5 Collaboration Document Management
@@ -136,13 +136,13 @@ vibecollab dev sync --aggregate
 
 ```bash
 # List all developers
-vibecollab dev list
+vibecollab role list
 
 # View specific developer status
-vibecollab dev status dev
+vibecollab role status dev
 
 # Initialize new developer context
-vibecollab dev init --developer qa
+vibecollab role init --developer qa
 ```
 
 ## 10.6 Dialogue Flow Adaptation
@@ -155,7 +155,7 @@ In multi-developer mode, the AI should at dialogue start:
 1. Read global aggregated CONTEXT.md (understand overall status)
 2. Read current developer's CONTEXT.md (understand own progress)
 3. Read COLLABORATION.md (understand collaboration relationships)
-4. Identify current developer identity (vibecollab dev whoami)
+4. Identify current developer identity (vibecollab role whoami)
 5. Confirm this dialogue's goal
 ```
 
@@ -203,13 +203,13 @@ The system detects the following conflict types:
 
 ```bash
 # Detect conflicts between current developer and others
-vibecollab dev conflicts
+vibecollab role conflicts
 
 # Verbose mode (show conflict details)
-vibecollab dev conflicts --verbose
+vibecollab role conflicts --verbose
 
 # Detect conflicts between specific developers
-vibecollab dev conflicts --between dev qa
+vibecollab role conflicts --between dev qa
 ```
 
 ### 10.7.3 Conflict Resolution Flow
@@ -230,30 +230,30 @@ vibecollab dev conflicts --between dev qa
 - [x] Define clear task boundaries, avoid overlapping responsibilities
 - [x] Keep COLLABORATION.md task assignments up to date
 - [x] Use task dependency annotations to avoid circular dependencies
-- [x] Regularly run `vibecollab dev conflicts` checks
+- [x] Regularly run `vibecollab role conflicts` checks
 - [x] Check global CONTEXT.md before major changes to understand others' progress
 
 ## 10.8 CLI Command Reference
 
 ```bash
 # Developer Identity
-vibecollab dev whoami                    # View current developer identity
-vibecollab dev switch <developer>        # Switch to specified developer (v0.5.4+)
-vibecollab dev switch                    # Interactive developer selection (v0.5.4+)
-vibecollab dev switch --clear            # Clear switch, restore default detection (v0.5.4+)
+vibecollab role whoami                    # View current developer identity
+vibecollab role switch <developer>        # Switch to specified developer (v0.5.4+)
+vibecollab role switch                    # Interactive developer selection (v0.5.4+)
+vibecollab role switch --clear            # Clear switch, restore default detection (v0.5.4+)
 
 # Developer Management
-vibecollab dev list                      # List all developers
-vibecollab dev status <developer>        # View developer status
-vibecollab dev init --developer <name>   # Initialize new developer
+vibecollab role list                      # List all developers
+vibecollab role status <developer>        # View developer status
+vibecollab role init --developer <name>   # Initialize new developer
 
 # Context Sync
-vibecollab dev sync                      # Update metadata timestamp
-vibecollab dev sync --aggregate          # Regenerate global aggregation
+vibecollab role sync                      # Update metadata timestamp
+vibecollab role sync --aggregate          # Regenerate global aggregation
 
 # Conflict Detection (v0.5.1+)
-vibecollab dev conflicts                 # Detect conflicts
-vibecollab dev conflicts --verbose       # Detailed conflict report
+vibecollab role conflicts                 # Detect conflicts
+vibecollab role conflicts --verbose       # Detailed conflict report
 
 # AI Human-Machine Interaction (v0.5.8+)
 vibecollab ai ask "question"             # Single-turn AI question (auto-inject project context)
@@ -328,7 +328,7 @@ If the project was originally single-developer, you can migrate smoothly:
 
 ```bash
 # Method 1: Use CLI command
-vibecollab dev migrate
+vibecollab role migrate
 
 # Method 2: Enable in project.yaml
 multi_developer:
@@ -340,7 +340,7 @@ vibecollab generate
 
 After migration:
 - Original `docs/CONTEXT.md` is backed up as `docs/CONTEXT.md.backup`
-- Creates `docs/developers/{developer}/CONTEXT.md`
+- Creates `docs/roles/{developer}/CONTEXT.md`
 - Auto-generates new global aggregated `docs/CONTEXT.md`
 
 ---

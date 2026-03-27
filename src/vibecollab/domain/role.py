@@ -93,7 +93,7 @@ class RoleManager:
 
         # Normalize
         if normalize:
-            role_val = self._normalize_role_name(role_val)
+            developer = self._normalize_role_name(developer)
 
         return role_val
 
@@ -114,7 +114,7 @@ class RoleManager:
         Switch current role identity (persisted to local config file)
 
         Args:
-            developer: Target developer identifier
+            developer: Target role identifier
 
         Returns:
             Whether the switch was successful
@@ -124,7 +124,7 @@ class RoleManager:
 
         # Normalize developer name
         if normalize:
-            role_val = self._normalize_role_name(role_val)
+            developer = self._normalize_role_name(developer)
 
         local_config_path = self.project_root / LOCAL_CONFIG_FILE
 
