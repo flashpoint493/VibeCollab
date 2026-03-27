@@ -171,6 +171,56 @@ vibecollab onboard -d <role>
 6. **Keep CONTEXT fresh** - Update it every session
 7. **Run check regularly** - Ensures protocol compliance
 
+### Development Workflow: Task-Insight Iteration Cycle
+
+The recommended workflow follows a continuous loop of task execution and knowledge accumulation:
+
+```
+Task Execution → Insight Capture → Next Task Planning
+      ↑                                    ↓
+   Knowledge Base ←—— Insight Search ←——|
+```
+
+**Implementation Steps:**
+
+1. **Before starting work**: Run `vibecollab onboard` and search existing Insights for relevant context
+2. **During implementation**: Create task with `vibecollab task create`, execute work, transition to DONE when complete
+3. **After completion**: Capture reusable knowledge with `vibecollab insight add` - include the problem, solution approach, and key learnings
+4. **For next iteration**: Use `vibecollab insight suggest` to discover implicit patterns from recent work, or search the Insight registry for similar scenarios
+5. **Accumulation principle**: Each task completion should yield at least one Insight; this compounds into a searchable knowledge base that accelerates future development
+
+**ROADMAP-Driven Development:**
+
+For milestone-based projects, integrate the Task-Insight cycle with ROADMAP tracking:
+
+```bash
+# View current milestone status
+vibecollab roadmap status
+
+# Create task from ROADMAP item
+vibecollab roadmap task <milestone_id>
+
+# Execute task following the iteration cycle above
+
+# Sync completed work back to ROADMAP
+vibecollab roadmap sync
+```
+
+This ensures every milestone advances both the codebase and the organizational knowledge base simultaneously.
+
+### Command Reference & Discovery
+
+**Explore all available commands:**
+
+```bash
+vibecollab --help              # View all top-level commands
+vibecollab task --help         # Task management options
+vibecollab insight --help      # Insight system commands
+vibecollab roadmap --help      # ROADMAP operations
+```
+
+Use `--help` flags to discover command options and best practices for each subcommand.
+
 ## Common Patterns
 
 ### Pattern 1: Starting Work on a Feature
