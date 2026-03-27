@@ -411,36 +411,50 @@ documentation:
   context_file: docs/CONTEXT.md
   changelog_file: docs/CHANGELOG.md
   decisions_file: docs/DECISIONS.md
-multi_developer:
+role_context:
   enabled: true
-  identity:
-    primary: git_username
-    fallback: system_user
-    normalize: true
+  current_role: dev
   context:
-    per_developer_dir: docs/developers
+    per_role_dir: docs/roles
     global_aggregation: true
     aggregation_file: docs/CONTEXT.md
     metadata_file: .metadata.yaml
     auto_sync: true
   collaboration:
     enabled: true
-    file: docs/developers/COLLABORATION.md
+    file: docs/roles/COLLABORATION.md
     track_dependencies: true
     track_handoffs: true
   dialogue_protocol:
     on_start:
       read_files:
       - docs/CONTEXT.md
-      - docs/developers/{developer}/CONTEXT.md
-      - docs/developers/COLLABORATION.md
+      - docs/roles/{role}/CONTEXT.md
+      - docs/roles/COLLABORATION.md
       - CONTRIBUTING_AI.md
     on_end:
       update_files:
-      - docs/developers/{developer}/CONTEXT.md
+      - docs/roles/{role}/CONTEXT.md
       - docs/CHANGELOG.md
       aggregate_context: true
       git_commit: true
+  role_assignments:
+    - role: dev
+      description: Core development work
+      insights: []
+      preferences: {}
+    - role: insight_collector
+      description: Collect and organize insights
+      insights:
+        - INS-001
+        - INS-002
+        - INS-003
+      preferences:
+        auto_suggest: true
+    - role: architect
+      description: System design and architecture
+      insights: []
+      preferences: {}
 insight:
   enabled: true
 protocol_check:

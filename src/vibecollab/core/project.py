@@ -25,14 +25,14 @@ class Project:
         self.docs_dir = output_dir / "docs"
 
     @classmethod
-    def create(cls, name: str, domain: str, output_dir: Path, multi_dev: bool = False) -> "Project":
+    def create(cls, name: str, domain: str, output_dir: Path, role_based: bool = False) -> "Project":
         """Create a new project
 
         Args:
             name: Project name
             domain: Business domain
             output_dir: Output directory
-            multi_dev: Whether to enable multi-developer mode
+            role_based: Whether to enable multi-developer mode
         """
         tm = TemplateManager()
 
@@ -44,10 +44,10 @@ class Project:
         config["project"]["domain"] = domain
 
         # Enable multi-developer mode
-        if multi_dev:
-            if "multi_developer" not in config:
-                config["multi_developer"] = {}
-            config["multi_developer"]["enabled"] = True
+        if role_based:
+            if "role_context" not in config:
+                config["role_context"] = {}
+            config["role_context"]["enabled"] = True
 
         # Merge domain extension
         try:
@@ -176,10 +176,10 @@ class Project:
         """Create document templates"""
         project_name = self.config.get("project", {}).get("name", "Project")
         today = datetime.now().strftime("%Y-%m-%d")
-        multi_dev_enabled = self.config.get("multi_developer", {}).get("enabled", False)
+        role_based_enabled = self.config.get("role_context", {}).get("enabled", False)
 
         # Multi-developer mode: initialize developer context
-        if multi_dev_enabled:
+        if role_based_enabled:
             from ..domain.developer import ContextAggregator, DeveloperManager
 
             dm = DeveloperManager(self.output_dir, self.config)
@@ -189,7 +189,7 @@ class Project:
             dm.init_developer_context(current_dev)
 
             # Create COLLABORATION.md
-            collab_config = self.config.get('multi_developer', {}).get('collaboration', {})
+            collab_config = self.config.get('role_context', {}).get('collaboration', {})
             collab_file = self.output_dir / collab_config.get('file', 'docs/developers/COLLABORATION.md')
             collab_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -344,7 +344,7 @@ This document records the project's original requirements and requirement change
 """
 
         # Write files
-        if not multi_dev_enabled:
+        if not role_based_enabled:
             # Single developer mode writes CONTEXT.md (multi-dev mode generates via aggregation)
             context_content = f"""# {project_name} Current Context
 
