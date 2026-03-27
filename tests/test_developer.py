@@ -12,18 +12,23 @@ from vibecollab.domain.role import (
     LOCAL_CONFIG_FILE,
     ContextAggregator,
     RoleManager,
-    migrate_to_role_context,
 )
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
-def _base_config(enabled=True, primary="git_username", fallback="system_user",
-                 normalize=True, per_role_dir="docs/roles",
-                 metadata_file=".metadata.yaml",
-                 aggregation_file="docs/CONTEXT.md",
-                 collaboration_file="docs/roles/COLLABORATION.md"):
+
+def _base_config(
+    enabled=True,
+    primary="git_username",
+    fallback="system_user",
+    normalize=True,
+    per_role_dir="docs/roles",
+    metadata_file=".metadata.yaml",
+    aggregation_file="docs/CONTEXT.md",
+    collaboration_file="docs/roles/COLLABORATION.md",
+):
     """Build a minimal usable multi-role config"""
     return {
         "project": {"name": "TestProject", "version": "v1.0.0"},
@@ -68,6 +73,7 @@ def dm(project_dir, config):
 # RoleManager — Initialization
 # ===========================================================================
 
+
 class TestRoleManagerInit:
     def test_enabled_flag(self, project_dir):
         mgr = RoleManager(project_dir, _base_config(enabled=True))
@@ -95,6 +101,7 @@ class TestRoleManagerInit:
 # RoleManager — Name normalization
 # ===========================================================================
 
+
 class TestNormalizeName:
     def test_lowercase(self, dm):
         assert dm._normalize_role_name("Alice") == "alice"
@@ -121,6 +128,7 @@ class TestNormalizeName:
 # ===========================================================================
 # RoleManager — Identity detection
 # ===========================================================================
+
 
 class TestGetCurrentRole:
     def test_local_config_takes_priority(self, project_dir, config):
@@ -176,6 +184,7 @@ class TestGetCurrentRole:
 # RoleManager — Identity source
 # ===========================================================================
 
+
 class TestGetIdentitySource:
     def test_local_switch_source(self, project_dir, config):
         local_cfg = project_dir / LOCAL_CONFIG_FILE
@@ -201,6 +210,7 @@ class TestGetIdentitySource:
 # ===========================================================================
 # RoleManager — switch / clear
 # ===========================================================================
+
 
 class TestSwitchRole:
     def test_switch_creates_local_config(self, dm, project_dir):
@@ -233,8 +243,9 @@ class TestSwitchRole:
 
     def test_clear_preserves_other_keys(self, dm, project_dir):
         local_cfg = project_dir / LOCAL_CONFIG_FILE
-        local_cfg.write_text("current_role: alice\nswitched_at: '2026-01-01'\nextra_key: value\n",
-                             encoding="utf-8")
+        local_cfg.write_text(
+            "current_role: alice\nswitched_at: '2026-01-01'\nextra_key: value\n", encoding="utf-8"
+        )
         dm.clear_switch()
         data = yaml.safe_load(local_cfg.read_text(encoding="utf-8"))
         assert "current_role" not in data
@@ -244,6 +255,7 @@ class TestSwitchRole:
 # ===========================================================================
 # RoleManager — Directories and file paths
 # ===========================================================================
+
 
 class TestPaths:
     @patch("vibecollab.domain.role.RoleManager._get_git_username", return_value="testdev")
@@ -255,12 +267,16 @@ class TestPaths:
         assert dm.get_role_dir() == project_dir / "docs" / "roles" / "testdev"
 
     def test_context_file(self, dm, project_dir):
-        assert dm.get_role_context_file("alice") == \
-               project_dir / "docs" / "roles" / "alice" / "CONTEXT.md"
+        assert (
+            dm.get_role_context_file("alice")
+            == project_dir / "docs" / "roles" / "alice" / "CONTEXT.md"
+        )
 
     def test_metadata_file(self, dm, project_dir):
-        assert dm.get_role_metadata_file("alice") == \
-               project_dir / "docs" / "roles" / "alice" / ".metadata.yaml"
+        assert (
+            dm.get_role_metadata_file("alice")
+            == project_dir / "docs" / "roles" / "alice" / ".metadata.yaml"
+        )
 
     def test_custom_metadata_filename(self, project_dir):
         cfg = _base_config(metadata_file="meta.yml")
@@ -271,6 +287,7 @@ class TestPaths:
 # ===========================================================================
 # RoleManager — List, create, initialize
 # ===========================================================================
+
 
 class TestListAndInit:
     def test_list_empty(self, dm):
@@ -335,6 +352,7 @@ class TestListAndInit:
 # RoleManager — Metadata
 # ===========================================================================
 
+
 class TestMetadata:
     def test_update_metadata_creates(self, dm, project_dir):
         dm.ensure_role_dir("alice")
@@ -372,6 +390,7 @@ class TestMetadata:
 # ===========================================================================
 # ContextAggregator
 # ===========================================================================
+
 
 class TestContextAggregator:
     def test_aggregate_no_roles(self, project_dir, config):
@@ -464,61 +483,9 @@ class TestContextAggregator:
 
 
 # ===========================================================================
-# migrate_to_role_context
-# ===========================================================================
-
-class TestMigrateToMultiRole:
-    @patch("vibecollab.domain.role.RoleManager._get_git_username", return_value="testdev")
-    def test_migrate_auto_role(self, mock_git, project_dir, config):
-        # Prepare single-role CONTEXT.md
-        old_ctx = project_dir / "docs" / "CONTEXT.md"
-        old_ctx.write_text("# Old context\n## 当前任务\n- task1\n", encoding="utf-8")
-        migrate_to_role_context(project_dir, config)
-        # Original file is backed up
-        assert (project_dir / "docs" / "CONTEXT.md.backup").exists()
-        # Role directory created
-        dev_ctx = project_dir / "docs" / "roles" / "testdev" / "CONTEXT.md"
-        assert dev_ctx.exists()
-        assert "Old context" in dev_ctx.read_text(encoding="utf-8")
-        # New global CONTEXT.md has been aggregated
-        new_global = project_dir / "docs" / "CONTEXT.md"
-        assert new_global.exists()
-        assert "testdev" in new_global.read_text(encoding="utf-8")
-
-    def test_migrate_named_role(self, project_dir, config):
-        old_ctx = project_dir / "docs" / "CONTEXT.md"
-        old_ctx.write_text("# Old context\n", encoding="utf-8")
-        migrate_to_role_context(project_dir, config, role_name="alice")
-        dev_ctx = project_dir / "docs" / "roles" / "alice" / "CONTEXT.md"
-        assert dev_ctx.exists()
-
-    def test_migrate_creates_collaboration(self, project_dir, config):
-        (project_dir / "docs" / "CONTEXT.md").write_text("x", encoding="utf-8")
-        migrate_to_role_context(project_dir, config, role_name="alice")
-        collab = project_dir / "docs" / "roles" / "COLLABORATION.md"
-        assert collab.exists()
-        content = collab.read_text(encoding="utf-8")
-        assert "alice" in content
-
-    def test_migrate_no_existing_context(self, project_dir, config):
-        # No old CONTEXT.md should not cause error
-        migrate_to_role_context(project_dir, config, role_name="alice")
-        dev_dir = project_dir / "docs" / "roles" / "alice"
-        assert dev_dir.exists()
-
-    def test_migrate_idempotent(self, project_dir, config):
-        (project_dir / "docs" / "CONTEXT.md").write_text("x", encoding="utf-8")
-        migrate_to_role_context(project_dir, config, role_name="alice")
-        # Second migration should not overwrite existing role CONTEXT
-        dev_ctx = project_dir / "docs" / "roles" / "alice" / "CONTEXT.md"
-        dev_ctx.write_text("custom content", encoding="utf-8")
-        migrate_to_role_context(project_dir, config, role_name="alice")
-        assert "custom content" in dev_ctx.read_text(encoding="utf-8")
-
-
-# ===========================================================================
 # Edge cases
 # ===========================================================================
+
 
 class TestEdgeCases:
     def test_corrupt_local_config(self, project_dir, config):
@@ -565,6 +532,7 @@ class TestEdgeCases:
 # ===========================================================================
 # RoleManager — Tag system extension
 # ===========================================================================
+
 
 class TestRoleTags:
     def test_get_tags_empty(self, dm, project_dir):

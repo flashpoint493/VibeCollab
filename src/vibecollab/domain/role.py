@@ -397,6 +397,10 @@ class ContextAggregator:
         output_file.write_text(content, encoding="utf-8")
         return output_file
 
+    def aggregate(self) -> str:
+        """Generate aggregated context content (returns content string)"""
+        return self._aggregate_content()
+
     def _aggregate_content(self) -> str:
         """Generate aggregated context content"""
         project_name = self.config.get("project", {}).get("name", "Project")
