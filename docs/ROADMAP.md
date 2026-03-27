@@ -467,13 +467,88 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [ ] Sample plan: feature regression (init→generate→check→health→insight chain)
 - [ ] Sample plan: host-driven workflow (onboard→next→prompt loop)
 
+### v0.11.0 - Role-Driven Architecture + Git Hooks + Guards (DECISION-019~022)
+
+> Objective: Implement user-requested features from CCGS analysis (FP-001, FP-002, FP-008, Role Fix)
+
+#### FP-001: Git Hooks Framework
+- [ ] `vibecollab hooks install` — Install hooks to .git/hooks/
+- [ ] `vibecollab hooks uninstall` — Remove hooks
+- [ ] `vibecollab hooks run <type>` — Execute hooks manually
+- [ ] Hook types: pre-commit, pre-push, post-commit
+- [ ] Configurable rules in project.yaml (JSON validity, TODO format, branch protection)
+- [ ] Windows PowerShell + Unix Bash dual support
+
+#### FP-008: Guard Protection Engine
+- [ ] Guard rule engine (pre-action + post-action)
+- [ ] Integrate into `vibecollab check --guards`
+- [ ] MCP `guard_check` tool for file operation interception
+- [ ] Default guards: .meta protection, Library/ protection, Debug.Log cleanup
+- [ ] Configurable severity: block / warn / allow
+
+#### Role Architecture Fix (DECISION-020)
+- [ ] Developer-Role binding in project.yaml
+- [ ] Role permissions: file_patterns, can_create_task_for, can_transition_to
+- [ ] `vibecollab dev` enhanced with role switching
+- [ ] Dynamic skill registration from Insights based on current role
+- [ ] Permission checking in Task operations
+
+#### Integration
+- [ ] Guards + Hooks unified configuration
+- [ ] Role-based audit dimensions
+- [ ] Documentation update (CONTRIBUTING_AI.md, README.md)
+- [ ] 40+ unit tests
+
+### v0.12.0 - Workflows + Templates (FP-004, FP-005)
+
+> Objective: Standardized workflow templates for common development scenarios
+
+#### FP-004: Workflow Integration (DECISION-021)
+- [ ] Pre-built workflow YAMLs in `.vibecollab/workflows/`:
+  - `docs-change.yaml` — Documentation update workflow
+  - `feature-add.yaml` — New feature development workflow
+  - `requirement-review.yaml` — PRD/requirement review workflow
+  - `competitor-analysis.yaml` — Competitive analysis workflow
+- [ ] `vibecollab plan list` — List available workflow plans
+- [ ] `vibecollab plan run <workflow>` — Execute standard workflow
+- [ ] Workflow templates use existing PlanRunner infrastructure
+
+#### FP-005: Document Template Library
+- [ ] `vibecollab template list` — List available templates
+- [ ] `vibecollab template use <template>` — Create document from template
+- [ ] Built-in templates via Pattern Engine:
+  - architecture-decision-record.md.j2
+  - sprint-plan.md.j2
+  - technical-design-document.md.j2
+  - release-checklist.md.j2
+- [ ] User custom templates in `.vibecollab/templates/`
+
+#### FP-015: Insight Derivation Chain (Small Feature)
+- [ ] `derived_from` field in Insight YAML
+- [ ] `vibecollab insight graph --show-derivation` visualization
+- [ ] Automatic derivation detection from task transitions
+
+### v0.13.0 - Insight-First CLI Optimization
+
+> Objective: Strengthen Insight integration into all CLI workflows
+
+- [ ] Optimize skill injection for IDE/Agent to proactively call `vibecollab insight`
+- [ ] `vibecollab onboard` auto-suggest relevant Insights via semantic search
+- [ ] `vibecollab next` prioritize actions based on Insight registry
+- [ ] MCP tools enhancement: insight proactive suggestions
+- [ ] Task creation auto-link Insights with improved matching algorithm
+- [ ] Session summary auto-extract Insight candidates
+
 ### v1.0.0 - Official Release
 
 > Objective: Mark stable version, PyPI + GitHub Release
 
+- [ ] All v0.11.x ~ v0.13.x features completed
+- [ ] Test coverage ≥ 85%
 - [ ] Clean up all .dev0 markers
 - [ ] PyPI v1.0.0 release
 - [ ] GitHub Release v1.0.0
+- [ ] Full documentation refresh
 
 ### ~~v0.9.2(old) - Bootstrap~~ ❌ Cut (DECISION-015)
 > Decision: `bootstrap` insufficient value (already have handwritten CONTRIBUTING_AI.md), `ContextBuilder` refactoring can happen on-demand during MCP development, no separate version needed.
