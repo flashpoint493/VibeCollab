@@ -1,5 +1,5 @@
-# MyProject AI Collaboration Rules
-## LLM Collaboration Protocol v1.0
+# VibeCollab AI Collaboration Rules
+## LLM Collaboration Protocol v0.10.11
 
 ---
 
@@ -1053,7 +1053,7 @@ Before continuing, let's confirm:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1.0 | 2026-03-05 | Initial version |
+| v1.0 | 2026-03-27 | Initial version |
 
 ---
 
@@ -1147,5 +1147,5 @@ vibecollab insight show INS-001
 ---
 
 *This is a living document that records the evolution of human-AI collaboration.*
-*Generated at: 2026-03-05 15:30:20*
+*Generated at: 2026-03-27 12:54:22*
 *The most precious thing is not the result, but the journey of thinking together.*

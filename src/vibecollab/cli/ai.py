@@ -35,15 +35,19 @@ from ..domain.task_manager import TaskManager, TaskStatus
 from ..i18n import _
 
 
-def _log_event(event_log: EventLog, event_type: str, summary: str,
-               actor: str = "cli", payload: dict = None) -> None:
+def _log_event(
+    event_log: EventLog, event_type: str, summary: str, actor: str = "cli", payload: dict = None
+) -> None:
     """Helper: append an Event to the log."""
-    event_log.append(Event(
-        event_type=event_type,
-        summary=summary,
-        actor=actor,
-        payload=payload or {},
-    ))
+    event_log.append(
+        Event(
+            event_type=event_type,
+            summary=summary,
+            actor=actor,
+            payload=payload or {},
+        )
+    )
+
 
 # ---------------------------------------------------------------------------
 # Windows GBK compatibility (imported from shared module)
@@ -124,16 +128,18 @@ def _check_rss_mb() -> float:
     """Get current process RSS (MB). Cross-platform compatible."""
     try:
         import resource
+
         # Unix: resource.getrusage (KB on Linux, bytes on macOS)
         ru = resource.getrusage(resource.RUSAGE_SELF)
         rss_kb = ru.ru_maxrss
         if sys.platform == "darwin":
             return rss_kb / (1024 * 1024)  # macOS: bytes -> MB
         return rss_kb / 1024  # Linux: KB -> MB
-    except ImportError:
+    except (ImportError, AttributeError):
         pass
     try:
         import psutil
+
         return psutil.Process().memory_info().rss / (1024 * 1024)
     except ImportError:
         return 0  # Cannot detect -> no limit
@@ -151,6 +157,7 @@ def _is_pending_solidify(task_mgr: TaskManager) -> bool:
 # ---------------------------------------------------------------------------
 # Project root detection
 # ---------------------------------------------------------------------------
+
 
 def _find_project_root(start: Optional[str] = None) -> Path:
     """Find project.yaml by searching upward from the specified or current directory."""
@@ -185,11 +192,13 @@ def _display_response(resp: LLMResponse, show_usage: bool = False):
     """Format and display LLM response."""
     if resp.ok:
         console.print()
-        console.print(Panel(
-            Markdown(resp.content),
-            title=f"{EMOJI['bot']} AI",
-            border_style="green",
-        ))
+        console.print(
+            Panel(
+                Markdown(resp.content),
+                title=f"{EMOJI['bot']} AI",
+                border_style="green",
+            )
+        )
         if show_usage and resp.usage:
             tokens_in = resp.usage.get("prompt_tokens", resp.usage.get("input_tokens", 0))
             tokens_out = resp.usage.get("completion_tokens", resp.usage.get("output_tokens", 0))
@@ -247,6 +256,7 @@ def _build_system_prompt(project_root: Path, agent_mode: bool = False) -> str:
 # Click command group
 # ---------------------------------------------------------------------------
 
+
 @click.group()
 def ai():
     """[experimental] AI assistant commands -- Human-AI dialogue & Agent autonomous mode
@@ -261,14 +271,18 @@ def ai():
 
 # ===== Human-AI interaction commands =====
 
+
 @ai.command()
 @click.argument("question")
-@click.option("--project", "-p", default=None, help=_("Project root directory (auto-detect by default)"))
+@click.option(
+    "--project", "-p", default=None, help=_("Project root directory (auto-detect by default)")
+)
 @click.option("--no-context", is_flag=True, help=_("Do not inject project context"))
-@click.option("--temperature", "-t", default=0.7, type=float, help=_("Sampling temperature (0.0-1.0)"))
+@click.option(
+    "--temperature", "-t", default=0.7, type=float, help=_("Sampling temperature (0.0-1.0)")
+)
 @click.option("--verbose", "-v", is_flag=True, help=_("Show token usage and details"))
-def ask(question: str, project: Optional[str], no_context: bool,
-        temperature: float, verbose: bool):
+def ask(question: str, project: Optional[str], no_context: bool, temperature: float, verbose: bool):
     """Ask AI a question (single turn, with project context)
 
     Examples:
@@ -299,9 +313,13 @@ def ask(question: str, project: Optional[str], no_context: bool,
 
         # Log to EventLog
         event_log = EventLog(project_root)
-        _log_event(event_log, EventType.CUSTOM,
-                   f"AI ask: {question[:100]}", actor="cli",
-                   payload={"model": resp.model, "question_length": len(question)})
+        _log_event(
+            event_log,
+            EventType.CUSTOM,
+            f"AI ask: {question[:100]}",
+            actor="cli",
+            payload={"model": resp.model, "question_length": len(question)},
+        )
 
     except ImportError as e:
         console.print(f"[red]{EMOJI['err']} {e}[/red]")
@@ -313,7 +331,9 @@ def ask(question: str, project: Optional[str], no_context: bool,
 
 
 @ai.command()
-@click.option("--project", "-p", default=None, help=_("Project root directory (auto-detect by default)"))
+@click.option(
+    "--project", "-p", default=None, help=_("Project root directory (auto-detect by default)")
+)
 @click.option("--no-context", is_flag=True, help=_("Do not inject project context"))
 @click.option("--temperature", "-t", default=0.7, type=float, help=_("Sampling temperature"))
 @click.option("--verbose", "-v", is_flag=True, help=_("Show token usage"))
@@ -376,12 +396,17 @@ def chat(project: Optional[str], no_context: bool, temperature: float, verbose: 
     # Log to EventLog
     if turn_count > 0:
         event_log = EventLog(project_root)
-        _log_event(event_log, EventType.CUSTOM,
-                   f"AI chat session: {turn_count} turns", actor="cli",
-                   payload={"turns": turn_count, "model": client.config.model})
+        _log_event(
+            event_log,
+            EventType.CUSTOM,
+            f"AI chat session: {turn_count} turns",
+            actor="cli",
+            payload={"turns": turn_count, "model": client.config.model},
+        )
 
 
 # ===== Agent autonomous commands =====
+
 
 @ai.group()
 def agent():
@@ -406,26 +431,31 @@ def plan(project: Optional[str], verbose: bool):
     client = _ensure_llm_configured()
     project_root = _find_project_root(project)
 
-    console.print(Panel.fit(
-        f"[bold]Agent Plan Mode[/bold]\nProject: {project_root}",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold]Agent Plan Mode[/bold]\nProject: {project_root}",
+            border_style="cyan",
+        )
+    )
 
     system = _build_system_prompt(project_root, agent_mode=True)
     messages = [
         Message(role="system", content=system),
-        Message(role="user", content=(
-            "Analyze the current project state and generate a detailed action plan. "
-            "List the top 3-5 highest priority tasks, with concrete steps for each. "
-            "Do NOT execute anything — only plan.\n\n"
-            "Output format:\n"
-            "## Action Plan\n"
-            "### Priority 1: [task description]\n"
-            "- Step 1: ...\n"
-            "- Step 2: ...\n"
-            "- Expected outcome: ...\n\n"
-            "### Priority 2: ...\n"
-        )),
+        Message(
+            role="user",
+            content=(
+                "Analyze the current project state and generate a detailed action plan. "
+                "List the top 3-5 highest priority tasks, with concrete steps for each. "
+                "Do NOT execute anything — only plan.\n\n"
+                "Output format:\n"
+                "## Action Plan\n"
+                "### Priority 1: [task description]\n"
+                "- Step 1: ...\n"
+                "- Step 2: ...\n"
+                "- Expected outcome: ...\n\n"
+                "### Priority 2: ...\n"
+            ),
+        ),
     ]
 
     try:
@@ -436,9 +466,13 @@ def plan(project: Optional[str], verbose: bool):
 
         # Log to EventLog
         event_log = EventLog(project_root)
-        _log_event(event_log, EventType.CUSTOM,
-                   "Agent plan: generated action plan", actor="agent",
-                   payload={"model": resp.model})
+        _log_event(
+            event_log,
+            EventType.CUSTOM,
+            "Agent plan: generated action plan",
+            actor="agent",
+            payload={"model": resp.model},
+        )
 
     except (ImportError, RuntimeError, ValueError) as e:
         console.print(f"[red]{EMOJI['err']} {e}[/red]")
@@ -468,12 +502,14 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
     event_log = EventLog(project_root)
     task_mgr = TaskManager(project_root, event_log)
 
-    console.print(Panel.fit(
-        f"[bold]Agent Run Mode[/bold] (single cycle)\n"
-        f"Project: {project_root}\n"
-        f"Dry-run: {'Yes' if dry_run else 'No'}",
-        border_style="yellow",
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold]Agent Run Mode[/bold] (single cycle)\n"
+            f"Project: {project_root}\n"
+            f"Dry-run: {'Yes' if dry_run else 'No'}",
+            border_style="yellow",
+        )
+    )
 
     # Gate: pending solidify check
     if _is_pending_solidify(task_mgr):
@@ -496,15 +532,15 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
         "3. Generate a concrete execution plan with specific file changes\n\n"
         "Output as JSON:\n"
         "```json\n"
-        '{\n'
+        "{\n"
         '  "task_summary": "brief description",\n'
         '  "priority": "high/medium/low",\n'
         '  "steps": [\n'
         '    {"action": "create/modify/test/document", "target": "file/path", "description": "what to do"}\n'
-        '  ],\n'
+        "  ],\n"
         '  "expected_outcome": "what success looks like",\n'
         '  "risks": ["potential issues"]\n'
-        '}\n'
+        "}\n"
         "```"
     )
 
@@ -521,15 +557,21 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
             console.print(f"[red]{EMOJI['err']} Plan phase failed: empty response[/red]")
             raise SystemExit(1)
 
-        console.print(Panel(
-            Markdown(plan_resp.content),
-            title="Action Plan",
-            border_style="cyan",
-        ))
+        console.print(
+            Panel(
+                Markdown(plan_resp.content),
+                title="Action Plan",
+                border_style="cyan",
+            )
+        )
 
-        _log_event(event_log, EventType.CUSTOM,
-                   "Agent run: plan generated", actor="agent",
-                   payload={"model": plan_resp.model, "dry_run": dry_run})
+        _log_event(
+            event_log,
+            EventType.CUSTOM,
+            "Agent run: plan generated",
+            actor="agent",
+            payload={"model": plan_resp.model, "dry_run": dry_run},
+        )
 
         if dry_run:
             console.print(f"\n[yellow]{EMOJI['warn']} Dry-run mode: no changes executed[/yellow]")
@@ -538,41 +580,52 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
         # Phase 2: EXECUTE (let LLM generate specific code changes)
         console.print("\n[cyan]Phase 2: EXECUTE[/cyan]")
         messages.append(Message(role="assistant", content=plan_resp.content))
-        messages.append(Message(role="user", content=(
-            "Phase 2: EXECUTE. Based on your plan, generate the specific code changes.\n\n"
-            "For each file change, output a JSON code block:\n"
-            "```json\n"
-            '{"file": "relative/path", "action": "create|modify|delete", '
-            '"content": "full file content"}\n'
-            "```\n\n"
-            "Rules:\n"
-            "- Output one JSON block per file change\n"
-            "- For 'modify', include the COMPLETE new file content, not a diff\n"
-            "- Generate ACTUAL code, not placeholders\n"
-            "- Follow the project's coding conventions"
-        )))
+        messages.append(
+            Message(
+                role="user",
+                content=(
+                    "Phase 2: EXECUTE. Based on your plan, generate the specific code changes.\n\n"
+                    "For each file change, output a JSON code block:\n"
+                    "```json\n"
+                    '{"file": "relative/path", "action": "create|modify|delete", '
+                    '"content": "full file content"}\n'
+                    "```\n\n"
+                    "Rules:\n"
+                    "- Output one JSON block per file change\n"
+                    "- For 'modify', include the COMPLETE new file content, not a diff\n"
+                    "- Generate ACTUAL code, not placeholders\n"
+                    "- Follow the project's coding conventions"
+                ),
+            )
+        )
 
         console.print(f"[cyan]{EMOJI['think']} Phase 2: Generating code changes...[/cyan]")
         exec_resp = client.chat(messages, temperature=0.2)
 
         if exec_resp.ok:
-            console.print(Panel(
-                Markdown(exec_resp.content),
-                title="Generated Changes",
-                border_style="yellow",
-            ))
+            console.print(
+                Panel(
+                    Markdown(exec_resp.content),
+                    title="Generated Changes",
+                    border_style="yellow",
+                )
+            )
 
         # Phase 3: APPLY + TEST + COMMIT
         console.print("\n[cyan]Phase 3: APPLY + TEST + COMMIT[/cyan]")
 
         from ..agent.executor import AgentExecutor
+
         executor = AgentExecutor(project_root)
         changes = executor.parse_changes(exec_resp.content if exec_resp.ok else "")
 
         if not changes:
-            console.print(f"[yellow]{EMOJI['warn']} No file changes parsed from LLM output[/yellow]")
-            _log_event(event_log, EventType.CUSTOM,
-                       "Agent run: no parseable changes", actor="agent")
+            console.print(
+                f"[yellow]{EMOJI['warn']} No file changes parsed from LLM output[/yellow]"
+            )
+            _log_event(
+                event_log, EventType.CUSTOM, "Agent run: no parseable changes", actor="agent"
+            )
             return
 
         console.print(f"  Parsed {len(changes)} file change(s):")
@@ -584,6 +637,7 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
         cfg_path = project_root / "project.yaml"
         if cfg_path.exists():
             import yaml
+
             with open(cfg_path, "r", encoding="utf-8") as f:
                 proj_cfg = yaml.safe_load(f) or {}
             qa = proj_cfg.get("quick_acceptance", {})
@@ -605,9 +659,13 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
             if result.git_committed:
                 console.print(f"  {EMOJI['ok']} Git commit: {result.git_hash}")
 
-            _log_event(event_log, EventType.CUSTOM,
-                       "Agent run: cycle completed successfully", actor="agent",
-                       payload=result.to_dict())
+            _log_event(
+                event_log,
+                EventType.CUSTOM,
+                "Agent run: cycle completed successfully",
+                actor="agent",
+                payload=result.to_dict(),
+            )
         else:
             console.print(f"\n[red]{EMOJI['err']} Cycle execution failed[/red]")
             for err in result.errors:
@@ -615,21 +673,30 @@ def run(project: Optional[str], dry_run: bool, verbose: bool):
             if result.rollback_performed:
                 console.print(f"  [yellow]{EMOJI['warn']} All changes rolled back[/yellow]")
 
-            _log_event(event_log, EventType.VALIDATION_FAILED,
-                       "Agent run: execution failed", actor="agent",
-                       payload=result.to_dict())
+            _log_event(
+                event_log,
+                EventType.VALIDATION_FAILED,
+                "Agent run: execution failed",
+                actor="agent",
+                payload=result.to_dict(),
+            )
 
     except (ImportError, RuntimeError, ValueError) as e:
         console.print(f"[red]{EMOJI['err']} Agent run failed: {e}[/red]")
-        _log_event(event_log, EventType.VALIDATION_FAILED,
-                   f"Agent run failed: {str(e)[:200]}", actor="agent")
+        _log_event(
+            event_log,
+            EventType.VALIDATION_FAILED,
+            f"Agent run failed: {str(e)[:200]}",
+            actor="agent",
+        )
         raise SystemExit(1)
 
 
 @agent.command()
 @click.option("--project", "-p", default=None, help=_("Project root directory"))
-@click.option("--max-cycles", "-n", default=None, type=int,
-              help=f"Max cycles (default: {DEFAULT_MAX_CYCLES})")
+@click.option(
+    "--max-cycles", "-n", default=None, type=int, help=f"Max cycles (default: {DEFAULT_MAX_CYCLES})"
+)
 @click.option("--verbose", "-v", is_flag=True, help=_("Verbose output"))
 def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
     """Long-running Agent service -- loop Plan -> Execute -> Solidify
@@ -667,19 +734,24 @@ def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
     event_log = EventLog(project_root)
     task_mgr = TaskManager(project_root, event_log)
 
-    console.print(Panel.fit(
-        f"[bold]Agent Serve Mode[/bold] (long-running)\n"
-        f"Project: {project_root}\n"
-        f"Max cycles: {agent_cfg['max_cycles']}\n"
-        f"PID: {os.getpid()}\n"
-        f"Model: {client.config.model} ({client.config.provider})",
-        border_style="green",
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold]Agent Serve Mode[/bold] (long-running)\n"
+            f"Project: {project_root}\n"
+            f"Max cycles: {agent_cfg['max_cycles']}\n"
+            f"PID: {os.getpid()}\n"
+            f"Model: {client.config.model} ({client.config.provider})",
+            border_style="green",
+        )
+    )
 
-    _log_event(event_log, EventType.CUSTOM,
-               f"Agent serve started (max_cycles={agent_cfg['max_cycles']})",
-               actor="agent",
-               payload={"pid": os.getpid(), "config": agent_cfg})
+    _log_event(
+        event_log,
+        EventType.CUSTOM,
+        f"Agent serve started (max_cycles={agent_cfg['max_cycles']})",
+        actor="agent",
+        payload={"pid": os.getpid(), "config": agent_cfg},
+    )
 
     cycle_count = 0
     consecutive_failures = 0
@@ -725,31 +797,33 @@ def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
                     f"[red]{EMOJI['stop']} Circuit breaker triggered: {consecutive_failures} consecutive failures "
                     f"-- waiting {agent_cfg['max_sleep']}s before retry[/red]"
                 )
-                _log_event(event_log, EventType.VALIDATION_FAILED,
-                           f"Circuit breaker: {consecutive_failures} consecutive failures",
-                           actor="agent")
+                _log_event(
+                    event_log,
+                    EventType.VALIDATION_FAILED,
+                    f"Circuit breaker: {consecutive_failures} consecutive failures",
+                    actor="agent",
+                )
                 time.sleep(agent_cfg["max_sleep"])
                 consecutive_failures = 0  # Reset, give another chance
                 continue
 
             # Execute cycle
-            ok = _execute_agent_cycle(
-                client, project_root, event_log, task_mgr, verbose
-            )
+            ok = _execute_agent_cycle(client, project_root, event_log, task_mgr, verbose)
 
             cycle_duration = time.time() - cycle_start
 
             if ok:
                 consecutive_failures = 0
                 current_sleep = agent_cfg["min_sleep"]
-                console.print(f"[green]{EMOJI['ok']} Cycle completed ({cycle_duration:.1f}s)[/green]")
+                console.print(
+                    f"[green]{EMOJI['ok']} Cycle completed ({cycle_duration:.1f}s)[/green]"
+                )
             else:
                 consecutive_failures += 1
                 # Adaptive backoff: failure or too fast -> exponential backoff
                 if cycle_duration < agent_cfg["idle_threshold"] or not ok:
                     current_sleep = min(
-                        agent_cfg["max_sleep"],
-                        max(agent_cfg["min_sleep"], current_sleep * 2)
+                        agent_cfg["max_sleep"], max(agent_cfg["min_sleep"], current_sleep * 2)
                     )
                 console.print(
                     f"[yellow]{EMOJI['warn']} Cycle failed "
@@ -763,17 +837,22 @@ def serve(project: Optional[str], max_cycles: Optional[int], verbose: bool):
             time.sleep(sleep_time)
 
     except KeyboardInterrupt:
-        console.print(f"\n\n{EMOJI['stop']} Agent interrupted by user (completed {cycle_count} cycles)")
+        console.print(
+            f"\n\n{EMOJI['stop']} Agent interrupted by user (completed {cycle_count} cycles)"
+        )
 
     finally:
         _release_lock(lock_path)
-        _log_event(event_log, EventType.CUSTOM,
-                   f"Agent serve stopped (cycles={cycle_count})",
-                   actor="agent",
-                   payload={
-                       "cycles_completed": cycle_count,
-                       "consecutive_failures": consecutive_failures,
-                   })
+        _log_event(
+            event_log,
+            EventType.CUSTOM,
+            f"Agent serve stopped (cycles={cycle_count})",
+            actor="agent",
+            payload={
+                "cycles_completed": cycle_count,
+                "consecutive_failures": consecutive_failures,
+            },
+        )
         console.print(f"\n{EMOJI['ok']} Agent service ended. Total {cycle_count} cycle(s).")
 
 
@@ -794,11 +873,14 @@ def _execute_agent_cycle(
         # Phase 1: PLAN
         messages = [
             Message(role="system", content=system),
-            Message(role="user", content=(
-                "Execute one development cycle. Phase 1: ASSESS and PLAN.\n"
-                "Identify the single most important task to advance the project.\n"
-                "Output a concise plan with specific actions."
-            )),
+            Message(
+                role="user",
+                content=(
+                    "Execute one development cycle. Phase 1: ASSESS and PLAN.\n"
+                    "Identify the single most important task to advance the project.\n"
+                    "Output a concise plan with specific actions."
+                ),
+            ),
         ]
 
         plan_resp = client.chat(messages, temperature=0.3)
@@ -806,41 +888,54 @@ def _execute_agent_cycle(
             return False
 
         if verbose:
-            console.print(Panel(
-                Markdown(plan_resp.content),
-                title="Plan", border_style="cyan",
-            ))
+            console.print(
+                Panel(
+                    Markdown(plan_resp.content),
+                    title="Plan",
+                    border_style="cyan",
+                )
+            )
 
         # Phase 2: EXECUTE
         messages.append(Message(role="assistant", content=plan_resp.content))
-        messages.append(Message(role="user", content=(
-            "Phase 2: EXECUTE. Generate the specific changes.\n"
-            "For each file, output a JSON code block:\n"
-            "```json\n"
-            '{"file": "relative/path", "action": "create|modify|delete", '
-            '"content": "full file content"}\n'
-            "```\n"
-            "Output ACTUAL code, not placeholders. One JSON block per file."
-        )))
+        messages.append(
+            Message(
+                role="user",
+                content=(
+                    "Phase 2: EXECUTE. Generate the specific changes.\n"
+                    "For each file, output a JSON code block:\n"
+                    "```json\n"
+                    '{"file": "relative/path", "action": "create|modify|delete", '
+                    '"content": "full file content"}\n'
+                    "```\n"
+                    "Output ACTUAL code, not placeholders. One JSON block per file."
+                ),
+            )
+        )
 
         exec_resp = client.chat(messages, temperature=0.2)
         if not exec_resp.ok:
             return False
 
         if verbose:
-            console.print(Panel(
-                Markdown(exec_resp.content),
-                title="Execute", border_style="yellow",
-            ))
+            console.print(
+                Panel(
+                    Markdown(exec_resp.content),
+                    title="Execute",
+                    border_style="yellow",
+                )
+            )
 
         # Phase 3: APPLY + TEST + COMMIT
         from ..agent.executor import AgentExecutor
+
         executor = AgentExecutor(project_root)
         changes = executor.parse_changes(exec_resp.content)
 
         if not changes:
-            _log_event(event_log, EventType.CUSTOM,
-                       "Agent cycle: no parseable changes", actor="agent")
+            _log_event(
+                event_log, EventType.CUSTOM, "Agent cycle: no parseable changes", actor="agent"
+            )
             return True  # Not a failure, just no executable changes
 
         # Get test command
@@ -848,6 +943,7 @@ def _execute_agent_cycle(
         cfg_path = project_root / "project.yaml"
         if cfg_path.exists():
             import yaml
+
             with open(cfg_path, "r", encoding="utf-8") as f:
                 proj_cfg = yaml.safe_load(f) or {}
             qa = proj_cfg.get("quick_acceptance", {})
@@ -860,13 +956,16 @@ def _execute_agent_cycle(
             test_command=test_cmd,
         )
 
-        _log_event(event_log, EventType.CUSTOM,
-                   f"Agent cycle {'completed' if result.success else 'failed'}",
-                   actor="agent", payload=result.to_dict())
+        _log_event(
+            event_log,
+            EventType.CUSTOM,
+            f"Agent cycle {'completed' if result.success else 'failed'}",
+            actor="agent",
+            payload=result.to_dict(),
+        )
 
         if verbose and result.success:
-            console.print(f"  Applied: {len(result.changes_applied)} files, "
-                          f"git: {result.git_hash}")
+            console.print(f"  Applied: {len(result.changes_applied)} files, git: {result.git_hash}")
 
         return result.success
 
@@ -888,10 +987,12 @@ def status(project: Optional[str]):
     vc_dir = project_root / ".vibecollab"
     lock_path = vc_dir / PID_LOCK_FILE
 
-    console.print(Panel.fit(
-        f"[bold]Agent Status[/bold]\nProject: {project_root}",
-        border_style="blue",
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold]Agent Status[/bold]\nProject: {project_root}",
+            border_style="blue",
+        )
+    )
 
     # Check PID lock
     if lock_path.exists():
@@ -901,7 +1002,9 @@ def status(project: Optional[str]):
                 os.kill(pid, 0)
                 console.print(f"[green]{EMOJI['ok']} Agent is running (PID: {pid})[/green]")
             except OSError:
-                console.print(f"[yellow]{EMOJI['warn']} Stale lock file (PID: {pid} has exited)[/yellow]")
+                console.print(
+                    f"[yellow]{EMOJI['warn']} Stale lock file (PID: {pid} has exited)[/yellow]"
+                )
         except ValueError:
             console.print(f"[yellow]{EMOJI['warn']} Invalid lock file[/yellow]")
     else:
@@ -937,10 +1040,7 @@ def status(project: Optional[str]):
             if recent:
                 console.print("\n[bold]Recent Events:[/bold]")
                 for evt in recent:
-                    console.print(
-                        f"  [{evt.event_type}] {evt.summary} "
-                        f"({evt.timestamp[:19]})"
-                    )
+                    console.print(f"  [{evt.event_type}] {evt.summary} ({evt.timestamp[:19]})")
         except Exception:
             pass
 

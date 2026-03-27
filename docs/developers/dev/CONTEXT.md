@@ -1,36 +1,31 @@
 # VibeCollab - DEV Role Context
 
 ## Current Status
-- **Version**: v0.10.3-dev
+- **Version**: v0.10.10
 - **Role**: DEV (Development)
-- **Last updated**: 2026-03-05
+- **Last updated**: 2026-03-26
 
 ## Current Tasks
-- **DECISION-017**: v0.10.x release engineering plan confirmed (S-level)
-- **v0.10.3**: Git history rewrite + Repository facade — DONE
-- **v0.11.0**: Developer → Role refactoring — IN PROGRESS
-- **Coverage**: 89% (1409 tests passed) — exceeds 85% threshold
+- **v0.10.x release engineering**: continue external-project QA verification and repo polish
+- **Protocol readiness**: keep onboarding/check flows accurate for real projects
+- **Documentation maintenance**: keep generated files and project metadata in sync
 
 ## Recently Completed
-- ✅ **Git commit rewrite**: All 220 commits rewritten to English Conventional Commits format via `git filter-repo`
-- ✅ **MCP path fix**: CodeBuddy MCP config path corrected from `.codebuddy/mcp.json` to `.mcp.json`
-- ✅ **Git history cleanup**: `git filter-repo` removed `.vibecollab/`, `.cursor/`, `.codebuddy/` from all commits
-- ✅ **`.gitignore` update**: Added ignore rules for all AI IDE config dirs
-- ✅ **`vibecollab mcp inject` fix**: Updated `mcp.py` + tests + docs for new CodeBuddy path
-- ✅ **Insight cache translation**: 16 Insight YAML files translated to English
-- ✅ **Template translation (v0.10.3)**: `default.project.yaml`, 3 domain extensions
-- ✅ **Docs English translation (v0.10.2)**: All 10 docs/ files translated
-- ✅ **Code i18n (v0.10.1)**: Full English translation of 96 files
+- ✅ **Environment verification**: confirmed Python 3.10.10 meets VibeCollab requirement
+- ✅ **Local dev environment**: created `.venv/` and installed current repo as editable package
+- ✅ **Protocol validation**: ran `vibecollab onboard` and `vibecollab check`, both passed
+- ✅ **Project metadata sync**: corrected `project.yaml` placeholder values to real VibeCollab identity
+- ✅ **Generated docs refresh**: regenerated `CONTRIBUTING_AI.md` / refreshed `llms.txt`
 
 ## Next Steps
-1. **v0.11.0** — Developer → Role refactoring (directories, metadata, CLI integration)
-2. **v1.0.0** — Official release
+1. **External QA** — Run `init` / `generate` / `check` on 3+ real external projects
+2. **UX verification** — Validate rich panel rendering on Windows PowerShell/CMD/WSL
+3. **Output quality** — Verify `onboard` / `next` behavior on large real-world repositories
 
 ## Technical Debt
-- cli_insight.py / cli_task.py not yet migrated to Rich output style (deferred to v1.0)
-- `vibecollab index --watch` file change auto-rebuild indexing (deferred)
-- README.zh-CN.md project structure section has outdated module layout
-- MCP `onboard` tool call timeout — needs investigation after IDE restart
+- `events.jsonl` Windows file lock issue still needs investigation
+- MCP `onboard` tool call timeout after IDE restart still needs investigation
+- `README.zh-CN.md` project structure section is outdated
 
 ---
 *This file is maintained by the DEV role agent*
