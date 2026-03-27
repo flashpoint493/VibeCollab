@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Completed (v0.10.13)
+- **v0.10.13 Release**: Finalized v0.10.x release cycle
+  - PyPI release v0.10.13 with role-based architecture
+  - Updated documentation (skill.md with Task-Insight best practices)
+  - Verified CI/CD pipeline (99.7% test pass rate)
+  - All commit messages standardized to English
+
 ### Planned (v0.11.0)
 - **FP-001**: Git Hooks Framework - Pre-commit/pre-push/post-commit hooks with configurable rules
 - **FP-008**: Guard Protection Engine - Pre/post-action protection rules integrated with check command
