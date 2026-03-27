@@ -103,8 +103,8 @@ def main(lang):
 )
 @click.option("--force", "-f", is_flag=True, help=_("Force overwrite existing directory"))
 @click.option("--no-git", is_flag=True, help=_("Skip automatic Git initialization"))
-@click.option("--multi-dev", is_flag=True, help=_("Enable multi-developer mode"))
-def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_dev: bool):
+@click.option("--role-based", is_flag=True, help=_("Enable role-based mode"))
+def init(name: str, domain: str, output: str, force: bool, no_git: bool, role_based: bool):
     """Initialize a new project
 
     Examples:
@@ -115,7 +115,7 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
 
         vibecollab init -n "GameProject" -d game --force
 
-        vibecollab init -n "TeamProject" --multi-dev
+        vibecollab init -n "TeamProject" --role-based
     """
     output_path = Path(output)
 
@@ -129,7 +129,7 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
     with console.status(f"[bold green]{_('Initializing project {name}...').format(name=name)}"):
         try:
             project = Project.create(
-                name=name, domain=domain, output_dir=output_path, multi_dev=multi_dev
+                name=name, domain=domain, output_dir=output_path, role_based=role_based
             )
             project.generate_all(auto_init_git=not no_git)
         except PermissionError as e:
@@ -145,7 +145,7 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
             raise SystemExit(1)
 
     console.print()
-    mode_text = _("multi-developer") if multi_dev else _("single-developer")
+    mode_text = _("role-based") if role_based else _("single-role")
     console.print(
         Panel.fit(
             f"[bold green]{EMOJI_MAP['success']} {_('Project {name} initialized!').format(name=name)}[/bold green]\n\n"
@@ -163,10 +163,10 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
     table.add_row("llms.txt", _("Project context (with collaboration rules reference)"))
     table.add_row("project.yaml", _("Project config (editable)"))
 
-    if multi_dev:
+    if role_based:
         table.add_row("docs/CONTEXT.md", _("Global aggregated context (auto-generated)"))
-        table.add_row("docs/developers/{dev}/CONTEXT.md", _("Per-developer context"))
-        table.add_row("docs/developers/COLLABORATION.md", _("Collaboration document"))
+        table.add_row("docs/roles/{dev}/CONTEXT.md", _("Per-role context"))
+        table.add_row("docs/roles/COLLABORATION.md", _("Collaboration document"))
     else:
         table.add_row("docs/CONTEXT.md", _("Current context"))
 
@@ -191,15 +191,15 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
             f"[dim]{_('Hint: consider initializing a Git repository to track changes')}[/dim]"
         )
 
-    if multi_dev:
-        from ..domain.developer import RoleManager
+    if role_based:
+        from ..domain.role import RoleManager
 
         dm = RoleManager(output_path, project.config)
         current_dev = dm.get_current_role()
 
         console.print()
-        console.print(f"[bold cyan]{_('Multi-developer mode enabled')}[/bold cyan]")
-        console.print(f"  {BULLET} {_('Current developer:')} {current_dev}")
+        console.print(f"[bold cyan]{_('Role-based mode enabled')}[/bold cyan]")
+        console.print(f"  {BULLET} {_('Current role:')} {current_dev}")
         cmd_hint = _("Use 'vibecollab dev' for related commands")
         console.print(f"  {BULLET} {cmd_hint}")
 
@@ -210,8 +210,8 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, multi_d
     if not is_git_repo(output_path):
         console.print(f"  {step}. git init  # {_('Initialize Git repository')}")
         step += 1
-    if multi_dev:
-        console.print(f"  {step}. vibecollab dev whoami  # {_('Check current developer')}")
+    if role_based:
+        console.print(f"  {step}. vibecollab role whoami  # {_('Check current role')}")
         step += 1
     console.print(f"  {step}. {_('Edit project.yaml to customize configuration')}")
     step += 1
@@ -412,7 +412,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
         "roles": user_config.get("roles"),
         "confirmed_decisions": user_config.get("confirmed_decisions"),
         "domain_extensions": user_config.get("domain_extensions"),
-        "multi_developer": user_config.get("multi_developer"),
+        "role_context": user_config.get("role_context"),
     }
 
     # Deep merge: latest as base, user_preserved overrides
@@ -495,45 +495,45 @@ def upgrade(config: str, dry_run: bool, force: bool):
         config_path.parent, project_name, project_desc, contributing_ai_path
     )
 
-    # Check and initialize multi-developer directory structure
-    multi_dev_config = merged.get("multi_developer", {})
-    if multi_dev_config.get("enabled", False):
+    # Check and initialize role-based directory structure
+    role_based_config = merged.get("role_context", {})
+    if role_based_config.get("enabled", False):
         from datetime import datetime
 
-        from ..domain.developer import ContextAggregator, RoleManager
+        from ..domain.role import ContextAggregator, RoleManager
 
         dm = RoleManager(config_path.parent, merged)
-        developers_dir = config_path.parent / "docs" / "developers"
+        roles_dir = config_path.parent / "docs" / "roles"
 
         # Check if initialization is needed
         initialized = False
 
-        # Initialize each developer's context
-        developers = multi_dev_config.get("developers", [])
-        for dev in developers:
+        # Initialize each role's context
+        roles = role_based_config.get("roles", [])
+        for dev in roles:
             dev_id = dev.get("id")
             if not dev_id:
                 continue
 
-            dev_dir = developers_dir / dev_id
+            dev_dir = roles_dir / dev_id
             if not dev_dir.exists():
                 dm.init_role_context(dev_id)
                 console.print(
-                    f"  [green]{EMOJI_MAP['sparkles']} {_('Initialized developer directory:')} docs/developers/{dev_id}/[/green]"
+                    f"  [green]{EMOJI_MAP['sparkles']} {_('Initialized role directory:')} docs/roles/{dev_id}/[/green]"
                 )
                 initialized = True
 
         # Create COLLABORATION.md
-        collab_config = multi_dev_config.get("collaboration", {})
+        collab_config = role_based_config.get("collaboration", {})
         collab_file = config_path.parent / collab_config.get(
-            "file", "docs/developers/COLLABORATION.md"
+            "file", "docs/roles/COLLABORATION.md"
         )
 
         if not collab_file.exists():
             collab_file.parent.mkdir(parents=True, exist_ok=True)
             today = datetime.now().strftime("%Y-%m-%d")
 
-            collab_content = f"""# {project_name} Developer Collaboration Log
+            collab_content = f"""# {project_name} Role Collaboration Log
 
 ## Current Collaboration
 
@@ -552,7 +552,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
 ## Collaboration Rules
 
 1. **Documentation**: Update your own CONTEXT.md after each task completion
-2. **Conflict Avoidance**: Check if other developers are editing shared documents before modifying
+2. **Conflict Avoidance**: Check if other roles are editing shared documents before modifying
 3. **Handoff Process**: Record handoff details in this document during task handoffs
 
 ## Handoff Records
@@ -564,7 +564,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
 """
             collab_file.write_text(collab_content, encoding="utf-8")
             console.print(
-                f"  [green]{EMOJI_MAP['sparkles']} {_('Created collaboration document:')} {collab_config.get('file', 'docs/developers/COLLABORATION.md')}[/green]"
+                f"  [green]{EMOJI_MAP['sparkles']} {_('Created collaboration document:')} {collab_config.get('file', 'docs/roles/COLLABORATION.md')}[/green]"
             )
             initialized = True
 
@@ -1429,13 +1429,13 @@ def role():
 @role.command("whoami")
 @click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 def role_whoami(config: str):
-    """Show current developer identity
+    """Show current role identity
 
     Examples:
 
-        vibecollab dev whoami
+        vibecollab role whoami
     """
-    from ..domain.developer import RoleManager
+    from ..domain.role import RoleManager
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -1451,7 +1451,7 @@ def role_whoami(config: str):
     current_dev = dm.get_current_role()
     identity_source = dm.get_identity_source()
 
-    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
+    role_based_enabled = project_config.get("role_context", {}).get("enabled", False)
 
     # Friendly display for identity source
     source_display = {
@@ -1465,9 +1465,9 @@ def role_whoami(config: str):
     console.print(
         Panel.fit(
             f"[bold cyan]{current_dev}[/bold cyan]\n\n"
-            f"{_('Multi-developer mode:')} {'[green]' + _('Enabled') + '[/green]' if multi_dev_enabled else '[yellow]' + _('Not enabled') + '[/yellow]'}\n"
+            f"{_('Role-based mode:')} {'[green]' + _('Enabled') + '[/green]' if role_based_enabled else '[yellow]' + _('Not enabled') + '[/yellow]'}\n"
             f"{_('Identity source:')} {source_display}",
-            title=_("Current Developer"),
+            title=_("Current Role"),
         )
     )
     console.print()
@@ -1476,13 +1476,13 @@ def role_whoami(config: str):
 @role.command("list")
 @click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 def role_list(config: str):
-    """List all developers
+    """List all roles
 
     Examples:
 
-        vibecollab dev list
+        vibecollab role list
     """
-    from ..domain.developer import RoleManager
+    from ..domain.role import RoleManager
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -1495,34 +1495,34 @@ def role_list(config: str):
         project_config = yaml.safe_load(f)
 
     dm = RoleManager(project_root, project_config)
-    developers = dm.list_roles()
+    roles = dm.list_roles()
     current_dev = dm.get_current_role()
 
-    # In single-developer mode, show current developer only
-    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
-    if not multi_dev_enabled:
-        if not developers:
-            # Show current developer from identity detection
+    # In single-role mode, show current role only
+    role_based_enabled = project_config.get("role_context", {}).get("enabled", False)
+    if not role_based_enabled:
+        if not roles:
+            # Show current role from identity detection
             console.print()
-            console.print(f"[cyan]{current_dev}[/cyan] {_('(Single-developer mode)')}")
+            console.print(f"[cyan]{current_dev}[/cyan] {_('(Single-role mode)')}")
             console.print()
             return
 
-    if not developers:
+    if not roles:
         console.print()
-        console.print(f"[yellow]{_('No developers yet')}[/yellow]")
-        hint = _("Use 'vibecollab init --multi-dev' to initialize a multi-developer project")
+        console.print(f"[yellow]{_('No roles yet')}[/yellow]")
+        hint = _("Use 'vibecollab init --role-based' to initialize a role-based project")
         console.print(f"[dim]{hint}[/dim]")
         console.print()
         return
 
-    table = Table(title=_("Developer List"), show_header=True)
-    table.add_column(_("Developer"), style="cyan")
+    table = Table(title=_("Role List"), show_header=True)
+    table.add_column(_("Role"), style="cyan")
     table.add_column(_("Status"))
     table.add_column(_("Last Updated"))
     table.add_column(_("Update Count"))
 
-    for dev in developers:
+    for dev in roles:
         status_info = dm.get_role_status(dev)
         is_current = f" ({_('current')})" if dev == current_dev else ""
         status = (
@@ -1543,18 +1543,18 @@ def role_list(config: str):
 
 
 @role.command("status")
-@click.argument("developer", required=False)
+@click.argument("role", required=False)
 @click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
-def role_status(developer: Optional[str], config: str):
-    """View developer status
+def role_status(role: Optional[str], config: str):
+    """View role status
 
     Examples:
 
-        vibecollab dev status           # View all developers
+        vibecollab dev status           # View all roles
 
         vibecollab dev status dev       # View a specific role
     """
-    from ..domain.developer import RoleManager
+    from ..domain.role import RoleManager
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -1569,32 +1569,32 @@ def role_status(developer: Optional[str], config: str):
     dm = RoleManager(project_root, project_config)
     current_dev = dm.get_current_role()
 
-    # Handle single-developer mode
-    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
-    if not multi_dev_enabled:
-        if developer and developer != current_dev:
+    # Handle single-role mode
+    role_based_enabled = project_config.get("role_context", {}).get("enabled", False)
+    if not role_based_enabled:
+        if role and role != current_dev:
             console.print(
-                f"[yellow]{_('Single-developer mode: only {dev} is available').format(dev=current_dev)}[/yellow]"
+                f"[yellow]{_('Single-role mode: only {dev} is available').format(dev=current_dev)}[/yellow]"
             )
             return
-        # Show current developer status
-        developers = [current_dev]
-    elif developer:
-        developers = [developer]
+        # Show current role status
+        roles = [current_dev]
+    elif role:
+        roles = [role]
     else:
-        developers = dm.list_roles()
+        roles = dm.list_roles()
 
-    if not developers:
+    if not roles:
         console.print()
-        console.print(f"[yellow]{_('No developers yet')}[/yellow]")
+        console.print(f"[yellow]{_('No roles yet')}[/yellow]")
         console.print()
         return
 
-    for dev in developers:
+    for dev in roles:
         context_file = dm.get_role_context_file(dev)
         if context_file.exists():
             console.print()
-            console.print(Panel.fit(f"[bold]{dev}[/bold]", title=_("Developer Status")))
+            console.print(Panel.fit(f"[bold]{dev}[/bold]", title=_("Role Status")))
             console.print()
 
             try:
@@ -1609,7 +1609,7 @@ def role_status(developer: Optional[str], config: str):
             console.print()
         else:
             console.print(
-                f"[yellow]{EMOJI_MAP['warning']} {_('Developer {name} not initialized').format(name=dev)}[/yellow]"
+                f"[yellow]{EMOJI_MAP['warning']} {_('Role {name} not initialized').format(name=dev)}[/yellow]"
             )
 
 
@@ -1622,7 +1622,7 @@ def role_sync(config: str):
 
         vibecollab dev sync
     """
-    from ..domain.developer import ContextAggregator
+    from ..domain.role import ContextAggregator
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -1634,10 +1634,10 @@ def role_sync(config: str):
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
-    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
-    if not multi_dev_enabled:
+    role_based_enabled = project_config.get("role_context", {}).get("enabled", False)
+    if not role_based_enabled:
         console.print(
-            f"[yellow]{EMOJI_MAP['warning']} {_('Multi-developer mode is not enabled')}[/yellow]"
+            f"[yellow]{EMOJI_MAP['warning']} {_('Role-based mode is not enabled')}[/yellow]"
         )
         raise SystemExit(1)
 
@@ -1659,17 +1659,17 @@ def role_sync(config: str):
 
 @role.command("init")
 @click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
-@click.option("--developer", "-d", help=_("Developer name (auto-detect if empty)"))
-def role_init(config: str, developer: Optional[str]):
-    """Initialize current developer's context
+@click.option("--role", "-d", help=_("Role name (auto-detect if empty)"))
+def role_init(config: str, role: Optional[str]):
+    """Initialize current role's context
 
     Examples:
 
-        vibecollab dev init                 # Auto-detect current developer
+        vibecollab dev init                 # Auto-detect current role
 
         vibecollab dev init -d dev          # Initialize for dev role
     """
-    from ..domain.developer import RoleManager
+    from ..domain.role import RoleManager
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -1683,20 +1683,20 @@ def role_init(config: str, developer: Optional[str]):
 
     dm = RoleManager(project_root, project_config)
 
-    if developer is None:
-        developer = dm.get_current_role()
+    if role is None:
+        role = dm.get_current_role()
 
-    # In single-developer mode, just show warning but allow init
-    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
-    if not multi_dev_enabled:
-        console.print(f"[dim]{_('Single-developer mode: initializing current identity')}[/dim]")
+    # In single-role mode, just show warning but allow init
+    role_based_enabled = project_config.get("role_context", {}).get("enabled", False)
+    if not role_based_enabled:
+        console.print(f"[dim]{_('Single-role mode: initializing current identity')}[/dim]")
 
     console.print()
-    console.print(f"[cyan]{_('Initializing developer:')}[/cyan] {developer}")
+    console.print(f"[cyan]{_('Initializing role:')}[/cyan] {role}")
 
     try:
-        dm.init_role_context(developer)
-        context_file = dm.get_role_context_file(developer)
+        dm.init_role_context(role)
+        context_file = dm.get_role_context_file(role)
 
         console.print(f"[green]{EMOJI_MAP['success']} {_('Initialization complete:')}[/green]")
         console.print(f"  {BULLET} {_('Context file:')} {context_file}")
@@ -1707,24 +1707,24 @@ def role_init(config: str, developer: Optional[str]):
 
 
 @role.command("switch")
-@click.argument("developer", required=False)
+@click.argument("role", required=False)
 @click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
 @click.option("--clear", is_flag=True, help=_("Clear switch, restore default identity"))
-def role_switch(developer: Optional[str], config: str, clear: bool):
-    """Switch current developer identity
+def role_switch(role: Optional[str], config: str, clear: bool):
+    """Switch current role identity
 
-    Select a developer context via CLI without modifying Git config or environment variables.
+    Select a role context via CLI without modifying Git config or environment variables.
     The switch setting is persisted to the local config file (.vibecollab.local.yaml).
 
     Examples:
 
         vibecollab dev switch dev        # Switch to dev role
 
-        vibecollab dev switch            # Interactive developer selection
+        vibecollab dev switch            # Interactive role selection
 
         vibecollab dev switch --clear    # Clear switch, restore default identity
     """
-    from ..domain.developer import RoleManager
+    from ..domain.role import RoleManager
 
     config_path = Path(config)
     project_root = config_path.parent
@@ -1738,14 +1738,14 @@ def role_switch(developer: Optional[str], config: str, clear: bool):
 
     dm = RoleManager(project_root, project_config)
 
-    # Handle single-developer mode
-    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
-    if not multi_dev_enabled:
+    # Handle single-role mode
+    role_based_enabled = project_config.get("role_context", {}).get("enabled", False)
+    if not role_based_enabled:
         console.print()
         current_dev = dm.get_current_role()
-        console.print(f"[yellow]{_('Single-developer mode: cannot switch identity')}[/yellow]")
+        console.print(f"[yellow]{_('Single-role mode: cannot switch identity')}[/yellow]")
         console.print(f"  {BULLET} {_('Current identity:')} [cyan]{current_dev}[/cyan]")
-        console.print(f"  {BULLET} {_('Enable multi_developer in project.yaml to switch')}")
+        console.print(f"  {BULLET} {_('Enable role_context in project.yaml to switch')}")
         console.print()
         return
 
@@ -1764,25 +1764,25 @@ def role_switch(developer: Optional[str], config: str, clear: bool):
         console.print()
         return
 
-    # Get available developer list
-    developers = dm.list_roles()
+    # Get available role list
+    roles = dm.list_roles()
     current_dev = dm.get_current_role()
 
-    # If no developer specified, interactive selection
-    if developer is None:
-        if not developers:
+    # If no role specified, interactive selection
+    if role is None:
+        if not roles:
             console.print()
-            console.print(f"[yellow]{_('No developers yet')}[/yellow]")
-            hint = _("Use 'vibecollab dev init -d <name>' to initialize a new developer")
+            console.print(f"[yellow]{_('No roles yet')}[/yellow]")
+            hint = _("Use 'vibecollab dev init -d <name>' to initialize a new role")
             console.print(f"[dim]{hint}[/dim]")
             console.print()
             return
 
         console.print()
-        console.print(f"[cyan]{_('Select a developer to switch to:')}[/cyan]")
+        console.print(f"[cyan]{_('Select a role to switch to:')}[/cyan]")
         console.print()
 
-        for i, dev in enumerate(developers, 1):
+        for i, dev in enumerate(roles, 1):
             status_info = dm.get_role_status(dev)
             is_current = f" [green]({_('current')})[/green]" if dev == current_dev else ""
             last_update = status_info.get("last_updated", _("unknown"))
@@ -1804,31 +1804,31 @@ def role_switch(developer: Optional[str], config: str, clear: bool):
             console.print(f"[dim]{_('Cancelled')}[/dim]")
             return
 
-        if choice < 1 or choice > len(developers):
+        if choice < 1 or choice > len(roles):
             console.print(f"[red]{_('Invalid choice:')} {choice}[/red]")
             raise SystemExit(1)
 
-        developer = developers[choice - 1]
+        role = roles[choice - 1]
 
-    # Normalize developer name
-    identity_config = project_config.get("multi_developer", {}).get("identity", {})
+    # Normalize role name
+    identity_config = project_config.get("role_context", {}).get("identity", {})
     if identity_config.get("normalize", True):
-        developer = dm._normalize_role_name(developer)
+        role = dm._normalize_role_name(role)
 
-    # Check if developer exists
-    if developer not in developers:
+    # Check if role exists
+    if role not in roles:
         console.print()
-        msg = _("Developer '{name}' does not exist").format(name=developer)
+        msg = _("Role '{name}' does not exist").format(name=role)
         console.print(f"[yellow]{EMOJI_MAP['warning']} {msg}[/yellow]")
         console.print()
 
         # Ask whether to initialize
         create = click.confirm(
-            _("Initialize context for '{name}'?").format(name=developer), default=True
+            _("Initialize context for '{name}'?").format(name=role), default=True
         )
         if create:
-            dm.init_role_context(developer)
-            msg = _("Initialized context for '{name}'").format(name=developer)
+            dm.init_role_context(role)
+            msg = _("Initialized context for '{name}'").format(name=role)
             console.print(f"[green]{EMOJI_MAP['success']} {msg}[/green]")
         else:
             console.print(f"[dim]{_('Cancelled')}[/dim]")
@@ -1836,12 +1836,12 @@ def role_switch(developer: Optional[str], config: str, clear: bool):
 
     # Execute switch
     console.print()
-    if dm.switch_role(developer):
+    if dm.switch_role(role):
         console.print(
-            f"[green]{EMOJI_MAP['success']} {_('Switched to developer:')} [bold cyan]{developer}[/bold cyan][/green]"
+            f"[green]{EMOJI_MAP['success']} {_('Switched to role:')} [bold cyan]{role}[/bold cyan][/green]"
         )
         console.print()
-        console.print(f"  {BULLET} {_('Context file:')} {dm.get_role_context_file(developer)}")
+        console.print(f"  {BULLET} {_('Context file:')} {dm.get_role_context_file(role)}")
         console.print(f"  {BULLET} {_('Persisted to:')} .vibecollab.local.yaml")
         console.print()
         hint = _("Hint: Use 'vibecollab dev switch --clear' to restore default identity")
@@ -1860,14 +1860,14 @@ def role_switch(developer: Optional[str], config: str, clear: bool):
     "--between", nargs=2, help=_("Detect conflicts between two roles (e.g. --between dev qa)")
 )
 def role_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]]):
-    """Detect cross-developer work conflicts
+    """Detect cross-role work conflicts
 
-    Detects potential conflicts between multiple developers, including file conflicts,
+    Detects potential conflicts between multiple roles, including file conflicts,
     task conflicts, dependency conflicts, etc.
 
     Examples:
 
-        vibecollab dev conflicts                 # Detect all developer conflicts
+        vibecollab dev conflicts                 # Detect all role conflicts
 
         vibecollab dev conflicts -v              # Show detailed info
 
@@ -1885,30 +1885,30 @@ def role_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]
     with open(config_path, encoding="utf-8") as f:
         project_config = yaml.safe_load(f)
 
-    multi_dev_enabled = project_config.get("multi_developer", {}).get("enabled", False)
+    role_based_enabled = project_config.get("role_context", {}).get("enabled", False)
 
     console.print()
 
-    # In single-developer mode, no conflicts possible
-    if not multi_dev_enabled:
-        from ..domain.developer import RoleManager
+    # In single-role mode, no conflicts possible
+    if not role_based_enabled:
+        from ..domain.role import RoleManager
 
         dm = RoleManager(project_root, project_config)
         current_dev = dm.get_current_role()
         console.print(
-            f"[green]{EMOJI_MAP['success']} {_('Single-developer mode: no conflicts possible')}[/green]"
+            f"[green]{EMOJI_MAP['success']} {_('Single-role mode: no conflicts possible')}[/green]"
         )
-        console.print(f"  {BULLET} {_('Current developer:')} {current_dev}")
+        console.print(f"  {BULLET} {_('Current role:')} {current_dev}")
         console.print()
         return
 
-    console.print(f"[cyan]{_('Detecting cross-developer conflicts...')}[/cyan]")
+    console.print(f"[cyan]{_('Detecting cross-role conflicts...')}[/cyan]")
     console.print()
 
     try:
         detector = ConflictDetector(project_root, project_config)
 
-        conflicts = detector.detect_all_conflicts(target_developer=None, between_developers=between)
+        conflicts = detector.detect_all_conflicts(target_role=None, between_roles=between)
 
         report = detector.generate_conflict_report(conflicts, verbose=verbose)
         console.print(report)

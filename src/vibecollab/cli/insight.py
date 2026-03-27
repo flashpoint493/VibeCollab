@@ -1,7 +1,7 @@
 """
 Insight CLI command group -- CLI interface for the distillation system
 
-Provides CRUD, search, usage, decay, consistency check, cross-developer sharing, traceability visualization, etc.
+Provides CRUD, search, usage, decay, consistency check, cross-role sharing, traceability visualization, etc.
 
 Commands:
     vibecollab insight list               List all insights
@@ -15,8 +15,8 @@ Commands:
     vibecollab insight bookmark <id>      Bookmark an insight
     vibecollab insight unbookmark <id>    Remove bookmark
     vibecollab insight trace <id>         Traceability tree visualization
-    vibecollab insight who <id>           View cross-developer usage info
-    vibecollab insight stats              Cross-developer sharing statistics
+    vibecollab insight who <id>           View cross-role usage info
+    vibecollab insight stats              Cross-role sharing statistics
 """
 
 from pathlib import Path
@@ -42,9 +42,9 @@ def _load_insight_manager(config_path: str = "project.yaml"):
     return InsightManager(project_root=project_root, event_log=event_log)
 
 
-def _load_developer_manager(config_path: str = "project.yaml"):
-    """Load DeveloperManager instance"""
-    from ..domain.developer import DeveloperManager
+def _load_role_manager(config_path: str = "project.yaml"):
+    """Load RoleManager instance"""
+    from ..domain.role import RoleManager
 
     project_root = Path.cwd()
     config_file = project_root / config_path
@@ -53,7 +53,7 @@ def _load_developer_manager(config_path: str = "project.yaml"):
             config = yaml.safe_load(f) or {}
     else:
         config = {}
-    return DeveloperManager(project_root, config)
+    return RoleManager(project_root, config)
 
 
 @click.group()
@@ -192,9 +192,9 @@ def add_insight(title, tags, category, scenario, approach, summary,
                 source_ref, source_url, source_project, derived_from, force):
     """Create a new insight entry"""
     mgr = _load_insight_manager()
-    dm = _load_developer_manager()
+    dm = _load_role_manager()
 
-    created_by = dm.get_current_developer()
+    created_by = dm.get_current_role()
     tag_list = [t.strip() for t in tags.split(",") if t.strip()]
     derived_list = [d.strip() for d in derived_from.split(",") if d.strip()] if derived_from else []
 
@@ -228,7 +228,7 @@ def add_insight(title, tags, category, scenario, approach, summary,
         derived_from=derived_list,
     )
 
-    # Record to developer contributed
+    # Record to role contributed
     dm.add_contributed(ins.id, created_by)
 
     # Update signal snapshot
@@ -347,8 +347,8 @@ def _semantic_search_insights(query: str, top_k: int):
 def use_insight(insight_id):
     """Record an insight usage, reward weight"""
     mgr = _load_insight_manager()
-    dm = _load_developer_manager()
-    used_by = dm.get_current_developer()
+    dm = _load_role_manager()
+    used_by = dm.get_current_role()
 
     entry = mgr.record_use(insight_id, used_by=used_by)
     if not entry:
@@ -429,7 +429,7 @@ def check_insights(as_json):
 def delete_insight(insight_id, yes):
     """Delete an insight entry"""
     mgr = _load_insight_manager()
-    dm = _load_developer_manager()
+    dm = _load_role_manager()
 
     ins = mgr.get(insight_id)
     if not ins:
@@ -439,10 +439,10 @@ def delete_insight(insight_id, yes):
     if not yes:
         click.confirm(f"Confirm delete {insight_id} ({ins.title})?", abort=True)
 
-    deleted_by = dm.get_current_developer()
+    deleted_by = dm.get_current_role()
     mgr.delete(insight_id, deleted_by=deleted_by)
 
-    # Remove developer contributed record
+    # Remove role contributed record
     dm.remove_contributed(insight_id, deleted_by)
 
     click.echo(f"Deleted: {insight_id}")
@@ -453,18 +453,18 @@ def delete_insight(insight_id, yes):
 def bookmark_insight(insight_id):
     """Bookmark an insight"""
     mgr = _load_insight_manager()
-    dm = _load_developer_manager()
+    dm = _load_role_manager()
 
     ins = mgr.get(insight_id)
     if not ins:
         click.echo(f"Insight not found: {insight_id}", err=True)
         raise SystemExit(1)
 
-    developer = dm.get_current_developer()
-    added = dm.add_bookmark(insight_id, developer)
+    role = dm.get_current_role()
+    added = dm.add_bookmark(insight_id, role)
     if added:
         click.echo(f"Bookmarked: {insight_id} ({ins.title})")
-        click.echo(f"  by: {developer}")
+        click.echo(f"  by: {role}")
     else:
         click.echo(f"Already bookmarked: {insight_id}")
 
@@ -473,10 +473,10 @@ def bookmark_insight(insight_id):
 @click.argument("insight_id")
 def unbookmark_insight(insight_id):
     """Remove bookmark from an insight"""
-    dm = _load_developer_manager()
+    dm = _load_role_manager()
 
-    developer = dm.get_current_developer()
-    removed = dm.remove_bookmark(insight_id, developer)
+    role = dm.get_current_role()
+    removed = dm.remove_bookmark(insight_id, role)
     if removed:
         click.echo(f"Bookmark removed: {insight_id}")
     else:
@@ -549,7 +549,7 @@ def who_insight(insight_id, as_json):
         click.echo(f"Insight not found: {insight_id}", err=True)
         raise SystemExit(1)
 
-    info = mgr.get_insight_developers(insight_id)
+    info = mgr.get_insight_roles(insight_id)
 
     if as_json:
         click.echo(json_mod.dumps(info, ensure_ascii=False, indent=2))
@@ -566,11 +566,11 @@ def who_insight(insight_id, as_json):
 @insight.command("stats")
 @click.option("--json", "as_json", is_flag=True, default=False, help=_("JSON output"))
 def stats_insights(as_json):
-    """Cross-developer sharing statistics"""
+    """Cross-role sharing statistics"""
     import json as json_mod
 
     mgr = _load_insight_manager()
-    stats = mgr.get_cross_developer_stats()
+    stats = mgr.get_cross_role_stats()
 
     if as_json:
         click.echo(json_mod.dumps(stats, ensure_ascii=False, indent=2))
@@ -579,16 +579,16 @@ def stats_insights(as_json):
     summary = stats["summary"]
     click.echo("\n=== Insight Sharing Statistics ===\n")
     click.echo(f"  Total insights:    {summary['total_insights']}")
-    click.echo(f"  Total developers:  {summary['total_developers']}")
+    click.echo(f"  Total roles:  {summary['total_roles']}")
     click.echo(f"  Total uses:        {summary['total_uses']}")
     if summary["most_used"]:
         click.echo(f"  Most used:         {summary['most_used']}")
     if summary["most_shared"]:
         click.echo(f"  Most shared:       {summary['most_shared']}")
 
-    if stats["developers"]:
-        click.echo("\n--- Developers ---")
-        for dev, data in stats["developers"].items():
+    if stats["roles"]:
+        click.echo("\n--- Roles ---")
+        for dev, data in stats["roles"].items():
             contributed = len(data["contributed"])
             bookmarks = len(data["bookmarks"])
             used = len(data["used"])
@@ -704,14 +704,14 @@ def _create_from_candidates(project_root, candidates, collector):
     mgr = _load_insight_manager()
     dm = None
     try:
-        dm = _load_developer_manager()
+        dm = _load_role_manager()
     except Exception:
         pass
 
     created_by = "unknown"
     if dm:
         try:
-            created_by = dm.get_current_developer()
+            created_by = dm.get_current_role()
         except Exception:
             pass
 
@@ -876,8 +876,8 @@ def import_insights(filepath, strategy, json_output):
         raise SystemExit(1)
 
     mgr = _load_insight_manager()
-    dm = _load_developer_manager()
-    imported_by = dm.get_current_developer()
+    dm = _load_role_manager()
+    imported_by = dm.get_current_role()
 
     results = mgr.import_insights(bundle, imported_by=imported_by, strategy=strategy)
 
@@ -885,7 +885,7 @@ def import_insights(filepath, strategy, json_output):
         click.echo(json_mod.dumps(results, ensure_ascii=False, indent=2))
         return
 
-    # Update developer contributed
+    # Update role contributed
     for ins_id in results["imported"]:
         try:
             dm.add_contributed(ins_id, imported_by)

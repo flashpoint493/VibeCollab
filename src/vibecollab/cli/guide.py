@@ -254,14 +254,14 @@ def _suggest_commit_message(diff_files: List[str]) -> str:
 
 
 def _collect_project_context(
-    config_path: Path, developer: Optional[str] = None
+    config_path: Path, role: Optional[str] = None
 ) -> Dict:
     """Collect project context data (shared by onboard and prompt)
 
     Returns:
         Dict containing: project_root, project_name, project_version, project_desc,
         context_text, recent_decisions, pending_roadmap, uncommitted,
-        read_files, developer_info, key_files, insight_count, top_insights,
+        read_files, role_info, key_files, insight_count, top_insights,
         project_config
     """
     project_root = config_path.parent if config_path.parent != Path(".") else Path.cwd()
@@ -272,13 +272,13 @@ def _collect_project_context(
 
     proj = project_config.get("project", {})
 
-    # Developer info
-    developer_info = None
-    if developer:
-        dev_context_path = project_root / "docs" / "developers" / developer / "CONTEXT.md"
-        dev_meta_path = project_root / "docs" / "developers" / developer / ".metadata.yaml"
-        developer_info = {
-            "id": developer,
+    # Role info
+    role_info = None
+    if role:
+        dev_context_path = project_root / "docs" / "roles" / role / "CONTEXT.md"
+        dev_meta_path = project_root / "docs" / "roles" / role / ".metadata.yaml"
+        role_info = {
+            "id": role,
             "context": _safe_read_text(dev_context_path, max_lines=20),
             "metadata": _safe_load_yaml(dev_meta_path),
         }
@@ -340,10 +340,10 @@ def _collect_project_context(
     context_text = _safe_read_text(project_root / "docs" / "CONTEXT.md", max_lines=30)
     related_insights: List[Dict] = []
 
-    # Build query text: prefer developer context, otherwise use project CONTEXT.md
+    # Build query text: prefer role context, otherwise use project CONTEXT.md
     query_text = ""
-    if developer_info and developer_info.get("context"):
-        query_text = developer_info["context"]
+    if role_info and role_info.get("context"):
+        query_text = role_info["context"]
     elif context_text:
         query_text = context_text
 
@@ -361,7 +361,7 @@ def _collect_project_context(
         "pending_roadmap": _extract_pending_from_roadmap(project_root / "docs" / "ROADMAP.md"),
         "uncommitted": _get_git_uncommitted(project_root),
         "read_files": _get_read_files_list(project_config),
-        "developer_info": developer_info,
+        "role_info": role_info,
         "key_files": project_config.get("documentation", {}).get("key_files", []),
         "insight_count": insight_count,
         "top_insights": top_insights,
@@ -378,9 +378,9 @@ def _collect_project_context(
 
 @click.command()
 @click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
-@click.option("--developer", "-d", default=None, help=_("Developer ID"))
+@click.option("--role", "-d", default=None, help=_("Role ID"))
 @click.option("--json", "as_json", is_flag=True, help=_("JSON output"))
-def onboard(config: str, developer: Optional[str], as_json: bool):
+def onboard(config: str, role: Optional[str], as_json: bool):
     """Onboarding context guide for AI Agent
 
     Outputs project overview, current progress, TODOs, and files to read,
@@ -395,7 +395,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         vibecollab onboard --json           # Machine-readable output
     """
     config_path = Path(config)
-    ctx = _collect_project_context(config_path, developer)
+    ctx = _collect_project_context(config_path, role)
     if not ctx:
         console.print("[red]Error:[/red] Cannot load project.yaml")
         raise SystemExit(1)
@@ -409,7 +409,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
     pending_roadmap = ctx["pending_roadmap"]
     uncommitted = ctx["uncommitted"]
     read_files = ctx["read_files"]
-    developer_info = ctx["developer_info"]
+    role_info = ctx["role_info"]
     key_files = ctx["key_files"]
     insight_count = ctx["insight_count"]
     top_insights = ctx["top_insights"]
@@ -434,11 +434,11 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
             "active_tasks": active_tasks,
             "recent_events": recent_events,
         }
-        if developer_info:
-            output["developer"] = {
-                "id": developer_info["id"],
-                "has_context": bool(developer_info["context"]),
-                "has_metadata": developer_info["metadata"] is not None,
+        if role_info:
+            output["role"] = {
+                "id": role_info["id"],
+                "has_context": bool(role_info["context"]),
+                "has_metadata": role_info["metadata"] is not None,
             }
         click.echo(json.dumps(output, ensure_ascii=False, indent=2))
         return
@@ -465,17 +465,17 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         console.print()
         console.print(Panel(context_text, title="Current Progress (docs/CONTEXT.md)", border_style="blue"))
 
-    # Developer info
-    if developer_info:
+    # Role info
+    if role_info:
         console.print()
-        if developer_info["context"]:
+        if role_info["context"]:
             console.print(Panel(
-                developer_info["context"],
-                title=f"Developer {developer} Context",
+                role_info["context"],
+                title=f"Role {role} Context",
                 border_style="cyan"
             ))
-        if developer_info["metadata"]:
-            meta = developer_info["metadata"]
+        if role_info["metadata"]:
+            meta = role_info["metadata"]
             tags = meta.get("tags", [])
             contributed = meta.get("contributed", [])
             bookmarks = meta.get("bookmarks", [])
@@ -599,7 +599,7 @@ def onboard(config: str, developer: Optional[str], as_json: bool):
         suggestions.append("Uncommitted changes found -> run `git status` to check if commit is needed")
     if pending_roadmap:
         suggestions.append(f"Roadmap has {len(pending_roadmap)} pending items -> check `docs/ROADMAP.md`")
-    if not developer:
+    if not role:
         suggestions.append("Use `vibecollab onboard -d <your-ID>` to see your personal context")
 
     suggestions.append("After modifying files, use `vibecollab next` for next-step suggestions")
@@ -712,9 +712,9 @@ def _build_prompt_text(
             parts.append(ctx["context_text"])
             parts.append("")
 
-        dev_info = ctx.get("developer_info")
+        dev_info = ctx.get("role_info")
         if dev_info and dev_info.get("context"):
-            parts.append(f"### Developer: {dev_info['id']}")
+            parts.append(f"### Role: {dev_info['id']}")
             parts.append(dev_info["context"])
             parts.append("")
 
@@ -768,7 +768,7 @@ def _build_prompt_text(
 
 @click.command("prompt")
 @click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
-@click.option("--developer", "-d", default=None, help=_("Developer ID"))
+@click.option("--role", "-d", default=None, help=_("Role ID"))
 @click.option("--compact", is_flag=True, help=_("Compact mode (core protocol + state only)"))
 @click.option(
     "--sections", "-s", default=None,
@@ -777,7 +777,7 @@ def _build_prompt_text(
 @click.option("--copy", "to_clipboard", is_flag=True, help=_("Copy to clipboard"))
 def prompt_cmd(
     config: str,
-    developer: Optional[str],
+    role: Optional[str],
     compact: bool,
     sections: Optional[str],
     to_clipboard: bool,
@@ -801,7 +801,7 @@ def prompt_cmd(
         vibecollab prompt -s protocol,context # Only protocol + status
     """
     config_path = Path(config)
-    ctx = _collect_project_context(config_path, developer)
+    ctx = _collect_project_context(config_path, role)
     if not ctx:
         console.print("[red]Error:[/red] Cannot load project.yaml")
         raise SystemExit(1)

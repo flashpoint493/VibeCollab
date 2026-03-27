@@ -153,7 +153,7 @@ vibecollab check
 vibecollab next
 
 # Save conversation summary at the end
-vibecollab session_save --summary "What was accomplished" --developer <role>
+vibecollab session_save --summary "What was accomplished" --role <role>
 ```
 
 ### Task Management Commands
@@ -233,13 +233,13 @@ vibecollab roadmap task <milestone_id>
 - `docs/CHANGELOG.md` - Development changelog
 - `.vibecollab/events.jsonl` - Event log for Insight generation
 
-## Multi-Developer Mode
+## Multi-Role Mode
 
-If the project has `multi_developer.enabled: true`:
+If the project has `role_context.enabled: true`:
 
-- Each developer has their own context in `docs/developers/{id}/`
+- Each role has their own context in `docs/roles/{id}/`
 - Check current identity with `vibecollab dev whoami`
-- Collaboration tracked in `docs/developers/COLLABORATION.md`
+- Collaboration tracked in `docs/roles/COLLABORATION.md`
 
 ## Best Practices
 
@@ -303,7 +303,7 @@ You are assisting with a VibeCollab-managed project. Follow these guidelines:
 
 ## At End of Conversation
 
-1. **Save session**: `vibecollab session_save --summary "..." --developer <role>`
+1. **Save session**: `vibecollab session_save --summary "..." --role <role>`
 2. **Complete tasks**: `vibecollab task solidify <id>`
 3. **Update CHANGELOG.md**
 4. **Record decisions** in `docs/DECISIONS.md`
@@ -372,7 +372,7 @@ vibecollab check
 vibecollab next
 
 # Save conversation summary at the end
-vibecollab session_save --summary "What was accomplished" --developer <role>
+vibecollab session_save --summary "What was accomplished" --role <role>
 ```
 
 ### Task Management Commands
@@ -452,13 +452,13 @@ vibecollab roadmap task <milestone_id>
 - `docs/CHANGELOG.md` - Development changelog
 - `.vibecollab/events.jsonl` - Event log for Insight generation
 
-## Multi-Developer Mode
+## Multi-Role Mode
 
-If the project has `multi_developer.enabled: true`:
+If the project has `role_context.enabled: true`:
 
-- Each developer has their own context in `docs/developers/{id}/`
+- Each role has their own context in `docs/roles/{id}/`
 - Check current identity with `vibecollab dev whoami`
-- Collaboration tracked in `docs/developers/COLLABORATION.md`
+- Collaboration tracked in `docs/roles/COLLABORATION.md`
 
 ## Best Practices
 
@@ -516,7 +516,7 @@ vibecollab check
 vibecollab next
 
 # Save conversation summary at the end
-vibecollab session_save --summary "What was accomplished" --developer <role>
+vibecollab session_save --summary "What was accomplished" --role <role>
 ```
 
 ### Task Management Commands
@@ -596,13 +596,13 @@ vibecollab roadmap task <milestone_id>
 - `docs/CHANGELOG.md` - Development changelog
 - `.vibecollab/events.jsonl` - Event log for Insight generation
 
-## Multi-Developer Mode
+## Multi-Role Mode
 
-If the project has `multi_developer.enabled: true`:
+If the project has `role_context.enabled: true`:
 
-- Each developer has their own context in `docs/developers/{id}/`
+- Each role has their own context in `docs/roles/{id}/`
 - Check current identity with `vibecollab dev whoami`
-- Collaboration tracked in `docs/developers/COLLABORATION.md`
+- Collaboration tracked in `docs/roles/COLLABORATION.md`
 
 ## Best Practices
 
