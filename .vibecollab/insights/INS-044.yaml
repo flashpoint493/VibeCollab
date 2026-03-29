@@ -1,0 +1,60 @@
+kind: insight
+version: '1'
+id: INS-044
+title: 'Role-Driven Architecture Implementation: Developer-Role Binding and Permissions'
+summary: Concrete implementation steps for DECISION-020 binding developers to roles, implementing permission system, and enabling dynamic skill registration from Insights
+tags:
+- architecture
+- role-driven
+- permissions
+- implementation
+- dev-binding
+category: workflow
+body:
+  scenario: DECISION-020 defined the architecture but implementation details need clarification. Need to bridge the gap between design and working code.
+  approach: |
+    Step 1 - Project.yaml Schema Extension:
+    Add developers and roles sections to project.yaml with bindings and permissions.
+    
+    Step 2 - RoleManager Enhancement:
+    Load developer-role bindings from project.yaml, validate permissions on task operations,
+    enforce file pattern restrictions, track role switches in EventLog.
+    
+    Step 3 - CLI Commands:
+    vibecollab role list - List all roles and permissions
+    vibecollab role show <role_code> - Show role details
+    vibecollab role switch <role_code> - Switch current role with permission check
+    vibecollab dev whoami --verbose - Show current dev + role + permissions
+    
+    Step 4 - Dynamic Skill Registration:
+    Role loads insights tagged with its code. Auto-register skills from insight metadata.
+    Skills injected into MCP prompts dynamically based on current role.
+    
+    Step 5 - Permission Enforcement Points:
+    Task creation checks can_create_task_for. Task transition checks can_transition_to.
+    File write checks file_patterns match. Decision approval checks can_approve_decisions level.
+    
+    Step 6 - Migration from Current:
+    Keep existing current_developer in .vibecollab.local.yaml. Add current_role field.
+    Backward compatible - if no role specified infer from task role. Support both old and new formats.
+  validation: |
+    Developer can only create tasks for allowed roles.
+    File writes blocked if outside file_patterns.
+    Role switch updates dynamic skills.
+    EventLog tracks all permission checks.
+    Backward compatible with existing projects.
+  artifacts:
+    - Updated project.yaml schema
+    - Enhanced RoleManager class
+    - New CLI commands
+    - Permission check decorators
+    - Migration guide
+origin:
+  created_by: architect
+  created_at: '2026-03-29'
+  context: Implementing DECISION-020 Role-Driven Architecture Fix for TASK-DEV-027
+  source:
+    type: task
+    description: Concrete implementation plan for role-driven architecture with permissions
+    ref: TASK-DEV-027
+fingerprint: d5309527d614690901a7e333b8cce723ea55643db34349d9eb53ab3c9b6055e4
