@@ -1,0 +1,61 @@
+kind: insight
+version: '1'
+id: INS-039
+title: 'Git Hooks Framework: Pre-Commit Consistency Check Pattern'
+summary: Implement automated consistency checks before each git commit using client-side hooks with vibecollab integration
+tags:
+- git-hooks
+- pre-commit
+- consistency-check
+- automation
+- quality-gate
+category: workflow
+body:
+  scenario: Need to enforce protocol compliance and insight consistency before allowing code commits
+  approach: |
+    1. **Hook Installation**:
+       - Create `.git/hooks/pre-commit` executable script
+       - Support Windows (PowerShell/Batch) and Unix (Bash) dual platforms
+       - Install via `vibecollab hooks install` command
+    
+    2. **Pre-Commit Checks** (in priority order):
+       - `vibecollab check` - Protocol compliance (errors block commit)
+       - `vibecollab insight check` - Fingerprint/Registry consistency
+       - Custom rules from `project.yaml` (JSON validity, TODO format, etc.)
+    
+    3. **Error Handling**:
+       - Exit code != 0 blocks the commit
+       - Show clear error messages with fix suggestions
+       - Allow bypass with `git commit --no-verify` (emergency only)
+    
+    4. **Configuration in project.yaml**:
+       ```yaml
+       hooks:
+         pre-commit:
+           - vibecollab check
+           - vibecollab insight check
+         pre-push:
+           - pytest
+           - vibecollab check
+       ```
+    
+    5. **IDE Integration**:
+       - VSCode/Cursor: Auto-detect and suggest hook installation
+       - Show hook status in status bar
+  validation: |
+    - Every commit triggers consistency check
+    - No commit with insight fingerprint errors
+    - Git history shows clean protocol compliance
+  artifacts:
+    - .git/hooks/pre-commit
+    - project.yaml hooks section
+    - Hook installation logs
+origin:
+  created_by: dev
+  created_at: '2026-03-29'
+  context: Implementing TASK-DEV-025 Git Hooks Framework to ensure every commit passes vibecollab check
+  source:
+    type: task
+    description: FP-001 Git Hooks Framework - Pre-commit consistency check implementation
+    ref: TASK-DEV-025
+fingerprint: c64907d2dc8c1ff2f4dc2841dafd6e9f2d26db62192a19b0695d61fdfa758cb8

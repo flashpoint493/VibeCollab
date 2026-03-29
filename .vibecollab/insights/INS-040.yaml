@@ -1,0 +1,79 @@
+kind: insight
+version: '1'
+id: INS-040
+title: 'Guard Protection Engine: File Operation Safety Pattern'
+summary: Pre/post-action guard rules to prevent accidental file operations on protected paths with configurable severity levels
+tags:
+- guard-engine
+- file-protection
+- safety-gate
+- mcp-integration
+- pre-action
+category: workflow
+body:
+  scenario: Need to prevent accidental deletion or modification of critical files (e.g., .meta files, Library/, sensitive configs) during AI-assisted development
+  approach: |
+    1. **Guard Rule Types**:
+       - **Pre-action guards**: Block before file operation (delete, modify, move)
+       - **Post-action guards**: Validate after operation (cleanup, format check)
+    
+    2. **Default Protected Patterns**:
+       ```yaml
+       guards:
+         protected_paths:
+           - "**/.meta"
+           - "**/Library/**"
+           - "**/.vibecollab/*.jsonl"
+         blocked_operations:
+           - delete
+           - modify
+       ```
+    
+    3. **Severity Levels**:
+       - **block**: Prevent operation entirely (exit code != 0)
+       - **warn**: Allow but log warning
+       - **allow**: Silent pass (for testing)
+    
+    4. **Integration Points**:
+       - CLI: `vibecollab check --guards` - Validate all guard rules
+       - MCP: `guard_check` tool - Intercept file operations in real-time
+       - IDE: Warning highlights on protected files
+    
+    5. **Rule Configuration in project.yaml**:
+       ```yaml
+       guards:
+         rules:
+           - name: meta_protection
+             pattern: "**/*.meta"
+             operations: [delete, modify]
+             severity: block
+             message: "Meta files should not be manually edited"
+           - name: library_cleanup
+             pattern: "**/Library/Temp/**"
+             operations: [create]
+             severity: warn
+             message: "Consider using tmpfile API"
+       ```
+    
+    6. **Combined with Hooks**:
+       - Guards run inside pre-commit hook
+       - Block commit if guard violations exist
+       - Different severity affects commit differently
+  validation: |
+    - No accidental deletion of .meta files
+    - Protected paths show IDE warnings
+    - MCP file operations intercepted and validated
+    - Guard violations logged with actionable messages
+  artifacts:
+    - project.yaml guards section
+    - Guard violation logs
+    - MCP guard_check tool implementation
+origin:
+  created_by: dev
+  created_at: '2026-03-29'
+  context: Implementing TASK-DEV-026 Guard Protection Engine to prevent accidental file operations during development
+  source:
+    type: task
+    description: FP-008 Guard Protection Engine - File operation safety rules
+    ref: TASK-DEV-026
+fingerprint: 16a3beeca3430768db7a4d5dbaee9ded2cd8bdfa9b76b0b6f07a56542c2f923f
