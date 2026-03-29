@@ -1947,8 +1947,9 @@ def role_permissions(config: str, role_code: Optional[str], as_json: bool):
 
         vibecollab role permissions --json       # Output as JSON for scripting
     """
-    from ..domain.role import RoleManager
     import json as json_module
+
+    from ..domain.role import RoleManager
 
     config_path = Path(config)
     project_root = config_path.parent

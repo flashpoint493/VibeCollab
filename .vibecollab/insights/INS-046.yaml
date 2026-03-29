@@ -1,0 +1,57 @@
+kind: insight
+version: '1'
+id: INS-046
+title: 'Local Build Check Before Commit: Preventing CI Failures'
+summary: Best practice for VibeCollab project - always run local build (ruff + tests) before git commit to catch issues early and prevent CI failures
+tags:
+- ci-cd
+- local-build
+- pre-commit
+- best-practice
+- quality-gate
+category: workflow
+body:
+  scenario: GitHub Actions CI failed due to simple lint errors that could have been caught locally. Wastes CI resources and delays feedback loop.
+  problem: |
+    CI failures due to:
+    - Import order issues (ruff I001)
+    - Missing type hints
+    - Simple syntax errors
+    - Test failures that don't appear in development environment
+  solution: |
+    1. Enhanced Pre-Commit Hook:
+       Run these checks before every commit:
+       - vibecollab check (protocol compliance)
+       - ruff check src/vibecollab/ tests/ (lint)
+       - pytest tests/ -x -q (quick test run)
+    
+    2. Quick vs Full Test Mode:
+       - Quick: pytest -x (stop on first failure)
+       - Full: pytest (run all tests, use in CI)
+    
+    3. Fast Feedback Loop:
+       Local build should complete in < 2 minutes:
+       - ruff: ~5 seconds
+       - quick tests: ~30-60 seconds
+       - Full test suite: ~80 seconds (1515 tests)
+    
+    4. Bypass Option:
+       Keep --no-verify for emergencies, but strongly discouraged
+  validation: |
+    - Zero CI failures due to lint errors
+    - Faster CI feedback (only real issues)
+    - Developer confidence in commits
+    - Consistent code quality
+  artifacts:
+    - .git/hooks/pre-commit
+    - Local build script
+    - CI workflow configuration
+origin:
+  created_by: dev
+  created_at: '2026-03-30'
+  context: GitHub Actions CI failed on ruff lint check (import order). Fixed locally and implemented enhanced pre-commit hook.
+  source:
+    type: incident
+    description: CI failure due to simple lint error that should have been caught locally
+    ref: TASK-DEV-046
+fingerprint: a91225d2ca35ac072819fdea146aa9b32260ac0b83f62ad553bcf36c6775af81
