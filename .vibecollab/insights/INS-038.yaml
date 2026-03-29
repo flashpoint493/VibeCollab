@@ -1,0 +1,61 @@
+kind: insight
+version: '1'
+id: INS-038
+title: 'Role-Driven Architecture: Continuous Improvement Pattern'
+summary: Systematic approach to evolving from developer-centric to role-centric architecture with backward compatibility
+tags:
+- architecture
+- role-driven
+- migration
+- backward-compatibility
+- refactoring
+category: workflow
+body:
+  scenario: When migrating from developer-based to role-based architecture while maintaining existing functionality and documentation
+  approach: |
+    1. **Assessment Phase**:
+       - Run `vibecollab check` to identify all breaking changes
+       - List all files referencing old 'developer' terminology
+       - Identify cross-references between docs/developers and code
+    
+    2. **Incremental Migration**:
+       - Rename docs/developers → docs/roles (directory structure)
+       - Update CLI commands: dev → role
+       - Update metadata keys: developer → role
+       - Update all internal references progressively
+    
+    3. **Validation at Each Step**:
+       - Run full test suite after each change batch
+       - Verify fingerprint consistency for insights
+       - Check all context files are accessible
+       - Validate ROADMAP.md task linkages
+    
+    4. **Documentation Sync**:
+       - Update DECISIONS.md with migration rationale
+       - Add CHANGELOG.md entries for each breaking change
+       - Update skill.md with new command syntax
+       - Maintain backward compatibility notes
+    
+    5. **Task-Insight Recording**:
+       - Create insight for each migration phase
+       - Link to related architecture insights (INS-004, INS-006)
+       - Update task status with insight references
+  validation: |
+    - All tests pass (>99%)
+    - No 'developer' references remain in user-facing APIs
+    - Documentation reflects new 'role' terminology
+    - Git history shows incremental, reviewable commits
+  artifacts:
+    - docs/roles/ directory structure
+    - Updated CLI command references
+    - Migrated context files
+    - Updated test suites
+origin:
+  created_by: ocarina
+  created_at: '2026-03-29'
+  context: Applied during TASK-DEV-027 Role-Driven Architecture Fix to systematically migrate from developer-based to role-based architecture
+  source:
+    type: task
+    description: Role-Driven Architecture Fix - migrating all developer references to role terminology
+    ref: TASK-DEV-027
+fingerprint: 13590d212c9e9695188e0a02650e3f1013e35bd88e0aabae68087b766ff53978
