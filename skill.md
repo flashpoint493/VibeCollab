@@ -73,6 +73,30 @@ After initialization completes, tell the user:
 
 This gives users an immediate path forward instead of leaving them wondering "what now?"
 
+## Step 2.5: Install Git Hooks (Recommended)
+
+Install the pre-commit hook to ensure every commit passes consistency checks:
+
+```bash
+vibecollab hooks install
+```
+
+**What it does:**
+- Automatically runs `vibecollab check` before every `git commit`
+- Validates insight fingerprints, protocol compliance, and document freshness
+- Blocks the commit if critical errors are found (prevents bad commits)
+
+**Why use it:**
+- Catches consistency issues before they reach the repository
+- Ensures all insights have valid fingerprints
+- Maintains protocol compliance automatically
+
+**If a commit is blocked:**
+- Fix the reported errors (recommended)
+- Or bypass with `git commit --no-verify` (emergency only)
+
+> **Note:** If `vibecollab hooks` command is not available (older versions), the hook can be manually installed. The hook will be auto-installed in future versions during `vibecollab init`.
+
 ## Step 3: Connect MCP to IDE
 
 Ask the user which IDE they use, then run:

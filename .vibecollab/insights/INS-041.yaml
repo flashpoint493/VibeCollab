@@ -1,0 +1,60 @@
+kind: insight
+version: '1'
+id: INS-041
+title: 'Documentation Update: Version-Aware README and Skill.md Maintenance'
+summary: Pattern for keeping README.md and skill.md synchronized with latest features while maintaining clarity for new users
+tags:
+- documentation
+- readme
+- skill
+- versioning
+- onboarding
+category: workflow
+body:
+  scenario: When new features (like pre-commit hooks) are implemented, README.md and skill.md need to be updated to reflect current capabilities without overwhelming new users
+  approach: |
+    1. **Version Awareness**:
+       - Add version badge/feature matrix in README
+       - Highlight features by version (v0.10.14, v0.11.0, etc.)
+       - Use "New in vX.Y.Z" labels for recent additions
+    
+    2. **Skill.md Structure** (Setup Instructions):
+       - Step 1: Install (pip install)
+       - Step 2: Initialize (vibecollab init)
+       - Step 2.5: Install Git Hooks (NEW - after init, before MCP)
+       - Step 3: Connect MCP to IDE
+       - Step 4: Verify
+       - Each step has clear purpose and commands
+    
+    3. **Feature Integration**:
+       - Add hooks installation as automatic step during init
+       - Document bypass option (--no-verify) for emergencies
+       - Explain what checks run (insight consistency, protocol compliance)
+    
+    4. **User-Friendly Explanations**:
+       - What the hook does: "自动检查一致性"
+       - Why it matters: "防止提交不符合协议规范的代码"
+       - How to handle failures: "修复错误或使用 --no-verify 绕过"
+    
+    5. **Backward Compatibility**:
+       - Don't break existing init workflows
+       - Hooks are opt-in during init (or auto-installed)
+       - Clear documentation for manual installation
+  validation: |
+    - New users can follow skill.md without confusion
+    - README features list matches actual capabilities
+    - Version numbers are accurate and up-to-date
+    - Hooks are mentioned prominently as quality gate
+  artifacts:
+    - README.md (features section)
+    - skill.md (setup steps)
+    - CHANGELOG.md (version tracking)
+origin:
+  created_by: dev
+  created_at: '2026-03-29'
+  context: Updating documentation to include pre-commit hooks feature after TASK-DEV-025 implementation
+  source:
+    type: task
+    description: Document pre-commit hooks in README and skill.md for better user onboarding
+    ref: TASK-DEV-029
+fingerprint: 972d3f677108542ecacbbda758d4ca9da576969f04b94b6a30f43ca8fd31195a

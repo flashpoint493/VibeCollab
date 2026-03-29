@@ -29,6 +29,13 @@
   - Pre-action and post-action guard rules documented
   - Severity levels: block/warn/allow
 
+- **Documentation Update**: README.md and skill.md synchronized ✅
+  - INS-041: Documentation Update Pattern for version-aware maintenance
+  - README.md: Added Git Hooks feature section (v0.10.14)
+  - skill.md: Added Step 2.5 (Git Hooks installation) to setup instructions
+  - Manual setup section now includes `vibecollab hooks install`
+  - Clear explanation of what hooks do and why they matter
+
 ### Planned (v0.11.0)
 - **FP-001**: Git Hooks Framework - Pre-commit/pre-push/post-commit hooks with configurable rules
 - **FP-008**: Guard Protection Engine - Pre/post-action protection rules integrated with check command

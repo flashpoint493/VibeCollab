@@ -33,10 +33,11 @@ That's all you need — the AI will install VibeCollab, initialize your project,
 pip install vibe-collab
 vibecollab init -n "MyProject" -d generic -o ./my-project
 cd my-project
+vibecollab hooks install              # Install pre-commit consistency checks
 vibecollab mcp inject --ide cursor   # or: cline / codebuddy / all
 ```
 
-That's it. Your AI assistant now follows structured collaboration protocols, captures reusable Insights, and maintains project context automatically.
+That's it. Your AI assistant now follows structured collaboration protocols, captures reusable Insights, and maintains project context automatically. The pre-commit hook ensures every commit passes consistency checks.
 
 ---
 
@@ -112,6 +113,12 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 - **YAML-driven workflows**: Define plans with `cli`, `assert`, `wait`, `prompt`, and `loop` actions
 - **Goal-based termination**: Loop continues until `check_command` passes or `max_rounds` reached
 - **Verbose logging**: `--verbose/-v` for timestamped per-step/per-round execution logs
+
+### Git Hooks + Consistency Guard (v0.10.14)
+- **Pre-commit hooks** (`vibecollab hooks install`): Auto-run `vibecollab check` before every commit
+- **Quality gate**: Blocks commits with insight fingerprint mismatches or protocol errors
+- **CI/CD ready**: Same checks in local dev and CI pipelines
+- **Configurable rules**: project.yaml controls which checks run and their severity
 
 ---
 
