@@ -23,4 +23,4 @@ origin:
     type: decision
     description: 'DECISION-007: Automatic Git Check'
     ref: DECISION-007
-fingerprint: 78d8deb9ab270e4f8ecf980d58d3c7ffb7c3da95084dcc09959833cff4f2494c
+fingerprint: 2f24db16449dadee7bc52f4a14d7b0a9d8aa86d69a5ca0278ff106f87130e71f

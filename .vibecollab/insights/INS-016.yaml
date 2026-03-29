@@ -24,4 +24,4 @@ origin:
     type: task
     description: Windows GBK compatibility refactoring
     ref: TASK-DEV-windows-compat
-fingerprint: d401017055c09aecfed27f0c10286a92eae54bbc30bf86610536f7c70e900465
+fingerprint: 529e7c541b2a0f686c8c6b10f04c8735173c924d64ecd1f5d5d12f0126afcf86

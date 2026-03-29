@@ -23,4 +23,4 @@ origin:
     type: decision
     description: 'DECISION-002: Integrate llms.txt Standard'
     ref: DECISION-002
-fingerprint: a5a28c394707cca3365b53a5ffe8ec2091659f855f3ba925cd80328e355fbbf3
+fingerprint: 38148f1cfa661242eac73ce004e301ca17fb9056e0fbb044bcc57138b8dc9511

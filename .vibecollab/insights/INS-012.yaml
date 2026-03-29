@@ -23,4 +23,4 @@ origin:
     type: task
     description: v0.9.2 Insight Signal Collector
     ref: TASK-DEV-insight-signals
-fingerprint: e4fc17cab37c79c5a3e0de98a3abe05460dac765f1e96974c67b37ff9f051402
+fingerprint: 19d2967b6f6b0c21a160abb97436f7f73c4e1bbc763e457c72cab5f7d06e0fc4

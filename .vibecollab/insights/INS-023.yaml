@@ -24,4 +24,4 @@ origin:
     type: task
     description: v0.10.12 skill command
     ref: TASK-DEV-skill-injection
-fingerprint: 6c61b314f12706af15daa88549b6710121b1cc96a5e3c8d88a23423d8b5d8850
+fingerprint: 9e7a38d4f2c27a90444da35e619ca8a609b2b3080f3f7aa4ac03c01f89ad9f45

@@ -24,4 +24,4 @@ origin:
     type: task
     description: v0.10.4 Host Adapter system
     ref: TASK-DEV-host-adapter
-fingerprint: 27cb6103e89aded288db9cae44d42af64c1ec5fa67cbbee517c4ff310e968637
+fingerprint: 89003dbed38b620e6c030a19b064c231f67d3c3b0fba2ab3dc6989c51338cb93

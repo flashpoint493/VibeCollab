@@ -24,4 +24,4 @@ origin:
     type: task
     description: v0.8.0 config system
     ref: TASK-DEV-config-system
-fingerprint: 846a74b0f3c1b11eb36e1211b32988ee730d53855fbff3f2fc7c0d2060aa38ce
+fingerprint: acd1363c65e203b24335b771d9f1f6da1c4ee8de1ea75e31855f877398468d3e

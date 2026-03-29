@@ -23,4 +23,4 @@ origin:
     type: task
     description: v0.9.3 Task workflow implementation
     ref: TASK-DEV-task-lifecycle
-fingerprint: a26fa8b1d046d90c3abdcabb2dd65eceade54deb249da25f9f2d849f13d285e5
+fingerprint: f3f85312ecf89f1e7f462f6a5229e15385aaef85e7f64a7f3f03ff48da2e5816

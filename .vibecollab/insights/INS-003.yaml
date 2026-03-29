@@ -23,4 +23,4 @@ origin:
     type: decision
     description: 'DECISION-003: Rename Package to vibe-collab'
     ref: DECISION-003
-fingerprint: 5c7ba9b901bf7446e673c8d35dd2e570c3c2f51a5be3e67b1538c8da3c6778b5
+fingerprint: 1a0fc6850d2e06c86184ed65bda2a4b5b85c5249a64af34bd8209525ffeb223c

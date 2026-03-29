@@ -23,4 +23,4 @@ origin:
     type: task
     description: v0.10.10 version sync tool
     ref: TASK-DEV-version-sync
-fingerprint: d5ad6394d43981a073271282ae94ce938fc32df6dec935750bc3428fc5e5e472
+fingerprint: fffa2981bc7491c2f2746a6d3ea7ce645357b24eaa35f2f4975835233ab0f748

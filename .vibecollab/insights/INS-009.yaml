@@ -25,4 +25,4 @@ origin:
     type: decision
     description: 'DECISION-017: v0.10.x Release Engineering'
     ref: DECISION-017
-fingerprint: 1076d7c841ca74b2b68fcd540a4d8e49201ffe435fc3638ceea3d65ac9bc4034
+fingerprint: 3153b9b00f6a7d674e8c2ae30b9045fa0a59fa479670e4650613300b1b22a919

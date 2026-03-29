@@ -24,4 +24,4 @@ origin:
     type: task
     description: v0.9.8 automated publishing
     ref: TASK-DEV-auto-publish
-fingerprint: d41209e677711106c2afe13c8e9c60588e5837b413b8f6179d8ec391e01bef09
+fingerprint: 1b3d59097fb61e48ad4fe22514374eceb9c72fba33db88a3a6b72db16cb6d40a
