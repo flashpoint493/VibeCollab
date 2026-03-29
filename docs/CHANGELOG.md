@@ -45,10 +45,18 @@
 - **Commit-Type-Based Dynamic Check**: Context-aware strictness ✅
   - INS-043: Commit-Type-Based Dynamic Document Sync Check
   - project.yaml: Added doc_requirements and severity per commit prefix
-  - [FEAT]: Requires CONTEXT, CHANGELOG, QA_TEST_CASES (error)
-  - [FIX]: Requires CHANGELOG, QA_TEST_CASES (error)
-  - [CONFIG]: No docs required (info)
-  - [DOC], [REFACTOR]: Warning level
+  - feat: Requires CONTEXT, CHANGELOG, QA_TEST_CASES (error)
+  - fix: Requires CHANGELOG, QA_TEST_CASES (error)
+  - config: No docs required (info)
+  - docs, refactor: Warning level
+  - Adjusted prefixes to lowercase to match git history
+
+- **Role-Driven Architecture**: Implementation started ✅
+  - INS-044: Role-Driven Architecture Implementation Pattern
+  - Concrete plan for developer-role binding
+  - Permission system design
+  - Dynamic skill registration approach
+  - TASK-DEV-027 in progress
   - prepare-commit-msg hook: Suggests prefix based on staged files
 
 ### Planned (v0.11.0)

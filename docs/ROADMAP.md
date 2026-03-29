@@ -493,14 +493,17 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [ ] MCP `guard_check` tool for file operation interception (TODO)
 - [ ] Default guards: .meta protection, Library/ protection (TODO)
 
-#### Role Architecture Fix (DECISION-020) — In Progress
+#### Role Architecture Fix (DECISION-020) — Implementation Started
 - [x] **Insight created**: INS-038 Role-Driven Architecture Migration Pattern
-- [x] **Related insights applied**: INS-004, INS-006, INS-017, INS-023
-- [ ] Developer-Role binding in project.yaml
-- [ ] Role permissions: file_patterns, can_create_task_for, can_transition_to
-- [ ] `vibecollab role` enhanced with role switching
-- [ ] Dynamic skill registration from Insights based on current role
-- [ ] Permission checking in Task operations
+- [x] **Insight created**: INS-044 Role-Driven Architecture Implementation Pattern
+- [x] **Design complete**: Developer-role binding schema defined
+- [x] **Design complete**: Permission system specification
+- [x] **Design complete**: Dynamic skill registration approach
+- [ ] Developer-Role binding in project.yaml (TODO)
+- [ ] Role permissions implementation: file_patterns, can_create_task_for, can_transition_to (TODO)
+- [ ] `vibecollab role` CLI commands: list, show, switch, permissions (TODO)
+- [ ] Dynamic skill registration from Insights based on current role (TODO)
+- [ ] Permission checking in Task operations (TODO)
 
 #### Integration
 - [ ] Guards + Hooks unified configuration
