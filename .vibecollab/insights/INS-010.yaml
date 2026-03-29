@@ -25,4 +25,4 @@ origin:
     type: task
     description: v0.9.0 semantic search engine implementation
     ref: TASK-DEV-semantic-search
-fingerprint: 8d8bbc0e7bebfbd417ab27cbe72faf9e42548d6b2b00921c3ee555271c545e28
+fingerprint: 5871173f18a59c68afdf9d0148b46ea9aa66b1191b15f1bd7db23aaaa3cb02f0

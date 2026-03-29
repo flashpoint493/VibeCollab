@@ -24,4 +24,4 @@ origin:
     type: task
     description: v0.9.6 CLI i18n framework
     ref: TASK-DEV-cli-i18n
-fingerprint: d357e73979fa06d3df6944f6e99b7554f7588682de40def8c20a0315bca34816
+fingerprint: 55ecaafbbe3de56753cdaea70e3c2f032066d8f8192eff9fa1b20cb44fac14bd

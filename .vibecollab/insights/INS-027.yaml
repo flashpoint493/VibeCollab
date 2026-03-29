@@ -24,4 +24,4 @@ origin:
     type: task
     description: Insight consistency check implementation
     ref: TASK-DEV-consistency-check
-fingerprint: 3465e8ec4521bb19fa4b0998fd8a48025c2cff96101e8ba53f2ffa2644001b95
+fingerprint: 77b6dc553069532d27414f1ab1c94496e8679c12491a56809288c7346c7bba73

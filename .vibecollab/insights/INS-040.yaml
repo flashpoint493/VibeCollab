@@ -76,4 +76,4 @@ origin:
     type: task
     description: FP-008 Guard Protection Engine - File operation safety rules
     ref: TASK-DEV-026
-fingerprint: 16a3beeca3430768db7a4d5dbaee9ded2cd8bdfa9b76b0b6f07a56542c2f923f
+fingerprint: 7a2603785a925aff44b48ff3f15aab16d2930dac9d963641bc48f3e7433f6f75

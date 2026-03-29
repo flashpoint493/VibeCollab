@@ -22,4 +22,4 @@ origin:
     type: decision
     description: 'DECISION-001: Rename llm.txt to CONTRIBUTING_AI.md'
     ref: DECISION-001
-fingerprint: 6200114dec346342a9545567ef734bcd74701d781c7c41f768579dca1c08af99
+fingerprint: bcd58c7fbf16c43d929558ab063845d6d64eb2ea8ef82508290b10b4073228eb

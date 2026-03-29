@@ -58,4 +58,4 @@ origin:
     type: task
     description: Role-Driven Architecture Fix - migrating all developer references to role terminology
     ref: TASK-DEV-027
-fingerprint: 13590d212c9e9695188e0a02650e3f1013e35bd88e0aabae68087b766ff53978
+fingerprint: e8923aa978d3946c658ac0bc5564af95c06dfe192d3e4c05fc14e0045bffb902

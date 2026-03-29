@@ -24,4 +24,4 @@ origin:
     type: task
     description: v0.9.1 MCP Server implementation
     ref: TASK-DEV-mcp-server
-fingerprint: 1dd35825d50d1aedbe9f992c8a4ad65227f3ca6bb129080a00f28490240e748a
+fingerprint: e285ffcfebf03da47d6240ba79f56d46decd6ba8a8867ce6c07af9fa17946814

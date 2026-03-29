@@ -58,4 +58,4 @@ origin:
     type: task
     description: FP-001 Git Hooks Framework - Pre-commit consistency check implementation
     ref: TASK-DEV-025
-fingerprint: c64907d2dc8c1ff2f4dc2841dafd6e9f2d26db62192a19b0695d61fdfa758cb8
+fingerprint: 3cbceb6142d7ab5cd7a8c24005acb7dd6ca2c6b801237a7c94c10f8534fc5e4c
