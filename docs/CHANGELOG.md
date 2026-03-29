@@ -9,6 +9,13 @@
   - Verified CI/CD pipeline (99.7% test pass rate)
   - All commit messages standardized to English
 
+### In Progress (v0.10.14)
+- **Task-Insight Best Practices**: Systematic workflow documentation
+  - INS-036: Release Engineering Task-Insight Documentation Cycle
+  - INS-037: VibeCollab --help Systematic Workflow
+  - Updated skill.md with iteration cycle best practices
+  - Continuous git synchronization (3 commits)
+
 ### Planned (v0.11.0)
 - **FP-001**: Git Hooks Framework - Pre-commit/pre-push/post-commit hooks with configurable rules
 - **FP-008**: Guard Protection Engine - Pre/post-action protection rules integrated with check command
