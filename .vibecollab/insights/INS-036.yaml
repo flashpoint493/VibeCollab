@@ -1,0 +1,33 @@
+kind: insight
+version: '1'
+id: INS-036
+title: 'Release Engineering: Task-Insight Documentation Cycle'
+summary: Structured release workflow using Task-Insight iteration for continuous knowledge
+  accumulation
+tags:
+- release-engineering
+- documentation
+- task-insight-cycle
+- best-practice
+category: workflow
+body:
+  scenario: When completing a software release cycle with multiple documentation and
+    version management tasks
+  approach: 1. Create TASK-DEV-XXX for release scope\n2. Execute release tasks (version
+    bump, docs, CI)\n3. Update ROADMAP.md and CHANGELOG.md immediately\n4. Capture
+    lessons as reusable Insight\n5. Git commit with conventional commit format\n6.
+    Push and verify CI/CD pipeline
+  validation: All documentation updated within same commit cycle, CI passes 99%+,
+    clear commit messages
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-03-27'
+  context: Applied during v0.10.13 release engineering with role-based architecture
+    migration. Documented in CHANGELOG Unreleased section with DECISION references.
+  source:
+    type: task
+    description: v0.10.13 release engineering - role-based architecture complete,
+      99.7% test pass rate
+    ref: TASK-DEV-028
+fingerprint: 347e6f6f960e516732b5d662742f8b4f226b2eedfc332f9295db86c2416443fd
