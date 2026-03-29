@@ -377,3 +377,59 @@ Conversation start → call onboard
 ```
 
 > **Key**: Insight is enabled by default in `check`. Every conversation should consider capturing reusable knowledge via `insight_add`.
+
+## Best Practice: Task-Insight Iteration Cycle
+
+When using `vibecollab --help` to drive development, follow this systematic workflow:
+
+### 1. State Assessment
+```bash
+# Check current tasks and insights
+vibecollab task list                    # View TODO tasks
+vibecollab task suggest <TASK-ID>       # Get relevant insights
+vibecollab insight status               # Check insight system health
+git status                              # Verify sync state
+```
+
+### 2. Task-Insight Loop
+```
+Select Task → Query Insights → Execute → Capture Insight → Git Sync
+     ↑                                                    ↓
+     └──────────────── Next Task ←──────────────←────────┘
+```
+
+**Pattern**: Always link tasks with insights:
+- Before starting: `vibecollab task suggest <task>` to find relevant experience
+- During work: Apply insights from registry (INS-XXX.yaml files)
+- After completion: Create new insight via `insight_add` or manual INS-XXX.yaml
+
+### 3. Git Synchronization Rules
+- **Immediate**: After every insight creation (`git add .vibecollab/insights/`)
+- **Batch**: After documentation updates (`git add docs/`)
+- **Atomic**: One logical change = one commit with conventional format:
+  ```
+  feat(insight): INS-XXX brief description
+  
+  - Detail 1
+  - Detail 2
+  
+  Refs: TASK-XXX
+  ```
+
+### 4. Documentation Update Sequence
+1. **CHANGELOG.md**: Add to `[Unreleased]` section immediately
+2. **ROADMAP.md**: Mark milestones, update task status
+3. **Context files**: Update `docs/roles/<role>/CONTEXT.md`
+4. **Re-index**: `vibecollab index` to update vector search
+
+### 5. Continuous Accumulation
+Each iteration should:
+- ✅ Complete at least one task
+- ✅ Create or update at least one insight
+- ✅ Synchronize to git
+- ✅ Update relevant documentation
+- ✅ Verify with `vibecollab check`
+
+**Reference Insights**:
+- INS-036: Release Engineering Task-Insight Cycle
+- INS-037: VibeCollab --help Systematic Workflow
