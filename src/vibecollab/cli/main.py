@@ -525,9 +525,7 @@ def upgrade(config: str, dry_run: bool, force: bool):
 
         # Create COLLABORATION.md
         collab_config = role_based_config.get("collaboration", {})
-        collab_file = config_path.parent / collab_config.get(
-            "file", "docs/roles/COLLABORATION.md"
-        )
+        collab_file = config_path.parent / collab_config.get("file", "docs/roles/COLLABORATION.md")
 
         if not collab_file.exists():
             collab_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1923,6 +1921,115 @@ def role_conflicts(config: str, verbose: bool, between: Optional[Tuple[str, str]
 
             console.print(traceback.format_exc())
         raise SystemExit(1)
+
+
+@role.command("permissions")
+@click.option("-c", "--config", default="project.yaml", help="Project config file path")
+@click.option(
+    "-r", "--role", "role_code", help="Show permissions for specific role (default: current)"
+)
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+def role_permissions(config: str, role_code: Optional[str], as_json: bool):
+    """Show effective permissions for current or specified role
+
+    Displays the permission settings including:
+    - Assigned roles and primary role
+    - File pattern access rights
+    - Task creation permissions
+    - Status transition permissions
+    - Decision approval levels
+
+    Examples:
+
+        vibecollab role permissions              # Show current role permissions
+
+        vibecollab role permissions -r DEV       # Show DEV role permissions
+
+        vibecollab role permissions --json       # Output as JSON for scripting
+    """
+    from ..domain.role import RoleManager
+    import json as json_module
+
+    config_path = Path(config)
+    project_root = config_path.parent
+
+    if not config_path.exists():
+        console.print(f"[red]{_('Error:')}[/red] {_('Config file not found:')} {config}")
+        raise SystemExit(1)
+
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+
+    dm = RoleManager(project_root, project_config)
+
+    # Get target role
+    if role_code is None:
+        role_code = dm.get_current_role()
+        source = dm.get_identity_source()
+    else:
+        source = "manual_specified"
+
+    # Get effective permissions
+    effective = dm.get_effective_permissions(role_code)
+
+    if as_json:
+        console.print(json_module.dumps(effective, indent=2, ensure_ascii=False))
+        return
+
+    # Display in formatted table
+    console.print()
+    console.print(f"[cyan]{_('Role Permissions')}[/cyan]")
+    console.print()
+
+    # Basic info
+    console.print(f"  {_('Developer:')} [bold]{effective['developer']}[/bold]")
+    console.print(f"  {_('Primary Role:')} [bold cyan]{effective['primary_role']}[/bold cyan]")
+    console.print(f"  {_('All Roles:')} {', '.join(effective['all_roles'])}")
+    console.print(f"  {_('Identity Source:')} {source}")
+    console.print()
+
+    # Permissions
+    perms = effective["permissions"]
+    if not perms:
+        console.print(f"  [yellow]{_('No permissions configured (permissive mode)')}[/yellow]")
+        console.print(f"  [dim]{_('All operations allowed by default')}[/dim]")
+    else:
+        console.print(f"  [bold]{_('Permissions:')}[/bold]")
+
+        # File patterns
+        patterns = perms.get("file_patterns", [])
+        if patterns:
+            console.print(f"    {_('File Access:')}")
+            for pattern in patterns:
+                console.print(f"      • {pattern}")
+
+        # Task creation
+        can_create = perms.get("can_create_task_for", [])
+        if can_create:
+            console.print(f"    {_('Can Create Tasks For:')} {', '.join(can_create)}")
+
+        # Status transitions
+        can_transition = perms.get("can_transition_to", [])
+        if can_transition:
+            console.print(f"    {_('Can Transition To:')} {', '.join(can_transition)}")
+
+        # Decision approval
+        can_approve = perms.get("can_approve_decisions", [])
+        if can_approve:
+            console.print(f"    {_('Can Approve Decisions:')} {', '.join(can_approve)}")
+
+    console.print()
+
+    # Quick check examples
+    console.print(f"  [dim]{_('Quick Checks:')}[/dim]")
+    test_roles = ["DEV", "ARCH", "QA"]
+    for test_role in test_roles:
+        can_create = dm.can_create_task_for(test_role, role_code)
+        status = "✓" if can_create else "✗"
+        color = "green" if can_create else "red"
+        console.print(f"    [{color}]{status}[/{color}] {_('Create tasks for')} {test_role}")
+
+    console.print()
 
 
 if __name__ == "__main__":

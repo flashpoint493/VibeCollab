@@ -538,6 +538,155 @@ class RoleManager:
         self._write_metadata(meta, developer)
         return True
 
+    # ------------------------------------------------------------------
+    # Permission system (DEV-027)
+    # ------------------------------------------------------------------
+
+    def _load_permissions_config(self) -> Dict:
+        """Load permissions configuration from project.yaml"""
+        # Check cache first
+        if hasattr(self, "_permissions_cache"):
+            return self._permissions_cache
+
+        # Load from project.yaml
+        permissions_config = {
+            "developers": self.config.get("developers", []),
+            "roles": self.config.get("roles", []),
+        }
+
+        # Build lookup dicts for faster access
+        self._developers_lookup = {d.get("name"): d for d in permissions_config["developers"]}
+        self._roles_lookup = {r.get("code"): r for r in permissions_config["roles"]}
+
+        self._permissions_cache = permissions_config
+        return permissions_config
+
+    def get_developer_roles(self, developer: Optional[str] = None) -> List[str]:
+        """Get all roles assigned to a developer"""
+        if developer is None:
+            developer = self.get_current_role()
+
+        self._load_permissions_config()
+        dev_config = self._developers_lookup.get(developer, {})
+
+        # Return configured roles or default to [developer]
+        roles = dev_config.get("roles", [])
+        if not roles:
+            # Backward compatible: treat developer name as role
+            roles = [developer]
+        return roles
+
+    def get_primary_role(self, developer: Optional[str] = None) -> str:
+        """Get primary role for a developer"""
+        if developer is None:
+            developer = self.get_current_role()
+
+        self._load_permissions_config()
+        dev_config = self._developers_lookup.get(developer, {})
+
+        return dev_config.get("primary_role", self.get_developer_roles(developer)[0])
+
+    def can_create_task_for(self, target_role: str, developer: Optional[str] = None) -> bool:
+        """Check if developer can create tasks for target role"""
+        if developer is None:
+            developer = self.get_current_role()
+
+        # Get developer's primary role
+        primary_role = self.get_primary_role(developer)
+
+        self._load_permissions_config()
+        role_config = self._roles_lookup.get(primary_role, {})
+        permissions = role_config.get("permissions", {})
+
+        # If no restrictions configured, allow all (backward compatible)
+        allowed_roles = permissions.get("can_create_task_for", [])
+        if not allowed_roles:
+            return True
+
+        return target_role in allowed_roles
+
+    def can_transition_to(self, status: str, developer: Optional[str] = None) -> bool:
+        """Check if developer can transition tasks to given status"""
+        if developer is None:
+            developer = self.get_current_role()
+
+        primary_role = self.get_primary_role(developer)
+
+        self._load_permissions_config()
+        role_config = self._roles_lookup.get(primary_role, {})
+        permissions = role_config.get("permissions", {})
+
+        allowed_statuses = permissions.get("can_transition_to", [])
+        if not allowed_statuses:
+            return True
+
+        return status in allowed_statuses
+
+    def can_write_file(self, file_path: str, developer: Optional[str] = None) -> bool:
+        """Check if developer can write to given file path"""
+        if developer is None:
+            developer = self.get_current_role()
+
+        primary_role = self.get_primary_role(developer)
+
+        self._load_permissions_config()
+        role_config = self._roles_lookup.get(primary_role, {})
+        permissions = role_config.get("permissions", {})
+
+        patterns = permissions.get("file_patterns", [])
+        if not patterns:
+            return True
+
+        # Check if file matches any allowed pattern
+        import fnmatch
+
+        for pattern in patterns:
+            if fnmatch.fnmatch(file_path, pattern):
+                return True
+
+        return False
+
+    def can_approve_decision(self, decision_level: str, developer: Optional[str] = None) -> bool:
+        """Check if developer can approve decisions of given level (S/A/B/C)"""
+        if developer is None:
+            developer = self.get_current_role()
+
+        primary_role = self.get_primary_role(developer)
+
+        self._load_permissions_config()
+        role_config = self._roles_lookup.get(primary_role, {})
+        permissions = role_config.get("permissions", {})
+
+        allowed_levels = permissions.get("can_approve_decisions", [])
+        if not allowed_levels:
+            # By default, only S and A require explicit approval permission
+            if decision_level in ["S", "A"]:
+                return False
+            return True
+
+        return decision_level in allowed_levels
+
+    def get_role_permissions(self, role_code: str) -> Dict:
+        """Get all permissions for a role"""
+        self._load_permissions_config()
+        role_config = self._roles_lookup.get(role_code, {})
+        return role_config.get("permissions", {})
+
+    def get_effective_permissions(self, developer: Optional[str] = None) -> Dict:
+        """Get effective permissions for current developer"""
+        if developer is None:
+            developer = self.get_current_role()
+
+        primary_role = self.get_primary_role(developer)
+        roles = self.get_developer_roles(developer)
+
+        return {
+            "developer": developer,
+            "primary_role": primary_role,
+            "all_roles": roles,
+            "permissions": self.get_role_permissions(primary_role),
+        }
+
 
 class ContextAggregator:
     """Context aggregator, responsible for generating global CONTEXT.md"""

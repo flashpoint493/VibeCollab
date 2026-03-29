@@ -1,0 +1,52 @@
+kind: insight
+version: '1'
+id: INS-045
+title: 'DEV-027 Implementation: RoleManager Enhancement Best Practices'
+summary: Best practices for implementing developer-role binding and permission system in RoleManager while maintaining backward compatibility
+tags:
+- implementation
+- rolemanager
+- permissions
+- best-practice
+- dev-027
+category: workflow
+body:
+  scenario: Need to enhance existing RoleManager class with permission system without breaking existing functionality. Must maintain backward compatibility for projects using current role system.
+  implementation_steps: |
+    Step 1 - Load Developer-Role Bindings:
+    Add method to load developers section from project.yaml. Support both old format (role only) and new format (developer with multiple roles).
+    
+    Step 2 - Permission Checking Methods:
+    Add check methods: can_create_task(role, target_role), can_transition_to(role, status), can_write_file(role, file_path), can_approve_decision(role, level).
+    Return True if no restrictions configured (backward compatible).
+    
+    Step 3 - Lazy Loading:
+    Load permission config only when first permission check is called. Cache results to avoid repeated yaml parsing.
+    
+    Step 4 - Event Logging:
+    Log all permission checks to EventLog for audit trail. Include: timestamp, role, action, resource, result.
+    
+    Step 5 - Graceful Degradation:
+    If project.yaml lacks permissions config, default to permissive mode (all checks pass). Warn user that strict mode is not configured.
+    
+    Step 6 - CLI Integration:
+    Add vibecollab role permissions command to display current effective permissions. Help developers understand what they can/cannot do.
+  validation: |
+    Existing projects without permission config continue to work.
+    New projects with permissions have restrictions enforced.
+    Permission violations are logged and reported clearly.
+    Role switch triggers permission recalculation.
+  artifacts:
+    - Enhanced RoleManager class
+    - Permission check methods
+    - CLI role permissions command
+    - EventLog integration
+origin:
+  created_by: dev
+  created_at: '2026-03-29'
+  context: Implementing DEV-027 Role-Driven Architecture Fix - RoleManager enhancement phase
+  source:
+    type: implementation
+    description: Best practices for enhancing RoleManager with backward compatible permission system
+    ref: TASK-DEV-027
+fingerprint: 390cc4446ea1545db329ac99bd3e3116823fbcff5699398709eddef880694e48

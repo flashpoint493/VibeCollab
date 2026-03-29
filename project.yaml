@@ -16,71 +16,100 @@ philosophy:
     critical_tolerance: 0
   long_term_dialogue: true
 roles:
-- code: DESIGN
-  name: Product Design
-  focus:
-  - requirements
-  - experience
-  - interaction
-  triggers:
-  - design
-  - requirements
-  - product
-  is_gatekeeper: false
-- code: ARCH
-  name: Architecture
-  focus:
-  - infrastructure
-  - performance
-  - extensibility
-  triggers:
-  - architecture
-  - infrastructure
-  - refactor
-  is_gatekeeper: false
-- code: DEV
-  name: Development
-  focus:
-  - implementation
-  - bug fixing
-  triggers:
-  - develop
-  - implement
-  - code
-  is_gatekeeper: false
-- code: PM
-  name: Project Management
-  focus:
-  - milestones
-  - priorities
-  - progress
-  triggers:
-  - plan
-  - schedule
-  - priority
-  is_gatekeeper: false
-- code: QA
-  name: Product Quality Assurance
-  focus:
-  - acceptance testing
-  - user experience validation
-  - edge cases
-  triggers:
-  - acceptance
-  - experience testing
-  - feature verification
-  is_gatekeeper: true
-- code: TEST
-  name: Unit Testing
-  focus:
-  - code testing
-  - coverage
-  - automated testing
-  triggers:
-  - unit test
-  - test case
-  - coverage
-  is_gatekeeper: false
+  - code: DESIGN
+    name: Product Design
+    focus:
+    - requirements
+    - experience
+    - interaction
+    triggers:
+    - design
+    - requirements
+    - product
+    is_gatekeeper: false
+    permissions:
+      file_patterns: ["docs/design/**", "docs/PRD.md"]
+      can_create_task_for: [DESIGN, DEV]
+      can_transition_to: [TODO, IN_PROGRESS, REVIEW, DONE]
+      can_approve_decisions: [B, C]
+  - code: ARCH
+    name: Architecture
+    focus:
+    - infrastructure
+    - performance
+    - extensibility
+    triggers:
+    - architecture
+    - infrastructure
+    - refactor
+    is_gatekeeper: false
+    permissions:
+      file_patterns: ["src/core/**", "docs/architecture/**", "docs/DECISIONS.md"]
+      can_create_task_for: [DEV, ARCH, DESIGN]
+      can_transition_to: [TODO, IN_PROGRESS, REVIEW, DONE]
+      can_approve_decisions: [S, A, B, C]
+  - code: DEV
+    name: Development
+    focus:
+    - implementation
+    - bug fixing
+    triggers:
+    - develop
+    - implement
+    - code
+    is_gatekeeper: false
+    permissions:
+      file_patterns: ["src/**", "tests/**", "docs/**"]
+      can_create_task_for: [DEV, TEST]
+      can_transition_to: [TODO, IN_PROGRESS, REVIEW]
+      can_approve_decisions: [C]
+  - code: PM
+    name: Project Management
+    focus:
+    - milestones
+    - priorities
+    - progress
+    triggers:
+    - plan
+    - schedule
+    - priority
+    is_gatekeeper: false
+    permissions:
+      file_patterns: ["docs/ROADMAP.md", "docs/CHANGELOG.md"]
+      can_create_task_for: [PM, DEV, DESIGN]
+      can_transition_to: [TODO, IN_PROGRESS, REVIEW, DONE]
+      can_approve_decisions: [A, B, C]
+  - code: QA
+    name: Product Quality Assurance
+    focus:
+    - acceptance testing
+    - user experience validation
+    - edge cases
+    triggers:
+    - acceptance
+    - experience testing
+    - feature verification
+    is_gatekeeper: true
+    permissions:
+      file_patterns: ["tests/**", "docs/QA_TEST_CASES.md"]
+      can_create_task_for: [QA, TEST]
+      can_transition_to: [REVIEW, DONE]
+      can_approve_decisions: [B, C]
+  - code: TEST
+    name: Unit Testing
+    focus:
+    - code testing
+    - coverage
+    - automated testing
+    triggers:
+    - unit test
+    - test case
+    - coverage
+    is_gatekeeper: false
+    permissions:
+      file_patterns: ["tests/**"]
+      can_create_task_for: [TEST, DEV]
+      can_transition_to: [TODO, IN_PROGRESS, REVIEW]
 decision_levels:
 - level: S
   name: Strategic Decision
@@ -434,6 +463,28 @@ prompt_engineering:
       '
 confirmed_decisions: []
 contributing_ai_changelog: []
+# Role-based permission system (DEV-027)
+developers:
+  - name: "dev"
+    git_username: "dev"
+    roles: [DEV, ARCH]
+    primary_role: DEV
+    permissions:
+      file_patterns: ["src/**", "tests/**", "docs/**"]
+      can_create_task_for: [DEV, TEST, QA]
+      can_transition_to: [TODO, IN_PROGRESS, REVIEW, DONE]
+      can_approve_decisions: [B, C]
+  
+  - name: "architect"
+    git_username: "architect"
+    roles: [ARCH]
+    primary_role: ARCH
+    permissions:
+      file_patterns: ["src/core/**", "docs/architecture/**"]
+      can_create_task_for: [DEV, ARCH, DESIGN]
+      can_transition_to: [TODO, IN_PROGRESS, REVIEW, DONE]
+      can_approve_decisions: [S, A, B, C]
+
 documentation:
   consistency:
     enabled: true
