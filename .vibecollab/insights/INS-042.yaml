@@ -1,0 +1,88 @@
+kind: insight
+version: '1'
+id: INS-042
+title: 'Strict Git-Based Document-Code Sync: Linked Groups Configuration'
+summary: Enforce that critical documents (CONTEXT, ROADMAP, DECISION, QA) are committed together with code changes using git_commit level consistency checks
+tags:
+- git-sync
+- documentation
+- strict-check
+- linked-groups
+- consistency
+category: workflow
+body:
+  scenario: Current checks only verify file modification time (24h threshold), allowing local changes without git commit. Critical docs (CONTEXT, ROADMAP, DECISION, QA_TEST_CASES) may drift from actual code state.
+  problems:
+    - mtime_check: Only warns if file not modified in 24h, doesn't check git commit
+    - no_sync_requirement: Docs can be updated without committing with code
+    - silent_drift: Documents become stale without blocking commits
+  approach: |
+    1. **Enable Linked Groups** (project.yaml):
+       ```yaml
+       documentation:
+         consistency:
+           enabled: true
+           default_level: git_commit
+           linked_groups:
+             - name: core_context
+               level: git_commit
+               files:
+                 - docs/CONTEXT.md
+                 - docs/CHANGELOG.md
+               description: Core context must sync with code changes
+             
+             - name: planning_docs
+               level: git_commit
+               files:
+                 - docs/ROADMAP.md
+                 - docs/DECISIONS.md
+               description: Planning docs must reflect committed decisions
+             
+             - name: qa_sync
+               level: git_commit
+               files:
+                 - docs/QA_TEST_CASES.md
+               description: QA cases must match committed features
+       ```
+    
+    2. **How git_commit level works**:
+       - Checks last commit hash of each file in group
+       - If files have different commit hashes → Error
+       - Ensures all files in group committed together
+    
+    3. **Severity Levels**:
+       - local_mtime: Check file mtime (current, lenient)
+       - git_commit: Check commit hash sync (strict, recommended)
+       - release: Check only at version tags (most lenient)
+    
+    4. **Error Examples**:
+       ```
+       ❌ Error: Linked group [core_context] requires git commit sync.
+       docs/CONTEXT.md was committed in abc1234 (2 hours ago)
+       docs/CHANGELOG.md was committed in def5678 (5 minutes ago)
+       These files should be committed together.
+       ```
+    
+    5. **Best Practices**:
+       - Use git_commit level for critical docs
+       - Use local_mtime for frequently updated files
+       - Always update CONTEXT + CHANGELOG in same commit as code
+       - Update ROADMAP when completing milestones
+  validation: |
+    - CONTEXT.md and code changes always in same commit
+    - ROADMAP.md reflects actually completed features
+    - QA_TEST_CASES.md matches committed implementation
+    - No silent document drift
+  artifacts:
+    - project.yaml linked_groups configuration
+    - Git commit history showing synced updates
+    - vibecollab check passing with strict mode
+origin:
+  created_by: dev
+  created_at: '2026-03-29'
+  context: Discussion about strengthening document-code consistency checks beyond mtime to git_commit level
+  source:
+    type: discussion
+    description: User raised concern about strictness of vibecollab check for document sync
+    ref: TASK-DEV-043
+fingerprint: 8e99eb72ce2c9975bede9629dbbed4fd5752bd6da022443c4257a8bc31f98aeb

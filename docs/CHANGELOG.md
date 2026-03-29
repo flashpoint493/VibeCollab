@@ -36,6 +36,21 @@
   - Manual setup section now includes `vibecollab hooks install`
   - Clear explanation of what hooks do and why they matter
 
+- **Strict Document-Code Sync**: Linked groups + Git commit level ✅
+  - INS-042: Strict Git-Based Document-Code Sync Pattern
+  - project.yaml: Configured linked_groups with git_commit level
+  - Enforces CONTEXT + CHANGELOG, ROADMAP + DECISIONS sync
+  - Detects when docs are modified in different commits
+
+- **Commit-Type-Based Dynamic Check**: Context-aware strictness ✅
+  - INS-043: Commit-Type-Based Dynamic Document Sync Check
+  - project.yaml: Added doc_requirements and severity per commit prefix
+  - [FEAT]: Requires CONTEXT, CHANGELOG, QA_TEST_CASES (error)
+  - [FIX]: Requires CHANGELOG, QA_TEST_CASES (error)
+  - [CONFIG]: No docs required (info)
+  - [DOC], [REFACTOR]: Warning level
+  - prepare-commit-msg hook: Suggests prefix based on staged files
+
 ### Planned (v0.11.0)
 - **FP-001**: Git Hooks Framework - Pre-commit/pre-push/post-commit hooks with configurable rules
 - **FP-008**: Guard Protection Engine - Pre/post-action protection rules integrated with check command

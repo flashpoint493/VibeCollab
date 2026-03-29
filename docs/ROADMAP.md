@@ -471,13 +471,17 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 
 > Objective: Implement user-requested features from CCGS analysis (FP-001, FP-002, FP-008, Role Fix)
 
-#### FP-001: Git Hooks Framework — Core Implementation ✅
+#### FP-001: Git Hooks Framework — Advanced Implementation ✅
 - [x] **Insight created**: INS-039 Git Hooks Framework Pattern
+- [x] **Insight created**: INS-042 Strict Git-Based Document-Code Sync Pattern
+- [x] **Insight created**: INS-043 Commit-Type-Based Dynamic Document Sync Check
 - [x] `.git/hooks/pre-commit` — Auto-runs `vibecollab check` before each commit
-- [x] **Working**: Every commit now validates insight consistency
+- [x] `.git/hooks/prepare-commit-msg` — Suggests commit prefix based on staged files
+- [x] **Linked groups**: Git commit level consistency check enabled
+- [x] **Commit-type rules**: project.yaml configured with doc_requirements per prefix
+- [x] **Dynamic severity**: [FEAT/FIX]=error, [DOC/REFACTOR]=warning, [CONFIG]=info
 - [ ] `vibecollab hooks install/uninstall/run` — CLI commands (TODO)
 - [ ] Hook types: pre-push, post-commit (TODO)
-- [ ] Configurable rules in project.yaml (TODO)
 - [ ] Windows PowerShell + Unix Bash dual support (TODO)
 
 #### FP-008: Guard Protection Engine — Pattern Defined ✅

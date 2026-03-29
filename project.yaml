@@ -191,42 +191,84 @@ git_workflow:
     description: Design document changes
     roles:
     - DESIGN
+    doc_requirements:
+      - docs/ROADMAP.md
+      - docs/DECISIONS.md
+    severity: warning
+    reason: Design changes should update planning and decision docs
   - prefix: '[ARCH]'
     description: Architecture adjustments
     roles:
     - ARCH
+    doc_requirements:
+      - docs/DECISIONS.md
+      - docs/CONTEXT.md
+    severity: error
+    reason: Architecture decisions must be recorded
   - prefix: '[FEAT]'
     description: New features
     roles:
     - DEV
+    doc_requirements:
+      - docs/CONTEXT.md
+      - docs/CHANGELOG.md
+      - docs/QA_TEST_CASES.md
+    severity: error
+    reason: Features require context, changelog, and test coverage
   - prefix: '[FIX]'
     description: Bug fixes
     roles:
     - DEV
     - QA
+    doc_requirements:
+      - docs/CHANGELOG.md
+      - docs/QA_TEST_CASES.md
+    severity: error
+    reason: Bug fixes need changelog and regression tests
   - prefix: '[CONFIG]'
     description: Config adjustments (no logic changes)
     roles:
     - DEV
+    doc_requirements: []
+    severity: info
+    reason: Config changes don't require documentation updates
   - prefix: '[REFACTOR]'
     description: Refactoring
     roles:
     - ARCH
     - DEV
+    doc_requirements:
+      - docs/CONTEXT.md
+    severity: warning
+    reason: Major refactoring should document architectural changes
   - prefix: '[DOC]'
     description: Documentation updates
     roles:
     - PM
     - DESIGN
+    doc_requirements:
+      - docs/ROADMAP.md
+      - docs/CHANGELOG.md
+    severity: warning
+    reason: Doc updates should sync planning and changelog
   - prefix: '[TEST]'
     description: Test related
     roles:
     - TEST
     - QA
+    doc_requirements:
+      - docs/QA_TEST_CASES.md
+    severity: warning
+    reason: Test changes should update test case documentation
   - prefix: '[VIBE]'
     description: Collaboration workflow updates
     roles:
     - PM
+    doc_requirements:
+      - docs/CHANGELOG.md
+      - CONTRIBUTING_AI.md
+    severity: warning
+    reason: Workflow changes need changelog and collaboration doc updates
   commit_required: true
 testing:
   unit_test:
@@ -383,6 +425,30 @@ prompt_engineering:
 confirmed_decisions: []
 contributing_ai_changelog: []
 documentation:
+  consistency:
+    enabled: true
+    default_level: local_mtime
+    linked_groups:
+      - name: core_context
+        level: git_commit
+        files:
+          - docs/CONTEXT.md
+          - docs/CHANGELOG.md
+        description: Core context and changelog must sync with code changes
+      
+      - name: planning_docs
+        level: git_commit
+        files:
+          - docs/ROADMAP.md
+          - docs/DECISIONS.md
+        description: Planning and decision docs must reflect committed state
+      
+      - name: qa_sync
+        level: git_commit
+        files:
+          - docs/QA_TEST_CASES.md
+        description: QA test cases must match committed features
+  
   key_files:
   - path: CONTRIBUTING_AI.md
     purpose: AI collaboration rules, top-level guidance
