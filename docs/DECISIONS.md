@@ -152,6 +152,64 @@ Both use `project.yaml` configuration but serve different purposes:
 
 ---
 
+### DECISION-023: Commit-Type-Based Dynamic Document Sync
+
+**Date**: 2026-03-29
+**Type**: A-level (Architecture)
+**Status**: Confirmed
+
+**Problem**:
+Current `vibecollab check` only verifies file modification time (24h threshold), allowing:
+- Docs to drift from actual code state
+- Silent inconsistencies between CONTEXT and committed features
+- No enforcement that ROADMAP/DECISIONS reflect committed work
+
+**Solution**:
+Implement three-layer document-code synchronization:
+
+**1. Linked Groups (Git Commit Level)**:
+```yaml
+documentation:
+  consistency:
+    linked_groups:
+      - name: core_context
+        level: git_commit  # Check commit hash sync
+        files: [CONTEXT.md, CHANGELOG.md]
+      - name: planning_docs
+        level: git_commit
+        files: [ROADMAP.md, DECISIONS.md]
+```
+
+**2. Commit-Type-Based Requirements**:
+```yaml
+git_workflow:
+  commit_prefixes:
+    - prefix: 'feat:'
+      doc_requirements: [CONTEXT.md, CHANGELOG.md, QA_TEST_CASES.md]
+      severity: error
+    - prefix: 'config:'
+      doc_requirements: []  # No docs required
+      severity: info
+```
+
+**3. Dynamic Severity**:
+- `error`: Block commit (feat, fix, arch)
+- `warning`: Allow but warn (docs, refactor, test)
+- `info`: No enforcement (config, chore)
+
+**Rationale**:
+- Context-aware: Different rules for different change types
+- Workflow-aligned: Matches actual git usage patterns
+- Progressive: Can bypass with `--no-verify` if needed
+- Clear feedback: Explains WHY docs are required
+
+**Implementation**:
+- Pre-commit hook auto-detects prefix from staged files
+- `vibecollab check` validates linked groups
+- Future: `vibecollab check --strict` enforces commit-type rules
+
+---
+
 ## Decision Archive
 
 (None)

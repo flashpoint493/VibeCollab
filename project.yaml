@@ -187,7 +187,7 @@ git_workflow:
     design_prefix: design/
     refactor_prefix: refactor/
   commit_prefixes:
-  - prefix: '[DESIGN]'
+  - prefix: 'design:'
     description: Design document changes
     roles:
     - DESIGN
@@ -196,16 +196,17 @@ git_workflow:
       - docs/DECISIONS.md
     severity: warning
     reason: Design changes should update planning and decision docs
-  - prefix: '[ARCH]'
+  - prefix: 'arch:'
     description: Architecture adjustments
     roles:
     - ARCH
     doc_requirements:
+      - docs/ROADMAP.md
       - docs/DECISIONS.md
       - docs/CONTEXT.md
     severity: error
-    reason: Architecture decisions must be recorded
-  - prefix: '[FEAT]'
+    reason: Architecture decisions must update roadmap, decisions, and context
+  - prefix: 'feat:'
     description: New features
     roles:
     - DEV
@@ -215,7 +216,7 @@ git_workflow:
       - docs/QA_TEST_CASES.md
     severity: error
     reason: Features require context, changelog, and test coverage
-  - prefix: '[FIX]'
+  - prefix: 'fix:'
     description: Bug fixes
     roles:
     - DEV
@@ -225,14 +226,14 @@ git_workflow:
       - docs/QA_TEST_CASES.md
     severity: error
     reason: Bug fixes need changelog and regression tests
-  - prefix: '[CONFIG]'
+  - prefix: 'config:'
     description: Config adjustments (no logic changes)
     roles:
     - DEV
     doc_requirements: []
     severity: info
     reason: Config changes don't require documentation updates
-  - prefix: '[REFACTOR]'
+  - prefix: 'refactor:'
     description: Refactoring
     roles:
     - ARCH
@@ -241,7 +242,7 @@ git_workflow:
       - docs/CONTEXT.md
     severity: warning
     reason: Major refactoring should document architectural changes
-  - prefix: '[DOC]'
+  - prefix: 'docs:'
     description: Documentation updates
     roles:
     - PM
@@ -251,7 +252,7 @@ git_workflow:
       - docs/CHANGELOG.md
     severity: warning
     reason: Doc updates should sync planning and changelog
-  - prefix: '[TEST]'
+  - prefix: 'test:'
     description: Test related
     roles:
     - TEST
@@ -260,15 +261,24 @@ git_workflow:
       - docs/QA_TEST_CASES.md
     severity: warning
     reason: Test changes should update test case documentation
-  - prefix: '[VIBE]'
-    description: Collaboration workflow updates
+  - prefix: 'chore:'
+    description: Maintenance and workflow updates
     roles:
     - PM
+    - DEV
     doc_requirements:
       - docs/CHANGELOG.md
-      - CONTRIBUTING_AI.md
+    severity: info
+    reason: Maintenance changes should update changelog
+  - prefix: 'revert:'
+    description: Revert previous changes
+    roles:
+    - DEV
+    - ARCH
+    doc_requirements:
+      - docs/CHANGELOG.md
     severity: warning
-    reason: Workflow changes need changelog and collaboration doc updates
+    reason: Reverts should be documented in changelog
   commit_required: true
 testing:
   unit_test:
