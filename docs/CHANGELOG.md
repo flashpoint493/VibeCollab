@@ -15,9 +15,19 @@
   - INS-037: VibeCollab --help Systematic Workflow
   - INS-038: Role-Driven Architecture Migration Pattern
   - Updated skill.md with iteration cycle best practices
-  - Fixed 33 insight fingerprint mismatches
-  - Created ocarina role context
-  - Continuous git synchronization (6 commits)
+  - Fixed 40 insight fingerprint mismatches
+  - Continuous git synchronization (9 commits)
+
+- **FP-001 Git Hooks Framework**: Pre-commit consistency check ✅
+  - INS-039: Git Hooks Framework Pattern
+  - Implemented `.git/hooks/pre-commit` with `vibecollab check`
+  - Every commit now auto-validates insight consistency
+  - Fixed fingerprint calculation (kind, version, id, title, summary, tags, category, body, artifacts, origin)
+
+- **FP-008 Guard Protection Engine**: Pattern defined ✅
+  - INS-040: Guard Protection Engine Pattern
+  - Pre-action and post-action guard rules documented
+  - Severity levels: block/warn/allow
 
 ### Planned (v0.11.0)
 - **FP-001**: Git Hooks Framework - Pre-commit/pre-push/post-commit hooks with configurable rules

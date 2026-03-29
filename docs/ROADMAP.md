@@ -471,20 +471,23 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 
 > Objective: Implement user-requested features from CCGS analysis (FP-001, FP-002, FP-008, Role Fix)
 
-#### FP-001: Git Hooks Framework
-- [ ] `vibecollab hooks install` — Install hooks to .git/hooks/
-- [ ] `vibecollab hooks uninstall` — Remove hooks
-- [ ] `vibecollab hooks run <type>` — Execute hooks manually
-- [ ] Hook types: pre-commit, pre-push, post-commit
-- [ ] Configurable rules in project.yaml (JSON validity, TODO format, branch protection)
-- [ ] Windows PowerShell + Unix Bash dual support
+#### FP-001: Git Hooks Framework — Core Implementation ✅
+- [x] **Insight created**: INS-039 Git Hooks Framework Pattern
+- [x] `.git/hooks/pre-commit` — Auto-runs `vibecollab check` before each commit
+- [x] **Working**: Every commit now validates insight consistency
+- [ ] `vibecollab hooks install/uninstall/run` — CLI commands (TODO)
+- [ ] Hook types: pre-push, post-commit (TODO)
+- [ ] Configurable rules in project.yaml (TODO)
+- [ ] Windows PowerShell + Unix Bash dual support (TODO)
 
-#### FP-008: Guard Protection Engine
-- [ ] Guard rule engine (pre-action + post-action)
-- [ ] Integrate into `vibecollab check --guards`
-- [ ] MCP `guard_check` tool for file operation interception
-- [ ] Default guards: .meta protection, Library/ protection, Debug.Log cleanup
-- [ ] Configurable severity: block / warn / allow
+#### FP-008: Guard Protection Engine — Pattern Defined ✅
+- [x] **Insight created**: INS-040 Guard Protection Engine Pattern
+- [x] **Pattern documented**: Pre-action/post-action guard rules
+- [x] **Severity levels**: block / warn / allow defined
+- [ ] Guard rule engine implementation (TODO)
+- [ ] Integrate into `vibecollab check --guards` (TODO)
+- [ ] MCP `guard_check` tool for file operation interception (TODO)
+- [ ] Default guards: .meta protection, Library/ protection (TODO)
 
 #### Role Architecture Fix (DECISION-020) — In Progress
 - [x] **Insight created**: INS-038 Role-Driven Architecture Migration Pattern
