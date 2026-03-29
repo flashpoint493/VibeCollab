@@ -13,8 +13,11 @@
 - **Task-Insight Best Practices**: Systematic workflow documentation
   - INS-036: Release Engineering Task-Insight Documentation Cycle
   - INS-037: VibeCollab --help Systematic Workflow
+  - INS-038: Role-Driven Architecture Migration Pattern
   - Updated skill.md with iteration cycle best practices
-  - Continuous git synchronization (3 commits)
+  - Fixed 33 insight fingerprint mismatches
+  - Created ocarina role context
+  - Continuous git synchronization (6 commits)
 
 ### Planned (v0.11.0)
 - **FP-001**: Git Hooks Framework - Pre-commit/pre-push/post-commit hooks with configurable rules

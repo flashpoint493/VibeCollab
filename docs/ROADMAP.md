@@ -486,10 +486,12 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [ ] Default guards: .meta protection, Library/ protection, Debug.Log cleanup
 - [ ] Configurable severity: block / warn / allow
 
-#### Role Architecture Fix (DECISION-020)
+#### Role Architecture Fix (DECISION-020) — In Progress
+- [x] **Insight created**: INS-038 Role-Driven Architecture Migration Pattern
+- [x] **Related insights applied**: INS-004, INS-006, INS-017, INS-023
 - [ ] Developer-Role binding in project.yaml
 - [ ] Role permissions: file_patterns, can_create_task_for, can_transition_to
-- [ ] `vibecollab dev` enhanced with role switching
+- [ ] `vibecollab role` enhanced with role switching
 - [ ] Dynamic skill registration from Insights based on current role
 - [ ] Permission checking in Task operations
 
