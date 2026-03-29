@@ -5,23 +5,34 @@
 
 ## Current Status
 
-- **Active Task**: TASK-DEV-028 (v0.10.x release engineering) - IN_PROGRESS
+- **Active Task**: TASK-DEV-027 (Role-Driven Architecture Fix) - IN_PROGRESS
 - **Completed Tasks**: 
-  - Best practice documentation (INS-036, INS-037)
-  - Git synchronization workflow
+  - TASK-DEV-028: v0.10.x release engineering documentation
+  - Best practice documentation (INS-036, INS-037, INS-038)
+  - Git synchronization workflow (7 commits)
 
 ## Recent Activities
+
+### 本次迭代工作 (Current Iteration)
+- **Fixed**: 33 insight fingerprint mismatches across all INS-001~INS-038
+- **Created**: INS-038 Role-Driven Architecture Migration Pattern
+- **Applied**: INS-004, INS-006, INS-017, INS-023 for TASK-DEV-027
+- **Updated**: CHANGELOG.md v0.10.14 section
+- **Updated**: ROADMAP.md v0.11.0 Role Architecture progress
+- **Created**: ocarina CONTEXT.md for role compliance
 
 ### Task-Insight Iteration Cycle
 - Created INS-036: Release Engineering Task-Insight Documentation Cycle
 - Created INS-037: VibeCollab --help Systematic Workflow
+- Created INS-038: Role-Driven Architecture Migration Pattern
 - Updated skill.md with 56 lines of best practices
-- Synchronized 4 commits to remote repository
+- Synchronized 7 commits to remote repository
 
 ### Key Contributions
-- 33 insights indexed (335 vectors)
+- 34 insights indexed (336 vectors)
 - All fingerprints corrected and validated
-- Documentation updated: CHANGELOG.md, skill.md
+- Documentation updated: CHANGELOG.md, ROADMAP.md, skill.md
+- Task progress: TASK-DEV-028 documented, TASK-DEV-027 started
 
 ## Work Patterns
 
@@ -33,12 +44,16 @@
 
 ## Next Steps
 
-- Continue TASK-DEV-028 completion
-- Prepare for TASK-DEV-027 (Role-Driven Architecture Fix)
+- Continue TASK-DEV-027 (Role-Driven Architecture Fix)
+  - Implement Developer-Role binding in project.yaml
+  - Add role permissions system
+  - Enhance `vibecollab role` command
+- Apply INS-038 migration pattern systematically
 - Maintain insight-driven development workflow
 
 ## Technical Notes
 
 - Environment: vibe-collab v0.10.13
-- Index: 33 insights, 335 vectors
-- Git: 4 commits ahead of previous sync
+- Index: 34 insights, 336 vectors
+- Git: 7 commits ahead (all synced to remote)
+- Check status: 2 warnings (CONTEXT.md age, dev metadata)
