@@ -335,6 +335,18 @@ guards:
       severity: warn
       message: "Consider using tmpfile API for temporary files"
 
+# Git Hooks Framework (FP-001)
+hooks:
+  enabled: true
+  rules:
+    pre-commit:
+      - vibecollab check
+      - ruff check src/vibecollab/ tests/
+      - pytest tests/ -x -q --tb=line
+    pre-push:
+      - pytest tests/ -q --tb=short
+      - vibecollab check
+
 testing:
   unit_test:
     enabled: true

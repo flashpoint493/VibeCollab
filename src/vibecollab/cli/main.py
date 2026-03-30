@@ -2033,5 +2033,220 @@ def role_permissions(config: str, role_code: Optional[str], as_json: bool):
     console.print()
 
 
+# Git Hooks Management Commands
+@main.group("hooks")
+def hooks():
+    """Manage Git hooks for the project
+
+    Install, uninstall, and run Git hooks to enforce quality checks
+    at various points in the Git workflow.
+
+    Examples:
+
+        vibecollab hooks install                    # Install pre-commit hook
+
+        vibecollab hooks install -t pre-push        # Install pre-push hook
+
+        vibecollab hooks uninstall --all            # Remove all hooks
+
+        vibecollab hooks run pre-commit             # Manually run pre-commit
+
+        vibecollab hooks status                     # Show hook status
+    """
+    pass
+
+
+@hooks.command("install")
+@click.option("-t", "--type", "hook_type", default="pre-commit", help="Hook type to install")
+@click.option("-c", "--config", default="project.yaml", help="Project config file path")
+@click.option("-f", "--force", is_flag=True, help="Overwrite existing hook")
+def hooks_install(hook_type: str, config: str, force: bool):
+    """Install Git hooks"""
+    from pathlib import Path
+
+    from ..domain.hook_manager import HookManager
+
+    config_path = Path(config)
+    project_root = config_path.parent
+
+    if not config_path.exists():
+        console.print(f"[red]Error:[/red] Config file not found: {config}")
+        raise SystemExit(1)
+
+    import yaml
+
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+
+    hook_config = project_config.get("hooks", {})
+    manager = HookManager(project_root, hook_config)
+
+    if not manager.is_git_repo():
+        console.print("[red]Error:[/red] Not a Git repository")
+        raise SystemExit(1)
+
+    success = manager.install(hook_type, force=force)
+
+    if success:
+        console.print(f"[green]✅ Installed {hook_type} hook[/green]")
+    else:
+        if (project_root / ".git" / "hooks" / hook_type).exists() and not force:
+            console.print(
+                f"[yellow]⚠️  {hook_type} hook already exists (use --force to overwrite)[/yellow]"
+            )
+        else:
+            console.print(f"[red]❌ Failed to install {hook_type} hook[/red]")
+        raise SystemExit(1)
+
+
+@hooks.command("uninstall")
+@click.option("-t", "--type", "hook_type", help="Hook type to uninstall")
+@click.option("-c", "--config", default="project.yaml", help="Project config file path")
+@click.option("--all", "uninstall_all", is_flag=True, help="Uninstall all hooks")
+def hooks_uninstall(hook_type: Optional[str], config: str, uninstall_all: bool):
+    """Uninstall Git hooks"""
+    from pathlib import Path
+
+    from ..domain.hook_manager import HookManager
+
+    config_path = Path(config)
+    project_root = config_path.parent
+
+    import yaml
+
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+
+    hook_config = project_config.get("hooks", {})
+    manager = HookManager(project_root, hook_config)
+
+    if not manager.is_git_repo():
+        console.print("[red]Error:[/red] Not a Git repository")
+        raise SystemExit(1)
+
+    if uninstall_all:
+        count = manager.uninstall_all()
+        console.print(f"[green]✅ Uninstalled {count} hooks[/green]")
+    elif hook_type:
+        success = manager.uninstall(hook_type)
+        if success:
+            console.print(f"[green]✅ Uninstalled {hook_type} hook[/green]")
+        else:
+            console.print(
+                f"[yellow]⚠️  {hook_type} hook not found or not managed by vibecollab[/yellow]"
+            )
+    else:
+        console.print("[yellow]Please specify --type or --all[/yellow]")
+        raise SystemExit(1)
+
+
+@hooks.command("run")
+@click.argument("hook_type")
+@click.option("-c", "--config", default="project.yaml", help="Project config file path")
+def hooks_run(hook_type: str, config: str):
+    """Run hooks manually"""
+    from pathlib import Path
+
+    from ..domain.hook_manager import HookManager
+
+    config_path = Path(config)
+    project_root = config_path.parent
+
+    import yaml
+
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+
+    hook_config = project_config.get("hooks", {})
+    manager = HookManager(project_root, hook_config)
+
+    console.print(f"[cyan]Running {hook_type} hooks...[/cyan]")
+    exit_code = manager.run(hook_type)
+
+    if exit_code == 0:
+        console.print(f"[green]✅ {hook_type} hooks passed[/green]")
+    else:
+        console.print(f"[red]❌ {hook_type} hooks failed[/red]")
+        raise SystemExit(exit_code)
+
+
+@hooks.command("status")
+@click.option("-c", "--config", default="project.yaml", help="Project config file path")
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+def hooks_status(config: str, as_json: bool):
+    """Show hooks status"""
+    import json as json_module
+    from pathlib import Path
+
+    from ..domain.hook_manager import HookManager
+
+    config_path = Path(config)
+    project_root = config_path.parent
+
+    import yaml
+
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+
+    hook_config = project_config.get("hooks", {})
+    manager = HookManager(project_root, hook_config)
+
+    status = manager.status()
+
+    if as_json:
+        console.print(json_module.dumps(status, indent=2))
+        return
+
+    console.print()
+    console.print("[cyan]Git Hooks Status[/cyan]")
+    console.print()
+
+    if not status["is_git_repo"]:
+        console.print("[red]Not a Git repository[/red]")
+        return
+
+    console.print(f"  Hooks enabled: {status['enabled']}")
+    console.print()
+
+    for hook_type, info in status["hooks"].items():
+        if info["installed"]:
+            icon = "🟢" if info["is_vibecollab"] else "🟡"
+            source = "vibecollab" if info["is_vibecollab"] else "custom"
+            console.print(f"  {icon} {hook_type}: installed ({source})")
+        else:
+            console.print(f"  ⚪ {hook_type}: not installed")
+
+    console.print()
+
+
+@hooks.command("list")
+@click.option("-c", "--config", default="project.yaml", help="Project config file path")
+def hooks_list(config: str):
+    """List installed vibecollab hooks"""
+    from pathlib import Path
+
+    from ..domain.hook_manager import HookManager
+
+    config_path = Path(config)
+    project_root = config_path.parent
+
+    import yaml
+
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+
+    hook_config = project_config.get("hooks", {})
+    manager = HookManager(project_root, hook_config)
+
+    installed = manager.list_hooks()
+
+    if installed:
+        console.print("[cyan]Installed vibecollab hooks:[/cyan]")
+        for hook in installed:
+            console.print(f"  • {hook}")
+    else:
+        console.print("[dim]No vibecollab hooks installed[/dim]")
+
+
 if __name__ == "__main__":
     main()
