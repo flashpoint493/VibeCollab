@@ -1,0 +1,129 @@
+kind: insight
+version: '1'
+id: INS-050
+title: 'Dynamic Skill Registration from Insights: Role-Based Skill Injection'
+summary: 'Implement dynamic skill loading where each role automatically gets relevant skills from Insights tagged with their role code, injected into MCP prompts for context-aware AI assistance'
+tags:
+- dynamic-skill
+- role-based
+- insight-injection
+- mcp
+- dev-027
+category: workflow
+body:
+  scenario: Different roles need different skills. DEV needs refactoring patterns, ARCH needs decision templates, QA needs testing strategies. Skills should be loaded dynamically from Insights rather than hardcoded.
+  approach: |
+    1. Skill Definition in Insight YAML:
+       Add role_skills section to INS-XXX.yaml:
+       ```yaml
+       role_skills:
+         DEV:
+           - id: "refactoring_helper"
+             name: "Large Function Refactoring"
+             description: "When refactoring functions >100 lines, extract helpers"
+             priority: 8
+             trigger: "refactor large function"
+         ARCH:
+           - id: "decision_template"
+             name: "Architecture Decision Record"
+             description: "Use ADR template for infrastructure changes"
+             priority: 9
+             trigger: "architecture decision"
+       ```
+    
+    2. Skill Registry System:
+       - SkillRegistry class to aggregate skills from all insights
+       - Index by role_code → list of skills
+       - Weight by priority + insight weight
+       - Cache for performance
+    
+    3. Dynamic Loading:
+       ```python
+       # In RoleManager
+       def get_skills_for_role(self, role_code: str) -> List[Skill]:
+           insights = self.insight_manager.get_insights_by_tag(role_code)
+           skills = []
+           for insight in insights:
+               if "role_skills" in insight and role_code in insight["role_skills"]:
+                   skills.extend(insight["role_skills"][role_code])
+           # Sort by priority
+           return sorted(skills, key=lambda s: s.get("priority", 0), reverse=True)
+       ```
+    
+    4. MCP Integration:
+       - On context switch, load skills for current role
+       - Inject into system prompt: "You have access to these skills: [...]"
+       - Format: "Skill: {name} - {description} (trigger: {trigger})"
+    
+    5. Skill Matching:
+       - Trigger words in user input match skill triggers
+       - Auto-suggest relevant skills in prompt
+       - Track skill usage in EventLog
+    
+    6. Hot Reload:
+       - Skills update when insights are added/modified
+       - No restart needed when new INS-XXX.yaml created
+       - Invalidate cache on insight change
+  validation: |
+    - DEV role sees refactoring skills
+    - ARCH role sees decision-making skills
+    - Skills update when new insights added
+    - Unused skills don't clutter prompts
+    - Skill usage tracked in EventLog
+  artifacts:
+    - Skill dataclass
+    - SkillRegistry class
+    - RoleManager skill methods
+    - MCP prompt injection
+    - Insight YAML schema extension
+
+# Example: This insight defines skills for DEV and ARCH roles
+role_skills:
+  DEV:
+    - id: "task_insight_cycle"
+      name: "Task-Insight Iteration"
+      description: "Always create INS-XXX after completing a task to capture knowledge"
+      priority: 9
+      trigger: "complete task"
+    
+    - id: "git_sync_best_practice"
+      name: "Git Sync After Insight"
+      description: "Run git add + commit immediately after creating insight"
+      priority: 8
+      trigger: "create insight"
+    
+    - id: "local_build_check"
+      name: "Local Build Verification"
+      description: "Run ruff + pytest before git push to prevent CI failures"
+      priority: 8
+      trigger: "git commit"
+  
+  ARCH:
+    - id: "decision_documentation"
+      name: "Document Architecture Decisions"
+      description: "Update DECISIONS.md when making significant architectural choices"
+      priority: 9
+      trigger: "architecture decision"
+    
+    - id: "permission_system_design"
+      name: "Role Permission Design"
+      description: "Consider backward compatibility when adding new permission checks"
+      priority: 7
+      trigger: "add permission"
+  
+  QA:
+    - id: "test_coverage_focus"
+      name: "Test Coverage Priority"
+      description: "Add tests for new features, maintain >90% coverage"
+      priority: 8
+      trigger: "new feature"
+
+origin:
+  created_by: architect
+  created_at: '2026-03-30'
+  context: Implementing dynamic skill registration for DEV-027 Role-Driven Architecture
+  source:
+    type: task
+    description: Dynamic skill loading from Insights based on role code
+    ref: TASK-DEV-027
+fingerprint: 73768d1f697e54dcad775a8a3f0972e9bd378c3c6f593d4a731db823fe320529

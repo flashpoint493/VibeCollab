@@ -687,6 +687,97 @@ class RoleManager:
             "permissions": self.get_role_permissions(primary_role),
         }
 
+    # ------------------------------------------------------------------
+    # Dynamic Skill Registration (DEV-027)
+    # ------------------------------------------------------------------
+
+    def get_skills_for_role(self, role_code: Optional[str] = None) -> List[Dict]:
+        """
+        Get dynamic skills for a role from Insights
+
+        Args:
+            role_code: Role code (DEV, ARCH, etc.), None uses current
+
+        Returns:
+            List of skill dictionaries
+        """
+        if role_code is None:
+            role_code = self.get_primary_role()
+
+        from .skill_registry import SkillRegistry
+
+        insights_dir = self.project_root / ".vibecollab" / "insights"
+        registry = SkillRegistry(insights_dir)
+
+        skills = registry.get_skills_for_role(role_code)
+        return [
+            {
+                "id": skill.id,
+                "name": skill.name,
+                "description": skill.description,
+                "priority": skill.priority,
+                "trigger": skill.trigger,
+                "source": skill.source_insight,
+            }
+            for skill in skills
+        ]
+
+    def format_skills_for_prompt(
+        self, role_code: Optional[str] = None, max_skills: int = 10
+    ) -> str:
+        """
+        Format skills as prompt text for AI
+
+        Args:
+            role_code: Role code
+            max_skills: Maximum number of skills to include
+
+        Returns:
+            Formatted prompt text
+        """
+        if role_code is None:
+            role_code = self.get_primary_role()
+
+        from .skill_registry import SkillRegistry
+
+        insights_dir = self.project_root / ".vibecollab" / "insights"
+        registry = SkillRegistry(insights_dir)
+
+        return registry.format_skills_for_prompt(role_code, max_skills)
+
+    def find_skills_by_trigger(
+        self, trigger_word: str, role_code: Optional[str] = None
+    ) -> List[Dict]:
+        """
+        Find skills matching a trigger word
+
+        Args:
+            trigger_word: Word to search for
+            role_code: Role to search in
+
+        Returns:
+            List of matching skills
+        """
+        if role_code is None:
+            role_code = self.get_primary_role()
+
+        from .skill_registry import SkillRegistry
+
+        insights_dir = self.project_root / ".vibecollab" / "insights"
+        registry = SkillRegistry(insights_dir)
+
+        skills = registry.find_skills_by_trigger(role_code, trigger_word)
+        return [
+            {
+                "id": skill.id,
+                "name": skill.name,
+                "description": skill.description,
+                "priority": skill.priority,
+                "trigger": skill.trigger,
+            }
+            for skill in skills
+        ]
+
 
 class ContextAggregator:
     """Context aggregator, responsible for generating global CONTEXT.md"""
