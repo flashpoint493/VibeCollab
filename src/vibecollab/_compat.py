@@ -74,8 +74,13 @@ def ensure_safe_stdout() -> None:
         # If errors is already replace/ignore/xmlcharrefreplace/backslashreplace,
         # it's safe. Note: surrogateescape can still crash on non-UTF encodings
         current_errors = getattr(stream, "errors", "strict")
-        if current_errors in ("replace", "ignore", "xmlcharrefreplace",
-                              "backslashreplace", "namereplace"):
+        if current_errors in (
+            "replace",
+            "ignore",
+            "xmlcharrefreplace",
+            "backslashreplace",
+            "namereplace",
+        ):
             continue
 
         # Python 3.7+ TextIOWrapper supports reconfigure
@@ -105,6 +110,7 @@ def ensure_safe_stdout() -> None:
 # Layer 2: Rich Console safe factory
 # ============================================================
 
+
 def safe_console(**kwargs):  # -> rich.console.Console
     """Create an encoding-safe Rich Console instance.
 
@@ -113,6 +119,7 @@ def safe_console(**kwargs):  # -> rich.console.Console
     """
     ensure_safe_stdout()
     from rich.console import Console
+
     return Console(**kwargs)
 
 
@@ -152,6 +159,8 @@ EMOJI = {
     "ok": "OK" if _GBK else "✅",
     "warn": "!" if _GBK else "⚠️",
     "err": "X" if _GBK else "❌",
+    # Insight triggers
+    "search": "[?]" if _GBK else "🔍",
 }
 
 # Bullet point substitute
@@ -161,6 +170,7 @@ BULLET = "-" if _GBK else "•"
 # ============================================================
 # Helper: sanitize arbitrary text output
 # ============================================================
+
 
 def safe_str(text: str, encoding: Optional[str] = None) -> str:
     """Replace unencodable characters in text with '?', for outputting user data.

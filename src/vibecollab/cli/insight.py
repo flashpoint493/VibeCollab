@@ -20,6 +20,7 @@ Commands:
 """
 
 from pathlib import Path
+from typing import Optional
 
 import click
 import yaml
@@ -36,7 +37,9 @@ def _load_insight_manager(config_path: str = "project.yaml"):
     project_root = Path.cwd()
     vibecollab_dir = project_root / ".vibecollab"
     if not vibecollab_dir.exists():
-        click.echo("Error: .vibecollab/ directory not found. Please run vibecollab init first", err=True)
+        click.echo(
+            "Error: .vibecollab/ directory not found. Please run vibecollab init first", err=True
+        )
         raise SystemExit(1)
     event_log = EventLog(vibecollab_dir / "events.jsonl")
     return InsightManager(project_root=project_root, event_log=event_log)
@@ -172,24 +175,54 @@ def show_insight(insight_id):
 @insight.command("add")
 @click.option("--title", "-t", required=True, help=_("Insight title"))
 @click.option("--tags", required=True, help=_("Tag list, comma separated"))
-@click.option("--category", "-c", required=True,
-              type=click.Choice(["technique", "workflow", "decision", "debug", "tool", "integration"]),
-              help=_("Category"))
+@click.option(
+    "--category",
+    "-c",
+    required=True,
+    type=click.Choice(["technique", "workflow", "decision", "debug", "tool", "integration"]),
+    help=_("Category"),
+)
 @click.option("--scenario", "-s", required=True, help=_("Applicable scenario"))
 @click.option("--approach", "-a", required=True, help=_("Method/steps"))
 @click.option("--summary", default="", help=_("One-line summary"))
 @click.option("--validation", default="", help=_("Validation method"))
-@click.option("--context", "origin_context", default="", help=_("Creation context (natural language)"))
-@click.option("--source-type", default=None, type=click.Choice(["task", "decision", "insight", "external"]))
-@click.option("--source-desc", default=None, help=_("Source description (natural language, cross-project readable)"))
-@click.option("--source-ref", default=None, help=_("Source internal ID (optional hint, e.g. DECISION-012)"))
+@click.option(
+    "--context", "origin_context", default="", help=_("Creation context (natural language)")
+)
+@click.option(
+    "--source-type", default=None, type=click.Choice(["task", "decision", "insight", "external"])
+)
+@click.option(
+    "--source-desc",
+    default=None,
+    help=_("Source description (natural language, cross-project readable)"),
+)
+@click.option(
+    "--source-ref", default=None, help=_("Source internal ID (optional hint, e.g. DECISION-012)")
+)
 @click.option("--source-url", default=None, help=_("Source external link (e.g. GitHub issue URL)"))
 @click.option("--source-project", default=None, help=_("Source project name"))
 @click.option("--derived-from", default=None, help=_("Derived from insight IDs, comma separated"))
-@click.option("--force", "-f", is_flag=True, default=False, help=_("Skip dedup check, force create"))
-def add_insight(title, tags, category, scenario, approach, summary,
-                validation, origin_context, source_type, source_desc,
-                source_ref, source_url, source_project, derived_from, force):
+@click.option(
+    "--force", "-f", is_flag=True, default=False, help=_("Skip dedup check, force create")
+)
+def add_insight(
+    title,
+    tags,
+    category,
+    scenario,
+    approach,
+    summary,
+    validation,
+    origin_context,
+    source_type,
+    source_desc,
+    source_ref,
+    source_url,
+    source_project,
+    derived_from,
+    force,
+):
     """Create a new insight entry"""
     mgr = _load_insight_manager()
     dm = _load_role_manager()
@@ -208,7 +241,9 @@ def add_insight(title, tags, category, scenario, approach, summary,
         if duplicates:
             click.echo(f"\n{EMOJI['warn']} Potential duplicates detected:")
             for dup in duplicates:
-                click.echo(f"  - {dup['id']}: {dup['title']} (score={dup['score']}, {dup['reason']})")
+                click.echo(
+                    f"  - {dup['id']}: {dup['title']} (score={dup['score']}, {dup['reason']})"
+                )
             click.echo("\nUse --force to create anyway, or adjust title/tags.")
             raise SystemExit(1)
 
@@ -234,6 +269,7 @@ def add_insight(title, tags, category, scenario, approach, summary,
     # Update signal snapshot
     try:
         from ..insight.signal import InsightSignalCollector
+
         collector = InsightSignalCollector(Path.cwd())
         collector.update_snapshot(insight_id=ins.id)
     except Exception:
@@ -248,8 +284,12 @@ def add_insight(title, tags, category, scenario, approach, summary,
 @insight.command("search")
 @click.option("--tags", default=None, help=_("Search by tags, comma separated"))
 @click.option("--category", default=None, help=_("Search by category"))
-@click.option("--semantic", "-q", default=None, help=_("Semantic search (requires vibecollab index first)"))
-@click.option("--include-inactive", is_flag=True, default=False, help=_("Include inactive insights"))
+@click.option(
+    "--semantic", "-q", default=None, help=_("Semantic search (requires vibecollab index first)")
+)
+@click.option(
+    "--include-inactive", is_flag=True, default=False, help=_("Include inactive insights")
+)
 @click.option("--top", "-k", default=10, help=_("Number of semantic search results"))
 def search_insights(tags, category, semantic, include_inactive, top):
     """Search insights
@@ -306,6 +346,7 @@ def _semantic_search_insights(query: str, top_k: int):
         raise SystemExit(1)
 
     import sqlite3
+
     conn = sqlite3.connect(str(db_path))
     row = conn.execute("SELECT dimensions FROM vectors LIMIT 1").fetchone()
     conn.close()
@@ -324,11 +365,11 @@ def _semantic_search_insights(query: str, top_k: int):
     results = store.search(query_vector, top_k=top_k, source_type="insight")
 
     if not results:
-        click.echo(f"No Insights related to \"{query}\" found.")
+        click.echo(f'No Insights related to "{query}" found.')
         store.close()
         return
 
-    click.echo(f"Semantic search: \"{query}\" (Top {len(results)})\n")
+    click.echo(f'Semantic search: "{query}" (Top {len(results)})\n')
     for i, r in enumerate(results, 1):
         title = r.metadata.get("title", "")
         tags = r.metadata.get("tags", [])
@@ -609,8 +650,9 @@ def stats_insights(as_json):
 
 @insight.command("suggest")
 @click.option("--json", "as_json", is_flag=True, help=_("JSON output"))
-@click.option("--auto-confirm", is_flag=True,
-              help=_("Auto-confirm all candidates (non-interactive mode)"))
+@click.option(
+    "--auto-confirm", is_flag=True, help=_("Auto-confirm all candidates (non-interactive mode)")
+)
 def suggest_insights(as_json, auto_confirm):
     """Suggest candidate Insights based on structured signals
 
@@ -628,6 +670,7 @@ def suggest_insights(as_json, auto_confirm):
 
     if as_json:
         import json as json_mod
+
         output = {
             "candidates": [c.to_dict() for c in candidates],
             "count": len(candidates),
@@ -645,8 +688,9 @@ def suggest_insights(as_json, auto_confirm):
 
     snapshot = collector.load_snapshot()
     if snapshot.last_commit:
-        click.echo(f"  Last snapshot: {snapshot.last_commit[:8]}... "
-                    f"({snapshot.last_timestamp[:10]})")
+        click.echo(
+            f"  Last snapshot: {snapshot.last_commit[:8]}... ({snapshot.last_timestamp[:10]})"
+        )
     else:
         click.echo("  First recommendation (no historical snapshot)")
     click.echo()
@@ -668,8 +712,10 @@ def suggest_insights(as_json, auto_confirm):
         return
 
     # Interactive mode: let user select
-    click.echo("Enter candidate numbers to create (comma separated, e.g. 1,3), "
-               "or 'all' to create all, 'q' to quit:")
+    click.echo(
+        "Enter candidate numbers to create (comma separated, e.g. 1,3), "
+        "or 'all' to create all, 'q' to quit:"
+    )
     try:
         choice = input("> ").strip()
     except (EOFError, KeyboardInterrupt):
@@ -752,10 +798,22 @@ def _create_from_candidates(project_root, candidates, collector):
 # Graph commands (v0.9.4)
 # ------------------------------------------------------------------
 
+
 @insight.command("graph")
-@click.option("--format", "fmt", type=click.Choice(["mermaid", "json", "text"]),
-              default="text", help=_("Output format"))
-@click.option("--json", "json_output", is_flag=True, default=False, help=_("JSON output (alias for --format json)"))
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["mermaid", "json", "text"]),
+    default="text",
+    help=_("Output format"),
+)
+@click.option(
+    "--json",
+    "json_output",
+    is_flag=True,
+    default=False,
+    help=_("JSON output (alias for --format json)"),
+)
 def insight_graph(fmt, json_output):
     """Insight association graph visualization
 
@@ -811,6 +869,7 @@ def insight_graph(fmt, json_output):
 # Export / Import commands (v0.9.4)
 # ------------------------------------------------------------------
 
+
 @insight.command("export")
 @click.option("--ids", default=None, help=_("Insight IDs to export, comma separated (default all)"))
 @click.option("--output", "-o", default=None, help=_("Output file path (default stdout)"))
@@ -831,8 +890,7 @@ def export_insights(ids, output, include_registry):
     id_list = [i.strip() for i in ids.split(",") if i.strip()] if ids else None
     bundle = mgr.export_insights(insight_ids=id_list, include_registry=include_registry)
 
-    yaml_content = yaml.dump(bundle, allow_unicode=True, sort_keys=False,
-                             default_flow_style=False)
+    yaml_content = yaml.dump(bundle, allow_unicode=True, sort_keys=False, default_flow_style=False)
 
     if output:
         Path(output).write_text(yaml_content, encoding="utf-8")
@@ -843,8 +901,12 @@ def export_insights(ids, output, include_registry):
 
 @insight.command("import")
 @click.argument("filepath")
-@click.option("--strategy", type=click.Choice(["skip", "rename", "overwrite"]),
-              default="skip", help=_("ID conflict strategy: skip/rename/overwrite"))
+@click.option(
+    "--strategy",
+    type=click.Choice(["skip", "rename", "overwrite"]),
+    default="skip",
+    help=_("ID conflict strategy: skip/rename/overwrite"),
+)
 @click.option("--json", "json_output", is_flag=True, default=False, help=_("JSON output"))
 def import_insights(filepath, strategy, json_output):
     """Import Insights from YAML file
@@ -895,7 +957,9 @@ def import_insights(filepath, strategy, json_output):
     click.echo(f"\nImport results (strategy={strategy}):")
     click.echo(f"  {EMOJI['ok']} Imported:  {len(results['imported'])}")
     if results["skipped"]:
-        click.echo(f"  {EMOJI['warn']} Skipped:   {len(results['skipped'])} ({', '.join(results['skipped'])})")
+        click.echo(
+            f"  {EMOJI['warn']} Skipped:   {len(results['skipped'])} ({', '.join(results['skipped'])})"
+        )
     if results["renamed"]:
         click.echo(f"  {EMOJI['info']} Renamed:   {len(results['renamed'])}")
         for old_id, new_id in results["renamed"].items():
@@ -904,3 +968,85 @@ def import_insights(filepath, strategy, json_output):
         click.echo(f"  {EMOJI['fail']} Errors:    {len(results['errors'])}")
         for err in results["errors"]:
             click.echo(f"    {err}")
+
+
+@insight.command("triggers")
+@click.option("-r", "--role", help="Filter by role (DEV, ARCH, QA, etc.)")
+@click.option("-s", "--search", help="Search triggers by keyword")
+@click.option("--json", "json_output", is_flag=True, help="Output as JSON")
+def insight_triggers(role: Optional[str], search: Optional[str], json_output: bool):
+    """List and discover insight triggers
+
+    Shows all available trigger words from insights that can be used
+    to activate specific skills and patterns.
+
+    Examples:
+
+        vibecollab insight triggers              # List all triggers
+
+        vibecollab insight triggers -r DEV       # Show only DEV triggers
+
+        vibecollab insight triggers -s "refactor"  # Search for refactor triggers
+
+        vibecollab insight triggers --json       # Export as JSON for AI
+    """
+    import json as json_mod
+
+    from ..domain.trigger_registry import TriggerRegistry
+
+    project_root = Path.cwd()
+    insights_dir = project_root / ".vibecollab" / "insights"
+
+    registry = TriggerRegistry(insights_dir)
+
+    # Search mode
+    if search:
+        triggers = registry.search_triggers(search)
+        if json_output:
+            click.echo(
+                json_mod.dumps(
+                    {
+                        "search": search,
+                        "triggers": [
+                            {
+                                "word": t.word,
+                                "skill": t.skill_name,
+                                "role": t.role,
+                                "insight": t.insight_id,
+                            }
+                            for t in triggers
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return
+
+        click.echo(f"\n{EMOJI['search']} Search results for '{search}':")
+        if not triggers:
+            click.echo("  No triggers found.")
+            return
+
+        for t in triggers:
+            click.echo(f'\n  • "{t.word}"')
+            click.echo(f"    Skill: {t.skill_name}")
+            click.echo(f"    Role: {t.role} | Insight: {t.insight_id}")
+        return
+
+    # Stats mode (default)
+    if json_output:
+        stats = registry.get_trigger_stats()
+        triggers_data = registry.to_dict()
+        click.echo(
+            json_mod.dumps(
+                {"stats": stats, "triggers": triggers_data["triggers"]},
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return
+
+    # Table mode
+    output = registry.format_triggers_table(role)
+    click.echo(output)

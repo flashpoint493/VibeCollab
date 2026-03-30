@@ -1,0 +1,67 @@
+kind: insight
+version: '1'
+id: INS-051
+title: 'Insight Trigger Registry: CLI Command for Trigger Discovery'
+summary: 'CLI command to list, search, and discover all insight triggers across the project, making it easy for users and AI to find and invoke relevant insights'
+tags:
+- trigger-registry
+- cli
+- discovery
+- usability
+- dev-051
+category: workflow
+body:
+  scenario: Users and AI don't know what triggers are available in insights. Need a way to discover triggers without manually reading each INS-XXX.yaml file.
+  approach: |
+    1. Insight Trigger Registry:
+       - Scan all INS-XXX.yaml files for triggers
+       - Index by: trigger_word → list of insights
+       - Support both skill triggers and direct insight triggers
+    
+    2. CLI Commands:
+       - vibecollab insight triggers: List all triggers grouped by role
+       - vibecollab insight triggers --search <keyword>: Search triggers
+       - vibecollab insight triggers --role DEV: Filter by role
+       - vibecollab insight triggers --json: Output as JSON for AI
+    
+    3. Output Format:
+       ```
+       Available Insight Triggers:
+       
+       [DEV] Development triggers:
+         • "complete task" → Task-Insight Iteration (INS-050)
+         • "create insight" → Git Sync After Insight (INS-050)
+         • "refactor" → Large Function Refactoring (INS-XXX)
+       
+       [ARCH] Architecture triggers:
+         • "architecture decision" → Document Architecture Decisions (INS-050)
+       
+       Usage: Mention trigger word in your request to activate the insight
+       ```
+    
+    4. Smart Matching:
+       - Fuzzy search for similar triggers
+       - Suggest triggers based on current context
+       - Highlight high-priority triggers
+    
+    5. Integration with MCP:
+       - Auto-inject available triggers into system prompt
+       - Update when new insights are added
+  validation: |
+    - User can list all available triggers
+    - AI can discover triggers programmatically
+    - Search finds relevant triggers quickly
+    - Trigger usage increases after implementation
+  artifacts:
+    - Trigger registry module
+    - CLI commands
+    - Integration with skill registry
+origin:
+  created_by: dev
+  created_at: '2026-03-30'
+  context: User request - need a way to discover insight triggers without manual inspection
+  source:
+    type: feature-request
+    description: CLI command to list and search all insight triggers for easy discovery
+    ref: TASK-DEV-051
+fingerprint: 158ba106a9862c7c1b5b156433cc791b6fae03f6b6ea569f8d4126e9e553c00e
