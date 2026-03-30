@@ -1,0 +1,72 @@
+kind: insight
+version: '1'
+id: INS-048
+title: 'Guard Protection Engine Implementation: Pre/Post-Action Safety Rules'
+summary: Concrete implementation of FP-008 Guard Protection Engine with rule matching, severity levels, and integration points for CLI and MCP
+tags:
+- guards
+- implementation
+- safety
+- file-protection
+- fp-008
+category: workflow
+body:
+  scenario: Need to prevent accidental operations on protected files (e.g., .meta, Library/) during AI-assisted development. Guards should intercept and validate operations before they happen.
+  implementation_steps: |
+    1. GuardRule dataclass:
+       - name: Rule identifier
+       - pattern: Glob pattern for file matching
+       - operations: List of protected operations (create, modify, delete, move)
+       - severity: block/warn/allow
+       - message: Human-readable explanation
+       - condition: Optional condition function
+    
+    2. GuardEngine class:
+       - load_rules(): Load from project.yaml guards section
+       - check_operation(operation, file_path): Check if operation allowed
+       - match_rule(file_path): Find matching rules for file
+       - validate_batch(operations): Check multiple operations
+    
+    3. Default Guards:
+       - meta_protection: **/*.meta, operations: [delete, modify], severity: block
+       - library_protection: **/Library/**, operations: [delete], severity: block
+       - temp_cleanup: **/Temp/**, operations: [create], severity: warn
+    
+    4. CLI Integration:
+       - vibecollab check --guards: Run guard validation
+       - vibecollab guard list: Show all configured guards
+       - vibecollab guard test <path>: Test if path is protected
+    
+    5. MCP Integration (future):
+       - guard_check tool: Pre-flight check before file operations
+       - Returns: {allowed: bool, rule: str, severity: str, message: str}
+    
+    6. Configuration (project.yaml):
+       guards:
+         enabled: true
+         rules:
+           - name: meta_protection
+             pattern: "**/*.meta"
+             operations: [delete, modify]
+             severity: block
+             message: "Meta files should not be manually edited"
+  validation: |
+    - Deleting .meta files blocked with clear error
+    - Modifying Library/ files shows warning but allows
+    - Guard rules loaded from project.yaml
+    - Batch operations validated atomically
+    - Performance: <10ms per file check
+  artifacts:
+    - GuardRule dataclass
+    - GuardEngine class
+    - Default guards configuration
+    - CLI commands
+origin:
+  created_by: dev
+  created_at: '2026-03-30'
+  context: Implementing FP-008 Guard Protection Engine for TASK-DEV-026
+  source:
+    type: task
+    description: Implement guard rules engine with pre/post-action protection
+    ref: TASK-DEV-026
+fingerprint: c4eda111793fcbd211f2b425d506e38e79a10cf5ce71a51e44643dd41cac21a4

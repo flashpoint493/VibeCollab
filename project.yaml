@@ -309,6 +309,32 @@ git_workflow:
     severity: warning
     reason: Reverts should be documented in changelog
   commit_required: true
+
+# Guard Protection Engine (FP-008)
+guards:
+  enabled: true
+  rules:
+    - name: meta_protection
+      pattern: "**/*.meta"
+      operations: [delete, modify]
+      severity: block
+      message: "Meta files should not be manually edited. Use vibecollab commands instead."
+    - name: library_protection  
+      pattern: "**/Library/**"
+      operations: [delete]
+      severity: block
+      message: "Library directory contains auto-generated files."
+    - name: insight_data_protection
+      pattern: ".vibecollab/insights/*.jsonl"
+      operations: [delete, modify]
+      severity: block
+      message: "Insight data files are managed automatically."
+    - name: temp_file_warning
+      pattern: "**/Temp/**"
+      operations: [create]
+      severity: warn
+      message: "Consider using tmpfile API for temporary files"
+
 testing:
   unit_test:
     enabled: true

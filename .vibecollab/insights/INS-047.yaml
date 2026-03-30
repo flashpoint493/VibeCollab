@@ -1,0 +1,65 @@
+kind: insight
+version: '1'
+id: INS-047
+title: 'Release Engineering Completion: Finalizing v0.10.x Cycle'
+summary: 'Pattern for completing a release cycle: verify PyPI, update docs, close milestones, create release notes'
+tags:
+- release
+- milestone
+- completion
+- versioning
+- documentation
+category: workflow
+body:
+  scenario: Completing a release cycle after all features are implemented. Need to ensure consistency between PyPI, docs, git tags, and milestone status.
+  completion_steps: |
+    1. Verify PyPI Release:
+       - pip show vibe-collab confirms target version
+       - Package is installable and functional
+       - All CLI commands work as expected
+    
+    2. Update CHANGELOG.md:
+       - Move [Unreleased] section to versioned section
+       - Add release date
+       - Summarize all changes since last release
+       - Group by: Added, Changed, Fixed, Removed
+    
+    3. Update ROADMAP.md:
+       - Mark completed milestones as done
+       - Update feature statuses to completed
+       - Move completed tasks to archive
+    
+    4. Create Git Tag:
+       - git tag -a v0.10.14 -m "Release v0.10.14"
+       - git push origin v0.10.14
+       - Tag should match CHANGELOG version
+    
+    5. Close Milestones:
+       - Update milestone status to completed
+       - Document lessons learned
+       - Transfer unfinished work to next milestone
+    
+    6. Final Verification:
+       - Run full test suite
+       - Verify documentation links work
+       - Check all references are consistent
+  validation: |
+    - PyPI version matches CHANGELOG version
+    - Git tag exists and points to release commit
+    - All documentation is consistent
+    - Milestones show as completed
+    - Test suite passes
+  artifacts:
+    - Updated CHANGELOG.md
+    - Updated ROADMAP.md  
+    - Git tag
+    - Release notes
+origin:
+  created_by: dev
+  created_at: '2026-03-30'
+  context: Completing TASK-DEV-028 for v0.10.14 release engineering
+  source:
+    type: task
+    description: Finalizing v0.10.x release cycle with all documentation and milestone updates
+    ref: TASK-DEV-028
+fingerprint: 86a91c27319a91c30cb1eb5b3fcbaa728fbd259bb2966b52f81aadc694b01320

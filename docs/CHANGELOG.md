@@ -9,55 +9,57 @@
   - Verified CI/CD pipeline (99.7% test pass rate)
   - All commit messages standardized to English
 
-### In Progress (v0.10.14)
-- **Task-Insight Best Practices**: Systematic workflow documentation
-  - INS-036: Release Engineering Task-Insight Documentation Cycle
-  - INS-037: VibeCollab --help Systematic Workflow
-  - INS-038: Role-Driven Architecture Migration Pattern
-  - Updated skill.md with iteration cycle best practices
-  - Fixed 40 insight fingerprint mismatches
-  - Continuous git synchronization (9 commits)
+## [v0.10.14] - 2026-03-30
 
-- **FP-001 Git Hooks Framework**: Pre-commit consistency check ✅
+### Added
+- **Git Hooks Framework** (FP-001): Pre-commit consistency check
   - INS-039: Git Hooks Framework Pattern
-  - Implemented `.git/hooks/pre-commit` with `vibecollab check`
-  - Every commit now auto-validates insight consistency
+  - Implemented `.git/hooks/pre-commit` with `vibecollab check` and local build verification
+  - Every commit auto-validates insight consistency and runs ruff + pytest
   - Fixed fingerprint calculation (kind, version, id, title, summary, tags, category, body, artifacts, origin)
 
-- **FP-008 Guard Protection Engine**: Pattern defined ✅
+- **Guard Protection Engine** (FP-008): Pattern defined
   - INS-040: Guard Protection Engine Pattern
   - Pre-action and post-action guard rules documented
   - Severity levels: block/warn/allow
 
-- **Documentation Update**: README.md and skill.md synchronized ✅
-  - INS-041: Documentation Update Pattern for version-aware maintenance
-  - README.md: Added Git Hooks feature section (v0.10.14)
-  - skill.md: Added Step 2.5 (Git Hooks installation) to setup instructions
-  - Manual setup section now includes `vibecollab hooks install`
-  - Clear explanation of what hooks do and why they matter
-
-- **Strict Document-Code Sync**: Linked groups + Git commit level ✅
+- **Strict Document-Code Sync**: Linked groups + Git commit level
   - INS-042: Strict Git-Based Document-Code Sync Pattern
   - project.yaml: Configured linked_groups with git_commit level
   - Enforces CONTEXT + CHANGELOG, ROADMAP + DECISIONS sync
-  - Detects when docs are modified in different commits
 
-- **Commit-Type-Based Dynamic Check**: Context-aware strictness ✅
+- **Commit-Type-Based Dynamic Check**: Context-aware strictness
   - INS-043: Commit-Type-Based Dynamic Document Sync Check
   - project.yaml: Added doc_requirements and severity per commit prefix
-  - feat: Requires CONTEXT, CHANGELOG, QA_TEST_CASES (error)
-  - fix: Requires CHANGELOG, QA_TEST_CASES (error)
-  - config: No docs required (info)
-  - docs, refactor: Warning level
-  - Adjusted prefixes to lowercase to match git history
+  - feat/fix: error level, docs/refactor: warning level, config: info level
 
-- **Role-Driven Architecture**: Implementation started ✅
-  - INS-044: Role-Driven Architecture Implementation Pattern
-  - Concrete plan for developer-role binding
-  - Permission system design
-  - Dynamic skill registration approach
-  - TASK-DEV-027 in progress
-  - prepare-commit-msg hook: Suggests prefix based on staged files
+- **Role-Driven Architecture Implementation** (DEV-027)
+  - INS-044: Implementation Pattern
+  - INS-045: Best Practices
+  - RoleManager permission system: can_create_task_for, can_transition_to, can_write_file, can_approve_decision
+  - CLI: `vibecollab role permissions` command
+  - project.yaml: Permission configs for all 6 roles
+
+### Changed
+- **Documentation Update**: README.md and skill.md synchronized
+  - INS-041: Documentation Update Pattern
+  - skill.md: Added Step 2.5 (Git Hooks installation)
+  - Manual setup includes `vibecollab hooks install`
+
+- **Task-Insight Best Practices**: Systematic workflow
+  - INS-036, INS-037, INS-038 for release engineering patterns
+  - INS-046: Local Build Check Before Commit best practice
+  - Fixed 40+ insight fingerprint mismatches
+  - Continuous git synchronization (15+ commits)
+
+### Fixed
+- Import order in cli/main.py (ruff I001)
+- Pre-commit hook now includes local build checks (ruff + pytest)
+- All 1515 tests passing
+
+---
+
+### Planned (v0.11.0)
 
 ### Planned (v0.11.0)
 - **FP-001**: Git Hooks Framework - Pre-commit/pre-push/post-commit hooks with configurable rules

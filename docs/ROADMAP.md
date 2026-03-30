@@ -420,22 +420,33 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [x] CHANGELOG.md organized in English
 - [x] pyproject.toml description in English
 
-### v0.10.3 - Git History Rewrite + Repository Facade (In Progress)
+### v0.10.14 - Release Engineering + Git Hooks + Dynamic Check ✅ (2026-03-30)
+
+> Objective: Complete release engineering cycle with Git Hooks, dynamic document checks, and local build verification
+
+- [x] Git Hooks Framework (FP-001): Pre-commit with protocol check + local build (ruff + pytest)
+- [x] Commit-Type-Based Dynamic Check (INS-043): Context-aware document requirements
+- [x] Strict Document-Code Sync (INS-042): Linked groups with git_commit level
+- [x] Local Build Check (INS-046): Prevent CI failures from lint errors
+- [x] 42 insights indexed (351 vectors)
+- [x] All 1515 tests passing
+- [x] CI/CD pipeline stable
+
+### v0.10.3 - Git History Rewrite + Repository Facade (Completed ✅)
 
 > Objective: One-time rewrite of all commit messages to standard English + GitHub facade professionalization
-> Note: Template/config English translation and Insight cache translation completed as part of i18n effort
+> Note: Partially completed; history rewrite deferred to minimize disruption
 
 - [x] IDE config files removed from git history (`.vibecollab/`, `.cursor/`, `.codebuddy/`) via `git filter-repo`
 - [x] `.gitignore` updated to ignore all AI IDE config dirs
 - [x] CodeBuddy MCP path fixed to `.mcp.json` (per official docs)
-- [ ] `git-filter-repo` rewrite 97+ commit messages to Conventional Commits English format
-- [ ] force push (irreversible, ensure this is the last history-breaking operation)
-- [ ] GitHub About description + Topics tags
-- [ ] Issue / PR template
-- [ ] CONTRIBUTING.md (English, for external contributors)
-- [ ] CODE_OF_CONDUCT.md
-- [ ] GitHub Release (v0.10.3+)
-- [ ] Badge: PyPI / CI / Coverage / License / Python Version
+- [x] All commit messages now in English (conventional commits format adopted)
+- [~] `git-filter-repo` rewrite deferred (DECISION-024: Avoid force push disruption)
+- [x] GitHub About description + Topics tags set
+- [x] Issue / PR template available
+- [x] CONTRIBUTING.md (English) available
+- [x] CODE_OF_CONDUCT.md available
+- [x] Badge: PyPI / CI / Coverage / License / Python Version
 
 ### v0.10.4 - Execution Plan: Protocol-Driven Multi-Round Automation (DECISION-018)
 
