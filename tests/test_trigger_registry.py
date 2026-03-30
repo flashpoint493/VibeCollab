@@ -1,4 +1,4 @@
-"""Tests for Trigger Registry"""
+"""Tests for Trigger Registry (Tag-based)"""
 
 import tempfile
 from pathlib import Path
@@ -14,18 +14,15 @@ class TestTrigger:
     def test_trigger_creation(self):
         """Test creating a trigger"""
         trigger = Trigger(
-            word="test",
-            insight_id="INS-001",
-            insight_title="Test Insight",
-            skill_name="Test Skill",
-            skill_description="A test skill",
-            role="DEV",
-            priority=8,
+            word="git",
+            insight_ids=["INS-001", "INS-002"],
+            insight_titles=["Git Best Practices", "Git Workflow"],
+            count=2,
         )
 
-        assert trigger.word == "test"
-        assert trigger.role == "DEV"
-        assert trigger.priority == 8
+        assert trigger.word == "git"
+        assert len(trigger.insight_ids) == 2
+        assert trigger.count == 2
 
 
 class TestTriggerRegistry:
@@ -39,27 +36,17 @@ class TestTriggerRegistry:
 
             assert triggers == []
 
-    def test_load_triggers_from_insight(self):
-        """Test loading triggers from insight file"""
+    def test_load_triggers_from_tags(self):
+        """Test loading triggers from insight tags"""
         with tempfile.TemporaryDirectory() as tmpdir:
             insights_dir = Path(tmpdir)
 
-            # Create a test insight with role_skills
+            # Create a test insight with tags
             insight_data = {
                 "kind": "insight",
                 "id": "INS-TEST",
                 "title": "Test Insight",
-                "role_skills": {
-                    "DEV": [
-                        {
-                            "id": "skill1",
-                            "name": "Test Skill",
-                            "description": "A test skill",
-                            "trigger": "test trigger",
-                            "priority": 8,
-                        }
-                    ]
-                },
+                "tags": ["git", "workflow", "best-practice"],
             }
 
             insight_file = insights_dir / "INS-TEST.yaml"
@@ -69,39 +56,42 @@ class TestTriggerRegistry:
             registry = TriggerRegistry(insights_dir)
             triggers = registry.get_all_triggers()
 
-            assert len(triggers) == 1
-            assert triggers[0].word == "test trigger"
-            assert triggers[0].role == "DEV"
-            assert triggers[0].priority == 8
+            assert len(triggers) == 3
+            trigger_words = [t.word for t in triggers]
+            assert "git" in trigger_words
+            assert "workflow" in trigger_words
+            assert "best-practice" in trigger_words
 
-    def test_get_triggers_by_role(self):
-        """Test filtering triggers by role"""
+    def test_trigger_counts_multiple_insights(self):
+        """Test that triggers count multiple insights with same tag"""
         with tempfile.TemporaryDirectory() as tmpdir:
             insights_dir = Path(tmpdir)
 
-            insight_data = {
+            # Create two insights with same tag
+            insight1 = {
                 "kind": "insight",
-                "id": "INS-TEST",
-                "role_skills": {
-                    "DEV": [{"id": "dev_skill", "name": "Dev Skill", "trigger": "dev"}],
-                    "ARCH": [{"id": "arch_skill", "name": "Arch Skill", "trigger": "arch"}],
-                },
+                "id": "INS-001",
+                "title": "Git Basics",
+                "tags": ["git"],
+            }
+            insight2 = {
+                "kind": "insight",
+                "id": "INS-002",
+                "title": "Git Advanced",
+                "tags": ["git"],
             }
 
-            insight_file = insights_dir / "INS-TEST.yaml"
-            with open(insight_file, "w") as f:
-                yaml.dump(insight_data, f)
+            with open(insights_dir / "INS-001.yaml", "w") as f:
+                yaml.dump(insight1, f)
+            with open(insights_dir / "INS-002.yaml", "w") as f:
+                yaml.dump(insight2, f)
 
             registry = TriggerRegistry(insights_dir)
+            git_trigger = registry.get_trigger("git")
 
-            dev_triggers = registry.get_triggers_by_role("DEV")
-            arch_triggers = registry.get_triggers_by_role("ARCH")
-
-            assert len(dev_triggers) == 1
-            assert dev_triggers[0].word == "dev"
-
-            assert len(arch_triggers) == 1
-            assert arch_triggers[0].word == "arch"
+            assert git_trigger is not None
+            assert git_trigger.count == 2
+            assert len(git_trigger.insight_ids) == 2
 
     def test_search_triggers(self):
         """Test searching triggers"""
@@ -111,23 +101,33 @@ class TestTriggerRegistry:
             insight_data = {
                 "kind": "insight",
                 "id": "INS-TEST",
-                "role_skills": {
-                    "DEV": [
-                        {"id": "refactor", "name": "Refactoring", "trigger": "refactor code"},
-                        {"id": "test", "name": "Testing", "trigger": "write test"},
-                    ]
-                },
+                "title": "Git Workflow Best Practices",
+                "tags": ["git", "workflow"],
             }
 
-            insight_file = insights_dir / "INS-TEST.yaml"
-            with open(insight_file, "w") as f:
+            with open(insights_dir / "INS-TEST.yaml", "w") as f:
                 yaml.dump(insight_data, f)
 
             registry = TriggerRegistry(insights_dir)
-            matches = registry.search_triggers("refactor")
 
+            # Search by tag word
+            matches = registry.search_triggers("git")
             assert len(matches) == 1
-            assert matches[0].word == "refactor code"
+            assert matches[0].word == "git"
+
+            # Search by tag word
+            matches = registry.search_triggers("workflow")
+            assert len(matches) == 1
+            assert matches[0].word == "workflow"
+
+            # Search by title word (should match "workflow" in title and tag)
+            matches = registry.search_triggers("practices")
+            # "practices" appears in title, should match both triggers
+            assert len(matches) == 2
+
+            # Search with no match
+            matches = registry.search_triggers("nonexistent")
+            assert len(matches) == 0
 
     def test_get_trigger_stats(self):
         """Test getting trigger statistics"""
@@ -137,49 +137,66 @@ class TestTriggerRegistry:
             insight_data = {
                 "kind": "insight",
                 "id": "INS-TEST",
-                "role_skills": {
-                    "DEV": [
-                        {"id": "skill1", "name": "Skill 1", "trigger": "trigger1"},
-                        {"id": "skill2", "name": "Skill 2", "trigger": "trigger2"},
-                    ],
-                    "ARCH": [{"id": "skill3", "name": "Skill 3", "trigger": "trigger3"}],
-                },
+                "title": "Test Insight",
+                "tags": ["git", "workflow", "testing"],
             }
 
-            insight_file = insights_dir / "INS-TEST.yaml"
-            with open(insight_file, "w") as f:
+            with open(insights_dir / "INS-TEST.yaml", "w") as f:
                 yaml.dump(insight_data, f)
 
             registry = TriggerRegistry(insights_dir)
             stats = registry.get_trigger_stats()
 
             assert stats["total_triggers"] == 3
-            assert stats["triggers_by_role"]["DEV"] == 2
-            assert stats["triggers_by_role"]["ARCH"] == 1
-            assert stats["unique_trigger_words"] == 3
+            assert stats["total_insights"] == 1
 
-    def test_find_trigger_exact_match(self):
-        """Test finding exact trigger"""
+    def test_get_insights_by_tag(self):
+        """Test getting insights by tag"""
         with tempfile.TemporaryDirectory() as tmpdir:
             insights_dir = Path(tmpdir)
 
             insight_data = {
                 "kind": "insight",
                 "id": "INS-TEST",
-                "role_skills": {
-                    "DEV": [{"id": "skill1", "name": "Skill 1", "trigger": "exact match"}]
-                },
+                "title": "Git Best Practices",
+                "tags": ["git"],
             }
 
-            insight_file = insights_dir / "INS-TEST.yaml"
-            with open(insight_file, "w") as f:
+            with open(insights_dir / "INS-TEST.yaml", "w") as f:
                 yaml.dump(insight_data, f)
 
             registry = TriggerRegistry(insights_dir)
+            insights = registry.get_insights_by_tag("git")
 
-            found = registry.find_trigger("exact match")
-            not_found = registry.find_trigger("nonexistent")
+            assert len(insights) == 1
+            assert insights[0]["id"] == "INS-TEST"
+            assert insights[0]["title"] == "Git Best Practices"
 
-            assert found is not None
-            assert found.word == "exact match"
-            assert not_found is None
+    def test_cache_invalidation(self):
+        """Test cache invalidation"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            insights_dir = Path(tmpdir)
+
+            # First call populates cache
+            registry = TriggerRegistry(insights_dir)
+            _ = registry.get_all_triggers()
+
+            # Invalidate cache
+            registry.invalidate_cache()
+
+            # Add new insight
+            insight_data = {
+                "kind": "insight",
+                "id": "INS-NEW",
+                "title": "New Insight",
+                "tags": ["new-tag"],
+            }
+
+            with open(insights_dir / "INS-NEW.yaml", "w") as f:
+                yaml.dump(insight_data, f)
+
+            # Second call should see new trigger
+            triggers = registry.get_all_triggers()
+            trigger_words = [t.word for t in triggers]
+
+            assert "new-tag" in trigger_words

@@ -1,10 +1,10 @@
 """
 Insight Trigger Registry
 
-Discover and manage triggers from all insights for easy invocation.
+Discover triggers from insight tags for easy invocation.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -13,19 +13,16 @@ import yaml
 
 @dataclass
 class Trigger:
-    """A trigger definition from an insight"""
+    """A trigger definition from insight tags"""
 
     word: str
-    insight_id: str
-    insight_title: str
-    skill_name: str
-    skill_description: str
-    role: str
-    priority: int = 5
+    insight_ids: List[str] = field(default_factory=list)
+    insight_titles: List[str] = field(default_factory=list)
+    count: int = 0
 
 
 class TriggerRegistry:
-    """Registry for all insight triggers"""
+    """Registry for all insight triggers based on tags"""
 
     def __init__(self, insights_dir: Path):
         """
@@ -35,7 +32,7 @@ class TriggerRegistry:
             insights_dir: Directory containing INS-XXX.yaml files
         """
         self.insights_dir = insights_dir
-        self._triggers: List[Trigger] = []
+        self._triggers: Dict[str, Trigger] = {}
         self._cache_valid = False
 
     def invalidate_cache(self):
@@ -44,7 +41,7 @@ class TriggerRegistry:
         self._triggers.clear()
 
     def _load_all_triggers(self):
-        """Load all triggers from insight files"""
+        """Load all triggers from insight tags"""
         if self._cache_valid:
             return
 
@@ -63,136 +60,108 @@ class TriggerRegistry:
 
                 insight_id = data.get("id", insight_file.stem)
                 insight_title = data.get("title", "Untitled")
+                tags = data.get("tags", [])
 
-                # Load triggers from role_skills
-                role_skills = data.get("role_skills", {})
-                for role, skills in role_skills.items():
-                    if not isinstance(skills, list):
-                        continue
-
-                    for skill in skills:
-                        trigger_word = skill.get("trigger", "")
-                        if not trigger_word:
-                            continue
-
-                        trigger = Trigger(
-                            word=trigger_word.lower(),
-                            insight_id=insight_id,
-                            insight_title=insight_title,
-                            skill_name=skill.get("name", "Unnamed"),
-                            skill_description=skill.get("description", ""),
-                            role=role,
-                            priority=skill.get("priority", 5),
+                # Each tag becomes a trigger word
+                for tag in tags:
+                    tag_lower = tag.lower()
+                    if tag_lower not in self._triggers:
+                        self._triggers[tag_lower] = Trigger(
+                            word=tag_lower,
+                            insight_ids=[],
+                            insight_titles=[],
+                            count=0,
                         )
-                        self._triggers.append(trigger)
+
+                    self._triggers[tag_lower].insight_ids.append(insight_id)
+                    self._triggers[tag_lower].insight_titles.append(insight_title)
+                    self._triggers[tag_lower].count += 1
 
             except Exception:
                 continue
 
-        # Sort by priority (descending)
-        self._triggers.sort(key=lambda t: t.priority, reverse=True)
         self._cache_valid = True
 
     def get_all_triggers(self) -> List[Trigger]:
-        """Get all triggers"""
+        """Get all triggers sorted by count (descending)"""
         self._load_all_triggers()
-        return self._triggers.copy()
+        return sorted(self._triggers.values(), key=lambda t: t.count, reverse=True)
 
-    def get_triggers_by_role(self, role: str) -> List[Trigger]:
-        """Get triggers for a specific role"""
+    def get_trigger(self, word: str) -> Optional[Trigger]:
+        """Get specific trigger by word"""
         self._load_all_triggers()
-        return [t for t in self._triggers if t.role == role]
+        return self._triggers.get(word.lower())
 
     def search_triggers(self, keyword: str) -> List[Trigger]:
         """Search triggers by keyword"""
         self._load_all_triggers()
         keyword_lower = keyword.lower()
 
-        return [
-            t
-            for t in self._triggers
-            if keyword_lower in t.word
-            or keyword_lower in t.skill_name.lower()
-            or keyword_lower in t.skill_description.lower()
-            or keyword_lower in t.insight_title.lower()
-        ]
+        results = []
+        for trigger in self._triggers.values():
+            # Match trigger word
+            if keyword_lower in trigger.word:
+                results.append(trigger)
+            # Match insight titles
+            elif any(keyword_lower in title.lower() for title in trigger.insight_titles):
+                results.append(trigger)
+
+        return sorted(results, key=lambda t: t.count, reverse=True)
 
     def get_trigger_stats(self) -> Dict:
         """Get statistics about triggers"""
         self._load_all_triggers()
 
-        stats = {
+        total_insights = len(
+            set(ins_id for trigger in self._triggers.values() for ins_id in trigger.insight_ids)
+        )
+
+        return {
             "total_triggers": len(self._triggers),
-            "triggers_by_role": {},
-            "unique_trigger_words": len(set(t.word for t in self._triggers)),
+            "total_insights": total_insights,
+            "most_common_trigger": (
+                max(self._triggers.values(), key=lambda t: t.count).word if self._triggers else None
+            ),
         }
 
-        for trigger in self._triggers:
-            role = trigger.role
-            if role not in stats["triggers_by_role"]:
-                stats["triggers_by_role"][role] = 0
-            stats["triggers_by_role"][role] += 1
-
-        return stats
-
-    def find_trigger(self, trigger_word: str) -> Optional[Trigger]:
-        """Find exact trigger by word"""
-        self._load_all_triggers()
-        word_lower = trigger_word.lower()
-
-        for trigger in self._triggers:
-            if trigger.word == word_lower:
-                return trigger
-
-        return None
-
-    def format_triggers_table(self, role: Optional[str] = None) -> str:
+    def format_triggers_table(self, limit: Optional[int] = None) -> str:
         """Format triggers as a readable table"""
-        if role:
-            triggers = self.get_triggers_by_role(role)
-            title = f"Triggers for {role} role"
-        else:
-            triggers = self.get_all_triggers()
-            title = "All Available Triggers"
+        triggers = self.get_all_triggers()
 
         if not triggers:
-            return f"No triggers found{f' for role {role}' if role else ''}."
+            return "No triggers found."
 
-        lines = [f"\n{'=' * 60}", f"  {title}", f"{'=' * 60}\n"]
+        if limit:
+            triggers = triggers[:limit]
 
-        # Group by role
-        if not role:
-            triggers_by_role: Dict[str, List[Trigger]] = {}
-            for t in triggers:
-                if t.role not in triggers_by_role:
-                    triggers_by_role[t.role] = []
-                triggers_by_role[t.role].append(t)
+        lines = [
+            "",
+            "=" * 70,
+            "  Available Insight Triggers (Tags)",
+            "=" * 70,
+            "",
+            "  Mention these words to find related insights:",
+            "",
+        ]
 
-            for role_code, role_triggers in sorted(triggers_by_role.items()):
-                lines.append(f"\n[{role_code}] {role_code} triggers:")
-                lines.append("-" * 40)
-                for t in role_triggers:
-                    lines.append(f'  • "{t.word}" → {t.skill_name}')
-                    if t.skill_description:
-                        desc = t.skill_description[:50]
-                        if len(t.skill_description) > 50:
-                            desc += "..."
-                        lines.append(f"    {desc}")
-                    lines.append(f"    ({t.insight_id})")
-                    lines.append("")
-        else:
-            for t in triggers:
-                lines.append(f'  • "{t.word}" → {t.skill_name}')
-                if t.skill_description:
-                    desc = t.skill_description[:50]
-                    if len(t.skill_description) > 50:
-                        desc += "..."
-                    lines.append(f"    {desc}")
-                lines.append(f"    ({t.insight_id})")
-                lines.append("")
+        for i, trigger in enumerate(triggers, 1):
+            lines.append(f'  {i}. "{trigger.word}" → {trigger.count} insight(s)')
+            # Show first 3 insight titles
+            for title in trigger.insight_titles[:3]:
+                short_title = title[:50] + "..." if len(title) > 50 else title
+                lines.append(f"     • {short_title}")
+            if len(trigger.insight_titles) > 3:
+                lines.append(f"     ... and {len(trigger.insight_titles) - 3} more")
+            lines.append("")
 
-        lines.append("\n💡 Usage: Mention trigger word in your request")
-        lines.append("   Example: 'help me complete task' will activate Task-Insight Iteration")
+        lines.extend(
+            [
+                "-" * 70,
+                "💡 Usage: Mention trigger word in your request",
+                '   Example: "show me workflow insights" or "git best practices"',
+                "",
+            ]
+        )
 
         return "\n".join(lines)
 
@@ -204,13 +173,23 @@ class TriggerRegistry:
             "triggers": [
                 {
                     "word": t.word,
-                    "insight_id": t.insight_id,
-                    "insight_title": t.insight_title,
-                    "skill_name": t.skill_name,
-                    "skill_description": t.skill_description,
-                    "role": t.role,
-                    "priority": t.priority,
+                    "insight_count": t.count,
+                    "insight_ids": t.insight_ids,
+                    "insight_titles": t.insight_titles,
                 }
-                for t in self._triggers
+                for t in sorted(self._triggers.values(), key=lambda x: x.count, reverse=True)
             ]
         }
+
+    def get_insights_by_tag(self, tag: str) -> List[Dict]:
+        """Get all insights that have a specific tag"""
+        self._load_all_triggers()
+
+        trigger = self._triggers.get(tag.lower())
+        if not trigger:
+            return []
+
+        return [
+            {"id": ins_id, "title": title}
+            for ins_id, title in zip(trigger.insight_ids, trigger.insight_titles)
+        ]

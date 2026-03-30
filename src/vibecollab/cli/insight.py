@@ -971,22 +971,22 @@ def import_insights(filepath, strategy, json_output):
 
 
 @insight.command("triggers")
-@click.option("-r", "--role", help="Filter by role (DEV, ARCH, QA, etc.)")
+@click.option("-l", "--limit", type=int, help="Limit number of triggers shown")
 @click.option("-s", "--search", help="Search triggers by keyword")
 @click.option("--json", "json_output", is_flag=True, help="Output as JSON")
-def insight_triggers(role: Optional[str], search: Optional[str], json_output: bool):
+def insight_triggers(limit: Optional[int], search: Optional[str], json_output: bool):
     """List and discover insight triggers
 
-    Shows all available trigger words from insights that can be used
-    to activate specific skills and patterns.
+    Shows all available trigger words from insight tags that can be used
+    to find related insights.
 
     Examples:
 
         vibecollab insight triggers              # List all triggers
 
-        vibecollab insight triggers -r DEV       # Show only DEV triggers
+        vibecollab insight triggers -l 10        # Show top 10 triggers
 
-        vibecollab insight triggers -s "refactor"  # Search for refactor triggers
+        vibecollab insight triggers -s "git"     # Search for git triggers
 
         vibecollab insight triggers --json       # Export as JSON for AI
     """
@@ -1010,9 +1010,8 @@ def insight_triggers(role: Optional[str], search: Optional[str], json_output: bo
                         "triggers": [
                             {
                                 "word": t.word,
-                                "skill": t.skill_name,
-                                "role": t.role,
-                                "insight": t.insight_id,
+                                "insight_count": t.count,
+                                "insight_ids": t.insight_ids[:5],  # Limit to 5
                             }
                             for t in triggers
                         ],
@@ -1029,9 +1028,11 @@ def insight_triggers(role: Optional[str], search: Optional[str], json_output: bo
             return
 
         for t in triggers:
-            click.echo(f'\n  • "{t.word}"')
-            click.echo(f"    Skill: {t.skill_name}")
-            click.echo(f"    Role: {t.role} | Insight: {t.insight_id}")
+            click.echo(f'\n  • "{t.word}" → {t.count} insight(s)')
+            for title in t.insight_titles[:3]:
+                click.echo(f"    • {title[:60]}{'...' if len(title) > 60 else ''}")
+            if len(t.insight_titles) > 3:
+                click.echo(f"    ... and {len(t.insight_titles) - 3} more")
         return
 
     # Stats mode (default)
@@ -1048,5 +1049,5 @@ def insight_triggers(role: Optional[str], search: Optional[str], json_output: bo
         return
 
     # Table mode
-    output = registry.format_triggers_table(role)
+    output = registry.format_triggers_table(limit)
     click.echo(output)
