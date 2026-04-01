@@ -116,6 +116,54 @@ class SchemaValidator:
                         "FEAT and FIX types"
                     )
 
+        # --- guards section ---
+        guards = config.get("guards", {})
+        if guards:
+            if not isinstance(guards.get("enabled", True), bool):
+                errors.append("guards.enabled must be a boolean")
+            guard_rules = guards.get("rules", [])
+            valid_severities = {"block", "warn", "allow"}
+            valid_operations = {"create", "modify", "delete", "move"}
+            for i, rule in enumerate(guard_rules):
+                if not rule.get("name"):
+                    errors.append(f"guards.rules[{i}].name is required")
+                if not rule.get("pattern"):
+                    errors.append(f"guards.rules[{i}].pattern is required")
+                severity = rule.get("severity", "block")
+                if severity not in valid_severities:
+                    warnings.append(
+                        f"guards.rules[{i}].severity '{severity}' "
+                        f"not in {valid_severities}"
+                    )
+                operations = rule.get("operations", [])
+                for op in operations:
+                    if op not in valid_operations:
+                        warnings.append(
+                            f"guards.rules[{i}].operations contains "
+                            f"unknown operation '{op}'"
+                        )
+
+        # --- hooks section ---
+        hooks = config.get("hooks", {})
+        if hooks:
+            if not isinstance(hooks.get("enabled", True), bool):
+                errors.append("hooks.enabled must be a boolean")
+            hook_rules = hooks.get("rules", {})
+            valid_hook_types = {
+                "pre-commit", "pre-push", "post-commit",
+                "post-checkout", "prepare-commit-msg",
+            }
+            for hook_type, commands in hook_rules.items():
+                if hook_type not in valid_hook_types:
+                    warnings.append(
+                        f"hooks.rules contains unknown hook type "
+                        f"'{hook_type}'"
+                    )
+                if not isinstance(commands, list):
+                    errors.append(
+                        f"hooks.rules.{hook_type} must be a list of commands"
+                    )
+
         return ValidationReport(errors=errors, warnings=warnings)
 
 

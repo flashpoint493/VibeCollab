@@ -1,21 +1,25 @@
 # VibeCollab - DEV Role Context
 
 ## Current Status
-- **Version**: v0.10.10
+- **Version**: v0.11.0
 - **Role**: DEV (Development)
-- **Last updated**: 2026-03-26
+- **Last updated**: 2026-04-01
 
 ## Current Tasks
-- **v0.10.x release engineering**: continue external-project QA verification and repo polish
+- **v0.11.0 milestone completion**: All 32/32 items done ✅
 - **Protocol readiness**: keep onboarding/check flows accurate for real projects
 - **Documentation maintenance**: keep generated files and project metadata in sync
 
 ## Recently Completed
-- ✅ **Environment verification**: confirmed Python 3.10.10 meets VibeCollab requirement
-- ✅ **Local dev environment**: created `.venv/` and installed current repo as editable package
-- ✅ **Protocol validation**: ran `vibecollab onboard` and `vibecollab check`, both passed
-- ✅ **Project metadata sync**: corrected `project.yaml` placeholder values to real VibeCollab identity
-- ✅ **Generated docs refresh**: regenerated `CONTRIBUTING_AI.md` / refreshed `llms.txt`
+- ✅ **RoleManager Permission Tests**: 69 dedicated unit tests for role.py permission system (test_role_permissions.py)
+- ✅ **v0.11.0 Test Suite**: 151 tests across 6 files (guard, hooks, skills, permissions, triggers, role_permissions)
+- ✅ **Project Self-Check**: `vibecollab check` all green (11 checks, 0 errors, 8 guard rules, 227 files scanned)
+- ✅ **Git Hooks Framework**: `vibecollab hooks install/uninstall/run/status/list` CLI commands
+- ✅ **Dynamic Skill Registration**: `vibecollab insight triggers` for role-based skill discovery
+- ✅ **Trigger Registry**: Collect triggers from insight tags instead of role_skills
+- ✅ **Guard Engine**: `domain/guard.py` with pre/post-action protection rules
+- ✅ **Role Permissions**: `vibecollab role permissions` command foundation
+- ✅ **Documentation sync**: skill.md, README.md, README.pypi.md, README.zh-CN.md all updated for v0.11.0
 
 ## Next Steps
 1. **External QA** — Run `init` / `generate` / `check` on 3+ real external projects

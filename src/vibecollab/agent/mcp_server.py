@@ -71,7 +71,19 @@ def _get_managers(root: Path):
 
     event_log = EventLog(root / ".vibecollab" / "events.jsonl")
     im = InsightManager(project_root=root, event_log=event_log)
-    tm = TaskManager(project_root=root, event_log=event_log, insight_manager=im)
+
+    # Try to load RoleManager for permission enforcement
+    rm = None
+    try:
+        from ..domain.role import RoleManager
+
+        config = _safe_load_yaml(root / "project.yaml")
+        if config:
+            rm = RoleManager(project_root=root, config=config)
+    except Exception:
+        pass
+
+    tm = TaskManager(project_root=root, event_log=event_log, insight_manager=im, role_manager=rm)
     return im, tm, event_log
 
 
@@ -276,6 +288,81 @@ def create_mcp_server(project_root: Optional[Path] = None):
                 "warnings": summary["warnings"],
                 "infos": summary["infos"],
                 "results": items,
+            }, ensure_ascii=False, indent=2)
+        except Exception as e:
+            return json.dumps({"error": str(e)}, ensure_ascii=False)
+
+    @mcp.tool()
+    def guard_check(operation: str, file_path: str) -> str:
+        """Check if a file operation is allowed by guard rules
+
+        Use this before performing file operations (create, modify, delete, move)
+        to ensure the operation doesn't violate project protection rules.
+
+        Args:
+            operation: Operation type — one of "create", "modify", "delete", "move"
+            file_path: Target file path (relative to project root)
+        """
+        try:
+            from ..domain.guard import GuardEngine
+
+            config = _safe_load_yaml(config_path)
+            guard_config = config.get("guards", None) if config else None
+            engine = GuardEngine(guard_config)
+
+            result = engine.check_operation(operation, file_path)
+
+            response = {
+                "allowed": result.allowed,
+                "operation": operation,
+                "file_path": file_path,
+            }
+
+            if result.rule:
+                response["matched_rule"] = {
+                    "name": result.rule.name,
+                    "pattern": result.rule.pattern,
+                    "severity": result.severity.value if result.severity else None,
+                    "message": result.message,
+                }
+            if not result.allowed:
+                response["suggestion"] = (
+                    "This operation is blocked by a guard rule. "
+                    "If this is intentional, configure guards in project.yaml."
+                )
+
+            return json.dumps(response, ensure_ascii=False, indent=2)
+        except Exception as e:
+            return json.dumps({"error": str(e)}, ensure_ascii=False)
+
+    @mcp.tool()
+    def guard_list_rules() -> str:
+        """List all configured guard protection rules
+
+        Returns the full list of guard rules (both defaults and custom from project.yaml),
+        showing patterns, operations, severity levels, and messages.
+        """
+        try:
+            from ..domain.guard import GuardEngine
+
+            config = _safe_load_yaml(config_path)
+            guard_config = config.get("guards", None) if config else None
+            engine = GuardEngine(guard_config)
+
+            rules = []
+            for rule in engine.list_rules():
+                rules.append({
+                    "name": rule.name,
+                    "pattern": rule.pattern,
+                    "operations": rule.operations,
+                    "severity": rule.severity.value,
+                    "message": rule.message,
+                })
+
+            return json.dumps({
+                "enabled": engine.enabled,
+                "rules": rules,
+                "count": len(rules),
             }, ensure_ascii=False, indent=2)
         except Exception as e:
             return json.dumps({"error": str(e)}, ensure_ascii=False)

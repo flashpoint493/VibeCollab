@@ -605,21 +605,29 @@ def upgrade(config: str, dry_run: bool, force: bool):
 @click.option(
     "--insights/--no-insights", default=True, help=_("Run Insight consistency check (default: on)")
 )
-def check(config: str, strict: bool, insights: bool):
+@click.option(
+    "--guards/--no-guards", default=True, help=_("Run Guard protection check (default: on)")
+)
+def check(config: str, strict: bool, insights: bool, guards: bool):
     """Check protocol compliance
 
     Check whether the project follows the collaboration protocol defined in CONTRIBUTING_AI.md.
     Insight consistency check is enabled by default (use --no-insights to skip).
+    Guard protection check is enabled by default (use --no-guards to skip).
 
     Examples:
 
-        vibecollab check                    # Check with Insight (default)
+        vibecollab check                    # Check with Insight + Guards (default)
 
         vibecollab check -c project.yaml    # Specify config file
 
         vibecollab check --strict           # Strict mode
 
         vibecollab check --no-insights      # Skip Insight consistency check
+
+        vibecollab check --no-guards        # Skip Guard protection check
+
+        vibecollab check --guards --no-insights  # Guards only, no Insights
     """
     config_path = Path(config)
     project_root = config_path.parent
@@ -749,12 +757,117 @@ def check(config: str, strict: bool, insights: bool):
             )
             console.print()
 
+    # Guard protection check
+    guard_blocks = 0
+    guard_warnings = 0
+    if guards:
+        console.print(
+            Panel.fit(
+                f"[bold]{_('Guard Protection Check')}[/bold]",
+                title=_("Guard Check"),
+            )
+        )
+        console.print()
+        try:
+            from ..domain.guard import GuardEngine, GuardSeverity
+
+            guard_config = project_config.get("guards", None)
+            engine = GuardEngine(guard_config)
+
+            if not engine.enabled:
+                console.print(
+                    f"  [dim]{EMOJI_MAP['info']} {_('Guards disabled in project config')}[/dim]"
+                )
+                console.print()
+            else:
+                # Scan project files for guard rule violations
+                import subprocess
+
+                try:
+                    result = subprocess.run(
+                        ["git", "ls-files"],
+                        cwd=str(project_root),
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
+                    tracked_files = [
+                        f.strip() for f in result.stdout.splitlines() if f.strip()
+                    ]
+                except Exception:
+                    # Fallback: scan common directories
+                    tracked_files = []
+                    for ext in ["*.py", "*.yaml", "*.yml", "*.md", "*.json", "*.meta"]:
+                        tracked_files.extend(
+                            str(p.relative_to(project_root))
+                            for p in project_root.rglob(ext)
+                            if ".git" not in str(p) and ".vibecollab" not in str(p)
+                        )
+
+                # Check each file against guard rules
+                guard_violations = []
+                for file_path in tracked_files:
+                    matching_rules = engine.test_path(file_path)
+                    for rule in matching_rules:
+                        guard_violations.append((file_path, rule))
+
+                blocks = [
+                    (fp, r) for fp, r in guard_violations if r.severity == GuardSeverity.BLOCK
+                ]
+                warns = [
+                    (fp, r) for fp, r in guard_violations if r.severity == GuardSeverity.WARN
+                ]
+
+                if blocks:
+                    guard_blocks = len(blocks)
+                    console.print(
+                        f"[bold red]{EMOJI_MAP['error']} {_('Guard Violations (BLOCK):')}[/bold red]"
+                    )
+                    for fp, rule in blocks:
+                        console.print(f"  {BULLET} {fp}")
+                        console.print(
+                            f"    [dim]{_('Rule:')} {rule.name} — {rule.message}[/dim]"
+                        )
+                    console.print()
+
+                if warns:
+                    guard_warnings = len(warns)
+                    console.print(
+                        f"[bold yellow]{EMOJI_MAP['warning']} {_('Guard Warnings (WARN):')}[/bold yellow]"
+                    )
+                    for fp, rule in warns:
+                        console.print(f"  {BULLET} {fp}")
+                        console.print(
+                            f"    [dim]{_('Rule:')} {rule.name} — {rule.message}[/dim]"
+                        )
+                    console.print()
+
+                if not blocks and not warns:
+                    console.print(
+                        f"  [green]{EMOJI_MAP['success']} {_('Guard check passed')} "
+                        f"({len(engine.list_rules())} {_('rules')}, "
+                        f"{len(tracked_files)} {_('files scanned')})[/green]"
+                    )
+                    console.print()
+                else:
+                    console.print(
+                        f"  [dim]{_('Scanned')} {len(tracked_files)} {_('files against')} "
+                        f"{len(engine.list_rules())} {_('guard rules')}[/dim]"
+                    )
+                    console.print()
+        except Exception as e:
+            console.print(
+                f"  [yellow]{EMOJI_MAP['warning']} {_('Guard check skipped:')} {e}[/yellow]"
+            )
+            console.print()
+
     # Merge statistics
-    total_errors = len(errors) + insight_errors + len(schema_errors_list)
-    total_warnings = len(warnings) + insight_warnings + len(schema_warnings_list)
+    total_errors = len(errors) + insight_errors + len(schema_errors_list) + guard_blocks
+    total_warnings = len(warnings) + insight_warnings + len(schema_warnings_list) + guard_warnings
     total_checks = (
         summary["total"]
         + (1 if insights else 0)
+        + (1 if guards else 0)
         + (1 if schema_errors_list or schema_warnings_list else 0)
     )
 

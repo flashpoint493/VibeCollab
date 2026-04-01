@@ -2,6 +2,38 @@
 
 ## [Unreleased]
 
+### In Progress (v0.11.0)
+- **Guard CLI Integration** (TASK-DEV-026): `vibecollab check --guards` implemented
+  - `--guards/--no-guards` flag (default: on) in `check` command
+  - Scans all git-tracked files against guard rules (defaults + project.yaml custom)
+  - Displays BLOCK violations as errors, WARN as warnings
+  - Integrated into check summary statistics and exit code
+- **MCP Guard Tools** (TASK-DEV-026): Two new MCP tools added
+  - `guard_check(operation, file_path)` — Pre-flight check for file operations
+  - `guard_list_rules()` — List all configured guard rules
+- **Role CLI Update**: Confirmed 8 subcommands already implemented (whoami/list/status/switch/permissions/init/sync/conflicts), ROADMAP updated
+- **TaskManager Permission Enforcement**: RoleManager injected into create_task/transition
+  - create_task raises PermissionError when role not allowed
+  - transition returns ValidationResult(ok=False) when role not allowed
+  - CLI and MCP both inject RoleManager for consistent enforcement
+- **Guards + Hooks Config Validation**: SchemaValidator extended with guards/hooks schema
+- **RoleManager Permission Tests** (TASK-DEV-029): 69 dedicated unit tests for role.py permission system
+  - `test_role_permissions.py`: covers _load_permissions_config, get_developer_roles, get_primary_role
+  - `can_create_task_for`, `can_transition_to`, `can_write_file`, `can_approve_decision` — all 5 roles verified
+  - `get_role_permissions`, `get_effective_permissions` — structure + correctness
+  - Edge cases: empty config, unknown devs, cache isolation, fnmatch glob, idempotency
+  - v0.11.0 total: **151 tests** across 6 test files (guard, hooks, skills, permissions, triggers, role_permissions)
+- **Project Self-Check**: `vibecollab check` all green (11 checks, 0 errors)
+  - Fixed: created missing `docs/roles/ocarina/CONTEXT.md`
+  - Guard check passed: 8 rules, 227 files scanned
+  - Insight consistency passed
+- **Documentation Update**: skill.md, README.md, README.pypi.md, README.zh-CN.md synchronized
+  - MCP tools count updated 12 → 16 (added guard_check, guard_list_rules, roadmap_status, roadmap_sync)
+  - CLI Reference: `vibecollab dev` → `vibecollab role` migration, added hooks commands
+  - Features section: added Git Hooks + Guard Protection, Multi-Role permissions
+  - Version histories updated with v0.11.0 and v0.10.14 entries
+  - Architecture tables: updated pillars to reflect Guard protection and role permissions
+
 ### Completed (v0.10.13)
 - **v0.10.13 Release**: Finalized v0.10.x release cycle
   - PyPI release v0.10.13 with role-based architecture
@@ -18,10 +50,34 @@
   - Every commit auto-validates insight consistency and runs ruff + pytest
   - Fixed fingerprint calculation (kind, version, id, title, summary, tags, category, body, artifacts, origin)
 
-- **Guard Protection Engine** (FP-008): Pattern defined
+- **Guard Protection Engine** (FP-008): Core engine implemented
   - INS-040: Guard Protection Engine Pattern
-  - Pre-action and post-action guard rules documented
-  - Severity levels: block/warn/allow
+  - `GuardEngine` class with `check_operation()`, `check_batch()`, `list_rules()`, `test_path()`
+  - `GuardSeverity` enum: block/warn/allow
+  - `GuardRule` dataclass with glob pattern matching and operation filtering
+  - 4 default rules: meta_protection, library_protection, insight_protection, temp_warning
+  - Custom rules loadable from `project.yaml`
+  - **Note**: CLI integration (`vibecollab check --guards`) pending
+
+- **Git Hooks CLI Commands** (FP-001): Full CLI implemented
+  - `HookManager` domain module with install/uninstall/run/status/list methods
+  - `vibecollab hooks install [-t TYPE] [--force]` — Install Git hooks
+  - `vibecollab hooks uninstall [-t TYPE] [--all]` — Remove hooks
+  - `vibecollab hooks run <hook_type>` — Manual hook execution
+  - `vibecollab hooks status [--json]` — Hook status overview
+  - `vibecollab hooks list` — List installed vibecollab hooks
+  - Windows PowerShell + Unix Bash dual template support
+  - Supports 5 hook types: pre-commit, pre-push, post-commit, post-checkout, prepare-commit-msg
+
+- **Dynamic Skill Registration** (DEV-027): Implemented
+  - `SkillRegistry` module: Load skills dynamically from Insight YAML files
+  - `RoleManager` integration: `get_skills_for_role()`, `format_skills_for_prompt()`, `find_skills_by_trigger()`
+  - Skills cached per role, sorted by priority
+
+- **Insight Trigger Registry**: New module + CLI
+  - `TriggerRegistry` module: Discover triggers from insight tags
+  - `vibecollab insight triggers [-l LIMIT] [-s SEARCH] [--json]` CLI command
+  - Tag-based trigger discovery with search, stats, and formatted table output
 
 - **Strict Document-Code Sync**: Linked groups + Git commit level
   - INS-042: Strict Git-Based Document-Code Sync Pattern
@@ -60,15 +116,18 @@
 ---
 
 ### Planned (v0.11.0)
-
-### Planned (v0.11.0)
-- **FP-001**: Git Hooks Framework - Pre-commit/pre-push/post-commit hooks with configurable rules
-- **FP-008**: Guard Protection Engine - Pre/post-action protection rules integrated with check command
-- **Role Architecture Fix**: Developer-Role binding with permissions and dynamic skill registration
+- **FP-001**: Git Hooks Framework - ~~Pre-commit/pre-push/post-commit hooks with configurable rules~~ ✅ Core done; remaining: advanced hook type extensions
+- **FP-008**: Guard Protection Engine - ~~Pre/post-action protection rules~~ ✅ Engine done; remaining: CLI integration (`vibecollab check --guards`), MCP `guard_check` tool
+- **Role Architecture Fix**: ~~Developer-Role binding with permissions and dynamic skill registration~~ ✅ Permissions + Skill Registry done; remaining: `vibecollab role` CLI commands, permission enforcement in Task operations
 
 ### Planned (v0.12.0)
+- **DECISION-025**: Docs Markdown → YAML Big-Bang Migration (S-level)
+  - All docs/*.md → docs/*.yaml, YAML as source of truth
+  - New CLI: `vibecollab docs render` for Markdown/JSON view generation
+  - 12+ modules rewrite, 193+ test updates
+  - No backward compatibility — clean break
 - **FP-004**: Standard Workflows - docs-change, feature-add, requirement-review, competitor-analysis
-- **FP-005**: Document Template Library - ADR, sprint-plan, TDD templates via Pattern Engine
+- **FP-005**: Document Template Library - ADR, sprint-plan, TDD templates via Pattern Engine (YAML-native)
 - **FP-015**: Insight Derivation Chain - Track insight relationships and derivation history
 
 ### Planned (v0.13.0)

@@ -1,0 +1,36 @@
+kind: insight
+version: '1'
+id: INS-054
+title: 'Permission System Testing Pattern: Role-Based Access Control Unit Tests'
+summary: Comprehensive RBAC permission testing pattern with 69 tests across 10 test
+  classes
+tags:
+- testing
+- permissions
+- role-permissions
+- rbac
+- unit-test
+- v0.11.0
+category: technique
+body:
+  scenario: When implementing role-based access control (RBAC) in a protocol management
+    tool, you need dedicated unit tests that verify each permission method against
+    all configured roles, with edge cases for unknown developers, empty configs, and
+    backward compatibility.
+  approach: '1. Use real RoleManager with project.yaml-style config dicts (no mocking
+    the SUT). 2. Create fixtures with full role/developer configs mirroring production
+    project.yaml. 3. Test matrix: each permission method × each role × positive/negative
+    cases. 4. Cover edge cases: unknown devs (backward compat fallback), empty config
+    (no restrictions), cache isolation across developers, fnmatch glob patterns, idempotency.
+    5. Test get_effective_permissions structure matches get_role_permissions output.
+    6. Run alongside integration tests (test_permission_enforcement.py) that verify
+    TaskManager↔RoleManager contract.'
+artifacts: []
+origin:
+  created_by: mcp
+  created_at: '2026-04-01'
+  context: Created during v0.11.0 milestone completion. RoleManager permission system
+    (role.py lines 542-688) had no dedicated tests — only indirect coverage via TaskManager
+    integration. This gap was identified after 82 tests existed for other v0.11.0
+    features (guard, hooks, skills, triggers, permission enforcement).
+fingerprint: ba6b4ac3f5b7f4302c987a2a13775eb5aeebf261809b6670e0b62ecb947cde41

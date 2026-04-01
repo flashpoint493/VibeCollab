@@ -30,6 +30,7 @@ from .event_log import Event, EventLog, EventType
 
 if TYPE_CHECKING:
     from ..insight.manager import InsightManager
+    from .role import RoleManager
 
 # ---------------------------------------------------------------------------
 # Task status enum & state machine
@@ -164,6 +165,7 @@ class TaskManager:
     def __init__(self, project_root: Path,
                  event_log: Optional[EventLog] = None,
                  insight_manager: Optional["InsightManager"] = None,
+                 role_manager: Optional["RoleManager"] = None,
                  max_files: int = DEFAULT_MAX_FILES,
                  max_lines: int = DEFAULT_MAX_LINES):
         self.project_root = Path(project_root)
@@ -171,6 +173,7 @@ class TaskManager:
         self.tasks_path = self.data_dir / self.TASKS_FILE
         self.event_log = event_log or EventLog(project_root=self.project_root)
         self.insight_manager = insight_manager
+        self.role_manager = role_manager
         self.max_files = max_files
         self.max_lines = max_lines
         self._tasks: Dict[str, Task] = {}
@@ -262,6 +265,7 @@ class TaskManager:
 
         Raises:
             ValueError: If task ID is invalid or already exists.
+            PermissionError: If actor lacks permission to create tasks for target role.
         """
         if not TASK_ID_PATTERN.match(id):
             raise ValueError(
@@ -269,6 +273,14 @@ class TaskManager:
                 f"(e.g. TASK-DEV-001)")
         if id in self._tasks:
             raise ValueError(f"Task '{id}' already exists.")
+
+        # Permission check: can actor create task for target role?
+        if self.role_manager is not None:
+            if not self.role_manager.can_create_task_for(role, developer=actor):
+                raise PermissionError(
+                    f"Permission denied: '{actor}' cannot create tasks "
+                    f"for role '{role}'. Check role permissions in project.yaml."
+                )
 
         task = Task(id=id, role=role, feature=feature,
                     assignee=assignee, **kwargs)
@@ -352,6 +364,17 @@ class TaskManager:
                     f"Allowed: {[s.value for s in allowed]}"
                 ],
             )
+
+        # Permission check: can actor transition to target status?
+        if self.role_manager is not None:
+            if not self.role_manager.can_transition_to(target.value, developer=actor):
+                return ValidationResult(
+                    ok=False,
+                    violations=[
+                        f"Permission denied: '{actor}' cannot transition tasks "
+                        f"to '{target.value}'. Check role permissions in project.yaml."
+                    ],
+                )
 
         old_status = task.status
         task.status = target.value

@@ -120,7 +120,7 @@ openclaw mcp add --transport stdio vibecollab vibecollab mcp serve
 vibecollab check
 ```
 
-Should return zero errors. Warnings about document staleness are normal for new projects. Insight consistency checks are included by default (use `--no-insights` to skip).
+Should return zero errors. Warnings about document staleness are normal for new projects. Insight consistency checks and guard protection checks are included by default (use `--no-insights` or `--no-guards` to skip).
 
 ## Setup Complete
 
@@ -138,9 +138,11 @@ VibeCollab is ready. You now have MCP tools available in your IDE:
 | `insight_export` | Export insights in YAML format |
 | `search_docs` | Semantic search across project documents |
 | `task_list` | List current tasks |
-| `task_create` | Create a new task (auto-links insights) |
-| `task_transition` | Move task status (TODO → IN_PROGRESS → REVIEW → DONE) |
-| `developer_context` | Get a specific role's context |
+| `task_create` | Create a new task (auto-links insights, permission-checked) |
+| `task_transition` | Move task status (TODO → IN_PROGRESS → REVIEW → DONE, permission-checked) |
+| `guard_check` | Pre-flight check before file operations (block/warn/allow) |
+| `guard_list_rules` | List all configured guard protection rules |
+| `role_context` | Get a specific role's context |
 | `project_prompt` | Generate full context prompt |
 | `roadmap_status` | View milestone progress |
 | `roadmap_sync` | Sync ROADMAP.md <-> tasks.json |
@@ -395,12 +397,12 @@ Conversation start → call onboard
                       ↓
     Conversation end → update docs/CONTEXT.md
                      → update docs/CHANGELOG.md
-                     → call check (includes Insight consistency by default)
+                     → call check (includes Insight consistency + Guard protection by default)
                      → call session_save
                      → git commit
 ```
 
-> **Key**: Insight is enabled by default in `check`. Every conversation should consider capturing reusable knowledge via `insight_add`.
+> **Key**: Insight and Guard checks are enabled by default in `check`. Every conversation should consider capturing reusable knowledge via `insight_add`.
 
 ## Best Practice: Task-Insight Iteration Cycle
 

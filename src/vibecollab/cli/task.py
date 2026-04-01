@@ -32,13 +32,24 @@ def _load_config(config_path: str) -> dict:
 
 
 def _get_managers(config_path: str):
-    """Create TaskManager + InsightManager pair."""
+    """Create TaskManager + InsightManager pair (with optional RoleManager)."""
     project_root = Path(".")
     try:
         im = InsightManager(project_root=project_root)
     except Exception:
         im = None
-    tm = TaskManager(project_root=project_root, insight_manager=im)
+
+    # Try to load RoleManager for permission enforcement
+    rm = None
+    try:
+        from ..domain.role import RoleManager
+
+        config = _load_config(config_path)
+        rm = RoleManager(project_root=project_root, config=config)
+    except Exception:
+        pass
+
+    tm = TaskManager(project_root=project_root, insight_manager=im, role_manager=rm)
     return tm, im
 
 
@@ -68,7 +79,7 @@ def create_task(task_id, role, feature, assignee, description, milestone, config
             milestone=milestone,
             actor=assignee or "cli",
         )
-    except ValueError as e:
+    except (ValueError, PermissionError) as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
 

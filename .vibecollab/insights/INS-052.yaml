@@ -1,0 +1,26 @@
+kind: insight
+version: '1'
+id: INS-052
+title: Guard Engine CLI Integration Pattern
+summary: Pattern for wiring standalone domain engines into CLI check commands and
+  MCP tools
+tags:
+- guard
+- cli
+- integration
+- check
+- pattern
+category: technique
+body:
+  scenario: When integrating a standalone domain engine (like GuardEngine) into an
+    existing CLI command
+  approach: 1. Add flag to existing command (--guards/--no-guards) rather than new
+    command group. 2. Use git ls-files for file scanning (fast, respects .gitignore).
+    3. Engine.test_path() for static analysis, Engine.check_operation() for dynamic
+    pre-flight. 4. Map GuardSeverity.BLOCK to errors, WARN to warnings in check summary.
+    5. Add parallel MCP tools (guard_check + guard_list_rules) for IDE integration.
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-04-01'
+fingerprint: ed9bf6d6803af6f1b86ed2ce29c6642d87dee309daf6ac1cd2fce74c73a65706

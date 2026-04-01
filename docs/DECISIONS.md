@@ -210,6 +210,114 @@ git_workflow:
 
 ---
 
+### DECISION-024: v0.11.0 Implementation Strategy (3/30 Sprint)
+
+**Date**: 2026-03-30
+**Type**: B-level (Implementation)
+**Status**: Confirmed
+
+**Context**:
+v0.11.0 has three major features (FP-001, FP-008, Role Fix). Sprint on 3/30 implemented core modules first, deferring CLI integration for some.
+
+**Decisions Made**:
+
+1. **Guard Engine**: Implement `GuardEngine` as standalone domain module (`domain/guard.py`) first, defer CLI integration to next sprint. Rationale: Engine logic is independent and testable; CLI wiring requires `protocol_checker.py` refactoring.
+
+2. **Hooks CLI**: Implement full CLI (`hooks install/uninstall/run/status/list`) immediately since `HookManager` domain module is self-contained. Both Bash and PowerShell templates generated.
+
+3. **Role Permissions**: Implement permission methods directly in `RoleManager` (not a separate PermissionManager). Rationale: Permissions are tightly coupled to role identity; separate class would add indirection without benefit.
+
+4. **Skill Registry**: Create `SkillRegistry` as standalone module, bridge via `RoleManager.get_skills_for_role()`. Rationale: Skill loading logic is complex enough to warrant separation, but access should be through role context.
+
+5. **Trigger Registry**: Create `TriggerRegistry` to extract triggers from Insight tags (not from `role_skills` section). Rationale: Tags are universal and already maintained; `role_skills` requires per-insight manual curation.
+
+**Non-goals for this sprint**:
+- ❌ `vibecollab check --guards` integration
+- ❌ `vibecollab role` CLI command group
+- ❌ Permission enforcement in `task_manager.py`
+
+---
+
+### DECISION-025: Docs Markdown → YAML Big-Bang Migration (v0.12.0)
+
+**Date**: 2026-04-01
+**Type**: S-level (Strategic)
+**Status**: Confirmed
+
+**Problem**:
+All 7 docs/ files (CONTEXT.md, CHANGELOG.md, DECISIONS.md, ROADMAP.md, PRD.md, QA_TEST_CASES.md, role CONTEXT.md) are Markdown. 12+ code modules parse them via fragile regex. This blocks structured Insight automation and reliable workflow integration.
+
+**Analysis**:
+Full dependency audit completed. Key findings:
+- `ContextAggregator.aggregate()` returns `str` (Markdown), no schema, only 8 tests
+- `RoadmapParser` already has `Milestone` dataclass — most migration-ready
+- `PRDManager` already has YAML fallback in `_load()` — low risk
+- `signal.py`, `indexer.py`, `protocol_checker.py` all do regex-based Markdown parsing
+- Existing YAML schemas (`insight.schema.yaml`, `project.schema.yaml`) provide proven pattern
+
+**Decision**: Big-Bang migration (Option B)
+
+**Key Choices**:
+
+| Item | Decision | Rationale |
+|------|----------|-----------|
+| Strategy | **Big-bang** (all docs at once) | Clean cut, no dual-format maintenance overhead |
+| Human readability | **CLI aggregation command** — YAML is source of truth, Markdown generated on demand by `vibecollab docs render` | YAML for machines, Markdown as a view layer |
+| `vibecollab init` | **Direct YAML** — init generates `.yaml` docs, no more `.md` templates | Clean break, no legacy baggage |
+| ROADMAP scope | **Added to v0.12.0** — prerequisite for Workflow + Insight Automation | Structured data enables structured workflows |
+| MCP Resources | **Return YAML** | Consumers get parseable structured data |
+| Backward compat | **None** — breaking change, major version bump within v0.12.0 | User base is small, clean migration preferred |
+
+**Affected Modules** (12+):
+1. `domain/role.py` — ContextAggregator + RoleManager (R/W CONTEXT)
+2. `domain/roadmap_parser.py` — RoadmapParser (R/W ROADMAP)
+3. `domain/prd_manager.py` — PRDManager (R/W PRD)
+4. `core/protocol_checker.py` — ProtocolChecker (R all docs)
+5. `insight/signal.py` — InsightSignalCollector (R 4 docs via git diff)
+6. `search/indexer.py` — Indexer (R 6 docs)
+7. `cli/guide.py` — onboard/prompt (R role CONTEXT)
+8. `cli/main.py` — CLI commands
+9. `mcp/server.py` — MCP Resources
+10. `templates/*.md.j2` — Pattern Engine templates
+11. `schema/` — New YAML schemas required
+12. `tests/` — 193+ tests need updating
+
+**YAML Schema Design Principles**:
+- Every doc file has `kind` + `version` top-level fields (following insight.schema.yaml pattern)
+- Schema files in `schema/` directory
+- Validation via existing YAML loading infrastructure
+
+**Execution**: Deferred to v0.12.0 sprint. v0.11.0 completion is prerequisite.
+
+---
+
+### DECISION-026: v0.11.0 Milestone Completion Validation
+
+**Date**: 2026-04-01
+**Type**: B-level (Implementation)
+**Status**: Confirmed
+
+**Context**:
+v0.11.0 milestone (Role-Driven Architecture + Git Hooks + Guards) reached 32/32 items complete. Final validation needed before declaring milestone closed.
+
+**Validation Results**:
+
+| Check | Result | Details |
+|-------|--------|---------|
+| Unit Tests | ✅ **151 passed** | 6 test files: guard (14), hooks (30), skills (10), permission_enforcement (14), triggers (9), role_permissions (69), 0 failures |
+| `vibecollab check` | ✅ **All green** | 11 checks, 0 errors, Guard (8 rules, 227 files), Insight consistency passed |
+| Protocol Compliance | ✅ **Fixed** | Created missing `docs/roles/ocarina/CONTEXT.md` |
+| Documentation | ✅ **Synchronized** | skill.md, README.md, README.pypi.md, README.zh-CN.md, ROADMAP.md, CHANGELOG.md all updated |
+| Task-Insight Cycle | ✅ **Complete** | TASK-DEV-029 + INS-054 (Permission testing pattern) |
+
+**Decision**: v0.11.0 milestone is **officially complete**. Ready for PyPI release and v0.12.0 planning.
+
+**Remaining Low-Priority Items**:
+- Hook types: pre-push, post-commit (advanced extensions) — deferred, not blocking
+- External QA on 3+ real projects — tracked in v0.10.0/v0.8.0 milestones
+
+---
+
 ## Decision Archive
 
 (None)

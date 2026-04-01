@@ -47,8 +47,8 @@
     "milestone": "v0.11.0",
     "output": "",
     "role": "DEV",
-    "status": "TODO",
-    "updated_at": "2026-03-27T06:05:55.209234+00:00"
+    "status": "IN_PROGRESS",
+    "updated_at": "2026-04-01T04:47:59.501345+00:00"
   },
   "TASK-DEV-027": {
     "assignee": null,
@@ -130,5 +130,48 @@
     "role": "DEV",
     "status": "IN_PROGRESS",
     "updated_at": "2026-03-29T13:42:07.099854+00:00"
+  },
+  "TASK-DEV-029": {
+    "assignee": null,
+    "created_at": "2026-04-01T06:34:31.200290+00:00",
+    "dependencies": [],
+    "description": "Create dedicated test_role_permissions.py covering all permission methods in role.py (lines 542-688), run vibecollab check for E2E validation, fix protocol compliance issues",
+    "dialogue_rounds": 0,
+    "feature": "v0.11.0 RoleManager permission unit tests + E2E acceptance",
+    "id": "TASK-DEV-029",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-045",
+          "score": 0.0625,
+          "title": "DEV-027 Implementation: RoleManager Enhancement Best Practices"
+        },
+        {
+          "id": "INS-044",
+          "score": 0.0303,
+          "title": "Role-Driven Architecture Implementation: Developer-Role Binding and Permissions"
+        },
+        {
+          "id": "INS-052",
+          "score": 0.0303,
+          "title": "Guard Engine CLI Integration Pattern"
+        },
+        {
+          "id": "INS-013",
+          "score": 0.0297,
+          "title": "Task Lifecycle: Validate → Solidify → Rollback"
+        },
+        {
+          "id": "INS-028",
+          "score": 0.0297,
+          "title": "Git Auto-Initialization Protocol"
+        }
+      ]
+    },
+    "milestone": "",
+    "output": "",
+    "role": "DEV",
+    "status": "REVIEW",
+    "updated_at": "2026-04-01T06:34:44.862551+00:00"
   }
 }

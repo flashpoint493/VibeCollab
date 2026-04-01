@@ -24,10 +24,11 @@ That's all you need — the AI will install VibeCollab, initialize your project,
 pip install vibe-collab
 vibecollab init -n "MyProject" -d generic -o ./my-project
 cd my-project
+vibecollab hooks install              # Install pre-commit consistency checks
 vibecollab mcp inject --ide cursor   # or: cline / codebuddy / all
 ```
 
-That's it. Your AI assistant now follows structured collaboration protocols, captures reusable Insights, and maintains project context automatically.
+That's it. Your AI assistant now follows structured collaboration protocols, captures reusable Insights, and maintains project context automatically. The pre-commit hook ensures every commit passes consistency checks.
 
 ---
 
@@ -65,7 +66,7 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 ### MCP Server + AI IDE Integration (v0.9.1)
 - **MCP Server** (`vibecollab mcp serve`): Standard Model Context Protocol, auto-connects to Cursor/Cline/CodeBuddy
 - **One-command config injection** (`vibecollab mcp inject`): Zero manual setup
-- **12 Tools**: `insight_search`, `insight_add`, `insight_suggest`, `check`, `onboard`, `next_step`, `search_docs`, `task_list`, `task_create`, `task_transition`, `session_save`, etc.
+- **16 Tools**: `insight_search`, `insight_add`, `insight_suggest`, `check`, `onboard`, `next_step`, `search_docs`, `task_list`, `task_create`, `task_transition`, `session_save`, `guard_check`, `guard_list_rules`, `roadmap_status`, `roadmap_sync`, `project_prompt`
 - **Resources**: Auto-exposes `CONTRIBUTING_AI.md`, `CONTEXT.md`, `DECISIONS.md`
 - **Prompts**: Auto-injects project context and protocol rules at conversation start
 
@@ -80,10 +81,19 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 - **Decision Tiers**: S/A/B/C levels with review requirements
 - **Audit Log**: Append-only JSONL with SHA-256 integrity
 
-### Multi-Role
+### Multi-Role (v0.11.0)
 - Context isolation per developer/agent
 - Cross-developer conflict detection (file, task, dependency)
+- Role-based permissions (file_patterns, can_create_task_for, can_transition_to)
+- Dynamic skill registration from Insights
 - Shared Insight statistics and provenance tracing
+
+### Git Hooks + Guard Protection (v0.11.0)
+- **Pre-commit hooks** (`vibecollab hooks install`): Auto-run `vibecollab check` before every commit
+- **Guard Protection Engine**: File operation interception with configurable rules (block/warn/allow)
+- **MCP Guard Tools**: `guard_check` and `guard_list_rules` for file operation protection
+- **Role permission enforcement**: Task create/transition checks against role permissions
+- **Quality gate**: Blocks commits with insight fingerprint mismatches or protocol errors
 
 ### Execution Plan (v0.10.7)
 - **Unified execution engine**: `vibecollab plan run` is the sole entry point for ALL automation workflows
@@ -102,8 +112,8 @@ VibeCollab is built on **5 core pillars**:
 
 | # | Pillar | Key Commands | Purpose |
 |---|--------|-------------|---------|
-| 1 | **Strict Consistency Checking** | `check`, `health` | Protocol compliance, doc freshness, Insight integrity (insights on by default) |
-| 2 | **Multi-Role + Milestone Scheduling** | `task`, `roadmap`, `dev` | Role-isolated contexts, ROADMAP<->Task sync |
+| 1 | **Strict Consistency Checking** | `check`, `health` | Protocol compliance, doc freshness, Insight integrity, Guard protection |
+| 2 | **Multi-Role + Milestone Scheduling** | `task`, `roadmap`, `role` | Role-isolated contexts, ROADMAP<->Task sync, permissions |
 | 3 | **Complete Document-Aligned Context** | `onboard`, `session_save` | CONTEXT/DECISIONS/CHANGELOG/PRD — auto-restored every conversation |
 | 4 | **Insight Knowledge System** | `insight add/search/suggest` | Capture, index, retrieve reusable knowledge across sessions |
 | 5 | **Autonomous Loop / Self-Iteration** | `plan run`, `auto` | Unified execution engine with 3 host adapters |
@@ -258,8 +268,15 @@ vibecollab task create/list/show/suggest/transition/solidify/rollback
 # Roadmap Integration
 vibecollab roadmap status/sync/parse
 
-# Multi-Role
-vibecollab dev whoami/list/status/sync/init/switch/conflicts
+# Multi-Role (v0.11.0)
+vibecollab role whoami/list/status/switch/permissions/init/sync/conflicts
+
+# Git Hooks (v0.11.0)
+vibecollab hooks install [-t TYPE] [--force]   # Install Git hooks
+vibecollab hooks uninstall [-t TYPE] [--all]   # Remove hooks
+vibecollab hooks run <hook_type>               # Manual hook execution
+vibecollab hooks status [--json]               # Hook status overview
+vibecollab hooks list                          # List installed hooks
 
 # Execution Plan (v0.10.7)
 vibecollab plan run <plan.yaml> [-v] [--dry-run] [--json]
@@ -278,7 +295,7 @@ vibecollab config show                         # Show current config
 vibecollab config set <key> <value>            # Set config value
 
 # Health & Checking
-vibecollab check [--no-insights] [--strict]    # Protocol compliance (insights on by default)
+vibecollab check [--no-insights] [--strict] [--guards/--no-guards]  # Protocol compliance
 vibecollab health [--json]                     # Health score (0-100)
 ```
 
@@ -366,4 +383,4 @@ MIT
 
 ---
 
-*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.10.11.*
+*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.11.0.*

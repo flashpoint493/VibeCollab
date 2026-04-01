@@ -81,8 +81,8 @@ VibeCollab 围绕 **5 大核心支柱** 构建：
 
 | # | 支柱 | 关键命令 | 用途 |
 |---|------|---------|------|
-| 1 | **严格一致性检查** | `check`, `health` | 协议遵循、文档时效、Insight 完整性（默认开启） |
-| 2 | **多角色 + 里程碑调度** | `task`, `roadmap`, `dev` | 角色隔离上下文 (DEV/QA/ARCH/PM)，ROADMAP<->Task 同步 |
+| 1 | **严格一致性检查** | `check`, `health` | 协议遵循、文档时效、Insight 完整性、Guard 保护（默认开启） |
+| 2 | **多角色 + 里程碑调度** | `task`, `roadmap`, `role` | 角色隔离上下文 (DEV/QA/ARCH/PM)，ROADMAP<->Task 同步，权限控制 |
 | 3 | **完备文档对齐上下文** | `onboard`, `session_save` | CONTEXT/DECISIONS/CHANGELOG/PRD — 每次对话自动恢复 |
 | 4 | **Insight 沉淀知识系统** | `insight add/search/suggest` | 跨对话捕获、索引、检索可复用知识 |
 | 5 | **自循环迭代系统** | `plan run`, `auto` | 统一执行引擎 + 3 种宿主适配器 |
@@ -113,12 +113,13 @@ VibeCollab 围绕 **5 大核心支柱** 构建：
 
 ```bash
 vibecollab init -n "MyProject" -d generic -o ./my-project --multi-dev  # 创建多角色项目
-vibecollab dev init -d dev          # 初始化特定角色上下文
-vibecollab dev switch qa            # 切换到 QA 角色
-vibecollab dev list                 # 列出所有角色
+vibecollab role init -d dev          # 初始化特定角色上下文
+vibecollab role switch qa            # 切换到 QA 角色
+vibecollab role list                 # 列出所有角色
+vibecollab role permissions          # 查看当前角色权限
 ```
 
-每个角色拥有独立的 `docs/developers/{role}/CONTEXT.md` + `.metadata.yaml`，跨角色冲突自动检测。
+每个角色拥有独立的 `docs/roles/{role}/CONTEXT.md` + `.metadata.yaml`，跨角色冲突自动检测，任务操作受权限控制。
 
 ---
 
@@ -127,7 +128,7 @@ vibecollab dev list                 # 列出所有角色
 ### MCP Server + AI IDE 无缝集成 (v0.9.1 NEW)
 - **MCP Server** (`vibecollab mcp serve`): 标准 Model Context Protocol 实现，Cursor/Cline/CodeBuddy/OpenClaw 及任何 MCP 兼容 Agent 自动接入
 - **一键配置注入** (`vibecollab mcp inject`): 自动生成 IDE 配置文件，零手动操作
-- **Tools**: `insight_search`, `insight_add`, `insight_suggest`, `check`, `onboard`, `next_step`, `search_docs`, `task_list`, `task_create`, `task_transition`, `session_save` 等 12 个工具
+- **Tools**: `insight_search`, `insight_add`, `insight_suggest`, `check`, `onboard`, `next_step`, `search_docs`, `task_list`, `task_create`, `task_transition`, `session_save`, `guard_check`, `guard_list_rules`, `roadmap_status`, `roadmap_sync`, `project_prompt` 等 16 个工具
 - **Resources**: 自动暴露 `CONTRIBUTING_AI.md`, `CONTEXT.md`, `DECISIONS.md` 等协议文档
 - **Prompts**: 对话开始时自动注入项目上下文和协议规则
 
@@ -159,8 +160,18 @@ vibecollab dev list                 # 列出所有角色
 
 ### 多角色协同
 - **多角色支持**: 多角色/多 Agent 协同开发（DEV/QA/ARCH/PM/TEST/DESIGN），独立上下文管理
+- **角色权限系统**: file_patterns、can_create_task_for、can_transition_to、can_approve_decision
+- **动态技能注册**: 基于当前角色从 Insight 自动注册技能
 - **冲突检测**: 自动检测跨角色的文件冲突、任务冲突、依赖冲突
 - **跨开发者 Insight 共享**: 收藏/使用/贡献统计 + 溯源可视化
+
+### Git Hooks + Guard 保护引擎 (v0.11.0)
+- **Pre-commit hooks** (`vibecollab hooks install`): 每次提交前自动运行 `vibecollab check`
+- **Guard 保护引擎**: 文件操作拦截，配置化规则 (block/warn/allow)
+- **`vibecollab check --guards`**: 扫描所有 git 跟踪文件检查违规
+- **MCP Guard 工具**: `guard_check` 文件操作预检, `guard_list_rules` 规则发现
+- **角色权限强制执行**: 任务创建/流转检查角色权限
+- **质量门禁**: 阻止 Insight 指纹不匹配或协议违规的提交
 
 ### 执行计划 (v0.10.7)
 - **统一执行引擎**: `vibecollab plan run` 是所有自动化工作流的唯一入口
@@ -491,14 +502,22 @@ vibecollab task transition <id> <status>           # 推进任务状态 (v0.9.3+
 vibecollab task solidify <id>                      # 固化任务 → DONE (v0.9.3+)
 vibecollab task rollback <id> [-r reason]          # 回滚任务状态 (v0.9.3+)
 
-# 多角色命令 (v0.5.0+)
-vibecollab dev whoami                          # 查看当前开发者身份
-vibecollab dev list                            # 列出所有开发者
-vibecollab dev status <developer>              # 查看开发者状态
-vibecollab dev sync [--aggregate]              # 同步/聚合上下文
-vibecollab dev init --developer <name>         # 初始化新开发者
-vibecollab dev switch <developer>              # 切换到指定开发者
-vibecollab dev conflicts [-v]                  # 检测跨开发者冲突
+# 多角色命令 (v0.11.0)
+vibecollab role whoami                          # 查看当前角色身份
+vibecollab role list                            # 列出所有角色
+vibecollab role status <role>                   # 查看角色状态
+vibecollab role sync [--aggregate]              # 同步/聚合上下文
+vibecollab role init --developer <name>         # 初始化新角色
+vibecollab role switch <role>                   # 切换到指定角色
+vibecollab role permissions                     # 查看当前角色权限
+vibecollab role conflicts [-v]                  # 检测跨角色冲突
+
+# Git Hooks (v0.11.0)
+vibecollab hooks install [-t TYPE] [--force]   # 安装 Git hooks
+vibecollab hooks uninstall [-t TYPE] [--all]   # 移除 hooks
+vibecollab hooks run <hook_type>               # 手动执行 hook
+vibecollab hooks status [--json]               # Hook 状态概览
+vibecollab hooks list                          # 列出已安装 hooks
 
 # 执行计划 (v0.10.7)
 vibecollab plan run <plan.yaml> [-v] [--dry-run] [--json]
@@ -518,7 +537,7 @@ vibecollab config set <key> <value>            # 设置配置项
 vibecollab config path                         # 显示配置文件路径
 
 # 协议自检与健康
-vibecollab check [--verbose] [--strict]        # 协议遵循检查
+vibecollab check [--verbose] [--strict] [--guards/--no-guards]  # 协议遵循检查 (Insight + Guard 默认开启)
 vibecollab check --insights                    # 含 Insight 一致性校验
 vibecollab health [--json]                     # 项目健康评分 (0-100)
 ```
@@ -843,6 +862,8 @@ vibecollab health
 
 | 版本 | 日期 | 主要特性 |
 |------|------|---------|
+| v0.11.0 | 2026-04-01 | 角色驱动架构: 权限系统 + Guard 引擎 + MCP Guard 工具 + `check --guards` + Hooks CLI + 动态技能注册 |
+| v0.10.14 | 2026-03-30 | 发布工程: Git hooks 框架、提交类型动态检查、严格文档代码同步、Guard 引擎核心 |
 | v0.10.9 | 2026-03-11 | 快速上手重写: "复制一句话给 AI" + raw skill.md 链接；PyPI README 同步 |
 | v0.10.8 | 2026-03-11 | README 门面装修: 居中 header、丰富 badge (CI/Tests/Platform)、Before/After 对比表、OpenClaw 集成、i18n 同步 |
 | v0.10.7 | 2026-03-11 | CI/CD 修复: 跨平台测试修复 (4 个测试)、Windows bash shell、Python 3.9 停止支持 |
@@ -906,4 +927,4 @@ MIT
 
 ---
 
-*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.10.10。*
+*本框架源自游戏开发实践，用协作协议来开发协作协议生成器。当前版本 v0.11.0。*

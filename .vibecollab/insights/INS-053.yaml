@@ -1,0 +1,35 @@
+kind: insight
+version: '1'
+id: INS-053
+title: Multi-File Documentation Synchronization Pattern for Major Releases
+summary: Systematic checklist approach for synchronizing 4+ documentation files during
+  major version releases
+tags:
+- documentation
+- release
+- synchronization
+- readme
+- skill
+- consistency
+category: workflow
+body:
+  scenario: 'When releasing a major version (e.g. v0.11.0) with significant new features,
+    multiple documentation files must be updated consistently: skill.md (AI setup
+    guide), README.md (main docs), README.pypi.md (PyPI-specific), README.zh-CN.md
+    (Chinese docs), ROADMAP.md, CHANGELOG.md.'
+  approach: '1. Identify all touch points: MCP tool count, CLI Reference (command
+    renames/additions), Features section, Architecture table, Version history, footer
+    version numbers. 2. Create a checklist of common fields across all files. 3. Update
+    in order: skill.md (AI-facing) → README.md (primary) → README.pypi.md (PyPI mirror)
+    → README.zh-CN.md (i18n mirror). 4. Cross-reference all changed CLI commands (e.g.
+    dev→role migration). 5. Mark ROADMAP task as complete, add CHANGELOG entry. 6.
+    Key pattern: dev→role migration must be consistent across all 4 README variants.'
+artifacts: []
+origin:
+  created_by: mcp
+  created_at: '2026-04-01'
+  context: 'v0.11.0 release: Role-driven architecture, Guard engine, Hooks CLI, MCP
+    guard tools. Required updating skill.md, README.md, README.pypi.md, README.zh-CN.md
+    with consistent MCP tool count (12→16), CLI command renames (dev→role), new feature
+    sections, version histories.'
+fingerprint: 02b2a889e8bc5c11b88d6192be2507a51722460d5d4a1c932407e23b10581a8d

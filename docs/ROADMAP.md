@@ -491,40 +491,60 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [x] **Linked groups**: Git commit level consistency check enabled
 - [x] **Commit-type rules**: project.yaml configured with doc_requirements per prefix
 - [x] **Dynamic severity**: [FEAT/FIX]=error, [DOC/REFACTOR]=warning, [CONFIG]=info
-- [ ] `vibecollab hooks install/uninstall/run` — CLI commands (TODO)
-- [ ] Hook types: pre-push, post-commit (TODO)
-- [ ] Windows PowerShell + Unix Bash dual support (TODO)
+- [x] `vibecollab hooks install/uninstall/run/status/list` — CLI commands ✅
+- [ ] Hook types: pre-push, post-commit (advanced extensions TODO)
+- [x] Windows PowerShell + Unix Bash dual support ✅
 
-#### FP-008: Guard Protection Engine — Pattern Defined ✅
+#### FP-008: Guard Protection Engine — Core Implemented ✅
 - [x] **Insight created**: INS-040 Guard Protection Engine Pattern
 - [x] **Pattern documented**: Pre-action/post-action guard rules
 - [x] **Severity levels**: block / warn / allow defined
-- [ ] Guard rule engine implementation (TODO)
-- [ ] Integrate into `vibecollab check --guards` (TODO)
-- [ ] MCP `guard_check` tool for file operation interception (TODO)
-- [ ] Default guards: .meta protection, Library/ protection (TODO)
+- [x] Guard rule engine implementation (`GuardEngine` class with 4 default rules) ✅
+- [x] Integrate into `vibecollab check --guards` ✅
+- [x] MCP `guard_check` + `guard_list_rules` tools for file operation interception ✅
+- [x] Default guards configuration in project.yaml ✅
 
-#### Role Architecture Fix (DECISION-020) — Implementation Started
+#### Role Architecture Fix (DECISION-020) — Core Implemented ✅
 - [x] **Insight created**: INS-038 Role-Driven Architecture Migration Pattern
 - [x] **Insight created**: INS-044 Role-Driven Architecture Implementation Pattern
 - [x] **Design complete**: Developer-role binding schema defined
 - [x] **Design complete**: Permission system specification
 - [x] **Design complete**: Dynamic skill registration approach
-- [ ] Developer-Role binding in project.yaml (TODO)
-- [ ] Role permissions implementation: file_patterns, can_create_task_for, can_transition_to (TODO)
-- [ ] `vibecollab role` CLI commands: list, show, switch, permissions (TODO)
-- [ ] Dynamic skill registration from Insights based on current role (TODO)
-- [ ] Permission checking in Task operations (TODO)
+- [x] Developer-Role binding in project.yaml ✅
+- [x] Role permissions implementation: file_patterns, can_create_task_for, can_transition_to, can_approve_decision ✅
+- [x] `vibecollab role` CLI commands: whoami, list, status, switch, permissions, init, sync, conflicts ✅
+- [x] Dynamic skill registration from Insights based on current role (`SkillRegistry` module) ✅
+- [x] Permission checking enforcement in Task operations (TaskManager + CLI + MCP) ✅
 
 #### Integration
-- [ ] Guards + Hooks unified configuration
-- [ ] Role-based audit dimensions
-- [ ] Documentation update (CONTRIBUTING_AI.md, README.md)
-- [ ] 40+ unit tests
+- [x] Guards + Hooks unified configuration (project.yaml + SchemaValidator) ✅
+- [x] Role-based audit dimensions (permission system integrated into task operations) ✅
+- [x] Documentation update (skill.md, README.md, README.pypi.md, README.zh-CN.md) ✅
+- [x] 40+ unit tests (151 tests across 6 test files: guard, hooks, skills, permissions, triggers, role_permissions) ✅
 
-### v0.12.0 - Workflows + Templates (FP-004, FP-005)
+### v0.12.0 - YAML Data Layer + Workflows + Insight Automation (DECISION-025)
 
-> Objective: Standardized workflow templates for common development scenarios
+> Objective: Evolve docs/ from fragile Markdown to structured YAML data layer,
+> enabling reliable workflows and zero-touch Insight automation.
+> Core principle: **YAML is source of truth → Markdown is a generated view.**
+
+#### Docs Markdown → YAML Big-Bang Migration (DECISION-025, P0)
+- [ ] YAML schema design for all doc types (`schema/context.schema.yaml`, `roadmap.schema.yaml`, etc.)
+  - `kind` + `version` top-level fields (consistent with insight.schema.yaml)
+- [ ] `docs/*.md` → `docs/*.yaml` full migration (CONTEXT, CHANGELOG, DECISIONS, ROADMAP, PRD, QA_TEST_CASES)
+- [ ] `docs/roles/*/CONTEXT.md` → `docs/roles/*/context.yaml`
+- [ ] Module rewrite: `ContextAggregator` — YAML in/out with typed schema
+- [ ] Module rewrite: `RoadmapParser` — YAML native (remove regex parsing)
+- [ ] Module rewrite: `PRDManager` — YAML-only (remove Markdown parser)
+- [ ] Module rewrite: `ProtocolChecker` — YAML-aware consistency checks
+- [ ] Module update: `InsightSignalCollector` — YAML diff detection
+- [ ] Module update: `Indexer` — YAML document splitting
+- [ ] Module update: `cli/guide.py` — Read YAML contexts
+- [ ] Module update: `mcp/server.py` — MCP Resources return YAML
+- [ ] Template migration: `.md.j2` → `.yaml.j2` for doc generation
+- [ ] `vibecollab init` generates YAML docs (no more Markdown templates)
+- [ ] `vibecollab docs render [--format md|json]` — CLI command to generate human-readable views from YAML
+- [ ] 193+ test updates across 4+ test files
 
 #### FP-004: Workflow Integration (DECISION-021)
 - [ ] Pre-built workflow YAMLs in `.vibecollab/workflows/`:
@@ -539,11 +559,7 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 #### FP-005: Document Template Library
 - [ ] `vibecollab template list` — List available templates
 - [ ] `vibecollab template use <template>` — Create document from template
-- [ ] Built-in templates via Pattern Engine:
-  - architecture-decision-record.md.j2
-  - sprint-plan.md.j2
-  - technical-design-document.md.j2
-  - release-checklist.md.j2
+- [ ] Built-in templates via Pattern Engine (YAML-native)
 - [ ] User custom templates in `.vibecollab/templates/`
 
 #### FP-015: Insight Derivation Chain (Small Feature)
@@ -687,4 +703,4 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 
 ---
 
-*Last updated: 2026-03-05 (v0.10.4-dev)*
+*Last updated: 2026-04-01 (v0.11.0)*

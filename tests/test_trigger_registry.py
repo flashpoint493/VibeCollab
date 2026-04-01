@@ -110,17 +110,23 @@ class TestTriggerRegistry:
 
             registry = TriggerRegistry(insights_dir)
 
-            # Search by tag word
+            # Search by tag word - "git" matches "git" tag and "Git" in title
             matches = registry.search_triggers("git")
-            assert len(matches) == 1
-            assert matches[0].word == "git"
+            # Both "git" and "workflow" triggers are found because title contains "Git"
+            assert len(matches) == 2
+            trigger_words = [m.word for m in matches]
+            assert "git" in trigger_words
+            assert "workflow" in trigger_words
 
-            # Search by tag word
+            # Search by tag word - "workflow" matches tag and "Workflow" in title
             matches = registry.search_triggers("workflow")
-            assert len(matches) == 1
-            assert matches[0].word == "workflow"
+            # Both triggers found because title contains "Workflow"
+            assert len(matches) == 2
+            trigger_words = [m.word for m in matches]
+            assert "git" in trigger_words
+            assert "workflow" in trigger_words
 
-            # Search by title word (should match "workflow" in title and tag)
+            # Search by title word
             matches = registry.search_triggers("practices")
             # "practices" appears in title, should match both triggers
             assert len(matches) == 2

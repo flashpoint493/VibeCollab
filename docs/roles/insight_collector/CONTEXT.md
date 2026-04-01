@@ -2,7 +2,7 @@
 
 > **Role**: Insight Curator & Knowledge Gardener  
 > **Mission**: Maintain and evolve VibeCollab's knowledge distillation system  
-> **Last Updated**: 2026-03-27
+> **Last Updated**: 2026-04-01
 
 ---
 
@@ -22,10 +22,12 @@
 
 ### Phase 1: Foundation (Completed ✅)
 
-- ✅ Created 30 high-quality Insights from git history (DECISIONS, CHANGELOG, architecture)
+- ✅ Created 54 high-quality Insights from git history (DECISIONS, CHANGELOG, architecture)
 - ✅ Verified all 40 CLI capabilities
-- ✅ Established semantic index (247 vectors)
+- ✅ Established semantic index (351+ vectors)
 - ✅ All consistency checks passing
+- ✅ Trigger Registry implemented — `vibecollab insight triggers` CLI available
+- ✅ Dynamic Skill Registration — `SkillRegistry` module operational
 
 ### Phase 2: External Validation (In Progress)
 
@@ -138,6 +140,10 @@
 
 ## Recently Completed
 
+- ✅ 2026-04-01: INS-054 Permission System Testing Pattern created (TASK-DEV-029)
+- ✅ 2026-04-01: INS-053 Documentation Sync pattern captured
+- ✅ 2026-03-30: Trigger Registry implemented (tag-based trigger discovery)
+- ✅ 2026-03-30: 54 total Insights indexed (351+ vectors)
 - ✅ 2026-03-27: Created 30 Insights from VibeCollab development history
 - ✅ 2026-03-27: Validated all 40 CLI commands
 - ✅ 2026-03-27: Established semantic search index
@@ -198,9 +204,9 @@
 
 | Metric | Current | Target | Status |
 |--------|---------|--------|--------|
-| Total Insights | 30 | 100+ | 🟡 In Progress |
+| Total Insights | 54 | 100+ | 🟡 In Progress |
 | Avg Weight | 0.95 | > 1.0 | 🟡 Needs Usage |
-| Semantic Coverage | 247 vectors | 500+ | 🟡 Growing |
+| Semantic Coverage | 351+ vectors | 500+ | 🟡 Growing |
 | External Projects Tested | 0 | 3+ | 🔴 Not Started |
 | Insight Packs Created | 0 | 3 | 🔴 Not Started |
 
