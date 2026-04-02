@@ -125,6 +125,37 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 - **Quality gate**: Blocks commits with insight fingerprint mismatches or protocol errors
 - **Configurable rules**: project.yaml controls guards, hooks, and their severity
 
+### YAML-first Document System (v0.12.0) ⭐ New
+- **Core principle**: YAML is source of truth → Markdown is generated view
+- **`vibecollab docs` command group**:
+  - `docs list`: List all renderable YAML documents in docs/
+  - `docs render --all`: Render all YAML docs to Markdown views
+  - `docs render -k context -k roadmap`: Filter by document kind
+  - `docs validate`: Validate YAML document structure
+- **6 document types**: context, decisions, changelog, roadmap, prd, qa
+- **24 Jinja2 templates**: Automatic YAML → Markdown rendering
+- **Forward-compatible**: `kind + version` envelope pattern for schema evolution
+
+### Workflow Automation (v0.12.0) ⭐ New
+- **`vibecollab plan` workflow commands**:
+  - `plan list`: List 3 pre-built workflows (daily-sync, release-prep, insight-collect)
+  - `plan run <workflow>`: Execute workflow with --dry-run and --verbose support
+  - `plan validate`: Validate workflow syntax before execution
+- **Pre-built workflows**:
+  - **daily-sync**: Check → validate → render docs → commit → push
+  - **release-prep**: Test → build → package → tag (full release pipeline)
+  - **insight-collect**: Index → suggest → export insights → auto-commit
+- **Host adapters**: file_exchange, subprocess, auto:cursor for different execution modes
+
+### Insight Derivation Chain (v0.12.0) ⭐ New
+- **`insight graph --show-derivation`**: Visualize insight derivation tree (root → descendants)
+- **`insight derive`**: Auto-detect derivation relationships when creating insights
+  - Based on task activity and insight usage history
+  - Configurable confidence threshold (`--min-confidence 0.8`)
+- **Derivation detection**: Automatic parent insight suggestion with `--dry-run` preview
+- **Traceability**: `insight trace` shows complete derivation chain and provenance
+- **Mermaid export**: Generate diagrams for documentation
+
 ---
 
 ## Architecture Overview
@@ -329,6 +360,8 @@ vibecollab search <query>                      # Semantic search
 
 # Insight Knowledge Capture
 vibecollab insight add --title --tags --category
+vibecollab insight derive --title ... --source-task TASK-XXX   # Auto derivation (v0.12.0)
+vibecollab insight graph --show-derivation     # Derivation tree (v0.12.0)
 vibecollab insight search --tags/--semantic
 vibecollab insight suggest                     # Signal-driven recommendations
 vibecollab insight list/show/use/decay/check/delete/bookmark/trace/who/stats
@@ -349,10 +382,22 @@ vibecollab hooks run <hook_type>               # Manual hook execution
 vibecollab hooks status [--json]               # Hook status overview
 vibecollab hooks list                          # List installed hooks
 
-# Execution Plan (v0.10.7)
+# YAML-first Documents (v0.12.0)
+vibecollab docs list                           # List renderable YAML docs
+vibecollab docs render --all                   # Render all docs
+vibecollab docs render -k context -k roadmap   # Filter by kind
+vibecollab docs validate <file.yaml>           # Validate document
+
+# Execution Plan & Workflows (v0.12.0)
+vibecollab plan list                           # List pre-built workflows
+vibecollab plan run daily-sync                 # Run workflow
+vibecollab plan run release-prep --dry-run     # Dry-run mode
+vibecollab plan run insight-collect -v         # Verbose output
+vibecollab plan validate <workflow>            # Validate workflow
+
+# Legacy Plan (v0.10.7)
 vibecollab plan run <plan.yaml> [-v] [--dry-run] [--json]
 vibecollab plan run <plan.yaml> --host auto:cursor  # Auto adapter
-vibecollab plan validate <plan.yaml>           # Validate plan syntax
 
 # Auto Driver Shortcuts (v0.10.7 — delegates to plan run)
 vibecollab auto list                           # List preset automation plans
@@ -479,6 +524,7 @@ Yes. Run `vibecollab init` in your project root. It creates `project.yaml` and `
 
 | Version | Date | Highlights |
 |---------|------|-----------|
+| v0.12.0 | 2026-04-02 | YAML-first docs: `docs` command group + 3 pre-built workflows (`plan run`) + Insight derivation chain + 1731 tests |
 | v0.11.0 | 2026-04-01 | Role-driven architecture: permissions + guard engine + MCP guard tools + `check --guards` + hooks CLI + dynamic skill registration |
 | v0.10.14 | 2026-03-30 | Release engineering: Git hooks framework, commit-type dynamic check, strict doc-code sync, guard engine core |
 | v0.10.9 | 2026-03-11 | Get-started rewrite: "copy one line to your AI" with raw skill.md link; PyPI README synced |
@@ -524,4 +570,4 @@ MIT
 
 ---
 
-*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.11.0.*
+*Born from game development practice -- using collaboration protocols to build a collaboration protocol generator. Current version v0.12.0.*

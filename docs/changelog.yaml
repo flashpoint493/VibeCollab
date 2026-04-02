@@ -1,23 +1,91 @@
 kind: changelog
-version: "1"
+version: "2"
 
 unreleased:
   release_version: "unreleased"
-  title: "v0.12.0-dev"
+  title: "v0.12.0 (Unreleased)"
+  highlights: "YAML-first文档系统、工作流自动化、Insight派生链"
   added:
-    - description: "YAML Schema Design (TASK-DEV-030, DECISION-027): 6 document type schemas created"
+    - description: "vibecollab docs 命令组: YAML文档管理"
       task_ids: ["TASK-DEV-030"]
-      decision_ids: ["DECISION-027"]
+      decision_ids: ["DECISION-025", "DECISION-027"]
       details:
-        - "schema/context.schema.yaml — Global + role context (project status, tech debt)"
-        - "schema/changelog.schema.yaml — Versioned releases with categorized entries"
-        - "schema/decisions.schema.yaml — Decision records with levels, options, rationale"
-        - "schema/roadmap.schema.yaml — Milestones, lifecycle stages, checklist items"
-        - "schema/prd.schema.yaml — Requirements with lifecycle tracking"
-        - "schema/qa.schema.yaml — QA test cases with steps, expected, status"
-        - "All schemas follow kind + version envelope pattern (forward-compatible)"
+        - "docs list: 列出可渲染的YAML文档"
+        - "docs render: 渲染YAML到Markdown，支持--all和-k过滤"
+        - "docs validate: 验证YAML文档结构"
+        - "支持6种文档类型: context, decisions, changelog, roadmap, prd, qa"
+        - "YAML是源文件，Markdown是生成的视图"
+    
+    - description: "vibecollab plan 工作流命令: 预置自动化工作流"
+      task_ids: ["TASK-DEV-034"]
+      details:
+        - "plan list: 列出预置工作流"
+        - "plan run: 运行工作流，支持--dry-run和-v详细输出"
+        - "plan validate: 验证工作流语法"
+        - "3个预置工作流: daily-sync, release-prep, insight-collect"
+        - "支持多种host适配器: file_exchange, subprocess, auto:cursor"
+    
+    - description: "insight graph --show-derivation: Insight派生图可视化"
+      task_ids: ["TASK-DEV-036"]
+      insight_ids: ["FP-015"]
+      details:
+        - "显示Insight的派生关系树"
+        - "支持Mermaid、JSON、text格式输出"
+        - "识别根Insights和派生链"
+    
+    - description: "insight derive: 自动派生检测"
+      task_ids: ["TASK-DEV-036"]
+      insight_ids: ["FP-015"]
+      details:
+        - "创建Insight时自动检测派生关系"
+        - "基于任务活动和Insight使用历史"
+        - "可配置置信度阈值(--min-confidence)"
+        - "支持--dry-run预览派生建议"
+        - "支持--derived-from手动指定"
+    
+    - description: "YAML-first文档系统完整实现"
+      task_ids: ["TASK-DEV-030", "TASK-DEV-031", "TASK-DEV-032"]
+      decision_ids: ["DECISION-025", "DECISION-027"]
+      details:
+        - "24个YAML渲染模板"
+        - "6种文档类型的Schema定义"
+        - "kind + version信封模式(前向兼容)"
+        - "YAML→Markdown自动渲染管线"
+    
+    - description: "Document Template Library: 可复用文档模板"
+      task_ids: ["TASK-DEV-033"]
+      details:
+        - "架构设计文档模板"
+        - "发布检查清单模板"
+        - "API设计文档模板"
+        - "用户故事模板"
+    
+    - description: "Workflow Integration: 工作流集成"
+      task_ids: ["TASK-DEV-034"]
+      details:
+        - "daily-sync: 日常同步工作流(检查→渲染→提交→推送)"
+        - "release-prep: 发布准备工作流(测试→构建→打包→标签)"
+        - "insight-collect: Insight收集工作流(索引→建议→导出→提交)"
+
+  changed:
+    - description: "v0.12.0版本号更新"
+    - description: "测试套件: 1731+测试通过"
+    - description: "文档更新: QA_TEST_CASES.md, README.md, USAGE.md, CHANGELOG.md"
+
+  deprecated: []
+
+  removed: []
+
   fixed:
-    - description: "events.jsonl bug fix: Root cause found — path was a directory not a file on Windows. Fixed by recreating as file."
+    - description: "events.jsonl路径问题修复: Windows下目录/文件混淆"
+    - description: "MCP onboard工具调用超时问题(部分修复)"
+
+  security: []
+
+  migration_notes:
+    - "从v0.11.x迁移到v0.12.0: 参见docs/v0.12.0-migration-guide.md"
+    - "Markdown文档现在是YAML的渲染输出，不要手动编辑"
+    - "使用vibecollab docs render --all更新所有文档"
 
 releases:
   - release_version: "v0.11.0"
@@ -117,10 +185,10 @@ releases:
       - description: "GitHub Actions PyPI auto-publish fix (Trusted Publishing)"
 
 planned:
-  - target_version: "v0.12.0"
-    summary: "Docs Markdown → YAML Big-Bang Migration (DECISION-025), Standard Workflows, Document Template Library, Insight Derivation Chain"
   - target_version: "v0.13.0"
     summary: "Insight-First CLI: Optimize skill injection and MCP for proactive insight usage"
+  - target_version: "v0.14.0"
+    summary: "Enhanced Workflow System: Custom workflow creation, workflow marketplace"
 
 decisions:
   - "DECISION-019"
@@ -129,3 +197,5 @@ decisions:
   - "DECISION-022"
   - "DECISION-025"
   - "DECISION-027"
+  - "DECISION-028"
+  - "DECISION-029"

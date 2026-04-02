@@ -1,15 +1,244 @@
 kind: qa
-version: "1"
+version: "2"
 updated_at: "2026-04-02"
 case_id_pattern: "TC-{module}-{seq}"
 
 phases:
-  - title: "Phase 0 Test Cases"
-    description: "Initial test cases (to be added)"
-    cases: []
+  - title: "v0.12.0 新特性测试 - docs 命令组"
+    description: "YAML-first文档系统测试"
+    cases:
+      - id: "TC-DOCS-001"
+        title: "docs list - 列出可渲染YAML文档"
+        steps:
+          - "在项目根目录下执行: vibecollab docs list"
+          - "观察输出列表中的YAML文件"
+          - "使用 -d 参数指定自定义目录: vibecollab docs list -d ./my-docs"
+        expected:
+          - "显示所有可渲染的YAML文档列表"
+          - "每行显示yaml_path、kind、output_name、version"
+          - "支持context、decisions、changelog、roadmap、prd、qa类型"
+          - "返回0退出码"
+        status: todo
+
+      - id: "TC-DOCS-002"
+        title: "docs render - 渲染单个YAML文件"
+        steps:
+          - "执行: vibecollab docs render -i docs/context.yaml"
+          - "验证生成的Markdown文件"
+          - "检查docs/CONTEXT.md是否存在"
+        expected:
+          - "从docs/context.yaml生成docs/CONTEXT.md"
+          - "Markdown文件包含正确的YAML内容"
+          - "返回0退出码"
+        status: todo
+
+      - id: "TC-DOCS-003"
+        title: "docs render --all - 渲染所有YAML文档"
+        steps:
+          - "确保docs/目录下有多个YAML文件(context.yaml, roadmap.yaml等)"
+          - "执行: vibecollab docs render --all"
+          - "检查所有对应的Markdown文件"
+        expected:
+          - "所有可渲染的YAML都被转换为对应的Markdown"
+          - "CONTEXT.md、ROADMAP.md、CHANGELOG.md等都已更新"
+          - "返回0退出码"
+        status: todo
+
+      - id: "TC-DOCS-004"
+        title: "docs render -k - 按类型过滤渲染"
+        steps:
+          - "执行: vibecollab docs render -k context -k roadmap"
+          - "验证只有context和roadmap类型被渲染"
+        expected:
+          - "只渲染context和roadmap类型的文档"
+          - "其他类型如changelog、prd未被渲染"
+          - "返回0退出码"
+        status: todo
+
+      - id: "TC-DOCS-005"
+        title: "docs validate - 验证YAML文档结构"
+        steps:
+          - "执行: vibecollab docs validate docs/context.yaml"
+          - "测试无效YAML: 创建一个缺少kind字段的文件并验证"
+        expected:
+          - "有效YAML返回0退出码，无错误"
+          - "无效YAML返回非0退出码，显示错误信息"
+          - "检查kind和version字段"
+        status: todo
+
+  - title: "v0.12.0 新特性测试 - plan 工作流命令"
+    description: "预置工作流测试"
+    cases:
+      - id: "TC-PLAN-001"
+        title: "plan list - 列出预置工作流"
+        steps:
+          - "执行: vibecollab plan list"
+          - "使用JSON输出: vibecollab plan list --json"
+        expected:
+          - "显示daily-sync、release-prep、insight-collect三个工作流"
+          - "每个工作流显示名称、描述、类别、版本"
+          - "JSON格式输出正确解析"
+          - "返回0退出码"
+        status: todo
+
+      - id: "TC-PLAN-002"
+        title: "plan run daily-sync - 运行日常同步工作流"
+        steps:
+          - "确保工作目录干净"
+          - "执行: vibecollab plan run daily-sync"
+          - "观察执行步骤"
+        expected:
+          - "依次执行git status检查、配置验证、合规检查"
+          - "渲染YAML文档到Markdown"
+          - "尝试提交和推送"
+          - "每个步骤成功完成"
+        status: todo
+
+      - id: "TC-PLAN-003"
+        title: "plan run release-prep - 运行发布准备工作流"
+        steps:
+          - "确保工作目录干净"
+          - "执行: vibecollab plan run release-prep --dry-run"
+          - "观察dry-run输出"
+        expected:
+          - "dry-run模式不实际执行命令"
+          - "显示将要执行的步骤"
+          - "包含测试、验证、渲染、构建等步骤"
+        status: todo
+
+      - id: "TC-PLAN-004"
+        title: "plan run insight-collect - 运行Insight收集工作流"
+        steps:
+          - "执行: vibecollab plan run insight-collect"
+          - "检查.vibecollab/insights/目录"
+        expected:
+          - "执行健康检查"
+          - "更新语义索引"
+          - "建议新的Insights"
+          - "导出Insights快照"
+          - "生成报告文件"
+        status: todo
+
+      - id: "TC-PLAN-005"
+        title: "plan validate - 验证工作流语法"
+        steps:
+          - "执行: vibecollab plan validate daily-sync"
+          - "创建一个无效的工作流文件并验证"
+        expected:
+          - "有效工作流返回0退出码"
+          - "无效工作流返回非0退出码并显示错误"
+        status: todo
+
+      - id: "TC-PLAN-006"
+        title: "plan run with host adapter - 使用不同的host适配器"
+        steps:
+          - "执行: vibecollab plan run daily-sync --host file_exchange"
+          - "执行: vibecollab plan run daily-sync --host subprocess:git"
+        expected:
+          - "file_exchange适配器正常工作"
+          - "subprocess适配器正常工作"
+          - "命令正确执行"
+        status: todo
+
+      - id: "TC-PLAN-007"
+        title: "plan run with verbose - 详细输出模式"
+        steps:
+          - "执行: vibecollab plan run daily-sync -v"
+        expected:
+          - "显示每个步骤的详细输出"
+          - "包含时间戳信息"
+          - "显示命令执行结果"
+        status: todo
+
+  - title: "v0.12.0 新特性测试 - insight graph和derive"
+    description: "Insight派生图和自动检测"
+    cases:
+      - id: "TC-INSIGHT-001"
+        title: "insight graph --show-derivation - 显示派生图"
+        steps:
+          - "确保有至少2-3个相关Insights"
+          - "执行: vibecollab insight graph --show-derivation"
+          - "使用不同格式: vibecollab insight graph --show-derivation --format mermaid"
+        expected:
+          - "显示Insight之间的派生关系树"
+          - "根Insights显示在顶部"
+          - "派生Insights正确缩进显示"
+          - "Mermaid格式输出可渲染的图表代码"
+          - "返回0退出码"
+        status: todo
+
+      - id: "TC-INSIGHT-002"
+        title: "insight derive - 创建带自动派生检测的Insight"
+        steps:
+          - "确保有活跃的任务TASK-DEV-XXX"
+          - "执行: vibecollab insight derive --title '测试派生' --tags 'test' --category technique --scenario '测试场景' --approach '测试方法' --source-task TASK-DEV-XXX --dry-run"
+          - "观察派生建议"
+          - "不带--dry-run再次执行"
+        expected:
+          - "dry-run显示建议的派生关系"
+          - "实际创建Insight"
+          - "自动检测相关Insights"
+          - "设置derived_from字段"
+          - "返回0退出码"
+        status: todo
+
+      - id: "TC-INSIGHT-003"
+        title: "insight derive with confidence - 置信度阈值"
+        steps:
+          - "执行: vibecollab insight derive ... --min-confidence 0.8"
+          - "使用不同的置信度阈值"
+        expected:
+          - "只返回置信度高于阈值的派生建议"
+          - "高阈值返回更少的建议"
+          - "低阈值返回更多的建议"
+        status: todo
+
+      - id: "TC-INSIGHT-004"
+        title: "insight trace - 追溯Insight来源"
+        steps:
+          - "执行: vibecollab insight trace <insight-id>"
+          - "选择一个有派生关系的Insight"
+        expected:
+          - "显示Insight的完整追溯链"
+          - "显示所有祖先Insight"
+          - "显示创建者和使用者"
+        status: todo
+
+  - title: "v0.12.0 回归测试"
+    description: "确保新特性不影响现有功能"
+    cases:
+      - id: "TC-REG-001"
+        title: "check命令仍然正常工作"
+        steps:
+          - "执行: vibecollab check"
+        expected:
+          - "所有检查通过"
+          - "返回0退出码"
+        status: todo
+
+      - id: "TC-REG-002"
+        title: "MCP Server工具正常工作"
+        steps:
+          - "启动MCP Server: vibecollab mcp serve"
+          - "测试onboard、insight_search等工具"
+        expected:
+          - "所有MCP工具响应正常"
+          - "无错误输出"
+        status: todo
+
+      - id: "TC-REG-003"
+        title: "role命令正常工作"
+        steps:
+          - "执行: vibecollab role list"
+          - "执行: vibecollab role whoami"
+        expected:
+          - "显示角色列表"
+          - "显示当前角色"
+          - "返回0退出码"
+        status: todo
 
 summary:
-  total: 0
+  total: 17
   pass: 0
   partial: 0
   fail: 0
