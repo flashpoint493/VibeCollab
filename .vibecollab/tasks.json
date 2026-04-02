@@ -24,8 +24,8 @@
     "milestone": "v0.11.0",
     "output": "",
     "role": "DEV",
-    "status": "TODO",
-    "updated_at": "2026-03-27T06:05:53.189478+00:00"
+    "status": "DONE",
+    "updated_at": "2026-04-01T07:16:13.039540+00:00"
   },
   "TASK-DEV-026": {
     "assignee": null,
@@ -47,8 +47,8 @@
     "milestone": "v0.11.0",
     "output": "",
     "role": "DEV",
-    "status": "IN_PROGRESS",
-    "updated_at": "2026-04-01T04:47:59.501345+00:00"
+    "status": "DONE",
+    "updated_at": "2026-04-01T07:16:13.598636+00:00"
   },
   "TASK-DEV-027": {
     "assignee": null,
@@ -85,8 +85,8 @@
     "milestone": "v0.11.0",
     "output": "",
     "role": "ARCH",
-    "status": "TODO",
-    "updated_at": "2026-03-27T06:05:57.698180+00:00"
+    "status": "DONE",
+    "updated_at": "2026-04-01T07:16:15.164714+00:00"
   },
   "TASK-DEV-028": {
     "assignee": null,
@@ -128,8 +128,8 @@
     "milestone": "v0.10.3",
     "output": "",
     "role": "DEV",
-    "status": "IN_PROGRESS",
-    "updated_at": "2026-03-29T13:42:07.099854+00:00"
+    "status": "DONE",
+    "updated_at": "2026-04-01T07:16:16.020146+00:00"
   },
   "TASK-DEV-029": {
     "assignee": null,
@@ -171,7 +171,40 @@
     "milestone": "",
     "output": "",
     "role": "DEV",
+    "status": "DONE",
+    "updated_at": "2026-04-01T07:16:17.161407+00:00"
+  },
+  "TASK-DEV-030": {
+    "assignee": null,
+    "created_at": "2026-04-01T07:18:54.508626+00:00",
+    "dependencies": [],
+    "description": "",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 YAML Schema Design: Define schema files for all doc types (context, roadmap, changelog, decisions, prd, qa)",
+    "id": "TASK-DEV-030",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-014",
+          "score": 0.0475,
+          "title": "ROADMAP-Task Bidirectional Sync"
+        },
+        {
+          "id": "INS-015",
+          "score": 0.0475,
+          "title": "Architecture Pattern Borrowing Strategy"
+        },
+        {
+          "id": "INS-008",
+          "score": 0.0452,
+          "title": "Execution Plan: YAML-Driven Multi-Round Automation"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "",
+    "role": "DEV",
     "status": "REVIEW",
-    "updated_at": "2026-04-01T06:34:44.862551+00:00"
+    "updated_at": "2026-04-01T07:24:48.113442+00:00"
   }
 }

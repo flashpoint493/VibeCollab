@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
-### In Progress (v0.11.0)
+## [v0.11.0] - 2026-04-02
+
+### Added
 - **Guard CLI Integration** (TASK-DEV-026): `vibecollab check --guards` implemented
   - `--guards/--no-guards` flag (default: on) in `check` command
   - Scans all git-tracked files against guard rules (defaults + project.yaml custom)
@@ -28,11 +30,16 @@
   - Guard check passed: 8 rules, 227 files scanned
   - Insight consistency passed
 - **Documentation Update**: skill.md, README.md, README.pypi.md, README.zh-CN.md synchronized
-  - MCP tools count updated 12 → 16 (added guard_check, guard_list_rules, roadmap_status, roadmap_sync)
+  - MCP tools count updated 12 → 19 (added guard_check, guard_list_rules, role_context, insight_graph, insight_export, insight_import, task_solidify, role_list)
   - CLI Reference: `vibecollab dev` → `vibecollab role` migration, added hooks commands
   - Features section: added Git Hooks + Guard Protection, Multi-Role permissions
   - Version histories updated with v0.11.0 and v0.10.14 entries
   - Architecture tables: updated pillars to reflect Guard protection and role permissions
+  - Tests badge: corrected 1520 → 151 passed
+
+### Changed
+- **Version bump**: 0.10.13 → 0.11.0
+- **Test suite**: 1666 tests passing (was 151 in ROADMAP docs, actual test count grew with new modules)
 
 ### Completed (v0.10.13)
 - **v0.10.13 Release**: Finalized v0.10.x release cycle

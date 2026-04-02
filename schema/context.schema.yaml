@@ -1,0 +1,175 @@
+# VibeCollab Context Schema v1
+# Defines structure for both global (docs/context.yaml) and role-level (docs/roles/*/context.yaml)
+#
+# Design goals:
+#   - Capture project status, role work status, and technical debt
+#   - Support auto-aggregation from role contexts into global context
+#   - Descriptive content stays as strings for AI semantic understanding
+#   - Forward-compatible via version field
+
+# ============================================
+# Global Context (docs/context.yaml)
+# ============================================
+global_context:
+  type: object
+  required: [kind, version, updated_at, project_status, roles]
+  properties:
+    kind:
+      type: string
+      const: "context"
+      description: Fixed type identifier
+
+    version:
+      type: string
+      default: "1"
+      description: Schema version for migration compatibility
+
+    updated_at:
+      type: string
+      format: date-time
+      description: Last update timestamp (ISO 8601)
+
+    aggregated_from:
+      type: array
+      items:
+        type: string
+      description: List of role names this context was aggregated from
+
+    project_status:
+      type: object
+      required: [current_version]
+      properties:
+        current_version:
+          type: string
+          description: Current project version (e.g. "v0.12.0")
+        active_roles:
+          type: array
+          items:
+            type: string
+          description: Currently active role names
+        milestone:
+          type: string
+          description: Current milestone summary (free-form, for AI context)
+        notes:
+          type: string
+          description: Additional project-level notes
+
+    roles:
+      type: array
+      description: Aggregated role work summaries
+      items:
+        $ref: "#/role_summary"
+
+    collaboration:
+      type: string
+      description: Cross-role collaboration notes (free-form)
+
+    technical_debt:
+      type: array
+      description: Known technical debt items across all roles
+      items:
+        type: object
+        required: [role, description]
+        properties:
+          role:
+            type: string
+            description: Which role owns this debt
+          description:
+            type: string
+            description: Description of the debt item
+          priority:
+            type: string
+            enum: [P0, P1, P2, P3]
+            description: Optional priority level
+
+# ============================================
+# Role Summary (embedded in global context)
+# ============================================
+role_summary:
+  type: object
+  required: [role, updated_at]
+  properties:
+    role:
+      type: string
+      description: Role name (e.g. "dev", "architect")
+    updated_at:
+      type: string
+      format: date
+      description: Last update date
+    current_task:
+      type: string
+      description: What this role is currently working on (free-form)
+    progress:
+      type: string
+      description: Progress summary (free-form)
+    pending_issues:
+      type: string
+      description: Pending issues (free-form)
+    next_steps:
+      type: string
+      description: Planned next steps (free-form)
+
+# ============================================
+# Role Context (docs/roles/*/context.yaml)
+# ============================================
+role_context:
+  type: object
+  required: [kind, version, role, updated_at]
+  properties:
+    kind:
+      type: string
+      const: "role_context"
+      description: Fixed type identifier
+
+    version:
+      type: string
+      default: "1"
+      description: Schema version
+
+    role:
+      type: string
+      description: Role name (e.g. "dev", "architect")
+
+    updated_at:
+      type: string
+      format: date
+      description: Last update date
+
+    current_version:
+      type: string
+      description: Project version this context reflects
+
+    current_tasks:
+      type: array
+      items:
+        type: string
+      description: Current active tasks (free-form descriptions)
+
+    recently_completed:
+      type: array
+      description: Recently completed work items
+      items:
+        type: object
+        required: [date, description]
+        properties:
+          date:
+            type: string
+            format: date
+          description:
+            type: string
+
+    pending_issues:
+      type: array
+      items:
+        type: string
+      description: Pending issues for this role
+
+    technical_debt:
+      type: array
+      items:
+        type: string
+      description: Technical debt owned by this role
+
+    notes:
+      type: string
+      description: Additional role-specific notes (free-form)

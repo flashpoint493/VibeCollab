@@ -8,7 +8,7 @@
 [![CI](https://github.com/flashpoint493/VibeCollab/actions/workflows/ci.yml/badge.svg)](https://github.com/flashpoint493/VibeCollab/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1520%20passed-brightgreen)](https://github.com/flashpoint493/VibeCollab/actions)
+[![Tests](https://img.shields.io/badge/tests-151%20passed-brightgreen)](https://github.com/flashpoint493/VibeCollab/actions)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://pypi.org/project/vibe-collab/)
 
 **[English](README.md)** | [中文文档](README.zh-CN.md)
@@ -85,7 +85,7 @@ VibeCollab generates a `CONTRIBUTING_AI.md` collaboration protocol from a single
 ### MCP Server + AI IDE Integration (v0.9.1)
 - **MCP Server** (`vibecollab mcp serve`): Standard Model Context Protocol, auto-connects to Cursor/Cline/CodeBuddy/OpenClaw and any MCP-compatible agent
 - **One-command config injection** (`vibecollab mcp inject`): Zero manual setup
-- **16 Tools**: `insight_search`, `insight_add`, `insight_suggest`, `check`, `onboard`, `next_step`, `search_docs`, `task_list`, `task_create`, `task_transition`, `session_save`, `guard_check`, `guard_list_rules`, `roadmap_status`, `roadmap_sync`, `project_prompt`
+- **19 Tools**: `insight_search`, `insight_add`, `insight_suggest`, `insight_graph`, `insight_export`, `check`, `onboard`, `next_step`, `search_docs`, `task_list`, `task_create`, `task_transition`, `session_save`, `guard_check`, `guard_list_rules`, `role_context`, `roadmap_status`, `roadmap_sync`, `project_prompt`
 - **Resources**: Auto-exposes `CONTRIBUTING_AI.md`, `CONTEXT.md`, `DECISIONS.md`
 - **Prompts**: Auto-injects project context and protocol rules at conversation start
 

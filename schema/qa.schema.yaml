@@ -1,0 +1,138 @@
+# VibeCollab QA Test Cases Schema v1
+# Defines structure for docs/qa.yaml
+#
+# Design goals:
+#   - Structured test cases with steps, expected results, status
+#   - Group test cases by phase / module
+#   - Support both automated and manual test tracking
+#   - Forward-compatible via version field
+
+qa:
+  type: object
+  required: [kind, version, phases]
+  properties:
+    kind:
+      type: string
+      const: "qa"
+      description: Fixed type identifier
+
+    version:
+      type: string
+      default: "1"
+      description: Schema version for migration compatibility
+
+    updated_at:
+      type: string
+      format: date
+      description: Last update date
+
+    # --- Test case format reference (for documentation) ---
+    case_id_pattern:
+      type: string
+      default: "TC-{module}-{seq}"
+      description: Test case ID pattern
+
+    phases:
+      type: array
+      description: Test phases / modules
+      items:
+        $ref: "#/test_phase"
+
+    summary:
+      type: object
+      description: Auto-computed test summary (optional, can be derived)
+      properties:
+        total:
+          type: integer
+        pass:
+          type: integer
+        partial:
+          type: integer
+        fail:
+          type: integer
+        skip:
+          type: integer
+
+# ============================================
+# Test Phase / Module
+# ============================================
+test_phase:
+  type: object
+  required: [title, cases]
+  properties:
+    title:
+      type: string
+      description: Phase or module name (e.g. "Phase 11 - E2E Validation")
+    description:
+      type: string
+      description: Phase description
+    cases:
+      type: array
+      items:
+        $ref: "#/test_case"
+
+# ============================================
+# Test Case
+# ============================================
+test_case:
+  type: object
+  required: [id, name, status]
+  properties:
+    id:
+      type: string
+      pattern: "^TC-[A-Za-z0-9]+-\\d{3,}$"
+      description: Test case ID (e.g. "TC-INIT-001")
+
+    name:
+      type: string
+      description: Test case name
+
+    related_task:
+      type: string
+      description: Related Task ID (e.g. "TASK-DEV-001")
+
+    related_feature:
+      type: string
+      description: Feature being tested
+
+    precondition:
+      type: string
+      description: Preconditions required
+
+    steps:
+      type: array
+      items:
+        type: string
+      description: Ordered test steps
+
+    expected:
+      type: string
+      description: Expected result
+
+    actual:
+      type: string
+      description: Actual result (filled during testing)
+
+    status:
+      type: string
+      enum: [pass, partial, fail, skip, pending]
+      description: >
+        Test result:
+        pass = all criteria met,
+        partial = some criteria met,
+        fail = criteria not met,
+        skip = intentionally skipped,
+        pending = not yet executed
+
+    notes:
+      type: string
+      description: Additional notes (e.g. logs, screenshots, edge cases)
+
+    tested_at:
+      type: string
+      format: date
+      description: When this test was last executed
+
+    tested_by:
+      type: string
+      description: Who executed this test

@@ -318,6 +318,44 @@ v0.11.0 milestone (Role-Driven Architecture + Git Hooks + Guards) reached 32/32 
 
 ---
 
+### DECISION-027: v0.12.0 YAML Schema Design Strategy
+
+**Date**: 2026-04-01
+**Type**: S-level (Strategic)
+**Status**: Confirmed
+
+**Context**:
+v0.12.0 requires YAML schemas for all doc types. User confirmed three key design principles:
+
+**Confirmed Decisions**:
+
+| # | Question | Decision |
+|---|----------|----------|
+| 1 | Migration strategy | **Big-Bang** (confirmed from DECISION-025). Only `CONTRIBUTING_AI.md`, `skill.md`, `README.md` remain as Markdown |
+| 2 | Human readability | YAML docs can be aggregated back to Markdown via `vibecollab docs render`. Descriptive content stays descriptive in YAML — it serves both AI parsing and human rendering |
+| 3 | Schema design style | Follow `insight.schema.yaml` pattern (`kind` + `version` top-level). Design must be **robust and forward-compatible** — schemas will evolve, versioning is critical |
+
+**Schema Design Principles**:
+
+1. **`kind` + `version` envelope**: Every doc YAML starts with `kind: <type>` and `version: "1"` for schema evolution
+2. **Descriptive content as strings**: Body text, notes, summaries remain as YAML string values (not atomized key-value) — preserves semantic richness for AI consumption
+3. **Forward compatibility**: Use `version` field for schema migration; new fields default to optional; validators ignore unknown fields at same major version
+4. **Schema-per-doc-type**: Each doc type has its own `schema/<type>.schema.yaml` file
+5. **Render-ready**: YAML structure maps naturally to Markdown sections via Jinja2 templates
+
+**Schemas to Create** (TASK-DEV-030):
+
+| Schema | File | Purpose |
+|--------|------|---------|
+| `context.schema.yaml` | Global + role context | Project status, role work status, tech debt |
+| `changelog.schema.yaml` | Version changelog | Releases, entries (added/changed/fixed) |
+| `decisions.schema.yaml` | Decision records | Levels, status, options, rationale |
+| `roadmap.schema.yaml` | Milestones + lifecycle | Stages, milestones, checklist items |
+| `prd.schema.yaml` | Requirements | Requirements with status, priority, history |
+| `qa.schema.yaml` | QA test cases | Test case structure with steps, expected, status |
+
+---
+
 ## Decision Archive
 
 (None)

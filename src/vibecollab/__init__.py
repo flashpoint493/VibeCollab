@@ -7,7 +7,7 @@ Usage:
     vibecollab validate -c project.yaml
 """
 
-__version__ = "0.10.13"
+__version__ = "0.11.0"
 __author__ = "VibeCollab Contributors"
 
 from .agent.llm_client import LLMClient, LLMConfig, LLMResponse, Message

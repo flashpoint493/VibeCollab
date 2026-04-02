@@ -136,13 +136,16 @@ VibeCollab is ready. You now have MCP tools available in your IDE:
 | `insight_suggest` | Get signal-driven insight recommendations |
 | `insight_graph` | View insight relationship graph |
 | `insight_export` | Export insights in YAML format |
+| `insight_import` | Import insights from other projects |
 | `search_docs` | Semantic search across project documents |
 | `task_list` | List current tasks |
-| `task_create` | Create a new task (auto-links insights, permission-checked) |
-| `task_transition` | Move task status (TODO → IN_PROGRESS → REVIEW → DONE, permission-checked) |
+| `task_create` | Create a new task (auto-links insights, **permission-checked**) |
+| `task_transition` | Move task status (TODO → IN_PROGRESS → REVIEW → DONE, **permission-checked**) |
+| `task_solidify` | Solidify a task through validation gates |
 | `guard_check` | Pre-flight check before file operations (block/warn/allow) |
 | `guard_list_rules` | List all configured guard protection rules |
-| `role_context` | Get a specific role's context |
+| `role_context` | Get a specific role's context (for multi-role projects) |
+| `role_list` | List all roles and their permissions |
 | `project_prompt` | Generate full context prompt |
 | `roadmap_status` | View milestone progress |
 | `roadmap_sync` | Sync ROADMAP.md <-> tasks.json |

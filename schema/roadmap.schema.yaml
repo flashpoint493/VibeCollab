@@ -1,0 +1,207 @@
+# VibeCollab Roadmap Schema v1
+# Defines structure for docs/roadmap.yaml
+#
+# Design goals:
+#   - Structured milestones with checklist items and completion tracking
+#   - Lifecycle stage management (demo → production → commercial → stable)
+#   - Bidirectional Task ID linking (for vibecollab roadmap sync)
+#   - Descriptive content as strings for AI context + Markdown rendering
+#   - Forward-compatible via version field
+
+roadmap:
+  type: object
+  required: [kind, version, lifecycle, milestones]
+  properties:
+    kind:
+      type: string
+      const: "roadmap"
+      description: Fixed type identifier
+
+    version:
+      type: string
+      default: "1"
+      description: Schema version for migration compatibility
+
+    updated_at:
+      type: string
+      format: date
+      description: Last update date
+
+    # ============================================
+    # Lifecycle Stage
+    # ============================================
+    lifecycle:
+      type: object
+      required: [current_stage]
+      properties:
+        current_stage:
+          type: string
+          enum: [demo, production, commercial, stable]
+          description: Current project lifecycle stage
+        start_date:
+          type: string
+          format: date
+          description: When this stage started
+        description:
+          type: string
+          description: Stage description (free-form)
+        focus:
+          type: array
+          items:
+            type: string
+          description: Stage focus areas
+        principles:
+          type: array
+          items:
+            type: string
+          description: Stage development principles
+        stage_history:
+          type: array
+          description: History of stage transitions
+          items:
+            type: object
+            required: [stage, started_at]
+            properties:
+              stage:
+                type: string
+              started_at:
+                type: string
+                format: date
+              ended_at:
+                type: string
+                format: date
+
+    # ============================================
+    # Milestones
+    # ============================================
+    milestones:
+      type: array
+      description: All milestones (completed + active + planned), ordered by version
+      items:
+        $ref: "#/milestone"
+
+    # ============================================
+    # Future Planning (beyond defined milestones)
+    # ============================================
+    future_planning:
+      type: array
+      description: High-level future plans not yet broken into milestones
+      items:
+        type: object
+        required: [title]
+        properties:
+          title:
+            type: string
+          description:
+            type: string
+          estimated_timeline:
+            type: string
+          prerequisites:
+            type: array
+            items:
+              type: string
+          key_tasks:
+            type: array
+            items:
+              type: string
+
+# ============================================
+# Milestone
+# ============================================
+milestone:
+  type: object
+  required: [milestone_version, title, status]
+  properties:
+    milestone_version:
+      type: string
+      description: Version tag (e.g. "v0.12.0")
+
+    title:
+      type: string
+      description: Milestone title (e.g. "YAML Data Layer + Workflows")
+
+    status:
+      type: string
+      enum: [completed, active, planned, cut]
+      description: Milestone status
+
+    date:
+      type: string
+      format: date
+      description: Completion or target date
+
+    objective:
+      type: string
+      description: Milestone objective (free-form, for AI context)
+
+    decision_refs:
+      type: array
+      items:
+        type: string
+      description: Related decision IDs (e.g. ["DECISION-025"])
+
+    # --- Sections group related checklist items ---
+    sections:
+      type: array
+      description: Grouped work items within this milestone
+      items:
+        $ref: "#/milestone_section"
+
+    # --- Flat items (for simple milestones without sections) ---
+    items:
+      type: array
+      description: Checklist items (flat list, no grouping)
+      items:
+        $ref: "#/checklist_item"
+
+    notes:
+      type: string
+      description: Additional milestone notes (free-form)
+
+    cut_reason:
+      type: string
+      description: If status=cut, the reason and redirect decision
+
+# ============================================
+# Milestone Section
+# ============================================
+milestone_section:
+  type: object
+  required: [title]
+  properties:
+    title:
+      type: string
+      description: Section heading (e.g. "Config Management System", "Test Coverage")
+    items:
+      type: array
+      items:
+        $ref: "#/checklist_item"
+
+# ============================================
+# Checklist Item
+# ============================================
+checklist_item:
+  type: object
+  required: [description, done]
+  properties:
+    description:
+      type: string
+      description: Item description (free-form, may reference IDs inline)
+
+    done:
+      type: boolean
+      description: Whether this item is completed
+
+    task_id:
+      type: string
+      description: Linked Task ID (for bidirectional sync)
+
+    insight_ids:
+      type: array
+      items:
+        type: string
+      description: Related Insight IDs
+
+    notes:
+      type: string
+      description: Additional notes (e.g. "Deferred", "Needs manual testing")
