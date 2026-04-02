@@ -137,17 +137,18 @@ class ProtocolChecker:
                     suggestion=f"Per protocol, {file_path} should be updated after dialogue ends. If there was recent dialogue, please update this document"
                 ))
 
-        # Check PRD.md (if configured)
+        # Check PRD (if configured) - supports both .yaml and .md
         prd_config = self.config.get("prd_management", {})
         if prd_config.get("enabled", False):
-            prd_path = self.project_root / prd_config.get("prd_file", "docs/PRD.md")
-            if not prd_path.exists():
+            prd_md_path = self.project_root / prd_config.get("prd_file", "docs/PRD.md")
+            prd_yaml_path = prd_md_path.parent / (prd_md_path.stem.lower() + ".yaml")
+            if not prd_yaml_path.exists() and not prd_md_path.exists():
                 results.append(CheckResult(
                     name="PRD Document",
                     passed=False,
-                    message="PRD.md document does not exist",
+                    message="PRD document does not exist (checked prd.yaml and PRD.md)",
                     severity="warning",
-                    suggestion="Create docs/PRD.md to record project requirements and requirement changes"
+                    suggestion="Create docs/prd.yaml (or docs/PRD.md) to record project requirements"
                 ))
 
         # Check multi-role collaboration document (if multi-role mode enabled)
@@ -269,15 +270,17 @@ class ProtocolChecker:
                 ))
                 continue
 
-            # Check CONTEXT.md
-            context_file = dev_dir / "CONTEXT.md"
+            # Check CONTEXT.md or context.yaml
+            context_yaml = dev_dir / "context.yaml"
+            context_md = dev_dir / "CONTEXT.md"
+            context_file = context_yaml if context_yaml.exists() else context_md
             if not context_file.exists():
                 results.append(CheckResult(
                     name=f"Role Context: {dev_name}",
                     passed=False,
-                    message=f"Role '{dev_name}' CONTEXT.md does not exist",
+                    message=f"Role '{dev_name}' context file does not exist (checked context.yaml and CONTEXT.md)",
                     severity="error",
-                    suggestion=f"Create docs/roles/{dev_id}/CONTEXT.md to record the role's work context"
+                    suggestion=f"Create docs/roles/{dev_id}/context.yaml (or CONTEXT.md) to record the role's work context"
                 ))
             else:
                 # Check if CONTEXT.md was recently updated (activity within 7 days)

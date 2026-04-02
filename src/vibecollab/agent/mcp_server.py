@@ -121,22 +121,34 @@ def create_mcp_server(project_root: Optional[Path] = None):
 
     @mcp.resource("vibecollab://docs/context")
     def get_context() -> str:
-        """Project current state (docs/CONTEXT.md) -- must read at conversation start"""
+        """Project current state (docs/context.yaml or CONTEXT.md) -- must read at conversation start"""
+        yaml_path = root / "docs" / "context.yaml"
+        if yaml_path.exists():
+            return _safe_read_text(yaml_path)
         return _safe_read_text(root / "docs" / "CONTEXT.md")
 
     @mcp.resource("vibecollab://docs/decisions")
     def get_decisions() -> str:
-        """Decision records (docs/DECISIONS.md)"""
+        """Decision records (docs/decisions.yaml or DECISIONS.md)"""
+        yaml_path = root / "docs" / "decisions.yaml"
+        if yaml_path.exists():
+            return _safe_read_text(yaml_path)
         return _safe_read_text(root / "docs" / "DECISIONS.md")
 
     @mcp.resource("vibecollab://docs/roadmap")
     def get_roadmap() -> str:
-        """Project roadmap (docs/ROADMAP.md)"""
+        """Project roadmap (docs/roadmap.yaml or ROADMAP.md)"""
+        yaml_path = root / "docs" / "roadmap.yaml"
+        if yaml_path.exists():
+            return _safe_read_text(yaml_path)
         return _safe_read_text(root / "docs" / "ROADMAP.md")
 
     @mcp.resource("vibecollab://docs/changelog")
     def get_changelog() -> str:
-        """Changelog (docs/CHANGELOG.md)"""
+        """Changelog (docs/changelog.yaml or CHANGELOG.md)"""
+        yaml_path = root / "docs" / "changelog.yaml"
+        if yaml_path.exists():
+            return _safe_read_text(yaml_path)
         return _safe_read_text(root / "docs" / "CHANGELOG.md")
 
     @mcp.resource("vibecollab://insights/list")
@@ -647,7 +659,10 @@ def create_mcp_server(project_root: Optional[Path] = None):
                 ensure_ascii=False,
             )
 
-        context_text = _safe_read_text(dev_dir / "CONTEXT.md")
+        context_yaml = dev_dir / "context.yaml"
+        context_md = dev_dir / "CONTEXT.md"
+        context_path = context_yaml if context_yaml.exists() else context_md
+        context_text = _safe_read_text(context_path)
         metadata = _safe_load_yaml(dev_dir / ".metadata.yaml")
 
         return json.dumps(
@@ -918,7 +933,10 @@ def create_mcp_server(project_root: Optional[Path] = None):
             ])
 
         # Inject current state summary
-        context_text = _safe_read_text(root / "docs" / "CONTEXT.md")
+        context_yaml_path = root / "docs" / "context.yaml"
+        context_md_path = root / "docs" / "CONTEXT.md"
+        context_path = context_yaml_path if context_yaml_path.exists() else context_md_path
+        context_text = _safe_read_text(context_path)
         if context_text:
             lines = context_text.strip().split("\n")[:20]
             parts.extend([
@@ -929,9 +947,10 @@ def create_mcp_server(project_root: Optional[Path] = None):
 
         # Role context
         if role:
-            dev_context = _safe_read_text(
-                root / "docs" / "roles" / role / "CONTEXT.md"
-            )
+            role_yaml = root / "docs" / "roles" / role / "context.yaml"
+            role_md = root / "docs" / "roles" / role / "CONTEXT.md"
+            role_path = role_yaml if role_yaml.exists() else role_md
+            dev_context = _safe_read_text(role_path)
             if dev_context:
                 dev_lines = dev_context.strip().split("\n")[:15]
                 parts.extend([

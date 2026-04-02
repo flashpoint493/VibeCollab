@@ -539,8 +539,8 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 - [ ] Module rewrite: `ProtocolChecker` — YAML-aware consistency checks
 - [ ] Module update: `InsightSignalCollector` — YAML diff detection
 - [ ] Module update: `Indexer` — YAML document splitting
-- [ ] Module update: `cli/guide.py` — Read YAML contexts
-- [ ] Module update: `mcp/server.py` — MCP Resources return YAML
+- [x] Module update: `cli/guide.py` — Read YAML contexts ✅ TASK-DEV-033
+- [x] Module update: `mcp/server.py` — MCP Resources return YAML ✅ TASK-DEV-033
 - [ ] Template migration: `.md.j2` → `.yaml.j2` for doc generation
 - [ ] `vibecollab init` generates YAML docs (no more Markdown templates)
 - [ ] `vibecollab docs render [--format md|json]` — CLI command to generate human-readable views from YAML

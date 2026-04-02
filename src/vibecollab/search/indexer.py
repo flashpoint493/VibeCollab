@@ -24,13 +24,18 @@ from .vector_store import VectorDocument, VectorStore
 
 logger = logging.getLogger(__name__)
 
-# Default document files to index
+# Default document files to index (YAML-first, Markdown fallback)
 DEFAULT_DOC_FILES = [
     "CONTRIBUTING_AI.md",
+    "docs/context.yaml",
     "docs/CONTEXT.md",
+    "docs/decisions.yaml",
     "docs/DECISIONS.md",
+    "docs/roadmap.yaml",
     "docs/ROADMAP.md",
+    "docs/prd.yaml",
     "docs/PRD.md",
+    "docs/changelog.yaml",
     "docs/CHANGELOG.md",
 ]
 
@@ -119,6 +124,43 @@ def _insight_to_text(insight_data: dict) -> str:
     return "\n".join(parts)
 
 
+def _split_yaml_by_keys(text: str, source: str) -> List[Dict[str, str]]:
+    """Split YAML document into chunks by top-level keys
+
+    Each chunk contains a key and its serialized value.
+    """
+    try:
+        data = yaml.safe_load(text)
+        if not isinstance(data, dict):
+            return [{"heading": source, "content": text, "source": source}]
+    except Exception:
+        return [{"heading": source, "content": text, "source": source}]
+
+    chunks: List[Dict[str, str]] = []
+    for key, value in data.items():
+        if key in ("kind", "version"):
+            continue
+        if isinstance(value, list):
+            content = "\n".join(
+                yaml.dump(item, allow_unicode=True, default_flow_style=False).strip()
+                if isinstance(item, dict) else str(item)
+                for item in value
+            )
+        elif isinstance(value, dict):
+            content = yaml.dump(value, allow_unicode=True, default_flow_style=False).strip()
+        else:
+            content = str(value) if value else ""
+
+        if content.strip():
+            chunks.append({
+                "heading": f"{source}:{key}",
+                "content": content,
+                "source": source,
+            })
+
+    return chunks
+
+
 class Indexer:
     """Project indexer
 
@@ -178,14 +220,26 @@ class Indexer:
         return stats
 
     def index_documents(self) -> IndexStats:
-        """Index project document files"""
+        """Index project document files (YAML-first, skip MD if YAML exists)"""
         stats = IndexStats()
 
+        # Deduplicate: if both .yaml and .md exist, only index .yaml
+        seen_stems: set = set()
+        effective_files: List[str] = []
         for doc_file in self._doc_files:
+            stem = doc_file.rsplit(".", 1)[0].lower().replace("/", "_")
             full_path = self._project_root / doc_file
             if not full_path.exists():
                 stats.skipped += 1
                 continue
+            if stem in seen_stems:
+                stats.skipped += 1
+                continue
+            seen_stems.add(stem)
+            effective_files.append(doc_file)
+
+        for doc_file in effective_files:
+            full_path = self._project_root / doc_file
 
             try:
                 text = full_path.read_text(encoding="utf-8")
@@ -193,7 +247,11 @@ class Indexer:
                     stats.skipped += 1
                     continue
 
-                chunks = _split_markdown_by_heading(text, doc_file)
+                # Choose splitter based on file extension
+                if doc_file.endswith((".yaml", ".yml")):
+                    chunks = _split_yaml_by_keys(text, doc_file)
+                else:
+                    chunks = _split_markdown_by_heading(text, doc_file)
                 if not chunks:
                     stats.skipped += 1
                     continue

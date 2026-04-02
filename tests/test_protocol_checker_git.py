@@ -167,7 +167,7 @@ class TestMultiDevProtocol:
 
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_role_context_protocol()
-        ctx_missing = [r for r in results if "CONTEXT.md does not exist" in r.message]
+        ctx_missing = [r for r in results if "context file does not exist" in r.message]
         assert len(ctx_missing) == 1
         assert ctx_missing[0].severity == "error"
 

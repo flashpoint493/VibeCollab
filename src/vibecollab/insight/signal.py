@@ -196,9 +196,13 @@ class InsightSignalCollector:
         """
         key_docs = [
             "docs/CONTEXT.md",
+            "docs/context.yaml",
             "docs/DECISIONS.md",
+            "docs/decisions.yaml",
             "docs/ROADMAP.md",
+            "docs/roadmap.yaml",
             "docs/CHANGELOG.md",
+            "docs/changelog.yaml",
         ]
         changes: Dict[str, List[str]] = {}
 
@@ -360,11 +364,11 @@ class InsightSignalCollector:
         if not changes:
             return candidates
 
-        # DECISIONS.md changes -> decision-type Insight
-        if "docs/DECISIONS.md" in changes:
-            decision_lines = changes["docs/DECISIONS.md"]
+        # DECISIONS changes -> decision-type Insight
+        decisions_changes = changes.get("docs/DECISIONS.md", []) + changes.get("docs/decisions.yaml", [])
+        if decisions_changes:
             new_decisions = [
-                line for line in decision_lines
+                line for line in decisions_changes
                 if line.startswith("+") and "DECISION-" in line
             ]
             if new_decisions:
@@ -379,11 +383,11 @@ class InsightSignalCollector:
                     confidence=0.8,
                 ))
 
-        # ROADMAP.md changes -> planning-type Insight
-        if "docs/ROADMAP.md" in changes:
-            roadmap_lines = changes["docs/ROADMAP.md"]
+        # ROADMAP changes -> planning-type Insight
+        roadmap_changes = changes.get("docs/ROADMAP.md", []) + changes.get("docs/roadmap.yaml", [])
+        if roadmap_changes:
             completed = [
-                line for line in roadmap_lines
+                line for line in roadmap_changes
                 if line.startswith("+") and ("[DONE]" in line or "\u2705" in line or "[x]" in line)
             ]
             if completed:
@@ -398,10 +402,10 @@ class InsightSignalCollector:
                     confidence=0.6,
                 ))
 
-        # CONTEXT.md major changes -> context switch signal
-        if "docs/CONTEXT.md" in changes:
-            context_lines = changes["docs/CONTEXT.md"]
-            added = [line for line in context_lines if line.startswith("+")]
+        # CONTEXT major changes -> context switch signal
+        context_changes = changes.get("docs/CONTEXT.md", []) + changes.get("docs/context.yaml", [])
+        if context_changes:
+            added = [line for line in context_changes if line.startswith("+")]
             if len(added) > 10:
                 candidates.append(InsightCandidate(
                     title="Development direction switch experience",

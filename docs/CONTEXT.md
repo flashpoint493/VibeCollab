@@ -8,7 +8,7 @@
 - **Version**: v0.12.0-dev
 - **Active roles**: 3 (architect, dev, insight_collector)
 - **Previous milestone**: v0.11.0 Role-Driven Architecture + Git Hooks + Guards — **32/32 items complete** ✅
-- **Current milestone**: v0.12.0 YAML Data Layer + Workflows + Insight Automation — **6/40 items** (schemas + docs migration + 3 module rewrites)
+- **Current milestone**: v0.12.0 YAML Data Layer + Workflows + Insight Automation — **11/26 items** (schemas + docs + 8 module rewrites/updates)
 
 ## Role Work Status
 

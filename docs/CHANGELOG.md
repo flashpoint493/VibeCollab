@@ -18,6 +18,13 @@
   - `ContextAggregator`: Reads YAML role contexts, outputs both `context.yaml` (source of truth) and `CONTEXT.md` (view). `_generate_yaml_data()` new method
   - `RoleManager.get_role_context_file()`: Now returns `context.yaml` if exists, else `CONTEXT.md`
   - 89 tests passing (53 roadmap + 36 prd), 3 test fixes for YAML output expectations
+- **Secondary Module Updates** (TASK-DEV-033): 5 modules made YAML-aware
+  - `ProtocolChecker`: Role context checks accept both `context.yaml` and `CONTEXT.md`; PRD check supports `prd.yaml`
+  - `InsightSignalCollector`: `key_docs` list includes both `.yaml` and `.md` variants; signal analysis merges both
+  - `Indexer`: `DEFAULT_DOC_FILES` includes YAML paths; `_split_yaml_by_keys()` new splitter; YAML/MD deduplication
+  - `cli/guide.py`: Role context path resolution prefers `context.yaml`
+  - `mcp/server.py`: All 4 doc Resources prefer YAML; developer_context + start_conversation prompt prefer YAML
+  - 119 additional tests passing (protocol_checker + signal + indexer), 1 test fix
 
 ## [v0.11.0] - 2026-04-02
 
