@@ -276,32 +276,32 @@ milestones:
             done: true
             task_id: "TASK-DEV-030"
           - description: "docs/*.md → docs/*.yaml full migration"
-            done: false
+            done: true
             task_id: "TASK-DEV-031"
           - description: "docs/roles/*/CONTEXT.md → docs/roles/*/context.yaml"
             done: false
           - description: "Module rewrite: ContextAggregator — YAML in/out"
-            done: false
+            done: true
           - description: "Module rewrite: RoadmapParser — YAML native"
-            done: false
+            done: true
           - description: "Module rewrite: PRDManager — YAML-only"
-            done: false
-          - description: "Module rewrite: ProtocolChecker — YAML-aware"
-            done: false
+            done: true
+          - description: "Module update: ProtocolChecker — YAML-aware"
+            done: true
           - description: "Module update: InsightSignalCollector — YAML diff detection"
-            done: false
+            done: true
           - description: "Module update: Indexer — YAML document splitting"
-            done: false
+            done: true
           - description: "Module update: cli/guide.py — Read YAML contexts"
-            done: false
+            done: true
           - description: "Module update: mcp/server.py — MCP Resources return YAML"
-            done: false
+            done: true
           - description: "Template migration: .md.j2 → .yaml.j2"
             done: false
           - description: "vibecollab init generates YAML docs"
-            done: false
+            done: true
           - description: "vibecollab docs render [--format md|json]"
-            done: false
+            done: true
           - description: "193+ test updates across 4+ test files"
             done: false
       - title: "FP-004: Workflow Integration"

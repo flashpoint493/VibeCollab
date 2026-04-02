@@ -9,12 +9,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import yaml
+
 from ..utils.git import get_git_status, is_git_repo
 
 
 @dataclass
 class CheckResult:
     """Check result"""
+
     name: str
     passed: bool
     message: str
@@ -53,6 +56,9 @@ class ProtocolChecker:
         # Check document consistency
         results.extend(self._check_document_consistency())
 
+        # Check YAML file format
+        results.extend(self._check_yaml_format())
+
         return results
 
     def _check_git_protocol(self) -> List[CheckResult]:
@@ -61,38 +67,44 @@ class ProtocolChecker:
 
         # Check if it's a Git repository
         if not is_git_repo(self.project_root):
-            results.append(CheckResult(
-                name="Git Repository Init",
-                passed=False,
-                message="Project directory is not a Git repository",
-                severity="error",
-                suggestion="Run 'git init' to initialize the repository, or use 'vibecollab init' to create a new project"
-            ))
+            results.append(
+                CheckResult(
+                    name="Git Repository Init",
+                    passed=False,
+                    message="Project directory is not a Git repository",
+                    severity="error",
+                    suggestion="Run 'git init' to initialize the repository, or use 'vibecollab init' to create a new project",
+                )
+            )
             return results  # If not a Git repo, other checks are meaningless
 
         # Check for uncommitted changes
         git_status = get_git_status(self.project_root)
         if git_status and git_status.get("has_uncommitted_changes"):
-            results.append(CheckResult(
-                name="Git Commit Requirement",
-                passed=False,
-                message="There are uncommitted changes",
-                severity="warning",
-                suggestion="Per protocol, git commit should be done after each effective dialogue. Run 'git status' to view changes, then commit"
-            ))
+            results.append(
+                CheckResult(
+                    name="Git Commit Requirement",
+                    passed=False,
+                    message="There are uncommitted changes",
+                    severity="warning",
+                    suggestion="Per protocol, git commit should be done after each effective dialogue. Run 'git status' to view changes, then commit",
+                )
+            )
 
         # Check recent commit time (if possible)
         last_commit_time = self._get_last_commit_time()
         if last_commit_time:
             hours_since_commit = (datetime.now() - last_commit_time).total_seconds() / 3600
             if hours_since_commit > 24:
-                results.append(CheckResult(
-                    name="Git Commit Frequency",
-                    passed=True,
-                    message=f"{int(hours_since_commit)} hours since last commit",
-                    severity="info",
-                    suggestion="If there was recent dialogue output, remember to commit to Git"
-                ))
+                results.append(
+                    CheckResult(
+                        name="Git Commit Frequency",
+                        passed=True,
+                        message=f"{int(hours_since_commit)} hours since last commit",
+                        severity="info",
+                        suggestion="If there was recent dialogue output, remember to commit to Git",
+                    )
+                )
 
         return results
 
@@ -101,7 +113,9 @@ class ProtocolChecker:
         results = []
 
         # Read update threshold from config, default 0.25 hours = 15 minutes
-        check_config = self.config.get("protocol_check", {}).get("checks", {}).get("documentation", {})
+        check_config = (
+            self.config.get("protocol_check", {}).get("checks", {}).get("documentation", {})
+        )
         threshold_hours = check_config.get("update_threshold_hours", 0.25)
 
         dialogue_protocol = self.config.get("dialogue_protocol", {})
@@ -111,13 +125,15 @@ class ProtocolChecker:
         for file_path in required_files:
             full_path = self.project_root / file_path
             if not full_path.exists():
-                results.append(CheckResult(
-                    name=f"Doc Existence: {file_path}",
-                    passed=False,
-                    message=f"Required document does not exist: {file_path}",
-                    severity="error",
-                    suggestion=f"Create file {file_path}, or use 'vibecollab init' to initialize the project"
-                ))
+                results.append(
+                    CheckResult(
+                        name=f"Doc Existence: {file_path}",
+                        passed=False,
+                        message=f"Required document does not exist: {file_path}",
+                        severity="error",
+                        suggestion=f"Create file {file_path}, or use 'vibecollab init' to initialize the project",
+                    )
+                )
                 continue
 
             # Check if file was updated within threshold
@@ -129,13 +145,15 @@ class ProtocolChecker:
                     time_desc = f"{int(threshold_hours * 60)} minutes"
                 else:
                     time_desc = f"{int(threshold_hours)} hours"
-                results.append(CheckResult(
-                    name=f"Doc Update: {file_path}",
-                    passed=False,
-                    message=f"Document {file_path} has not been updated for over {time_desc}",
-                    severity="warning",
-                    suggestion=f"Per protocol, {file_path} should be updated after dialogue ends. If there was recent dialogue, please update this document"
-                ))
+                results.append(
+                    CheckResult(
+                        name=f"Doc Update: {file_path}",
+                        passed=False,
+                        message=f"Document {file_path} has not been updated for over {time_desc}",
+                        severity="warning",
+                        suggestion=f"Per protocol, {file_path} should be updated after dialogue ends. If there was recent dialogue, please update this document",
+                    )
+                )
 
         # Check PRD (if configured) - supports both .yaml and .md
         prd_config = self.config.get("prd_management", {})
@@ -143,13 +161,15 @@ class ProtocolChecker:
             prd_md_path = self.project_root / prd_config.get("prd_file", "docs/PRD.md")
             prd_yaml_path = prd_md_path.parent / (prd_md_path.stem.lower() + ".yaml")
             if not prd_yaml_path.exists() and not prd_md_path.exists():
-                results.append(CheckResult(
-                    name="PRD Document",
-                    passed=False,
-                    message="PRD document does not exist (checked prd.yaml and PRD.md)",
-                    severity="warning",
-                    suggestion="Create docs/prd.yaml (or docs/PRD.md) to record project requirements"
-                ))
+                results.append(
+                    CheckResult(
+                        name="PRD Document",
+                        passed=False,
+                        message="PRD document does not exist (checked prd.yaml and PRD.md)",
+                        severity="warning",
+                        suggestion="Create docs/prd.yaml (or docs/PRD.md) to record project requirements",
+                    )
+                )
 
         # Check multi-role collaboration document (if multi-role mode enabled)
         role_context_config = self.config.get("role_context", {})
@@ -159,26 +179,30 @@ class ProtocolChecker:
             collab_path = self.project_root / collab_file
 
             if not collab_path.exists():
-                results.append(CheckResult(
-                    name="Collaboration Doc",
-                    passed=False,
-                    message=f"Multi-role collaboration document does not exist: {collab_file}",
-                    severity="warning",
-                    suggestion=f"Create {collab_file} to record role collaboration, task assignments and dependencies"
-                ))
+                results.append(
+                    CheckResult(
+                        name="Collaboration Doc",
+                        passed=False,
+                        message=f"Multi-role collaboration document does not exist: {collab_file}",
+                        severity="warning",
+                        suggestion=f"Create {collab_file} to record role collaboration, task assignments and dependencies",
+                    )
+                )
             else:
                 # Check if file was recently updated (within 7 days)
                 file_mtime = datetime.fromtimestamp(collab_path.stat().st_mtime)
                 days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
 
                 if days_since_update > 7:
-                    results.append(CheckResult(
-                        name="Collaboration Doc Update",
-                        passed=True,
-                        message=f"{collab_file} has not been updated for over 7 days",
-                        severity="info",
-                        suggestion="Recommend updating collaboration document regularly (weekly) to record task progress and team changes"
-                    ))
+                    results.append(
+                        CheckResult(
+                            name="Collaboration Doc Update",
+                            passed=True,
+                            message=f"{collab_file} has not been updated for over 7 days",
+                            severity="info",
+                            suggestion="Recommend updating collaboration document regularly (weekly) to record task progress and team changes",
+                        )
+                    )
 
         return results
 
@@ -194,13 +218,15 @@ class ProtocolChecker:
         for file_path in required_reads:
             full_path = self.project_root / file_path
             if not full_path.exists():
-                results.append(CheckResult(
-                    name=f"Dialogue Start File: {file_path}",
-                    passed=False,
-                    message=f"File that should be read at dialogue start does not exist: {file_path}",
-                    severity="error",
-                    suggestion=f"Ensure file {file_path} exists, or use 'vibecollab init' to initialize the project"
-                ))
+                results.append(
+                    CheckResult(
+                        name=f"Dialogue Start File: {file_path}",
+                        passed=False,
+                        message=f"File that should be read at dialogue start does not exist: {file_path}",
+                        severity="error",
+                        suggestion=f"Ensure file {file_path} exists, or use 'vibecollab init' to initialize the project",
+                    )
+                )
 
         return results
 
@@ -215,9 +241,7 @@ class ProtocolChecker:
 
         roles = role_context_config.get("roles", [])
 
-        roles_dir_name = role_context_config.get("context", {}).get(
-            "per_role_dir", "docs/roles"
-        )
+        roles_dir_name = role_context_config.get("context", {}).get("per_role_dir", "docs/roles")
         roles_dir = self.project_root / roles_dir_name
 
         # If no static role list, discover dynamically from filesystem
@@ -230,44 +254,50 @@ class ProtocolChecker:
                 roles = discovered
 
             if not roles:
-                results.append(CheckResult(
-                    name="Role Config",
-                    passed=False,
-                    message="Multi-role mode is enabled but no roles were found",
-                    severity="warning",
-                    suggestion=(
-                        "Use 'vibecollab dev init -d <name>' to initialize a role, "
-                        "or configure statically in role_context.roles"
+                results.append(
+                    CheckResult(
+                        name="Role Config",
+                        passed=False,
+                        message="Multi-role mode is enabled but no roles were found",
+                        severity="warning",
+                        suggestion=(
+                            "Use 'vibecollab dev init -d <name>' to initialize a role, "
+                            "or configure statically in role_context.roles"
+                        ),
                     )
-                ))
+                )
                 return results
 
         # Check each role's context files
         for dev in roles:
             dev_id = dev.get("id") if isinstance(dev, dict) else dev
-            dev_name = (dev.get("name", dev_id) if isinstance(dev, dict) else dev)
+            dev_name = dev.get("name", dev_id) if isinstance(dev, dict) else dev
 
             if not dev_id:
-                results.append(CheckResult(
-                    name="Role ID",
-                    passed=False,
-                    message=f"Role '{dev_name}' is missing the required 'id' field",
-                    severity="error",
-                    suggestion="Configure a unique id identifier for each role"
-                ))
+                results.append(
+                    CheckResult(
+                        name="Role ID",
+                        passed=False,
+                        message=f"Role '{dev_name}' is missing the required 'id' field",
+                        severity="error",
+                        suggestion="Configure a unique id identifier for each role",
+                    )
+                )
                 continue
 
             dev_dir = roles_dir / dev_id
 
             # Check if role directory exists
             if not dev_dir.exists():
-                results.append(CheckResult(
-                    name=f"Role Dir: {dev_name}",
-                    passed=False,
-                    message=f"Role '{dev_name}' directory does not exist: docs/roles/{dev_id}",
-                    severity="error",
-                    suggestion=f"Create directory docs/roles/{dev_id} and add CONTEXT.md and .metadata.yaml"
-                ))
+                results.append(
+                    CheckResult(
+                        name=f"Role Dir: {dev_name}",
+                        passed=False,
+                        message=f"Role '{dev_name}' directory does not exist: docs/roles/{dev_id}",
+                        severity="error",
+                        suggestion=f"Create directory docs/roles/{dev_id} and add CONTEXT.md and .metadata.yaml",
+                    )
+                )
                 continue
 
             # Check CONTEXT.md or context.yaml
@@ -275,56 +305,67 @@ class ProtocolChecker:
             context_md = dev_dir / "CONTEXT.md"
             context_file = context_yaml if context_yaml.exists() else context_md
             if not context_file.exists():
-                results.append(CheckResult(
-                    name=f"Role Context: {dev_name}",
-                    passed=False,
-                    message=f"Role '{dev_name}' context file does not exist (checked context.yaml and CONTEXT.md)",
-                    severity="error",
-                    suggestion=f"Create docs/roles/{dev_id}/context.yaml (or CONTEXT.md) to record the role's work context"
-                ))
+                results.append(
+                    CheckResult(
+                        name=f"Role Context: {dev_name}",
+                        passed=False,
+                        message=f"Role '{dev_name}' context file does not exist (checked context.yaml and CONTEXT.md)",
+                        severity="error",
+                        suggestion=f"Create docs/roles/{dev_id}/context.yaml (or CONTEXT.md) to record the role's work context",
+                    )
+                )
             else:
                 # Check if CONTEXT.md was recently updated (activity within 7 days)
                 file_mtime = datetime.fromtimestamp(context_file.stat().st_mtime)
                 days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
 
                 if days_since_update > 7:
-                    results.append(CheckResult(
-                        name=f"Role Context Update: {dev_name}",
-                        passed=True,
-                        message=f"Role '{dev_name}' CONTEXT.md has not been updated for {int(days_since_update)} days",
-                        severity="info",
-                        suggestion=f"If {dev_name} has had recent development activity, remember to update their CONTEXT.md"
-                    ))
+                    results.append(
+                        CheckResult(
+                            name=f"Role Context Update: {dev_name}",
+                            passed=True,
+                            message=f"Role '{dev_name}' CONTEXT.md has not been updated for {int(days_since_update)} days",
+                            severity="info",
+                            suggestion=f"If {dev_name} has had recent development activity, remember to update their CONTEXT.md",
+                        )
+                    )
                 else:
-                    results.append(CheckResult(
-                        name=f"Role Context Update: {dev_name}",
-                        passed=True,
-                        message=f"Role '{dev_name}' CONTEXT.md was updated {int(days_since_update)} days ago",
-                        severity="info"
-                    ))
+                    results.append(
+                        CheckResult(
+                            name=f"Role Context Update: {dev_name}",
+                            passed=True,
+                            message=f"Role '{dev_name}' CONTEXT.md was updated {int(days_since_update)} days ago",
+                            severity="info",
+                        )
+                    )
 
             # Check .metadata.yaml
             metadata_file = dev_dir / ".metadata.yaml"
             if not metadata_file.exists():
-                results.append(CheckResult(
-                    name=f"Role Metadata: {dev_name}",
-                    passed=False,
-                    message=f"Role '{dev_name}' .metadata.yaml does not exist",
-                    severity="warning",
-                    suggestion=f"Create docs/roles/{dev_id}/.metadata.yaml to record role info (role, expertise, etc.)"
-                ))
+                results.append(
+                    CheckResult(
+                        name=f"Role Metadata: {dev_name}",
+                        passed=False,
+                        message=f"Role '{dev_name}' .metadata.yaml does not exist",
+                        severity="warning",
+                        suggestion=f"Create docs/roles/{dev_id}/.metadata.yaml to record role info (role, expertise, etc.)",
+                    )
+                )
 
             # Check if role's context update is in Git commits
             if context_file.exists():
                 git_tracked = self._is_file_tracked_in_git(context_file)
                 if not git_tracked:
-                    results.append(CheckResult(
-                        name=f"Git Tracking: {dev_name} CONTEXT.md",
-                        passed=False,
-                        message=f"Role '{dev_name}' CONTEXT.md is not tracked in Git version control",
-                        severity="warning",
-                        suggestion=f"Run 'git add docs/roles/{dev_id}/CONTEXT.md' and commit"
-                    ))
+                    context_filename = context_file.name
+                    results.append(
+                        CheckResult(
+                            name=f"Git Tracking: {dev_name} {context_filename}",
+                            passed=False,
+                            message=f"Role '{dev_name}' {context_filename} is not tracked in Git version control",
+                            severity="warning",
+                            suggestion=f"Run 'git add docs/roles/{dev_id}/{context_filename}' and commit",
+                        )
+                    )
 
         # Check collaboration document
         collab_config = role_context_config.get("collaboration", {})
@@ -332,37 +373,43 @@ class ProtocolChecker:
         collab_path = self.project_root / collab_file
 
         if not collab_path.exists():
-            results.append(CheckResult(
-                name="Multi-Role Collaboration Doc",
-                passed=False,
-                message=f"Collaboration document does not exist: {collab_file}",
-                severity="error",
-                suggestion=f"Create {collab_file} to record team task assignments, milestones and collaboration rules"
-            ))
+            results.append(
+                CheckResult(
+                    name="Multi-Role Collaboration Doc",
+                    passed=False,
+                    message=f"Collaboration document does not exist: {collab_file}",
+                    severity="error",
+                    suggestion=f"Create {collab_file} to record team task assignments, milestones and collaboration rules",
+                )
+            )
         else:
             # Check collaboration document update frequency
             file_mtime = datetime.fromtimestamp(collab_path.stat().st_mtime)
             days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
 
             if days_since_update > 7:
-                results.append(CheckResult(
-                    name="Collaboration Doc Update Frequency",
-                    passed=True,
-                    message=f"Collaboration document has not been updated for {int(days_since_update)} days",
-                    severity="info",
-                    suggestion="Recommend updating collaboration document weekly to record task progress and team changes"
-                ))
+                results.append(
+                    CheckResult(
+                        name="Collaboration Doc Update Frequency",
+                        passed=True,
+                        message=f"Collaboration document has not been updated for {int(days_since_update)} days",
+                        severity="info",
+                        suggestion="Recommend updating collaboration document weekly to record task progress and team changes",
+                    )
+                )
 
         # Check conflict detection config
         conflict_config = role_context_config.get("conflict_detection", {})
         if not conflict_config.get("enabled", True):
-            results.append(CheckResult(
-                name="Conflict Detection",
-                passed=True,
-                message="Multi-role conflict detection is disabled",
-                severity="warning",
-                suggestion="Recommend enabling conflict detection to avoid multiple roles modifying the same files"
-            ))
+            results.append(
+                CheckResult(
+                    name="Conflict Detection",
+                    passed=True,
+                    message="Multi-role conflict detection is disabled",
+                    severity="warning",
+                    suggestion="Recommend enabling conflict detection to avoid multiple roles modifying the same files",
+                )
+            )
 
         return results
 
@@ -404,13 +451,9 @@ class ProtocolChecker:
                     )
                 )
             elif level == "git_commit":
-                results.extend(
-                    self._check_git_commit_consistency(group_name, files)
-                )
+                results.extend(self._check_git_commit_consistency(group_name, files))
             elif level == "release":
-                results.extend(
-                    self._check_release_consistency(group_name, files)
-                )
+                results.extend(self._check_release_consistency(group_name, files))
 
         # Check existence + optional staleness of all files declared in key_files
         key_files = doc_config.get("key_files", [])
@@ -420,13 +463,15 @@ class ProtocolChecker:
                 continue
             full_path = self.project_root / path
             if not full_path.exists():
-                results.append(CheckResult(
-                    name=f"Key Doc Existence: {path}",
-                    passed=False,
-                    message=f"Key document does not exist: {path} (purpose: {kf.get('purpose', 'unknown')})",
-                    severity="warning",
-                    suggestion=f"Create {path}, it is declared as a key document"
-                ))
+                results.append(
+                    CheckResult(
+                        name=f"Key Doc Existence: {path}",
+                        passed=False,
+                        message=f"Key document does not exist: {path} (purpose: {kf.get('purpose', 'unknown')})",
+                        severity="warning",
+                        suggestion=f"Create {path}, it is declared as a key document",
+                    )
+                )
                 continue
 
             # Optional staleness check: max_stale_days
@@ -435,19 +480,21 @@ class ProtocolChecker:
                 file_mtime = datetime.fromtimestamp(full_path.stat().st_mtime)
                 days_since_update = (datetime.now() - file_mtime).total_seconds() / 86400
                 if days_since_update > max_stale_days:
-                    results.append(CheckResult(
-                        name=f"Key Doc Stale: {path}",
-                        passed=False,
-                        message=(
-                            f"Key document {path} has not been updated for over {max_stale_days} days"
-                            f" (last update: {int(days_since_update)} days ago)"
-                        ),
-                        severity="warning",
-                        suggestion=(
-                            f"Based on trigger condition '{kf.get('update_trigger', 'unknown')}', "
-                            f"please check if {path} needs updating"
+                    results.append(
+                        CheckResult(
+                            name=f"Key Doc Stale: {path}",
+                            passed=False,
+                            message=(
+                                f"Key document {path} has not been updated for over {max_stale_days} days"
+                                f" (last update: {int(days_since_update)} days ago)"
+                            ),
+                            severity="warning",
+                            suggestion=(
+                                f"Based on trigger condition '{kf.get('update_trigger', 'unknown')}', "
+                                f"please check if {path} needs updating"
+                            ),
                         )
-                    ))
+                    )
 
             # Optional follow check: watch_files - warn when watched files updated but this file didn't follow
             watch_files = kf.get("watch_files", [])
@@ -459,25 +506,30 @@ class ProtocolChecker:
                         wf_mtime = datetime.fromtimestamp(wf_path.stat().st_mtime)
                         lag_minutes = (wf_mtime - my_mtime).total_seconds() / 60
                         if lag_minutes > 15:
-                            results.append(CheckResult(
-                                name=f"Key Doc Lag: {path}",
-                                passed=False,
-                                message=(
-                                    f"{wf} has been updated, but {path} is lagging "
-                                    f"{int(lag_minutes)} minutes behind"
-                                ),
-                                severity="warning",
-                                suggestion=(
-                                    f"Trigger condition '{kf.get('update_trigger', 'unknown')}' "
-                                    f"may have been met, please check if {path} needs updating"
+                            results.append(
+                                CheckResult(
+                                    name=f"Key Doc Lag: {path}",
+                                    passed=False,
+                                    message=(
+                                        f"{wf} has been updated, but {path} is lagging "
+                                        f"{int(lag_minutes)} minutes behind"
+                                    ),
+                                    severity="warning",
+                                    suggestion=(
+                                        f"Trigger condition '{kf.get('update_trigger', 'unknown')}' "
+                                        f"may have been met, please check if {path} needs updating"
+                                    ),
                                 )
-                            ))
+                            )
 
         return results
 
     def _check_mtime_consistency(
-        self, group_name: str, files: List[str], threshold_minutes: float,
-        max_inactive_hours: float = 0
+        self,
+        group_name: str,
+        files: List[str],
+        threshold_minutes: float,
+        max_inactive_hours: float = 0,
     ) -> List[CheckResult]:
         """Local file modification time level consistency check
 
@@ -510,36 +562,38 @@ class ProtocolChecker:
             hours_since_newest = (datetime.now() - newest_time).total_seconds() / 3600
             # max_inactive_hours: -1 = always check; 0 = default 24h; >0 = custom
             inactive_limit = (
-                float("inf") if max_inactive_hours < 0
+                float("inf")
+                if max_inactive_hours < 0
                 else (max_inactive_hours if max_inactive_hours > 0 else 24)
             )
             if hours_since_newest < inactive_limit:
                 stale_files = [
-                    f for f, t in sorted_files[1:]
+                    f
+                    for f, t in sorted_files[1:]
                     if (newest_time - t).total_seconds() / 60 > threshold_minutes
                 ]
                 for stale_f in stale_files:
                     stale_t = file_mtimes[stale_f]
                     diff_min = int((newest_time - stale_t).total_seconds() / 60)
-                    results.append(CheckResult(
-                        name=f"Doc Consistency: {group_name}",
-                        passed=False,
-                        message=(
-                            f"{newest_file} has been modified, but associated document {stale_f} "
-                            f"is lagging {diff_min} minutes behind"
-                        ),
-                        severity="warning",
-                        suggestion=(
-                            f"Linked group [{group_name}] requires synchronized updates. "
-                            f"Please check if {stale_f} needs to be updated accordingly"
+                    results.append(
+                        CheckResult(
+                            name=f"Doc Consistency: {group_name}",
+                            passed=False,
+                            message=(
+                                f"{newest_file} has been modified, but associated document {stale_f} "
+                                f"is lagging {diff_min} minutes behind"
+                            ),
+                            severity="warning",
+                            suggestion=(
+                                f"Linked group [{group_name}] requires synchronized updates. "
+                                f"Please check if {stale_f} needs to be updated accordingly"
+                            ),
                         )
-                    ))
+                    )
 
         return results
 
-    def _check_git_commit_consistency(
-        self, group_name: str, files: List[str]
-    ) -> List[CheckResult]:
+    def _check_git_commit_consistency(self, group_name: str, files: List[str]) -> List[CheckResult]:
         """Git commit time level consistency check
 
         Check whether group files were modified in the same recent commit.
@@ -560,7 +614,8 @@ class ProtocolChecker:
                 result = subprocess.run(
                     ["git", "log", "-1", "--format=%H", "--", f],
                     cwd=self.project_root,
-                    capture_output=True, text=True
+                    capture_output=True,
+                    text=True,
                 )
                 commit_hash = result.stdout.strip() if result.returncode == 0 else None
                 file_last_commits[f] = commit_hash
@@ -578,12 +633,11 @@ class ProtocolChecker:
                     result = subprocess.run(
                         ["git", "log", "-1", "--format=%ct", commit_hash],
                         cwd=self.project_root,
-                        capture_output=True, text=True
+                        capture_output=True,
+                        text=True,
                     )
                     if result.returncode == 0 and result.stdout.strip():
-                        commits_with_time[f] = datetime.fromtimestamp(
-                            int(result.stdout.strip())
-                        )
+                        commits_with_time[f] = datetime.fromtimestamp(int(result.stdout.strip()))
                     else:
                         commits_with_time[f] = None
                 except BaseException:
@@ -605,25 +659,25 @@ class ProtocolChecker:
             if f == newest_file:
                 continue
             if commit_hash != newest_commit:
-                results.append(CheckResult(
-                    name=f"Doc Git Consistency: {group_name}",
-                    passed=False,
-                    message=(
-                        f"{newest_file} was modified in the recent commit, "
-                        f"but associated document {f} is not in the same commit"
-                    ),
-                    severity="warning",
-                    suggestion=(
-                        f"Linked group [{group_name}] requires git commit sync. "
-                        f"Recommend updating {f} when modifying {newest_file}"
+                results.append(
+                    CheckResult(
+                        name=f"Doc Git Consistency: {group_name}",
+                        passed=False,
+                        message=(
+                            f"{newest_file} was modified in the recent commit, "
+                            f"but associated document {f} is not in the same commit"
+                        ),
+                        severity="warning",
+                        suggestion=(
+                            f"Linked group [{group_name}] requires git commit sync. "
+                            f"Recommend updating {f} when modifying {newest_file}"
+                        ),
                     )
-                ))
+                )
 
         return results
 
-    def _check_release_consistency(
-        self, group_name: str, files: List[str]
-    ) -> List[CheckResult]:
+    def _check_release_consistency(self, group_name: str, files: List[str]) -> List[CheckResult]:
         """Release version level consistency check
 
         Check whether all files in the group were modified (compared to previous tag)
@@ -639,7 +693,8 @@ class ProtocolChecker:
             tag_result = subprocess.run(
                 ["git", "tag", "--sort=-v:refname", "-l", "v*"],
                 cwd=self.project_root,
-                capture_output=True, text=True
+                capture_output=True,
+                text=True,
             )
             if tag_result.returncode != 0:
                 return results
@@ -655,7 +710,8 @@ class ProtocolChecker:
             diff_result = subprocess.run(
                 ["git", "diff", "--name-only", prev_tag, latest_tag],
                 cwd=self.project_root,
-                capture_output=True, text=True
+                capture_output=True,
+                text=True,
             )
             if diff_result.returncode != 0:
                 return results
@@ -670,19 +726,21 @@ class ProtocolChecker:
             if some_changed and not all_changed:
                 missing = [f for f, changed in group_in_diff.items() if not changed]
                 for f in missing:
-                    results.append(CheckResult(
-                        name=f"Doc Version Consistency: {group_name}",
-                        passed=False,
-                        message=(
-                            f"In version {prev_tag} -> {latest_tag}, "
-                            f"some documents in the linked group were updated, but {f} was not synced"
-                        ),
-                        severity="info",
-                        suggestion=(
-                            f"Linked group [{group_name}] should be consistent at release. "
-                            f"Please check if {f} needs updating"
+                    results.append(
+                        CheckResult(
+                            name=f"Doc Version Consistency: {group_name}",
+                            passed=False,
+                            message=(
+                                f"In version {prev_tag} -> {latest_tag}, "
+                                f"some documents in the linked group were updated, but {f} was not synced"
+                            ),
+                            severity="info",
+                            suggestion=(
+                                f"Linked group [{group_name}] should be consistent at release. "
+                                f"Please check if {f} needs updating"
+                            ),
                         )
-                    ))
+                    )
         except BaseException:
             pass
 
@@ -702,10 +760,15 @@ class ProtocolChecker:
 
         try:
             result = subprocess.run(
-                ["git", "ls-files", "--error-unmatch", str(file_path.relative_to(self.project_root))],
+                [
+                    "git",
+                    "ls-files",
+                    "--error-unmatch",
+                    str(file_path.relative_to(self.project_root)),
+                ],
                 cwd=self.project_root,
                 capture_output=True,
-                text=True
+                text=True,
             )
             return result.returncode == 0
         except BaseException:
@@ -722,12 +785,86 @@ class ProtocolChecker:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             timestamp = int(result.stdout.strip())
             return datetime.fromtimestamp(timestamp)
         except BaseException:
             return None
+
+    def _check_yaml_format(self) -> List[CheckResult]:
+        """Check YAML file format validity
+
+        Validates that key YAML files are well-formed.
+        """
+        results = []
+
+        # Key YAML files to check
+        yaml_files = [
+            "docs/context.yaml",
+            "docs/decisions.yaml",
+            "docs/roadmap.yaml",
+            "docs/prd.yaml",
+            "docs/changelog.yaml",
+            "project.yaml",
+        ]
+
+        # Check role context YAML files if multi-role mode is enabled
+        role_context_config = self.config.get("role_context", {})
+        if role_context_config.get("enabled", False):
+            roles_dir_name = role_context_config.get("context", {}).get(
+                "per_role_dir", "docs/roles"
+            )
+            roles_dir = self.project_root / roles_dir_name
+            if roles_dir.exists():
+                for role_dir in roles_dir.iterdir():
+                    if role_dir.is_dir() and not role_dir.name.startswith("."):
+                        metadata_file = role_dir / ".metadata.yaml"
+                        if metadata_file.exists():
+                            yaml_files.append(str(metadata_file.relative_to(self.project_root)))
+                        context_yaml = role_dir / "context.yaml"
+                        if context_yaml.exists():
+                            yaml_files.append(str(context_yaml.relative_to(self.project_root)))
+
+        for yaml_path in yaml_files:
+            full_path = self.project_root / yaml_path
+            if not full_path.exists():
+                continue
+
+            try:
+                with open(full_path, "r", encoding="utf-8") as f:
+                    yaml.safe_load(f)
+                # YAML is valid
+                results.append(
+                    CheckResult(
+                        name=f"YAML Format: {yaml_path}",
+                        passed=True,
+                        message=f"{yaml_path} is valid YAML",
+                        severity="info",
+                    )
+                )
+            except yaml.YAMLError as e:
+                results.append(
+                    CheckResult(
+                        name=f"YAML Format: {yaml_path}",
+                        passed=False,
+                        message=f"{yaml_path} has invalid YAML format: {str(e)[:100]}",
+                        severity="error",
+                        suggestion=f"Fix YAML syntax errors in {yaml_path}",
+                    )
+                )
+            except Exception as e:
+                results.append(
+                    CheckResult(
+                        name=f"YAML Format: {yaml_path}",
+                        passed=False,
+                        message=f"Error reading {yaml_path}: {str(e)[:100]}",
+                        severity="warning",
+                        suggestion=f"Check file permissions and encoding for {yaml_path}",
+                    )
+                )
+
+        return results
 
     def get_summary(self, results: List[CheckResult]) -> Dict:
         """Get check results summary
@@ -750,5 +887,5 @@ class ProtocolChecker:
             "errors": errors,
             "warnings": warnings,
             "infos": infos,
-            "all_passed": errors == 0
+            "all_passed": errors == 0,
         }

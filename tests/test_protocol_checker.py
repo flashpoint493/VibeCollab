@@ -25,18 +25,12 @@ class TestProtocolChecker:
             config = {
                 "role_context": {
                     "enabled": True,
-                    "collaboration": {
-                        "file": "docs/roles/COLLABORATION.md"
-                    }
+                    "collaboration": {"file": "docs/roles/COLLABORATION.md"},
                 },
                 "dialogue_protocol": {
-                    "on_end": {
-                        "update_files": []
-                    },
-                    "on_start": {
-                        "read_files": []
-                    }
-                }
+                    "on_end": {"update_files": []},
+                    "on_start": {"read_files": []},
+                },
             }
 
             checker = ProtocolChecker(project_root, config)
@@ -61,28 +55,23 @@ class TestProtocolChecker:
             config = {
                 "role_context": {
                     "enabled": True,
-                    "collaboration": {
-                        "file": "docs/roles/COLLABORATION.md"
-                    }
+                    "collaboration": {"file": "docs/roles/COLLABORATION.md"},
                 },
                 "dialogue_protocol": {
-                    "on_end": {
-                        "update_files": []
-                    },
-                    "on_start": {
-                        "read_files": []
-                    }
-                }
+                    "on_end": {"update_files": []},
+                    "on_start": {"read_files": []},
+                },
             }
 
             checker = ProtocolChecker(project_root, config)
             results = checker.check_all()
 
             # Should not have missing collaboration doc errors
-            collab_errors = [r for r in results
-                           if "Collaboration Doc" in r.name
-                           and r.severity == "warning"
-                           and not r.passed]
+            collab_errors = [
+                r
+                for r in results
+                if "Collaboration Doc" in r.name and r.severity == "warning" and not r.passed
+            ]
             assert len(collab_errors) == 0
 
     def test_check_collaboration_disabled(self):
@@ -91,17 +80,11 @@ class TestProtocolChecker:
             project_root = Path(tmpdir)
 
             config = {
-                "role_context": {
-                    "enabled": False
-                },
+                "role_context": {"enabled": False},
                 "dialogue_protocol": {
-                    "on_end": {
-                        "update_files": []
-                    },
-                    "on_start": {
-                        "read_files": []
-                    }
-                }
+                    "on_end": {"update_files": []},
+                    "on_start": {"read_files": []},
+                },
             }
 
             checker = ProtocolChecker(project_root, config)
@@ -118,7 +101,7 @@ class TestProtocolChecker:
             passed=True,
             message="Test message",
             severity="info",
-            suggestion="Test suggestion"
+            suggestion="Test suggestion",
         )
 
         assert result.name == "Test Check"
@@ -131,7 +114,12 @@ class TestProtocolChecker:
         """Test check results summary"""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            config = {"dialogue_protocol": {"on_end": {"update_files": []}, "on_start": {"read_files": []}}}
+            config = {
+                "dialogue_protocol": {
+                    "on_end": {"update_files": []},
+                    "on_start": {"read_files": []},
+                }
+            }
             checker = ProtocolChecker(project_root, config)
 
             results = [
@@ -160,16 +148,14 @@ class TestProtocolChecker:
                     "enabled": True,
                     "roles": [
                         {"id": "alice", "name": "Alice", "role": "backend"},
-                        {"id": "bob", "name": "Bob", "role": "frontend"}
+                        {"id": "bob", "name": "Bob", "role": "frontend"},
                     ],
-                    "collaboration": {
-                        "file": "docs/roles/COLLABORATION.md"
-                    }
+                    "collaboration": {"file": "docs/roles/COLLABORATION.md"},
                 },
                 "dialogue_protocol": {
                     "on_end": {"update_files": []},
-                    "on_start": {"read_files": []}
-                }
+                    "on_start": {"read_files": []},
+                },
             }
 
             # Only create alice's context
@@ -186,8 +172,9 @@ class TestProtocolChecker:
             assert len(bob_checks) > 0
 
             # Should detect that alice's files exist
-            alice_context_checks = [r for r in results
-                                   if "Alice" in r.message and "CONTEXT.md" in r.message]
+            alice_context_checks = [
+                r for r in results if "Alice" in r.message and "CONTEXT.md" in r.message
+            ]
             assert any(r.passed for r in alice_context_checks)
 
     def test_check_role_missing_id(self):
@@ -200,12 +187,12 @@ class TestProtocolChecker:
                     "enabled": True,
                     "roles": [
                         {"name": "Alice"}  # missing id
-                    ]
+                    ],
                 },
                 "dialogue_protocol": {
                     "on_end": {"update_files": []},
-                    "on_start": {"read_files": []}
-                }
+                    "on_start": {"read_files": []},
+                },
             }
 
             checker = ProtocolChecker(project_root, config)
@@ -224,12 +211,12 @@ class TestProtocolChecker:
             config = {
                 "role_context": {
                     "enabled": True,
-                    "roles": []  # empty list
+                    "roles": [],  # empty list
                 },
                 "dialogue_protocol": {
                     "on_end": {"update_files": []},
-                    "on_start": {"read_files": []}
-                }
+                    "on_start": {"read_files": []},
+                },
             }
 
             checker = ProtocolChecker(project_root, config)
@@ -257,14 +244,12 @@ class TestProtocolChecker:
                     "conflict_detection": {
                         "enabled": False  # disable conflict detection
                     },
-                    "collaboration": {
-                        "file": "docs/roles/COLLABORATION.md"
-                    }
+                    "collaboration": {"file": "docs/roles/COLLABORATION.md"},
                 },
                 "dialogue_protocol": {
                     "on_end": {"update_files": []},
-                    "on_start": {"read_files": []}
-                }
+                    "on_start": {"read_files": []},
+                },
             }
 
             # Create collaboration document
@@ -303,7 +288,9 @@ class TestConfigurableThreshold:
             results = checker._check_documentation_protocol()
 
             # File just created, should not timeout
-            update_warnings = [r for r in results if "Doc Update" in r.name and r.severity == "warning"]
+            update_warnings = [
+                r for r in results if "Doc Update" in r.name and r.severity == "warning"
+            ]
             assert len(update_warnings) == 0
 
     def test_threshold_default_15min(self):
@@ -331,6 +318,7 @@ class TestConfigurableThreshold:
     def test_threshold_warning_message_minutes(self):
         """Test warning message uses minutes when threshold < 1 hour"""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             doc = project_root / "docs" / "OLD.md"
@@ -380,7 +368,10 @@ class TestDocumentConsistency:
             project_root = Path(tmpdir)
             config = {
                 "documentation": {"consistency": {"enabled": False}},
-                "dialogue_protocol": {"on_end": {"update_files": []}, "on_start": {"read_files": []}},
+                "dialogue_protocol": {
+                    "on_end": {"update_files": []},
+                    "on_start": {"read_files": []},
+                },
             }
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
@@ -394,12 +385,16 @@ class TestDocumentConsistency:
             (project_root / "docs" / "PRD.md").write_text("prd\n", encoding="utf-8")
             (project_root / "docs" / "DECISIONS.md").write_text("dec\n", encoding="utf-8")
 
-            config = self._base_config([{
-                "name": "PRD-DECISIONS",
-                "files": ["docs/PRD.md", "docs/DECISIONS.md"],
-                "level": "local_mtime",
-                "threshold_minutes": 15,
-            }])
+            config = self._base_config(
+                [
+                    {
+                        "name": "PRD-DECISIONS",
+                        "files": ["docs/PRD.md", "docs/DECISIONS.md"],
+                        "level": "local_mtime",
+                        "threshold_minutes": 15,
+                    }
+                ]
+            )
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
 
@@ -409,6 +404,7 @@ class TestDocumentConsistency:
     def test_mtime_consistency_one_stale(self):
         """One file just modified, another exceeds threshold, should warn"""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             (project_root / "docs").mkdir()
@@ -424,12 +420,16 @@ class TestDocumentConsistency:
             old_time = time.time() - 7200
             os.utime(prd, (old_time, old_time))
 
-            config = self._base_config([{
-                "name": "PRD-DECISIONS",
-                "files": ["docs/PRD.md", "docs/DECISIONS.md"],
-                "level": "local_mtime",
-                "threshold_minutes": 15,
-            }])
+            config = self._base_config(
+                [
+                    {
+                        "name": "PRD-DECISIONS",
+                        "files": ["docs/PRD.md", "docs/DECISIONS.md"],
+                        "level": "local_mtime",
+                        "threshold_minutes": 15,
+                    }
+                ]
+            )
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
 
@@ -442,6 +442,7 @@ class TestDocumentConsistency:
     def test_mtime_consistency_both_stale(self):
         """Both files not modified for a long time (>24h), should not warn (no active editing)"""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             (project_root / "docs").mkdir()
@@ -457,12 +458,16 @@ class TestDocumentConsistency:
             os.utime(prd, (old_time, old_time))
             os.utime(dec, (old_time, old_time))
 
-            config = self._base_config([{
-                "name": "PRD-DECISIONS",
-                "files": ["docs/PRD.md", "docs/DECISIONS.md"],
-                "level": "local_mtime",
-                "threshold_minutes": 15,
-            }])
+            config = self._base_config(
+                [
+                    {
+                        "name": "PRD-DECISIONS",
+                        "files": ["docs/PRD.md", "docs/DECISIONS.md"],
+                        "level": "local_mtime",
+                        "threshold_minutes": 15,
+                    }
+                ]
+            )
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
 
@@ -477,12 +482,16 @@ class TestDocumentConsistency:
             (project_root / "docs" / "PRD.md").write_text("prd\n", encoding="utf-8")
             # DECISIONS.md does not exist
 
-            config = self._base_config([{
-                "name": "PRD-DECISIONS",
-                "files": ["docs/PRD.md", "docs/DECISIONS.md"],
-                "level": "local_mtime",
-                "threshold_minutes": 15,
-            }])
+            config = self._base_config(
+                [
+                    {
+                        "name": "PRD-DECISIONS",
+                        "files": ["docs/PRD.md", "docs/DECISIONS.md"],
+                        "level": "local_mtime",
+                        "threshold_minutes": 15,
+                    }
+                ]
+            )
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
 
@@ -493,6 +502,7 @@ class TestDocumentConsistency:
     def test_mtime_consistency_three_files(self):
         """Two stale files in a three-file group should produce two warnings"""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             (project_root / "docs").mkdir()
@@ -510,12 +520,16 @@ class TestDocumentConsistency:
             os.utime(b, (old_time, old_time))
             os.utime(c, (old_time, old_time))
 
-            config = self._base_config([{
-                "name": "three-doc-group",
-                "files": ["docs/A.md", "docs/B.md", "docs/C.md"],
-                "level": "local_mtime",
-                "threshold_minutes": 15,
-            }])
+            config = self._base_config(
+                [
+                    {
+                        "name": "three-doc-group",
+                        "files": ["docs/A.md", "docs/B.md", "docs/C.md"],
+                        "level": "local_mtime",
+                        "threshold_minutes": 15,
+                    }
+                ]
+            )
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
 
@@ -537,7 +551,10 @@ class TestDocumentConsistency:
                     ],
                     "consistency": {"enabled": True, "linked_groups": []},
                 },
-                "dialogue_protocol": {"on_end": {"update_files": []}, "on_start": {"read_files": []}},
+                "dialogue_protocol": {
+                    "on_end": {"update_files": []},
+                    "on_start": {"read_files": []},
+                },
             }
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
@@ -549,6 +566,7 @@ class TestDocumentConsistency:
     def test_default_level_used(self):
         """Groups without explicit level use default_level"""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             (project_root / "docs").mkdir()
@@ -560,12 +578,16 @@ class TestDocumentConsistency:
             old_time = time.time() - 7200
             os.utime(b, (old_time, old_time))
 
-            config = self._base_config([{
-                "name": "default-level-group",
-                "files": ["docs/A.md", "docs/B.md"],
-                # No level specified, uses default_level=local_mtime
-                "threshold_minutes": 15,
-            }])
+            config = self._base_config(
+                [
+                    {
+                        "name": "default-level-group",
+                        "files": ["docs/A.md", "docs/B.md"],
+                        # No level specified, uses default_level=local_mtime
+                        "threshold_minutes": 15,
+                    }
+                ]
+            )
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
 
@@ -580,11 +602,15 @@ class TestDocumentConsistency:
             (project_root / "docs").mkdir()
             (project_root / "docs" / "A.md").write_text("a\n", encoding="utf-8")
 
-            config = self._base_config([{
-                "name": "single-file-group",
-                "files": ["docs/A.md"],
-                "level": "local_mtime",
-            }])
+            config = self._base_config(
+                [
+                    {
+                        "name": "single-file-group",
+                        "files": ["docs/A.md"],
+                        "level": "local_mtime",
+                    }
+                ]
+            )
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
 
@@ -594,6 +620,7 @@ class TestDocumentConsistency:
     def test_key_files_staleness_triggered(self):
         """key_files with max_stale_days configured and file expired, should warn"""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             (project_root / "docs").mkdir()
@@ -605,8 +632,12 @@ class TestDocumentConsistency:
             config = {
                 "documentation": {
                     "key_files": [
-                        {"path": "docs/QA.md", "purpose": "QA testing",
-                         "update_trigger": "on feature completion", "max_stale_days": 7},
+                        {
+                            "path": "docs/QA.md",
+                            "purpose": "QA testing",
+                            "update_trigger": "on feature completion",
+                            "max_stale_days": 7,
+                        },
                     ],
                     "consistency": {"enabled": True, "linked_groups": []},
                 },
@@ -630,8 +661,7 @@ class TestDocumentConsistency:
             config = {
                 "documentation": {
                     "key_files": [
-                        {"path": "docs/QA.md", "purpose": "QA testing",
-                         "max_stale_days": 7},
+                        {"path": "docs/QA.md", "purpose": "QA testing", "max_stale_days": 7},
                     ],
                     "consistency": {"enabled": True, "linked_groups": []},
                 },
@@ -645,6 +675,7 @@ class TestDocumentConsistency:
     def test_key_files_no_max_stale_days(self):
         """key_files without max_stale_days, no staleness check"""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             (project_root / "docs").mkdir()
@@ -670,6 +701,7 @@ class TestDocumentConsistency:
     def test_max_inactive_hours_always_check(self):
         """max_inactive_hours=-1 always checks, even if all group files > 24h old"""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             (project_root / "docs").mkdir()
@@ -687,13 +719,17 @@ class TestDocumentConsistency:
             prd_time = time.time() - 72 * 3600
             os.utime(prd, (prd_time, prd_time))
 
-            config = self._base_config([{
-                "name": "PRD-DECISIONS",
-                "files": ["docs/PRD.md", "docs/DECISIONS.md"],
-                "level": "local_mtime",
-                "threshold_minutes": 15,
-                "max_inactive_hours": -1,
-            }])
+            config = self._base_config(
+                [
+                    {
+                        "name": "PRD-DECISIONS",
+                        "files": ["docs/PRD.md", "docs/DECISIONS.md"],
+                        "level": "local_mtime",
+                        "threshold_minutes": 15,
+                        "max_inactive_hours": -1,
+                    }
+                ]
+            )
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
 
@@ -705,6 +741,7 @@ class TestDocumentConsistency:
     def test_max_inactive_hours_custom(self):
         """max_inactive_hours=48, newest file modified 30h ago should still check"""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             (project_root / "docs").mkdir()
@@ -722,13 +759,17 @@ class TestDocumentConsistency:
             b_time = time.time() - 60 * 3600
             os.utime(b, (b_time, b_time))
 
-            config = self._base_config([{
-                "name": "AB-GROUP",
-                "files": ["docs/A.md", "docs/B.md"],
-                "level": "local_mtime",
-                "threshold_minutes": 15,
-                "max_inactive_hours": 48,
-            }])
+            config = self._base_config(
+                [
+                    {
+                        "name": "AB-GROUP",
+                        "files": ["docs/A.md", "docs/B.md"],
+                        "level": "local_mtime",
+                        "threshold_minutes": 15,
+                        "max_inactive_hours": 48,
+                    }
+                ]
+            )
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
 
@@ -739,6 +780,7 @@ class TestDocumentConsistency:
     def test_max_inactive_hours_default_24h(self):
         """max_inactive_hours=0 (default) uses 24h, exceeding skips check"""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             (project_root / "docs").mkdir()
@@ -756,13 +798,17 @@ class TestDocumentConsistency:
             b_time = time.time() - 60 * 3600
             os.utime(b, (b_time, b_time))
 
-            config = self._base_config([{
-                "name": "AB-GROUP",
-                "files": ["docs/A.md", "docs/B.md"],
-                "level": "local_mtime",
-                "threshold_minutes": 15,
-                # No max_inactive_hours, default is 0 -> 24h
-            }])
+            config = self._base_config(
+                [
+                    {
+                        "name": "AB-GROUP",
+                        "files": ["docs/A.md", "docs/B.md"],
+                        "level": "local_mtime",
+                        "threshold_minutes": 15,
+                        # No max_inactive_hours, default is 0 -> 24h
+                    }
+                ]
+            )
             checker = ProtocolChecker(project_root, config)
             results = checker._check_document_consistency()
 
@@ -773,6 +819,7 @@ class TestDocumentConsistency:
     def test_watch_files_triggered(self):
         """watch_files target updated but this file didn't follow, should warn"""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             (project_root / "docs").mkdir()
@@ -888,3 +935,98 @@ class TestDocumentConsistency:
 
             lag_results = [r for r in results if "Key Doc Lag" in r.name]
             assert len(lag_results) == 0
+
+
+class TestYamlFormatCheck:
+    """Test YAML format validation"""
+
+    def test_valid_yaml_passes(self):
+        """Valid YAML files should pass format check"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+            (project_root / "docs" / "context.yaml").write_text(
+                "key: value\nlist:\n  - item1\n  - item2\n", encoding="utf-8"
+            )
+
+            config = {
+                "dialogue_protocol": {
+                    "on_end": {"update_files": []},
+                    "on_start": {"read_files": []},
+                }
+            }
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_yaml_format()
+
+            yaml_results = [r for r in results if "YAML Format: docs/context.yaml" in r.name]
+            assert len(yaml_results) == 1
+            assert yaml_results[0].passed is True
+            assert yaml_results[0].severity == "info"
+
+    def test_invalid_yaml_fails(self):
+        """Invalid YAML files should fail format check"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            (project_root / "docs").mkdir()
+            # Invalid YAML - unclosed quote
+            (project_root / "docs" / "decisions.yaml").write_text(
+                'key: "unclosed string\n', encoding="utf-8"
+            )
+
+            config = {
+                "dialogue_protocol": {
+                    "on_end": {"update_files": []},
+                    "on_start": {"read_files": []},
+                }
+            }
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_yaml_format()
+
+            yaml_results = [r for r in results if "YAML Format: docs/decisions.yaml" in r.name]
+            assert len(yaml_results) == 1
+            assert yaml_results[0].passed is False
+            assert yaml_results[0].severity == "error"
+
+    def test_missing_yaml_skipped(self):
+        """Missing YAML files should be skipped"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            # Don't create any YAML files
+
+            config = {
+                "dialogue_protocol": {
+                    "on_end": {"update_files": []},
+                    "on_start": {"read_files": []},
+                }
+            }
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_yaml_format()
+
+            # Should return empty list when no YAML files exist
+            assert len(results) == 0
+
+    def test_role_context_yaml_checked(self):
+        """Role context YAML files should be checked when multi-role enabled"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            roles_dir = project_root / "docs" / "roles" / "alice"
+            roles_dir.mkdir(parents=True)
+            (roles_dir / ".metadata.yaml").write_text("role: backend\n", encoding="utf-8")
+            (roles_dir / "context.yaml").write_text("current_task: testing\n", encoding="utf-8")
+
+            config = {
+                "role_context": {"enabled": True},
+                "dialogue_protocol": {
+                    "on_end": {"update_files": []},
+                    "on_start": {"read_files": []},
+                },
+            }
+            checker = ProtocolChecker(project_root, config)
+            results = checker._check_yaml_format()
+
+            metadata_results = [r for r in results if ".metadata.yaml" in r.name]
+            context_results = [r for r in results if "context.yaml" in r.name]
+            assert len(metadata_results) == 1
+            assert len(context_results) == 1
+            assert metadata_results[0].passed is True
+            assert context_results[0].passed is True

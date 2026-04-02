@@ -1,0 +1,58 @@
+kind: insight
+version: '1'
+id: INS-056
+title: 'YAML-Aware Module Update Pattern: ProtocolChecker, InsightSignalCollector, Indexer'
+summary: Systematic verification and enhancement of YAML support across core modules for v0.12.0 YAML Data Layer
+tags:
+- yaml
+- protocol
+- insight
+- indexer
+- v0.12.0
+- verification
+- enhancement
+category: technique
+body:
+  scenario: >
+    v0.12.0 YAML Data Layer migration requires all core modules to support YAML-first document paths.
+    Need to verify and complete YAML-aware updates for:
+    1. ProtocolChecker - YAML document path checking
+    2. InsightSignalCollector - YAML diff detection
+    3. Indexer - YAML document indexing and segmentation
+  approach: >
+    Three-phase verification approach:
+
+    Phase 1 - Code Inspection:
+    - Read existing implementation of all three modules
+    - Identify YAML support gaps and inconsistencies
+
+    Phase 2 - Enhancement:
+    - ProtocolChecker: Fix hardcoded CONTEXT.md references to support context.yaml,
+      add _check_yaml_format() method for YAML validation
+    - InsightSignalCollector: Already supports YAML document paths (verified)
+    - Indexer: Already supports YAML-first document list (verified)
+
+    Phase 3 - Testing:
+    - Run all existing tests (97 tests passed)
+    - Add new YAML format validation tests (4 new tests added)
+    - Verify backward compatibility
+  constraints:
+  - Maintain backward compatibility with Markdown files
+  - YAML and Markdown should coexist during transition period
+  - All existing tests must pass
+  validation:
+  - 97 tests passing across all three modules
+  - 4 new YAML format validation tests added
+  - ProtocolChecker now validates YAML syntax for context.yaml, decisions.yaml, roadmap.yaml, prd.yaml, changelog.yaml
+  - Git tracking messages now show correct filename (CONTEXT.md or context.yaml)
+artifacts:
+- src/vibecollab/core/protocol_checker.py
+- src/vibecollab/insight/signal.py
+- src/vibecollab/search/indexer.py
+- tests/test_protocol_checker.py
+origin:
+  created_by: ocarina
+  created_at: '2026-04-02'
+  context: Completed v0.12.0 YAML-aware module verification and enhancement. All modules
+    now fully support YAML-first document paths. 101 total tests passing (97 existing + 4 new).
+fingerprint: 8a3f2c9e1b5d4e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f
