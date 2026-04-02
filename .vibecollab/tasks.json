@@ -204,7 +204,35 @@
     "milestone": "v0.12.0",
     "output": "",
     "role": "DEV",
+    "status": "DONE",
+    "updated_at": "2026-04-02T05:11:42.012614+00:00"
+  },
+  "TASK-DEV-031": {
+    "assignee": null,
+    "created_at": "2026-04-02T05:14:33.406012+00:00",
+    "dependencies": [],
+    "description": "",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 Docs Markdown to YAML migration: Convert all docs/*.md to docs/*.yaml using schema v1",
+    "id": "TASK-DEV-031",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-038",
+          "score": 0.0588,
+          "title": "Role-Driven Architecture: Continuous Improvement Pattern"
+        },
+        {
+          "id": "INS-008",
+          "score": 0.0559,
+          "title": "Execution Plan: YAML-Driven Multi-Round Automation"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "",
+    "role": "DEV",
     "status": "REVIEW",
-    "updated_at": "2026-04-01T07:24:48.113442+00:00"
+    "updated_at": "2026-04-02T05:19:31.218103+00:00"
   }
 }

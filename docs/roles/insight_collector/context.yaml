@@ -1,0 +1,41 @@
+kind: role_context
+version: "1"
+role: insight_collector
+updated_at: "2026-04-01"
+current_version: "v0.11.0"
+
+current_tasks:
+  - "Insight System Hardening — External project validation pending"
+  - "Phase 2: Test Insight system on 3+ real external projects"
+
+recently_completed:
+  - date: "2026-04-01"
+    description: "INS-054 Permission System Testing Pattern created (TASK-DEV-029)"
+  - date: "2026-04-01"
+    description: "INS-053 Documentation Sync pattern captured"
+  - date: "2026-03-30"
+    description: "Trigger Registry implemented (tag-based trigger discovery)"
+  - date: "2026-03-30"
+    description: "55 total Insights indexed (351+ vectors)"
+  - date: "2026-03-27"
+    description: "Created 30 Insights from VibeCollab development history"
+  - date: "2026-03-27"
+    description: "Validated all 40 CLI commands"
+  - date: "2026-03-27"
+    description: "Established semantic search index"
+
+pending_issues:
+  - "Cross-project import/export verification not started"
+  - "External project A/B/C validation not started"
+
+technical_debt:
+  - "Semantic index staleness (no auto-update on Insight change)"
+  - "Duplicate detection sensitivity threshold needs tuning"
+  - "Import fingerprint mismatch on rename strategy"
+
+notes: |
+  Key Metrics:
+  - Total Insights: 55 (target: 100+)
+  - Avg Weight: 0.95 (target: > 1.0)
+  - Semantic Coverage: 351+ vectors (target: 500+)
+  - External Projects Tested: 0 (target: 3+)

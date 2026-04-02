@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### In Progress (v0.12.0)
+- **YAML Schema Design** (TASK-DEV-030, DECISION-027): 6 document type schemas created
+  - `schema/context.schema.yaml` — Global + role context (project status, tech debt)
+  - `schema/changelog.schema.yaml` — Versioned releases with categorized entries
+  - `schema/decisions.schema.yaml` — Decision records with levels, options, rationale
+  - `schema/roadmap.schema.yaml` — Milestones, lifecycle stages, checklist items
+  - `schema/prd.schema.yaml` — Requirements with lifecycle tracking
+  - `schema/qa.schema.yaml` — QA test cases with steps, expected, status
+  - All schemas follow `kind` + `version` envelope pattern (forward-compatible)
+- **events.jsonl Bug Fix**: Root cause found — path was a directory not a file on Windows. Fixed by recreating as file.
+
 ## [v0.11.0] - 2026-04-02
 
 ### Added

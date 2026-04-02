@@ -1,0 +1,49 @@
+kind: context
+version: "1"
+updated_at: "2026-04-02T13:11:00"
+aggregated_from:
+  - architect
+  - dev
+  - insight_collector
+
+project_status:
+  current_version: "v0.12.0-dev"
+  active_roles:
+    - architect
+    - dev
+    - insight_collector
+  milestone: "v0.12.0 YAML Data Layer + Workflows + Insight Automation — 1/40 items (TASK-DEV-030 schema design done)"
+
+roles:
+  - role: architect
+    updated_at: "2026-04-02"
+    current_task: "v0.12.0 YAML Data Layer architecture (DECISION-025/027)"
+    progress: "Schema design principles confirmed, 6 schemas created"
+    pending_issues: null
+    next_steps: "Review module rewrite sequence for v0.12.0"
+
+  - role: dev
+    updated_at: "2026-04-02"
+    current_task: "v0.12.0 Docs Markdown → YAML migration (TASK-DEV-031)"
+    progress: "TASK-DEV-030 DONE (6 YAML schemas). events.jsonl bug fixed. v0.11.0 all tasks DONE."
+    pending_issues: "MCP onboard timeout after IDE restart"
+    next_steps: "docs/*.md → docs/*.yaml full migration, then module rewrites (ContextAggregator, RoadmapParser, PRDManager)"
+
+  - role: insight_collector
+    updated_at: "2026-04-01"
+    current_task: "Insight System Hardening — External project validation pending"
+    progress: "55 Insights indexed, Trigger Registry + Skill Registry operational"
+    pending_issues: "Cross-project import/export verification not started"
+    next_steps: "External project A/B/C validation"
+
+collaboration: "See docs/roles/ for individual role contexts"
+
+technical_debt:
+  - role: dev
+    description: "MCP `onboard` tool call timeout after IDE restart still needs investigation"
+  - role: dev
+    description: "`README.zh-CN.md` project structure section is outdated"
+  - role: insight_collector
+    description: "Semantic index staleness (no auto-update on Insight change)"
+  - role: insight_collector
+    description: "Duplicate detection sensitivity threshold needs tuning"

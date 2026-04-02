@@ -529,10 +529,10 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
 > Core principle: **YAML is source of truth → Markdown is a generated view.**
 
 #### Docs Markdown → YAML Big-Bang Migration (DECISION-025, P0)
-- [ ] YAML schema design for all doc types (`schema/context.schema.yaml`, `roadmap.schema.yaml`, etc.)
+- [x] YAML schema design for all doc types (`schema/context.schema.yaml`, `roadmap.schema.yaml`, etc.) ✅ TASK-DEV-030
   - `kind` + `version` top-level fields (consistent with insight.schema.yaml)
-- [ ] `docs/*.md` → `docs/*.yaml` full migration (CONTEXT, CHANGELOG, DECISIONS, ROADMAP, PRD, QA_TEST_CASES)
-- [ ] `docs/roles/*/CONTEXT.md` → `docs/roles/*/context.yaml`
+- [x] `docs/*.md` → `docs/*.yaml` full migration (CONTEXT, CHANGELOG, DECISIONS, ROADMAP, PRD, QA_TEST_CASES) ✅ TASK-DEV-031
+- [x] `docs/roles/*/CONTEXT.md` → `docs/roles/*/context.yaml` ✅ TASK-DEV-031
 - [ ] Module rewrite: `ContextAggregator` — YAML in/out with typed schema
 - [ ] Module rewrite: `RoadmapParser` — YAML native (remove regex parsing)
 - [ ] Module rewrite: `PRDManager` — YAML-only (remove Markdown parser)

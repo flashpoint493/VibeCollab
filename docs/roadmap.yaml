@@ -1,0 +1,391 @@
+kind: roadmap
+version: "1"
+updated_at: "2026-04-02"
+
+lifecycle:
+  current_stage: demo
+  start_date: "2026-01-20"
+  description: "Rapidly validate core concepts and feasibility"
+  focus:
+    - "Rapid iteration"
+    - "Concept validation"
+    - "Core features"
+  principles:
+    - "Fail fast, adjust fast"
+    - "Prioritize core features, defer optimization"
+    - "Technical debt acceptable, but must be documented"
+    - "Detailed Git development iteration records"
+    - "Record important decisions in DECISIONS"
+    - "Establish CI/CD"
+  stage_history:
+    - stage: demo
+      started_at: "2026-01-20"
+
+milestones:
+  # === Completed Milestones ===
+
+  - milestone_version: "v0.5.9"
+    title: "Pattern Engine + Template Overlay"
+    status: completed
+    date: "2026-02-24"
+    items:
+      - description: "PatternEngine: Jinja2 templates + manifest.yaml declarative engine"
+        done: true
+      - description: "27 .md.j2 templates replace hardcoded _add_*() methods"
+        done: true
+      - description: "Template Overlay: .vibecollab/patterns/ local override mechanism"
+        done: true
+      - description: "Legacy removal: generator.py 1713→83 lines"
+        done: true
+      - description: "DECISION-011: Pattern Engine architecture"
+        done: true
+      - description: "40 PatternEngine tests, full 215 tests zero regression"
+        done: true
+
+  - milestone_version: "v0.7.0"
+    title: "Insight Solidification System"
+    status: completed
+    items:
+      - description: "Insight Schema design (body + Registry + Developer Tag three parts)"
+        done: true
+      - description: "InsightManager core module (CRUD / Registry / search / provenance / consistency check)"
+        done: true
+      - description: "InsightManager unit tests (62 tests)"
+        done: true
+      - description: "developer.py unit test completion (67 tests)"
+        done: true
+      - description: "Developer metadata extension (tags / contributed / bookmarks + 21 tests)"
+        done: true
+      - description: "CLI command encapsulation (insight list/show/add/search/use/decay/check/delete + 21 tests)"
+        done: true
+      - description: "Cross-developer sharing + provenance CLI visualization (24 tests)"
+        done: true
+      - description: "Consistency check integrated into vibecollab check --insights"
+        done: true
+      - description: "Document consistency check enhancement (linked_groups)"
+        done: true
+      - description: "Agent guidance commands vibecollab onboard + vibecollab next"
+        done: true
+      - description: "Technical debt cleanup (version number unification v0.7.0-dev)"
+        done: true
+      - description: "protocol_checker multi-developer dynamic discovery"
+        done: true
+
+  - milestone_version: "v0.7.1"
+    title: "Task-Insight Auto-Link"
+    status: completed
+    items:
+      - description: "TaskManager.create_task() auto-searches related Insights"
+        done: true
+      - description: "_extract_search_tags(): Extract keywords from feature/description/role"
+        done: true
+      - description: "_find_related_insights(): Jaccard × weight matching + metadata storage"
+        done: true
+      - description: "suggest_insights(): Insight recommendations for existing tasks"
+        done: true
+      - description: "CLI vibecollab task create/list/show/suggest"
+        done: true
+      - description: "EventLog records linked Insights"
+        done: true
+      - description: "Backward compatible (auto-skips when no InsightManager)"
+        done: true
+      - description: "28 unit tests"
+        done: true
+
+  - milestone_version: "v0.9.0"
+    title: "Semantic Search Engine"
+    status: completed
+    items:
+      - description: "Embedder module — Lightweight embedding abstraction layer"
+        done: true
+      - description: "VectorStore module — Local persistent vector storage"
+        done: true
+      - description: "vibecollab index command — Index project documents"
+        done: true
+      - description: "vibecollab insight search --semantic enhancement"
+        done: true
+      - description: "vibecollab search new command — Global semantic search"
+        done: true
+      - description: "onboard enhancement — Semantically match current task related Insights"
+        done: true
+
+  - milestone_version: "v0.9.1"
+    title: "MCP Server + AI IDE Integration"
+    status: completed
+    items:
+      - description: "vibecollab mcp serve — Standard MCP Server implementation"
+        done: true
+      - description: "MCP CLI command group"
+        done: true
+      - description: "PyPI v0.9.1 release"
+        done: true
+      - description: "CodeBuddy MCP integration"
+        done: true
+      - description: "35 unit tests, 1074 full passed"
+        done: true
+      - description: "Unified skill injection — vibecollab skill inject <ide>"
+        done: true
+
+  - milestone_version: "v0.9.2"
+    title: "Insight Solidification Signal Enhancement"
+    status: completed
+    items:
+      - description: "vibecollab insight suggest — Structured signal-based recommendation"
+        done: true
+      - description: "Signal snapshot — .vibecollab/insight_signal.json"
+        done: true
+      - description: "Conversation summary storage — .vibecollab/sessions/"
+        done: true
+      - description: "MCP Server enhancement (insight_suggest, session_save)"
+        done: true
+      - description: "60 unit tests, full 1134 passed"
+        done: true
+
+  - milestone_version: "v0.9.3"
+    title: "Task/EventLog Core Workflow Integration"
+    status: completed
+    decision_refs: ["DECISION-016"]
+    items:
+      - description: "vibecollab task transition / solidify / rollback"
+        done: true
+      - description: "onboard injects active Task overview + recent EventLog summary"
+        done: true
+      - description: "next recommends actions based on Task status"
+        done: true
+      - description: "MCP task_create + task_transition tools"
+        done: true
+      - description: "30 unit tests, full 1164 passed"
+        done: true
+
+  - milestone_version: "v0.9.4"
+    title: "Insight Quality & Lifecycle"
+    status: completed
+    items:
+      - description: "Insight auto-deduplication"
+        done: true
+      - description: "Insight relationship graph"
+        done: true
+      - description: "Cross-project Insight portability (export/import)"
+        done: true
+      - description: "MCP insight_graph / insight_export tools"
+        done: true
+      - description: "36 unit tests, full 1201 passed"
+        done: true
+
+  - milestone_version: "v0.9.5"
+    title: "ROADMAP ↔ Task Integration"
+    status: completed
+    items:
+      - description: "RoadmapParser module"
+        done: true
+      - description: "Bidirectional sync (ROADMAP ↔ Task DONE)"
+        done: true
+      - description: "Task milestone field"
+        done: true
+      - description: "CLI vibecollab roadmap status/sync/parse"
+        done: true
+      - description: "CLI vibecollab task create --milestone / task list --milestone"
+        done: true
+      - description: "MCP roadmap_status / roadmap_sync tools"
+        done: true
+      - description: "README bilingual restructure"
+        done: true
+      - description: "40 unit tests, 1331 passed, 89% coverage"
+        done: true
+
+  - milestone_version: "v0.10.14"
+    title: "Release Engineering + Git Hooks + Dynamic Check"
+    status: completed
+    date: "2026-03-30"
+    items:
+      - description: "Git Hooks Framework (FP-001)"
+        done: true
+      - description: "Commit-Type-Based Dynamic Check (INS-043)"
+        done: true
+      - description: "Strict Document-Code Sync (INS-042)"
+        done: true
+      - description: "Local Build Check (INS-046)"
+        done: true
+      - description: "42 insights indexed (351 vectors)"
+        done: true
+      - description: "All 1515 tests passing"
+        done: true
+      - description: "CI/CD pipeline stable"
+        done: true
+
+  - milestone_version: "v0.11.0"
+    title: "Role-Driven Architecture + Git Hooks + Guards"
+    status: completed
+    decision_refs: ["DECISION-019", "DECISION-020", "DECISION-021", "DECISION-022"]
+    sections:
+      - title: "FP-001: Git Hooks Framework"
+        items:
+          - description: "Hooks install/uninstall/run/status/list CLI"
+            done: true
+          - description: "Linked groups: Git commit level consistency"
+            done: true
+          - description: "Commit-type rules with dynamic severity"
+            done: true
+          - description: "Windows PowerShell + Unix Bash dual support"
+            done: true
+          - description: "Hook types: pre-push, post-commit (advanced extensions)"
+            done: false
+            notes: "Deferred, not blocking"
+      - title: "FP-008: Guard Protection Engine"
+        items:
+          - description: "GuardEngine class with 4 default rules"
+            done: true
+          - description: "vibecollab check --guards integration"
+            done: true
+          - description: "MCP guard_check + guard_list_rules tools"
+            done: true
+      - title: "Role Architecture Fix (DECISION-020)"
+        items:
+          - description: "Developer-Role binding in project.yaml"
+            done: true
+          - description: "Role permissions implementation"
+            done: true
+          - description: "vibecollab role CLI commands (8 subcommands)"
+            done: true
+          - description: "Dynamic skill registration (SkillRegistry)"
+            done: true
+          - description: "Permission checking enforcement in Task operations"
+            done: true
+      - title: "Integration"
+        items:
+          - description: "Guards + Hooks unified configuration"
+            done: true
+          - description: "Role-based audit dimensions"
+            done: true
+          - description: "Documentation update (skill.md, READMEs)"
+            done: true
+          - description: "151 tests across 6 test files"
+            done: true
+
+  # === Active Milestone ===
+
+  - milestone_version: "v0.12.0"
+    title: "YAML Data Layer + Workflows + Insight Automation"
+    status: active
+    decision_refs: ["DECISION-025", "DECISION-027"]
+    objective: "Evolve docs/ from fragile Markdown to structured YAML data layer, enabling reliable workflows and zero-touch Insight automation."
+    sections:
+      - title: "Docs Markdown → YAML Big-Bang Migration (P0)"
+        items:
+          - description: "YAML schema design for all doc types"
+            done: true
+            task_id: "TASK-DEV-030"
+          - description: "docs/*.md → docs/*.yaml full migration"
+            done: false
+            task_id: "TASK-DEV-031"
+          - description: "docs/roles/*/CONTEXT.md → docs/roles/*/context.yaml"
+            done: false
+          - description: "Module rewrite: ContextAggregator — YAML in/out"
+            done: false
+          - description: "Module rewrite: RoadmapParser — YAML native"
+            done: false
+          - description: "Module rewrite: PRDManager — YAML-only"
+            done: false
+          - description: "Module rewrite: ProtocolChecker — YAML-aware"
+            done: false
+          - description: "Module update: InsightSignalCollector — YAML diff detection"
+            done: false
+          - description: "Module update: Indexer — YAML document splitting"
+            done: false
+          - description: "Module update: cli/guide.py — Read YAML contexts"
+            done: false
+          - description: "Module update: mcp/server.py — MCP Resources return YAML"
+            done: false
+          - description: "Template migration: .md.j2 → .yaml.j2"
+            done: false
+          - description: "vibecollab init generates YAML docs"
+            done: false
+          - description: "vibecollab docs render [--format md|json]"
+            done: false
+          - description: "193+ test updates across 4+ test files"
+            done: false
+      - title: "FP-004: Workflow Integration"
+        items:
+          - description: "Pre-built workflow YAMLs in .vibecollab/workflows/"
+            done: false
+          - description: "vibecollab plan list — List available workflow plans"
+            done: false
+          - description: "vibecollab plan run <workflow>"
+            done: false
+          - description: "Workflow templates use existing PlanRunner"
+            done: false
+      - title: "FP-005: Document Template Library"
+        items:
+          - description: "vibecollab template list/use commands"
+            done: false
+          - description: "Built-in templates via Pattern Engine (YAML-native)"
+            done: false
+          - description: "User custom templates in .vibecollab/templates/"
+            done: false
+      - title: "FP-015: Insight Derivation Chain"
+        items:
+          - description: "derived_from field in Insight YAML"
+            done: false
+          - description: "vibecollab insight graph --show-derivation"
+            done: false
+          - description: "Automatic derivation detection from task transitions"
+            done: false
+
+  # === Planned Milestones ===
+
+  - milestone_version: "v0.13.0"
+    title: "Insight-First Ecosystem"
+    status: planned
+    objective: "Insight becomes the central nervous system of VibeCollab"
+    items:
+      - description: "Insight marketplace: vibecollab insight install <pack>"
+        done: false
+      - description: "Cross-project Insight federation"
+        done: false
+      - description: "Insight-driven code generation"
+        done: false
+      - description: "Insight quality scoring"
+        done: false
+
+  - milestone_version: "v1.0.0"
+    title: "Official Release"
+    status: planned
+    objective: "Mark stable version, PyPI + GitHub Release"
+    items:
+      - description: "All v0.11.x ~ v0.13.x features completed"
+        done: false
+      - description: "Test coverage ≥ 85%"
+        done: false
+      - description: "Clean up all .dev0 markers"
+        done: false
+      - description: "PyPI v1.0.0 release"
+        done: false
+      - description: "GitHub Release v1.0.0"
+        done: false
+      - description: "Full documentation refresh"
+        done: false
+
+future_planning:
+  - title: "Production Stage"
+    estimated_timeline: "After v1.0.0 release"
+    prerequisites:
+      - "v0.10.x all completed"
+      - "Test coverage 85%+"
+      - "Code/docs fully English"
+    key_tasks:
+      - "Community operations + external contributor onboarding"
+      - "Plugin ecosystem (custom Patterns / domain extensions)"
+      - "Performance optimization (large-scale projects)"
+      - "i18n framework (multi-language CLI output)"
+  - title: "Commercial Stage"
+    estimated_timeline: "TBD"
+    key_tasks:
+      - "User experience optimization"
+      - "Market adaptation"
+      - "Extensibility improvement"
+  - title: "Stable Stage"
+    estimated_timeline: "TBD"
+    key_tasks:
+      - "Stability maintenance"
+      - "Maintenance cost reduction"
+      - "Long-term planning"

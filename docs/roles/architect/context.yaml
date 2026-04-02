@@ -1,0 +1,31 @@
+kind: role_context
+version: "1"
+role: architect
+updated_at: "2026-04-02"
+current_version: "v0.12.0-dev"
+
+current_tasks:
+  - "v0.12.0 YAML Data Layer architecture planning (DECISION-025)"
+  - "Workflow Integration strategy refinement (DECISION-021)"
+
+recently_completed:
+  - date: "2026-04-02"
+    description: "DECISION-027 — YAML Schema Design Strategy confirmed"
+  - date: "2026-04-01"
+    description: "v0.11.0 milestone complete — 32/32 items, 151 tests, all checks green"
+  - date: "2026-04-01"
+    description: "DECISION-025 Docs Markdown → YAML Big-Bang Migration confirmed (v0.12.0)"
+  - date: "2026-03-30"
+    description: "Permission system specification finalized (DEV-027)"
+  - date: "2026-03-30"
+    description: "Dynamic skill registration approach designed"
+  - date: "2026-03-30"
+    description: "Guard + Hooks unified configuration design complete"
+  - date: "2026-03-29"
+    description: "DECISION-023 Commit-Type-Based Dynamic Document Sync"
+  - date: "2026-03-27"
+    description: "DECISION-019~022 (CCGS Feature Assessment, Role Fix, Workflow, Hooks+Guards)"
+
+pending_issues: []
+technical_debt: []
+notes: null

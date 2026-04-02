@@ -1,0 +1,12 @@
+kind: prd
+version: "1"
+updated_at: "2026-04-02"
+
+requirements: []
+
+statistics:
+  draft: 0
+  confirmed: 0
+  in_progress: 0
+  completed: 0
+  cancelled: 0

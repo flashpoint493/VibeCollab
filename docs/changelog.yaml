@@ -1,0 +1,131 @@
+kind: changelog
+version: "1"
+
+unreleased:
+  release_version: "unreleased"
+  title: "v0.12.0-dev"
+  added:
+    - description: "YAML Schema Design (TASK-DEV-030, DECISION-027): 6 document type schemas created"
+      task_ids: ["TASK-DEV-030"]
+      decision_ids: ["DECISION-027"]
+      details:
+        - "schema/context.schema.yaml — Global + role context (project status, tech debt)"
+        - "schema/changelog.schema.yaml — Versioned releases with categorized entries"
+        - "schema/decisions.schema.yaml — Decision records with levels, options, rationale"
+        - "schema/roadmap.schema.yaml — Milestones, lifecycle stages, checklist items"
+        - "schema/prd.schema.yaml — Requirements with lifecycle tracking"
+        - "schema/qa.schema.yaml — QA test cases with steps, expected, status"
+        - "All schemas follow kind + version envelope pattern (forward-compatible)"
+  fixed:
+    - description: "events.jsonl bug fix: Root cause found — path was a directory not a file on Windows. Fixed by recreating as file."
+
+releases:
+  - release_version: "v0.11.0"
+    date: "2026-04-02"
+    added:
+      - description: "Guard CLI Integration (TASK-DEV-026): `vibecollab check --guards` implemented"
+        task_ids: ["TASK-DEV-026"]
+        details:
+          - "--guards/--no-guards flag (default: on) in check command"
+          - "Scans all git-tracked files against guard rules (defaults + project.yaml custom)"
+          - "Displays BLOCK violations as errors, WARN as warnings"
+          - "Integrated into check summary statistics and exit code"
+      - description: "MCP Guard Tools (TASK-DEV-026): Two new MCP tools added"
+        task_ids: ["TASK-DEV-026"]
+        details:
+          - "guard_check(operation, file_path) — Pre-flight check for file operations"
+          - "guard_list_rules() — List all configured guard rules"
+      - description: "Role CLI Update: Confirmed 8 subcommands (whoami/list/status/switch/permissions/init/sync/conflicts)"
+      - description: "TaskManager Permission Enforcement: RoleManager injected into create_task/transition"
+        details:
+          - "create_task raises PermissionError when role not allowed"
+          - "transition returns ValidationResult(ok=False) when role not allowed"
+          - "CLI and MCP both inject RoleManager for consistent enforcement"
+      - description: "Guards + Hooks Config Validation: SchemaValidator extended with guards/hooks schema"
+      - description: "RoleManager Permission Tests (TASK-DEV-029): 69 dedicated unit tests"
+        task_ids: ["TASK-DEV-029"]
+        details:
+          - "test_role_permissions.py: covers _load_permissions_config, get_developer_roles, get_primary_role"
+          - "can_create_task_for, can_transition_to, can_write_file, can_approve_decision — all 5 roles verified"
+          - "Edge cases: empty config, unknown devs, cache isolation, fnmatch glob, idempotency"
+          - "v0.11.0 total: 151 tests across 6 test files"
+      - description: "Project Self-Check: vibecollab check all green (11 checks, 0 errors)"
+      - description: "Documentation Update: skill.md, README.md, README.pypi.md, README.zh-CN.md synchronized"
+        details:
+          - "MCP tools count updated 12 → 19"
+          - "CLI Reference: vibecollab dev → vibecollab role migration, added hooks commands"
+          - "Features section: added Git Hooks + Guard Protection, Multi-Role permissions"
+    changed:
+      - description: "Version bump: 0.10.13 → 0.11.0"
+      - description: "Test suite: 1666 tests passing"
+
+  - release_version: "v0.10.14"
+    date: "2026-03-30"
+    added:
+      - description: "Git Hooks Framework (FP-001): Pre-commit consistency check"
+        insight_ids: ["INS-039"]
+        details:
+          - "Implemented .git/hooks/pre-commit with vibecollab check and local build verification"
+          - "Every commit auto-validates insight consistency and runs ruff + pytest"
+      - description: "Guard Protection Engine (FP-008): Core engine implemented"
+        insight_ids: ["INS-040"]
+        details:
+          - "GuardEngine class with check_operation(), check_batch(), list_rules(), test_path()"
+          - "GuardSeverity enum: block/warn/allow"
+          - "4 default rules: meta_protection, library_protection, insight_protection, temp_warning"
+      - description: "Git Hooks CLI Commands (FP-001): Full CLI implemented"
+        details:
+          - "HookManager domain module with install/uninstall/run/status/list methods"
+          - "Windows PowerShell + Unix Bash dual template support"
+          - "Supports 5 hook types: pre-commit, pre-push, post-commit, post-checkout, prepare-commit-msg"
+      - description: "Dynamic Skill Registration (DEV-027): SkillRegistry module"
+      - description: "Insight Trigger Registry: New module + CLI"
+      - description: "Strict Document-Code Sync: Linked groups + Git commit level"
+        insight_ids: ["INS-042"]
+      - description: "Commit-Type-Based Dynamic Check: Context-aware strictness"
+        insight_ids: ["INS-043"]
+      - description: "Role-Driven Architecture Implementation (DEV-027)"
+        insight_ids: ["INS-044", "INS-045"]
+    changed:
+      - description: "Documentation Update: README.md and skill.md synchronized"
+        insight_ids: ["INS-041"]
+      - description: "Task-Insight Best Practices: Systematic workflow"
+        insight_ids: ["INS-036", "INS-037", "INS-038", "INS-046"]
+    fixed:
+      - description: "Import order in cli/main.py (ruff I001)"
+      - description: "Pre-commit hook now includes local build checks (ruff + pytest)"
+      - description: "All 1515 tests passing"
+
+  - release_version: "v0.10.13"
+    date: "2026-03-27"
+    fixed:
+      - description: "Role-based architecture: Complete DeveloperManager → RoleManager migration"
+      - description: "Test suite: Fix 33 failing tests, achieve 99.7% pass rate (1510/1515)"
+      - description: "Conflict detector: Update parameter names (developers → roles)"
+      - description: "Pattern engine: Update section titles and conditions for role_context"
+      - description: "Context aggregator: Update terminology (developer → role)"
+      - description: "CLI commands: Rename dev → role throughout codebase"
+      - description: "Default paths: Update docs/developers → docs/roles"
+    changed:
+      - description: "BREAKING: vibecollab dev → vibecollab role CLI commands"
+      - description: "BREAKING: docs/developers/ → docs/roles/ directory structure"
+
+  - release_version: "v0.10.12"
+    date: "2026-03-27"
+    added:
+      - description: "IDE Skill Injection: Support for Cursor, Cline, CodeBuddy, OpenCode, and 'all' option"
+      - description: "GitHub Actions PyPI auto-publish fix (Trusted Publishing)"
+
+planned:
+  - target_version: "v0.12.0"
+    summary: "Docs Markdown → YAML Big-Bang Migration (DECISION-025), Standard Workflows, Document Template Library, Insight Derivation Chain"
+  - target_version: "v0.13.0"
+    summary: "Insight-First CLI: Optimize skill injection and MCP for proactive insight usage"
+
+decisions:
+  - "DECISION-019"
+  - "DECISION-020"
+  - "DECISION-021"
+  - "DECISION-022"
+  - "DECISION-025"
+  - "DECISION-027"

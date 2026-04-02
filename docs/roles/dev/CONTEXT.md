@@ -1,33 +1,30 @@
 # VibeCollab - DEV Role Context
 
 ## Current Status
-- **Version**: v0.11.0
+- **Version**: v0.12.0-dev
 - **Role**: DEV (Development)
-- **Last updated**: 2026-04-01
+- **Last updated**: 2026-04-02
 
 ## Current Tasks
-- **v0.11.0 milestone completion**: All 32/32 items done ✅
-- **Protocol readiness**: keep onboarding/check flows accurate for real projects
-- **Documentation maintenance**: keep generated files and project metadata in sync
+- **v0.12.0 YAML Data Layer migration** (DECISION-025/027): Docs Markdown → YAML Big-Bang
+- **Next up**: `docs/*.md` → `docs/*.yaml` content migration using new schemas
+- **Then**: Module rewrites (ContextAggregator, RoadmapParser, PRDManager, ProtocolChecker)
 
 ## Recently Completed
-- ✅ **RoleManager Permission Tests**: 69 dedicated unit tests for role.py permission system (test_role_permissions.py)
-- ✅ **v0.11.0 Test Suite**: 151 tests across 6 files (guard, hooks, skills, permissions, triggers, role_permissions)
-- ✅ **Project Self-Check**: `vibecollab check` all green (11 checks, 0 errors, 8 guard rules, 227 files scanned)
-- ✅ **Git Hooks Framework**: `vibecollab hooks install/uninstall/run/status/list` CLI commands
-- ✅ **Dynamic Skill Registration**: `vibecollab insight triggers` for role-based skill discovery
-- ✅ **Trigger Registry**: Collect triggers from insight tags instead of role_skills
-- ✅ **Guard Engine**: `domain/guard.py` with pre/post-action protection rules
-- ✅ **Role Permissions**: `vibecollab role permissions` command foundation
-- ✅ **Documentation sync**: skill.md, README.md, README.pypi.md, README.zh-CN.md all updated for v0.11.0
+- ✅ 2026-04-02: TASK-DEV-030 — 6 YAML schemas designed and created (context, changelog, decisions, roadmap, prd, qa)
+- ✅ 2026-04-02: DECISION-027 — YAML Schema Design Strategy confirmed (S-level)
+- ✅ 2026-04-01: events.jsonl bug fixed (root cause: path was directory not file on Windows)
+- ✅ 2026-04-01: v0.11.0 milestone complete — 32/32 items, 151 tests, all checks green
+- ✅ 2026-04-01: docs/roles/ocarina/ spurious directory removed
+- ✅ 2026-04-01: All v0.11.0 tasks (DEV-025~029) transitioned to DONE
 
 ## Next Steps
-1. **External QA** — Run `init` / `generate` / `check` on 3+ real external projects
-2. **UX verification** — Validate rich panel rendering on Windows PowerShell/CMD/WSL
-3. **Output quality** — Verify `onboard` / `next` behavior on large real-world repositories
+1. **Docs migration** — Convert docs/*.md to docs/*.yaml using schema v1
+2. **ContextAggregator rewrite** — YAML in/out with typed schema
+3. **RoadmapParser rewrite** — YAML native (remove regex parsing)
+4. **`vibecollab docs render`** — New CLI command for YAML → Markdown view generation
 
 ## Technical Debt
-- `events.jsonl` Windows file lock issue still needs investigation
 - MCP `onboard` tool call timeout after IDE restart still needs investigation
 - `README.zh-CN.md` project structure section is outdated
 

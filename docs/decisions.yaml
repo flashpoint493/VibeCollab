@@ -1,0 +1,144 @@
+kind: decisions
+version: "1"
+
+decisions:
+  - id: DECISION-027
+    title: "v0.12.0 YAML Schema Design Strategy"
+    date: "2026-04-01"
+    level: S
+    status: confirmed
+    context: "v0.12.0 requires YAML schemas for all doc types. User confirmed three key design principles."
+    problem: "Need schema design for 6 document types to enable Markdown → YAML migration"
+    decision_text: |
+      1. Big-Bang migration (confirmed from DECISION-025). Only CONTRIBUTING_AI.md, skill.md, README.md remain as Markdown.
+      2. YAML docs can be aggregated back to Markdown via `vibecollab docs render`. Descriptive content stays descriptive in YAML.
+      3. Follow insight.schema.yaml pattern (kind + version top-level). Design must be robust and forward-compatible.
+    rationale: "YAML is more effective for AI consumption. Descriptive content in YAML still serves both AI parsing and human rendering via Markdown view generation."
+    related_tasks: ["TASK-DEV-030"]
+
+  - id: DECISION-026
+    title: "v0.11.0 Milestone Completion Validation"
+    date: "2026-04-01"
+    level: B
+    status: confirmed
+    context: "v0.11.0 milestone (Role-Driven Architecture + Git Hooks + Guards) reached 32/32 items complete."
+    problem: "Final validation needed before declaring milestone closed"
+    decision_text: "v0.11.0 milestone is officially complete. Ready for PyPI release and v0.12.0 planning."
+    rationale: "All checks passed: 151 tests, vibecollab check all green, Guard (8 rules, 227 files), Insight consistency passed."
+    validation:
+      checks:
+        - name: "Unit Tests"
+          result: pass
+          details: "151 passed across 6 test files, 0 failures"
+        - name: "vibecollab check"
+          result: pass
+          details: "11 checks, 0 errors"
+        - name: "Protocol Compliance"
+          result: pass
+          details: "Fixed missing docs/roles/ocarina/CONTEXT.md"
+        - name: "Documentation"
+          result: pass
+          details: "skill.md, README.md, README.pypi.md, README.zh-CN.md all synced"
+        - name: "Task-Insight Cycle"
+          result: pass
+          details: "TASK-DEV-029 + INS-054"
+
+  - id: DECISION-025
+    title: "Docs Markdown → YAML Big-Bang Migration (v0.12.0)"
+    date: "2026-04-01"
+    level: S
+    status: confirmed
+    context: "All 7 docs/ files are Markdown. 12+ code modules parse them via fragile regex. This blocks structured Insight automation and reliable workflow integration."
+    problem: "Fragile regex-based Markdown parsing in 12+ modules prevents structured automation"
+    options:
+      - label: "A"
+        description: "Incremental migration (one doc at a time)"
+        cons: ["Dual-format maintenance overhead", "Longer migration period"]
+      - label: "B"
+        description: "Big-bang migration (all docs at once)"
+        pros: ["Clean cut", "No dual-format maintenance"]
+        cons: ["Larger single PR", "More risk"]
+    decision_text: "Big-bang migration (Option B). YAML is source of truth, Markdown generated on demand by vibecollab docs render."
+    rationale: "Clean cut, no dual-format maintenance overhead. User base is small, clean migration preferred."
+    related_decisions: ["DECISION-027"]
+
+  - id: DECISION-024
+    title: "v0.11.0 Implementation Strategy (3/30 Sprint)"
+    date: "2026-03-30"
+    level: B
+    status: confirmed
+    problem: "v0.11.0 has three major features (FP-001, FP-008, Role Fix). Need to decide implementation order and scope for sprint."
+    decision_text: |
+      1. Guard Engine: Implement as standalone domain module first, defer CLI integration.
+      2. Hooks CLI: Implement full CLI immediately since HookManager is self-contained.
+      3. Role Permissions: Implement in RoleManager directly (not separate PermissionManager).
+      4. Skill Registry: Create as standalone module, bridge via RoleManager.
+      5. Trigger Registry: Extract triggers from Insight tags (not role_skills section).
+    rationale: "Maximize independent testable modules, defer integration that requires refactoring."
+
+  - id: DECISION-023
+    title: "Commit-Type-Based Dynamic Document Sync"
+    date: "2026-03-29"
+    level: A
+    status: confirmed
+    problem: "Current vibecollab check only verifies file modification time (24h threshold), allowing docs to drift from actual code state."
+    decision_text: |
+      Three-layer document-code synchronization:
+      1. Linked Groups (Git Commit Level) — CONTEXT+CHANGELOG, ROADMAP+DECISIONS must sync at commit level
+      2. Commit-Type-Based Requirements — feat/fix require doc updates (error), docs/refactor (warning), config (info)
+      3. Dynamic Severity — Block/warn/allow based on commit prefix
+    rationale: "Context-aware, workflow-aligned, progressive enforcement."
+
+  - id: DECISION-022
+    title: "Hooks and Guards Integration"
+    date: "2026-03-27"
+    level: A
+    status: confirmed
+    problem: "Need constraint system for both git lifecycle and file operations"
+    decision_text: |
+      Dual-track constraint system:
+      - Git Hooks (FP-001): Install to .git/hooks/, enforce hard constraints (pre-commit, pre-push)
+      - Guards (FP-008): Integrate into vibecollab check, file operation protection via MCP guard_check
+      Both use project.yaml configuration. Hooks = Git lifecycle, Guards = File operations.
+    rationale: "Different trigger points serve different purposes; unified config keeps it simple."
+
+  - id: DECISION-021
+    title: "Workflow Integration Strategy"
+    date: "2026-03-27"
+    level: A
+    status: confirmed
+    problem: "How to integrate new workflows (docs-change, feature-add, requirement-review)"
+    decision_text: "Integrate into existing plan CLI (vibecollab plan run <workflow>.yaml), NOT separate commands."
+    rationale: "Avoid command proliferation, leverage existing PlanRunner infrastructure, YAML-driven matches philosophy."
+
+  - id: DECISION-020
+    title: "Role-Driven Architecture Fix"
+    date: "2026-03-27"
+    level: S
+    status: confirmed
+    problem: "Current architecture separates developer identity from role. No true role-driven routing or permission system."
+    decision_text: |
+      Implement role-driven architecture:
+      1. Developer-Role Binding in project.yaml (name, roles, primary_role)
+      2. Role Permissions (file_patterns, can_create_task_for, can_transition_to, can_approve_decision)
+      3. Auto-Delegation via dev switch + dynamic skill registration from Insights
+    rationale: "Fix fundamental separation, enable permission-based access without over-engineering."
+    notes: "Non-goals: 3-tier hierarchy, 48-agent presets, automatic AI delegation without confirmation."
+
+  - id: DECISION-019
+    title: "CCGS Feature Proposal Assessment"
+    date: "2026-03-27"
+    level: S
+    status: confirmed
+    problem: "17 Feature Proposals (FP-001~FP-017) submitted based on CCGS framework analysis. Need strategic review."
+    decision_text: |
+      Accepted (7): FP-001 Git Hooks (P0), FP-002 Agent Orchestration Lite (P1), FP-004 Workflow Definition (P1),
+      FP-005 Document Template Library (P2), FP-008 Guard Protection Engine (P0), FP-015 Insight Derivation Chain (P2),
+      Role Fix (P0).
+      Deferred (2): FP-014 Adversarial Code Review, FP-017 6-Dimension Audit.
+      Rejected (8): FP-003, FP-006, FP-007, FP-009, FP-010, FP-011, FP-012, FP-016.
+    rationale: |
+      Strategic principles: Insight-Centric, Plan-YAML Integration, No LLM Runtime,
+      Simplify Project.yaml, Skill over Preset.
+
+archive: []

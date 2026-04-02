@@ -1,0 +1,33 @@
+kind: role_context
+version: "1"
+role: dev
+updated_at: "2026-04-02"
+current_version: "v0.12.0-dev"
+
+current_tasks:
+  - "v0.12.0 YAML Data Layer migration (DECISION-025/027): Docs Markdown → YAML Big-Bang"
+  - "Next up: docs/*.md → docs/*.yaml content migration using new schemas"
+  - "Then: Module rewrites (ContextAggregator, RoadmapParser, PRDManager, ProtocolChecker)"
+
+recently_completed:
+  - date: "2026-04-02"
+    description: "TASK-DEV-030 — 6 YAML schemas designed and created (context, changelog, decisions, roadmap, prd, qa)"
+  - date: "2026-04-02"
+    description: "DECISION-027 — YAML Schema Design Strategy confirmed (S-level)"
+  - date: "2026-04-01"
+    description: "events.jsonl bug fixed (root cause: path was directory not file on Windows)"
+  - date: "2026-04-01"
+    description: "v0.11.0 milestone complete — 32/32 items, 151 tests, all checks green"
+  - date: "2026-04-01"
+    description: "docs/roles/ocarina/ spurious directory removed"
+  - date: "2026-04-01"
+    description: "All v0.11.0 tasks (DEV-025~029) transitioned to DONE"
+
+pending_issues:
+  - "MCP onboard timeout after IDE restart still needs investigation"
+
+technical_debt:
+  - "MCP `onboard` tool call timeout after IDE restart still needs investigation"
+  - "`README.zh-CN.md` project structure section is outdated"
+
+notes: null

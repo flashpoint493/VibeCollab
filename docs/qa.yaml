@@ -1,0 +1,16 @@
+kind: qa
+version: "1"
+updated_at: "2026-04-02"
+case_id_pattern: "TC-{module}-{seq}"
+
+phases:
+  - title: "Phase 0 Test Cases"
+    description: "Initial test cases (to be added)"
+    cases: []
+
+summary:
+  total: 0
+  pass: 0
+  partial: 0
+  fail: 0
+  skip: 0
