@@ -331,7 +331,7 @@ class TestPRDManagerPersistence:
             assert "REQ-002" in manager2.requirements
 
     def test_save_creates_directory(self):
-        """Test save creates directory"""
+        """Test save creates directory (outputs YAML)"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "nested" / "dir" / "PRD.md"
 
@@ -339,11 +339,13 @@ class TestPRDManagerPersistence:
             manager.add_requirement("Test", "Desc")
             manager.save()
 
-            assert prd_path.exists()
-            assert prd_path.parent.exists()
+            # save() now outputs .yaml sibling
+            yaml_path = prd_path.parent / "prd.yaml"
+            assert yaml_path.exists()
+            assert yaml_path.parent.exists()
 
     def test_save_with_changes_history(self):
-        """Test saving requirement with change history"""
+        """Test saving requirement with change history (YAML output)"""
         with tempfile.TemporaryDirectory() as tmpdir:
             prd_path = Path(tmpdir) / "PRD.md"
 
@@ -352,9 +354,10 @@ class TestPRDManagerPersistence:
             manager.update_requirement("REQ-001", "Updated", "Clarification")
             manager.save()
 
-            # Verify file content
-            content = prd_path.read_text(encoding="utf-8")
-            assert "Change History" in content
+            # save() now outputs prd.yaml
+            yaml_path = Path(tmpdir) / "prd.yaml"
+            content = yaml_path.read_text(encoding="utf-8")
+            assert "change_history" in content
             assert "Clarification" in content
 
 
@@ -559,8 +562,9 @@ class TestPRDManagerEdgeCases:
 
             manager.save()
 
-            # Reload and verify
-            manager2 = PRDManager(prd_path)
+            # Reload from yaml (save outputs prd.yaml)
+            yaml_path = Path(tmpdir) / "prd.yaml"
+            manager2 = PRDManager(yaml_path)
             assert "REQ-001" in manager2.requirements
             assert "User Auth" in manager2.requirements["REQ-001"].title
 
@@ -575,9 +579,10 @@ class TestPRDManagerEdgeCases:
 
             manager.save()
 
-            # Verify save succeeded
-            assert prd_path.exists()
-            content = prd_path.read_text(encoding="utf-8")
+            # save() now outputs prd.yaml
+            yaml_path = Path(tmpdir) / "prd.yaml"
+            assert yaml_path.exists()
+            content = yaml_path.read_text(encoding="utf-8")
             assert "Long Feature" in content
 
     def test_update_preserves_original(self):

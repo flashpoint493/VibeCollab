@@ -8,7 +8,7 @@
 - **Version**: v0.12.0-dev
 - **Active roles**: 3 (architect, dev, insight_collector)
 - **Previous milestone**: v0.11.0 Role-Driven Architecture + Git Hooks + Guards — **32/32 items complete** ✅
-- **Current milestone**: v0.12.0 YAML Data Layer + Workflows + Insight Automation — **1/40 items** (TASK-DEV-030 schema design done)
+- **Current milestone**: v0.12.0 YAML Data Layer + Workflows + Insight Automation — **6/40 items** (schemas + docs migration + 3 module rewrites)
 
 ## Role Work Status
 
@@ -21,8 +21,8 @@
 
 ### dev
 - **Last updated**: 2026-04-02
-- **Current task**: v0.12.0 Docs Markdown → YAML migration
-- **Progress**: TASK-DEV-030 DONE (6 YAML schemas: context, changelog, decisions, roadmap, prd, qa). events.jsonl bug fixed (was directory, now file).
+- **Current task**: v0.12.0 Module Rewrites (TASK-DEV-032) — PRDManager, RoadmapParser, ContextAggregator YAML-first
+- **Progress**: TASK-DEV-030 DONE, TASK-DEV-031 DONE, TASK-DEV-032 REVIEW. 89 tests passing on rewritten modules.
 - **Pending issues**: MCP onboard timeout after IDE restart
 - **Next steps**: `docs/*.md` → `docs/*.yaml` full migration, then module rewrites (ContextAggregator, RoadmapParser, PRDManager)
 

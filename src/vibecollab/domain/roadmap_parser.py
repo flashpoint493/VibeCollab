@@ -118,7 +118,7 @@ class RoadmapStatus:
 # ---------------------------------------------------------------------------
 
 class RoadmapParser:
-    """Parse and sync ROADMAP.md with TaskManager.
+    """Parse and sync ROADMAP (YAML or Markdown) with TaskManager.
 
     Usage:
         parser = RoadmapParser(project_root=Path("."))
@@ -128,6 +128,7 @@ class RoadmapParser:
     """
 
     DEFAULT_ROADMAP = "docs/ROADMAP.md"
+    DEFAULT_ROADMAP_YAML = "docs/roadmap.yaml"
 
     def __init__(
         self,
@@ -139,19 +140,107 @@ class RoadmapParser:
         self.roadmap_file = self.project_root / (roadmap_path or self.DEFAULT_ROADMAP)
         self.task_manager = task_manager
         self._milestones: Optional[List[Milestone]] = None
+        self._source: Optional[str] = None  # "yaml" or "markdown"
+
+    def _resolve_roadmap_file(self) -> Path:
+        """Resolve which roadmap file to use (YAML-first, Markdown fallback)"""
+        # If explicit path was given and exists, use it
+        if self.roadmap_file.exists():
+            if self.roadmap_file.suffix in (".yaml", ".yml"):
+                self._source = "yaml"
+                return self.roadmap_file
+            # Check for YAML sibling
+            yaml_path = self.roadmap_file.parent / "roadmap.yaml"
+            if yaml_path.exists():
+                self._source = "yaml"
+                return yaml_path
+            self._source = "markdown"
+            return self.roadmap_file
+
+        # Try YAML at default location
+        yaml_path = self.project_root / self.DEFAULT_ROADMAP_YAML
+        if yaml_path.exists():
+            self._source = "yaml"
+            return yaml_path
+
+        self._source = "markdown"
+        return self.roadmap_file
 
     # -- Parsing ------------------------------------------------------------
 
     def parse(self) -> List[Milestone]:
-        """Parse ROADMAP.md and extract milestones with their items.
+        """Parse ROADMAP (YAML or Markdown) and extract milestones.
 
         Returns:
             List of Milestone objects.
         """
-        if not self.roadmap_file.exists():
+        resolved = self._resolve_roadmap_file()
+        if not resolved.exists():
             return []
 
-        lines = self.roadmap_file.read_text(encoding="utf-8").splitlines()
+        if self._source == "yaml":
+            return self._parse_yaml(resolved)
+        return self._parse_markdown(resolved)
+
+    def _parse_yaml(self, path: Path) -> List[Milestone]:
+        """Parse roadmap.yaml (schema v1)"""
+        import yaml as _yaml
+
+        with open(path, "r", encoding="utf-8") as f:
+            data = _yaml.safe_load(f) or {}
+
+        milestones: List[Milestone] = []
+        for ms_data in data.get("milestones", []):
+            ms = Milestone(
+                version=ms_data.get("milestone_version", ""),
+                title=ms_data.get("title", ""),
+                line_number=0,  # N/A for YAML
+            )
+
+            # Collect items from flat items + sections
+            line_counter = 0
+            for item_data in ms_data.get("items", []):
+                line_counter += 1
+                task_ids = []
+                tid = item_data.get("task_id")
+                if tid:
+                    task_ids.append(tid)
+                # Also extract from description text
+                task_ids.extend(TASK_ID_RE.findall(item_data.get("description", "")))
+                task_ids = list(dict.fromkeys(task_ids))  # dedupe preserving order
+
+                ms.items.append(MilestoneItem(
+                    line_number=line_counter,
+                    text=item_data.get("description", ""),
+                    checked=item_data.get("done", False),
+                    task_ids=task_ids,
+                ))
+
+            for section in ms_data.get("sections", []):
+                for item_data in section.get("items", []):
+                    line_counter += 1
+                    task_ids = []
+                    tid = item_data.get("task_id")
+                    if tid:
+                        task_ids.append(tid)
+                    task_ids.extend(TASK_ID_RE.findall(item_data.get("description", "")))
+                    task_ids = list(dict.fromkeys(task_ids))
+
+                    ms.items.append(MilestoneItem(
+                        line_number=line_counter,
+                        text=item_data.get("description", ""),
+                        checked=item_data.get("done", False),
+                        task_ids=task_ids,
+                    ))
+
+            milestones.append(ms)
+
+        self._milestones = milestones
+        return milestones
+
+    def _parse_markdown(self, path: Path) -> List[Milestone]:
+        """Parse ROADMAP.md (legacy Markdown format)"""
+        lines = path.read_text(encoding="utf-8").splitlines()
         milestones: List[Milestone] = []
         current_milestone: Optional[Milestone] = None
 

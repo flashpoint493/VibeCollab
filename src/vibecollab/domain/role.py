@@ -260,15 +260,19 @@ class RoleManager:
 
     def get_role_context_file(self, developer: Optional[str] = None) -> Path:
         """
-        Get developer's CONTEXT.md file path
+        Get developer's context file path (YAML-first, Markdown fallback)
 
         Args:
             developer: Role identifier, None uses current developer
 
         Returns:
-            CONTEXT.md file path
+            context.yaml or CONTEXT.md file path
         """
-        return self.get_role_dir(developer) / "CONTEXT.md"
+        dev_dir = self.get_role_dir(developer)
+        yaml_path = dev_dir / "context.yaml"
+        if yaml_path.exists():
+            return yaml_path
+        return dev_dir / "CONTEXT.md"
 
     def get_role_metadata_file(self, developer: Optional[str] = None) -> Path:
         """
@@ -869,7 +873,7 @@ class ContextAggregator:
 
     def _extract_role_summary(self, developer: str) -> Dict:
         """
-        Extract summary info from developer's CONTEXT.md
+        Extract summary info from developer's context file (YAML or Markdown)
 
         Args:
             developer: Role identifier
@@ -891,6 +895,24 @@ class ContextAggregator:
             return summary
 
         try:
+            # YAML path: structured extraction
+            if context_file.suffix in (".yaml", ".yml"):
+                with open(context_file, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
+                summary["last_updated"] = data.get("updated_at", "Unknown")
+                tasks = data.get("current_tasks", [])
+                if tasks:
+                    summary["current_task"] = tasks[0][:100] if isinstance(tasks[0], str) else str(tasks[0])[:100]
+                pending = data.get("pending_issues", [])
+                if pending:
+                    summary["issues"] = "; ".join(pending[:3]) if isinstance(pending, list) else str(pending)
+                debt = data.get("technical_debt", [])
+                notes = data.get("notes", "")
+                if notes:
+                    summary["progress"] = str(notes)[:100]
+                return summary
+
+            # Legacy Markdown path
             content = context_file.read_text(encoding="utf-8")
 
             # Extract last updated time
@@ -954,7 +976,7 @@ class ContextAggregator:
 
     def _merge_technical_debts(self, developers: List[str]) -> List[str]:
         """
-        Merge technical debts from all developers
+        Merge technical debts from all developers (YAML or Markdown)
 
         Args:
             developers: List of developers
@@ -970,6 +992,18 @@ class ContextAggregator:
                 continue
 
             try:
+                # YAML path
+                if context_file.suffix in (".yaml", ".yml"):
+                    with open(context_file, "r", encoding="utf-8") as f:
+                        data = yaml.safe_load(f) or {}
+                    for debt_item in data.get("technical_debt", []):
+                        if isinstance(debt_item, str):
+                            debts.append(f"[{dev}] - {debt_item}")
+                        elif isinstance(debt_item, dict):
+                            debts.append(f"[{dev}] - {debt_item.get('description', str(debt_item))}")
+                    continue
+
+                # Legacy Markdown path
                 content = context_file.read_text(encoding="utf-8")
                 for header in ("## Technical Debt", "## 技术债务"):
                     if header in content:
@@ -992,19 +1026,67 @@ class ContextAggregator:
 
     def generate_and_save(self) -> Path:
         """
-        Generate and save global CONTEXT.md
+        Generate and save global context (YAML primary + Markdown view)
 
         Returns:
             Saved file path
         """
         context_config = self.role_context_config.get("context", {})
-        output_file = self.project_root / context_config.get("aggregation_file", "docs/CONTEXT.md")
+        md_output_file = self.project_root / context_config.get("aggregation_file", "docs/CONTEXT.md")
+        yaml_output_file = md_output_file.parent / "context.yaml"
 
+        # Generate and save YAML (source of truth)
+        yaml_data = self._generate_yaml_data()
+        yaml_output_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(yaml_output_file, "w", encoding="utf-8") as f:
+            yaml.dump(yaml_data, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
+
+        # Also generate Markdown view for human readability
         content = self.aggregate()
-        output_file.parent.mkdir(parents=True, exist_ok=True)
-        output_file.write_text(content, encoding="utf-8")
+        md_output_file.parent.mkdir(parents=True, exist_ok=True)
+        md_output_file.write_text(content, encoding="utf-8")
 
-        return output_file
+        return yaml_output_file
+
+    def _generate_yaml_data(self) -> dict:
+        """Generate global context as YAML-serializable dict (schema v1)"""
+        developers = self.developer_manager.list_roles()
+        project_version = self.config.get("project", {}).get("version", "v1.0")
+
+        roles_data = []
+        for dev in developers:
+            summary = self._extract_role_summary(dev)
+            roles_data.append({
+                "role": dev,
+                "updated_at": summary["last_updated"],
+                "current_task": summary["current_task"],
+                "progress": summary["progress"],
+                "pending_issues": summary["issues"],
+                "next_steps": summary["next_steps"],
+            })
+
+        debts_data = []
+        for dev in developers:
+            context_file = self.developer_manager.get_role_context_file(dev)
+            if context_file.exists() and context_file.suffix in (".yaml", ".yml"):
+                with open(context_file, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
+                for debt_item in data.get("technical_debt", []):
+                    desc = debt_item if isinstance(debt_item, str) else debt_item.get("description", str(debt_item))
+                    debts_data.append({"role": dev, "description": desc})
+
+        return {
+            "kind": "context",
+            "version": "1",
+            "updated_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "aggregated_from": developers,
+            "project_status": {
+                "current_version": project_version,
+                "active_roles": developers,
+            },
+            "roles": roles_data,
+            "technical_debt": debts_data,
+        }
 
 
 def migrate_to_role_context(project_root: Path, config: dict, developer_name: Optional[str] = None):

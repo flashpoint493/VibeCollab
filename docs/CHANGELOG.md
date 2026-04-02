@@ -12,6 +12,12 @@
   - `schema/qa.schema.yaml` — QA test cases with steps, expected, status
   - All schemas follow `kind` + `version` envelope pattern (forward-compatible)
 - **events.jsonl Bug Fix**: Root cause found — path was a directory not a file on Windows. Fixed by recreating as file.
+- **Module Rewrites** (TASK-DEV-032): 3 core modules rewritten for YAML-first
+  - `PRDManager`: YAML-first load/save, Markdown as fallback. `_load_yaml()` + `_generate_yaml_data()` new methods
+  - `RoadmapParser`: YAML-first parse via `_parse_yaml()`, Markdown fallback via `_parse_markdown()`. Auto-resolves `roadmap.yaml` vs `ROADMAP.md`
+  - `ContextAggregator`: Reads YAML role contexts, outputs both `context.yaml` (source of truth) and `CONTEXT.md` (view). `_generate_yaml_data()` new method
+  - `RoleManager.get_role_context_file()`: Now returns `context.yaml` if exists, else `CONTEXT.md`
+  - 89 tests passing (53 roadmap + 36 prd), 3 test fixes for YAML output expectations
 
 ## [v0.11.0] - 2026-04-02
 

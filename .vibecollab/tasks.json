@@ -234,5 +234,28 @@
     "role": "DEV",
     "status": "REVIEW",
     "updated_at": "2026-04-02T05:19:31.218103+00:00"
+  },
+  "TASK-DEV-032": {
+    "assignee": null,
+    "created_at": "2026-04-02T05:42:11.398697+00:00",
+    "dependencies": [],
+    "description": "",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 Module Rewrite: ContextAggregator + RoadmapParser + PRDManager to read/write YAML instead of Markdown",
+    "id": "TASK-DEV-032",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-008",
+          "score": 0.0559,
+          "title": "Execution Plan: YAML-Driven Multi-Round Automation"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "",
+    "role": "DEV",
+    "status": "REVIEW",
+    "updated_at": "2026-04-02T05:49:30.124893+00:00"
   }
 }

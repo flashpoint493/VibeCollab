@@ -533,9 +533,9 @@ Borrow mature architectural patterns to enhance protocol robustness, improve dev
   - `kind` + `version` top-level fields (consistent with insight.schema.yaml)
 - [x] `docs/*.md` → `docs/*.yaml` full migration (CONTEXT, CHANGELOG, DECISIONS, ROADMAP, PRD, QA_TEST_CASES) ✅ TASK-DEV-031
 - [x] `docs/roles/*/CONTEXT.md` → `docs/roles/*/context.yaml` ✅ TASK-DEV-031
-- [ ] Module rewrite: `ContextAggregator` — YAML in/out with typed schema
-- [ ] Module rewrite: `RoadmapParser` — YAML native (remove regex parsing)
-- [ ] Module rewrite: `PRDManager` — YAML-only (remove Markdown parser)
+- [x] Module rewrite: `ContextAggregator` — YAML in/out with typed schema ✅ TASK-DEV-032
+- [x] Module rewrite: `RoadmapParser` — YAML native (remove regex parsing) ✅ TASK-DEV-032
+- [x] Module rewrite: `PRDManager` — YAML-only (remove Markdown parser) ✅ TASK-DEV-032
 - [ ] Module rewrite: `ProtocolChecker` — YAML-aware consistency checks
 - [ ] Module update: `InsightSignalCollector` — YAML diff detection
 - [ ] Module update: `Indexer` — YAML document splitting

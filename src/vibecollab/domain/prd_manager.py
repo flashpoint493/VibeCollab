@@ -44,25 +44,59 @@ class PRDManager:
         self._load()
 
     def _load(self):
-        """Load PRD from file"""
+        """Load PRD from file (YAML-first, Markdown fallback)"""
         if not self.prd_path.exists():
+            # Try YAML sibling (e.g. docs/prd.yaml when prd_path is docs/PRD.md)
+            yaml_path = self.prd_path.parent / (self.prd_path.stem.lower() + ".yaml")
+            if yaml_path.exists():
+                self._load_yaml(yaml_path)
+            return
+
+        # If path ends with .yaml, load directly as YAML
+        if self.prd_path.suffix in (".yaml", ".yml"):
+            self._load_yaml(self.prd_path)
+            return
+
+        # Legacy: try YAML sibling first, then fall back to Markdown parsing
+        yaml_path = self.prd_path.parent / (self.prd_path.stem.lower() + ".yaml")
+        if yaml_path.exists():
+            self._load_yaml(yaml_path)
             return
 
         try:
             content = self.prd_path.read_text(encoding="utf-8")
-            # Parse Markdown format PRD
+            # Legacy: Parse Markdown format PRD
             self._parse_markdown(content)
         except Exception:
-            # If parsing fails, try loading as YAML (backward compatible)
-            try:
-                with open(self.prd_path, "r", encoding="utf-8") as f:
-                    data = yaml.safe_load(f)
-                    if data and "requirements" in data:
-                        for req_data in data["requirements"]:
-                            req = Requirement(**req_data)
-                            self.requirements[req.id] = req
-            except Exception:
-                pass
+            pass
+
+    def _load_yaml(self, path: Path):
+        """Load PRD from YAML file (schema v1)"""
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
+            if data.get("kind") == "prd" and "requirements" in data:
+                for req_data in data["requirements"]:
+                    # Map YAML fields to Requirement dataclass
+                    req = Requirement(
+                        id=req_data.get("id", ""),
+                        title=req_data.get("title", ""),
+                        original_description=req_data.get("original_description", ""),
+                        current_description=req_data.get("current_description"),
+                        status=req_data.get("status", "draft"),
+                        priority=req_data.get("priority", "medium"),
+                        created_at=req_data.get("created_at", ""),
+                        updated_at=req_data.get("updated_at", ""),
+                        changes=req_data.get("change_history", []),
+                    )
+                    self.requirements[req.id] = req
+            elif "requirements" in data:
+                # Backward compatible: old YAML without kind field
+                for req_data in data["requirements"]:
+                    req = Requirement(**req_data)
+                    self.requirements[req.id] = req
+        except Exception:
+            pass
 
     def _parse_markdown(self, content: str):
         """Parse Markdown format PRD"""
@@ -195,10 +229,65 @@ class PRDManager:
         req.updated_at = datetime.now().strftime("%Y-%m-%d")
 
     def save(self):
-        """Save PRD to file"""
+        """Save PRD to YAML file (schema v1)"""
+        data = self._generate_yaml_data()
+        # Determine output path: prefer .yaml extension
+        out_path = self.prd_path
+        if out_path.suffix in (".md",):
+            out_path = out_path.parent / (out_path.stem.lower() + ".yaml")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            yaml.dump(data, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
+
+    def save_markdown(self, output_path: Optional[Path] = None):
+        """Render PRD as Markdown (view layer)"""
         content = self._generate_markdown()
-        self.prd_path.parent.mkdir(parents=True, exist_ok=True)
-        self.prd_path.write_text(content, encoding="utf-8")
+        path = output_path or self.prd_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+    def _generate_yaml_data(self) -> dict:
+        """Generate YAML-serializable dict (schema v1)"""
+        reqs = []
+        for req in sorted(
+            self.requirements.values(),
+            key=lambda r: (
+                {"draft": 0, "confirmed": 1, "in_progress": 2, "completed": 3, "cancelled": 4}.get(r.status, 5),
+                r.created_at,
+            ),
+        ):
+            req_data = {
+                "id": req.id,
+                "title": req.title,
+                "original_description": req.original_description,
+                "status": req.status,
+                "priority": req.priority,
+                "created_at": req.created_at,
+                "updated_at": req.updated_at,
+            }
+            if req.current_description and req.current_description != req.original_description:
+                req_data["current_description"] = req.current_description
+            if req.changes:
+                req_data["change_history"] = req.changes
+            reqs.append(req_data)
+
+        status_counts = {}
+        for req in self.requirements.values():
+            status_counts[req.status] = status_counts.get(req.status, 0) + 1
+
+        return {
+            "kind": "prd",
+            "version": "1",
+            "updated_at": datetime.now().strftime("%Y-%m-%d"),
+            "requirements": reqs,
+            "statistics": {
+                "draft": status_counts.get("draft", 0),
+                "confirmed": status_counts.get("confirmed", 0),
+                "in_progress": status_counts.get("in_progress", 0),
+                "completed": status_counts.get("completed", 0),
+                "cancelled": status_counts.get("cancelled", 0),
+            },
+        }
 
     def _generate_markdown(self) -> str:
         """Generate Markdown format PRD"""
