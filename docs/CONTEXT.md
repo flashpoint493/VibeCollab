@@ -2,14 +2,14 @@
 # VibeCollab Global Context
 
 > ⚠️ **This file is auto-generated, do not edit manually**
-> Last updated: 2026-04-02T14:00:00
+> Last updated: 2026-04-02T15:30:00
 > Aggregated from: architect, dev, insight_collector
 
 
 ## Project Overall Status
 - **Version**: v0.12.0-dev
 - **Active roles**: 3 (architect, dev, insight_collector)
-- **Milestone**: v0.12.0 YAML Data Layer + Workflows + Insight Automation — 12/25 items (core infrastructure done)
+- **Milestone**: v0.12.0 YAML Data Layer + Workflows + Insight Automation — 22/25 items (88% complete, remaining: test updates)
 
 ## Role Work Status
 
@@ -17,26 +17,26 @@
 
 ### architect
 - **Last updated**: 2026-04-02
-- **Current task**: v0.12.0 YAML Data Layer architecture (DECISION-025/027)
-- **Progress**: v0.12.0 core infrastructure complete, reviewing remaining work
+- **Current task**: v0.12.0 YAML Data Layer architecture review (DECISION-025/027)
+- **Progress**: All major features implemented. 22/25 items complete. Template migration, Workflow Integration, Insight Derivation Chain all done.
 - **Pending issues**: (None)
-- **Next steps**: Review module rewrite sequence for v0.12.0
+- **Next steps**: Final review and v0.12.0 release preparation
 
 
 ### dev
 - **Last updated**: 2026-04-02
-- **Current task**: v0.12.0 YAML Data Layer implementation (TASK-DEV-030~034)
-- **Progress**: TASK-DEV-030~034 DONE. YAML Data Layer core complete. 1677 tests passing.
+- **Current task**: v0.12.0 completion (TASK-DEV-030~036)
+- **Progress**: TASK-DEV-030~036 DONE. 24 YAML templates created, Workflow Integration with 3 pre-built workflows, Insight Derivation Chain with graph visualization. 1731 tests passing.
 - **Pending issues**: MCP onboard timeout after IDE restart
-- **Next steps**: docs/*.md → docs/*.yaml full migration, then module rewrites (ContextAggregator, RoadmapParser, PRDManager)
+- **Next steps**: Final test updates and v0.12.0 release
 
 
 ### insight_collector
-- **Last updated**: 2026-04-01
-- **Current task**: Insight System Hardening — External project validation pending
-- **Progress**: 55 Insights indexed, Trigger Registry + Skill Registry operational
+- **Last updated**: 2026-04-02
+- **Current task**: Insight Derivation Chain implementation (FP-015)
+- **Progress**: FP-015 complete: derived_from field, insight graph --show-derivation, automatic derivation detection. 58 Insights indexed.
 - **Pending issues**: Cross-project import/export verification not started
-- **Next steps**: External project A/B/C validation
+- **Next steps**: Insight quality validation for v0.12.0
 
 
 

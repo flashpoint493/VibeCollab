@@ -1,0 +1,53 @@
+kind: insight
+version: "1"
+id: INS-058
+title: "Insight Derivation Chain: Tracking Knowledge Lineage"
+summary: "System for tracking insight lineage through derived_from relationships and automatic detection"
+tags:
+  - insight
+  - derivation
+  - graph
+  - lineage
+  - provenance
+category: technique
+body:
+  scenario: |
+    When creating new insights that build upon existing knowledge, you need to track
+    the lineage and relationships between insights. This helps understand how knowledge
+    evolves, identify foundational concepts, and trace the origin of ideas.
+  approach: |
+    1. Use the `derived_from` field in Insight YAML origin to record parent insight IDs
+    2. Create insights using `vibecollab insight derive` for automatic derivation detection
+    3. Visualize derivation chains with `vibecollab insight graph --show-derivation`
+    4. The DerivationDetector class analyzes task transitions and insight usage to suggest derivations
+    5. Tag matching and event log analysis provide confidence scores for suggestions
+    
+    Example derivation chain:
+    ```
+    INS-001 (Root)
+    └── INS-005 (Derived from INS-001)
+        └── INS-010 (Derived from INS-005)
+    ```
+  validation: |
+    Run `vibecollab insight graph --show-derivation` to verify chains are displayed correctly.
+    Check that derived_from references are valid in `vibecollab insight check`.
+  constraints:
+    - Requires insight schema version 1 or higher
+    - derived_from references must be valid insight IDs
+    - Circular references should be avoided
+  notes: |
+    FP-015 implementation includes:
+    - derived_from field support in Insight YAML schema
+    - vibecollab insight graph --show-derivation CLI command
+    - DerivationDetector class for automatic detection from task transitions
+    - Event log integration for tracking insight usage during tasks
+origin:
+  created_by: dev
+  created_at: "2026-04-02"
+  context: "FP-015 Insight Derivation Chain implementation"
+  source:
+    type: task
+    description: "Implementation of insight derivation chain tracking system"
+    ref: FP-015
+fingerprint: ""
+artifacts: []

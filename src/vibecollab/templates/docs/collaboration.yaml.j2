@@ -1,0 +1,66 @@
+# Collaboration configuration template - docs/collaboration.yaml
+kind: collaboration
+version: "1"
+updated_at: "{{ today }}"
+
+# Multi-developer/Agent collaboration configuration
+enabled: {{ role_context.enabled | default(false) }}
+
+# Identity Detection
+identity:
+  primary: {{ role_context.identity.primary | default('git_username') }}
+  fallback: {{ role_context.identity.fallback | default('system_user') }}
+  normalize: {{ role_context.identity.normalize | default(true) }}
+
+# Context Management
+context:
+  aggregation_file: "{{ role_context.context.aggregation_file | default('docs/CONTEXT.md') }}"
+  auto_sync: {{ role_context.context.auto_sync | default(true) }}
+  per_developer_dir: "docs/developers/"
+
+# Collaboration Document
+collaboration_doc:
+  file: "{{ role_context.collaboration.file | default('docs/developers/COLLABORATION.md') }}"
+  sections:
+    - "Task Assignment Matrix"
+    - "Dependencies"
+    - "Handoff Records"
+    - "Collaboration Conventions"
+
+# Dialogue Protocol
+dialogue_protocol:
+  on_start:
+    - "Read global aggregated CONTEXT.md (understand overall status)"
+    - "Read current developer's CONTEXT.md (understand own progress)"
+    - "Read COLLABORATION.md (understand collaboration relationships)"
+    - "Identify current developer identity"
+    - "Confirm this dialogue's goal"
+  on_end:
+    - "Update current developer's CONTEXT.md"
+    - "Update global CHANGELOG.md"
+    - "If cross-developer collaboration occurred, update COLLABORATION.md"
+    - "Auto-trigger context aggregation"
+    - "Git commit"
+
+# Conflict Detection
+conflict_detection:
+  enabled: true
+  types:
+    - "File Conflicts"
+    - "Task Conflicts"
+    - "Dependency Conflicts"
+    - "Naming Conflicts"
+  auto_check: true
+
+# Workspace Structure
+workspace_structure:
+  root: "docs/developers/"
+  subdirs:
+    - "{developer}/"
+    - "{developer}/CONTEXT.md"
+    - "{developer}/.metadata.yaml"
+  global_files:
+    - "docs/CONTEXT.md"
+    - "docs/CHANGELOG.md"
+    - "docs/DECISIONS.md"
+    - "docs/developers/COLLABORATION.md"

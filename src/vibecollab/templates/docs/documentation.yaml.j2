@@ -1,0 +1,62 @@
+# Documentation configuration template - docs/documentation.yaml
+kind: documentation
+version: "1"
+updated_at: "{{ today }}"
+
+# Key Files and Responsibilities
+key_files:
+{% for f in documentation.key_files %}
+  - path: "{{ f.path }}"
+    purpose: "{{ f.purpose }}"
+    update_trigger: "{{ f.update_trigger }}"
+{% endfor %}
+{% if not documentation.key_files %}
+  - path: "docs/CONTEXT.md"
+    purpose: "Current project state and progress"
+    update_trigger: "End of every dialogue"
+  - path: "docs/DECISIONS.md"
+    purpose: "Confirmed and pending decisions"
+    update_trigger: "When decisions are made"
+  - path: "docs/CHANGELOG.md"
+    purpose: "Session outputs and progress log"
+    update_trigger: "End of every dialogue"
+  - path: "docs/ROADMAP.md"
+    purpose: "Milestones and iteration planning"
+    update_trigger: "Milestone changes"
+  - path: "CONTRIBUTING_AI.md"
+    purpose: "Collaboration rules and protocols"
+    update_trigger: "Protocol changes"
+{% endif %}
+
+# Context Restoration Protocol
+context_restoration:
+  on_dialogue_start:
+    - "Read CONTRIBUTING_AI.md to understand collaboration rules"
+    - "Read docs/CONTEXT.md to restore current state"
+    - "Read docs/DECISIONS.md to review decisions"
+    - "Run 'git log --oneline -10' to review recent progress"
+    - "Ask user about the goal of this dialogue"
+  files_to_read:
+    - "{{ documentation.context_file | default('docs/CONTEXT.md') }}"
+    - "{{ documentation.decisions_file | default('docs/DECISIONS.md') }}"
+    - "CONTRIBUTING_AI.md"
+
+# Context Save Protocol
+context_save:
+  on_dialogue_end:
+    - "Update {{ documentation.context_file | default('docs/CONTEXT.md') }} to save current state"
+    - "Update {{ documentation.changelog_file | default('docs/CHANGELOG.md') }} to record outputs"
+    - "If new decisions were made, update {{ documentation.decisions_file | default('docs/DECISIONS.md') }}"
+    - "Must execute git commit to record this dialogue's outputs"
+  files_to_update:
+    - "{{ documentation.context_file | default('docs/CONTEXT.md') }}"
+    - "{{ documentation.changelog_file | default('docs/CHANGELOG.md') }}"
+    - "{{ documentation.decisions_file | default('docs/DECISIONS.md') }}"
+
+# Documentation Principles
+documentation_principles:
+  - "YAML is the source of truth"
+  - "Markdown is a generated view"
+  - "Keep documentation close to code"
+  - "Update docs continuously, not in batches"
+  - "Git history is a design record"

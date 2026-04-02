@@ -1,0 +1,52 @@
+name: "daily-sync"
+description: "Daily synchronization workflow: check docs, render markdown, and commit changes"
+version: "1.0"
+category: maintenance
+steps:
+  - action: cli
+    description: "Check for uncommitted changes"
+    command: "git status --short"
+    store_as: "git_status"
+
+  - action: cli
+    description: "Validate project configuration"
+    command: "vibecollab validate -c project.yaml"
+    expect:
+      exit_code: 0
+    on_fail: "continue"
+
+  - action: cli
+    description: "Run protocol compliance check"
+    command: "vibecollab check -c project.yaml"
+    expect:
+      exit_code: 0
+      stdout_contains: "All checks passed"
+    on_fail: "continue"
+
+  - action: cli
+    description: "Render YAML docs to Markdown"
+    command: "vibecollab docs render --format md"
+    on_fail: "abort"
+
+  - action: assert
+    description: "Verify ROADMAP.md was generated"
+    file: "docs/ROADMAP.md"
+
+  - action: cli
+    description: "Stage all changes"
+    command: "git add -A"
+    on_fail: "abort"
+
+  - action: cli
+    description: "Commit with timestamp"
+    command: "git commit -m \"Daily sync: $(date +%Y-%m-%d)\" || echo 'Nothing to commit'"
+    expect:
+      exit_code: 0
+    on_fail: "continue"
+
+  - action: cli
+    description: "Sync with remote"
+    command: "git pull --rebase && git push"
+    on_fail: "continue"
+
+on_fail: "abort"

@@ -1,0 +1,75 @@
+# Milestone configuration template - docs/milestone.yaml
+kind: milestone
+version: "1"
+updated_at: "{{ today }}"
+
+# Milestone Standards
+milestone_definition:
+  description: "Milestone = multiple features + bug fix period + full acceptance"
+  tag_pattern: "v{major}.{minor}.{patch}"
+
+# Milestone Lifecycle
+lifecycle:
+{% for phase in milestone.lifecycle %}
+  - phase: "{{ phase.phase }}"
+    description: "{{ phase.description }}"
+    exit_criteria:
+{% for criteria in phase.exit_criteria %}
+      - "{{ criteria }}"
+{% endfor %}
+{% endfor %}
+{% if not milestone.lifecycle %}
+  - phase: "Feature Development"
+    description: "Implement planned features"
+    exit_criteria:
+      - "All planned features implemented"
+      - "Unit tests passing"
+  - phase: "Bug Fix Period"
+    description: "Stabilization and bug fixing"
+    exit_criteria:
+      - "Critical bugs fixed"
+      - "No P0/P1 bugs remaining"
+  - phase: "QA Acceptance"
+    description: "Full product QA testing"
+    exit_criteria:
+      - "All test cases executed"
+      - "Acceptance criteria met"
+  - phase: "Release"
+    description: "Tag and release"
+    exit_criteria:
+      - "Version tagged"
+      - "Release notes published"
+{% endif %}
+
+# Bug Priority
+bug_priority:
+{% for priority in milestone.bug_priority %}
+  - level: "{{ priority.level }}"
+    description: "{{ priority.description }}"
+{% endfor %}
+{% if not milestone.bug_priority %}
+  - level: "P0"
+    description: "Critical - Blocks release"
+  - level: "P1"
+    description: "High - Major impact"
+  - level: "P2"
+    description: "Medium - Minor impact"
+  - level: "P3"
+    description: "Low - Cosmetic"
+{% endif %}
+
+# Release Commands
+release_commands:
+  create_tag: "git tag -a {tag} -m '{description}'"
+  push_tag: "git push origin {tag}"
+  create_release_notes: "Generate release notes from changelog"
+
+# Milestone Management
+management:
+  planning_required: true
+  pm_approval_required: true
+  qa_acceptance_required: true
+  documentation_required:
+    - "CHANGELOG.md update"
+    - "Release notes"
+    - "Version bump"

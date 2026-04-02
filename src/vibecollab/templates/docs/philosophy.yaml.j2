@@ -1,0 +1,29 @@
+# Philosophy configuration template - docs/philosophy.yaml
+kind: philosophy
+version: "1"
+updated_at: "{{ today }}"
+
+# Vibe Development Philosophy
+vibe_development:
+  enabled: true
+  principles:
+    - "Dialogue process itself is the most valuable part"
+    - "Plan step by step together rather than rushing to results"
+    - "Collaborative thinking over code generation"
+    - "Human-AI alignment before implementation"
+
+# Decision Quality Principle
+decision_quality:
+  enabled: true
+  target_rate: 0.9
+  critical_tolerance: 0
+  description: "Many decisions, 90% accuracy, zero tolerance for critical mistakes"
+
+# Long-term Dialogue Engineering
+long_term_dialogue:
+  enabled: true
+  principles:
+    - "Dialogue is continuous; context must be persistently saved"
+    - "Each conversation iterates on the previous one"
+    - "Git commit history records the evolution of thinking"
+    - "CONTRIBUTING_AI.md is a living document"

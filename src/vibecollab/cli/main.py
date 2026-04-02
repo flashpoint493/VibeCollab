@@ -1018,15 +1018,39 @@ main.add_command(skill_group)
 
 @main.group("plan")
 def plan_group():
-    """Execution Plan: YAML-driven workflow automation
+    """Execution Plan: YAML-driven workflow automation.
 
     Run multi-step automation plans for testing and protocol workflows.
+    Use 'vibecollab plan list' to see available workflows, then
+    'vibecollab plan run <workflow>' to execute.
     """
     pass
 
 
+def _resolve_plan_file(plan_file: str) -> tuple[str, bool]:
+    """Resolve plan file path, checking workflows directory if needed.
+
+    Returns:
+        Tuple of (resolved_path, is_workflow)
+    """
+    path = Path(plan_file)
+
+    # If file exists as-is, use it
+    if path.exists():
+        return str(path), False
+
+    # Try to find in workflows directory
+    from ..core.workflow import find_workflow
+
+    wf = find_workflow(plan_file)
+    if wf:
+        return str(wf.path), True
+
+    return plan_file, False
+
+
 @plan_group.command("run")
-@click.argument("plan_file", type=click.Path(exists=True))
+@click.argument("plan_file")
 @click.option("--dry-run", is_flag=True, help=_("Preview plan without executing"))
 @click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
 @click.option("--timeout", default=120, help=_("Step timeout in seconds"))
@@ -1043,9 +1067,14 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
     including file-exchange based loops and keyboard-simulation based
     autonomous IDE driving.
 
+    Plan file can be a path to any YAML file, or a workflow name from
+    .vibecollab/workflows/ (e.g., 'daily-sync', 'release-prep').
+
     Examples:
 
         vibecollab plan run my_plan.yaml
+
+        vibecollab plan run daily-sync
 
         vibecollab plan run my_plan.yaml --dry-run
 
@@ -1061,10 +1090,17 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
 
     from ..core.execution_plan import PlanRunner, load_plan, resolve_host_adapter
 
+    # Resolve plan file (check workflows directory if not found as-is)
+    resolved_path, is_workflow = _resolve_plan_file(plan_file)
+
+    if is_workflow and not json_output:
+        console.print(f"[dim]Loading workflow: {plan_file}[/dim]")
+
     try:
-        plan = load_plan(Path(plan_file))
+        plan = load_plan(Path(resolved_path))
     except (FileNotFoundError, ValueError) as e:
         console.print(f"[red]{EMOJI_MAP['error']} {e}[/red]")
+        console.print(f"[dim]Hint: Use 'vibecollab plan list' to see available workflows[/dim]")
         raise SystemExit(1)
 
     # Optional EventLog integration
@@ -1204,18 +1240,29 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
 
 
 @plan_group.command("validate")
-@click.argument("plan_file", type=click.Path(exists=True))
+@click.argument("plan_file")
 def plan_validate(plan_file):
-    """Validate a YAML plan file without executing
+    """Validate a YAML plan file or workflow without executing
+
+    Plan file can be a path to any YAML file, or a workflow name from
+    .vibecollab/workflows/ (e.g., 'daily-sync', 'release-prep').
 
     Examples:
 
         vibecollab plan validate my_plan.yaml
+
+        vibecollab plan validate daily-sync
     """
     from ..core.execution_plan import load_plan
 
+    # Resolve plan file (check workflows directory if not found as-is)
+    resolved_path, is_workflow = _resolve_plan_file(plan_file)
+
+    if is_workflow:
+        console.print(f"[dim]Validating workflow: {plan_file}[/dim]")
+
     try:
-        plan = load_plan(Path(plan_file))
+        plan = load_plan(Path(resolved_path))
         steps = len(plan.get("steps", []))
         console.print(
             f"[green]{EMOJI_MAP['success']} Plan '{plan.get('name', '?')}' "
@@ -1223,7 +1270,73 @@ def plan_validate(plan_file):
         )
     except (FileNotFoundError, ValueError) as e:
         console.print(f"[red]{EMOJI_MAP['error']} {e}[/red]")
+        console.print(f"[dim]Hint: Use 'vibecollab plan list' to see available workflows[/dim]")
         raise SystemExit(1)
+
+
+@plan_group.command("list")
+@click.option("--json-output", "--json", is_flag=True, help=_("Output in JSON format"))
+def plan_list(json_output):
+    """List available workflow plans
+
+    Shows all pre-built workflows from .vibecollab/workflows/ directory.
+    Workflows can be executed with: vibecollab plan run <workflow-name>
+
+    Examples:
+
+        vibecollab plan list
+
+        vibecollab plan list --json
+    """
+    import json as json_mod
+
+    from ..core.workflow import discover_workflows, list_workflow_categories
+
+    workflows = discover_workflows()
+
+    if json_output:
+        data = [
+            {
+                "name": w.name,
+                "description": w.description,
+                "version": w.version,
+                "category": w.category,
+                "step_count": w.step_count,
+                "path": str(w.path),
+            }
+            for w in workflows
+        ]
+        click.echo(json_mod.dumps(data, ensure_ascii=False, indent=2))
+        return
+
+    if not workflows:
+        console.print("[yellow]No workflows found.[/yellow]")
+        console.print(f"[dim]Workflows directory: .vibecollab/workflows/[/dim]")
+        return
+
+    # Group by category
+    categories = list_workflow_categories(workflows)
+
+    console.print()
+    console.print(
+        Panel.fit(
+            f"[bold]Available Workflows[/bold]\n\n"
+            f"Total: {len(workflows)} workflow(s) in {len(categories)} categorie(s)",
+            title="Plan List",
+        )
+    )
+
+    for category, wfs in sorted(categories.items()):
+        console.print()
+        console.print(f"[bold cyan]{category.upper()}[/bold cyan]")
+        for wf in wfs:
+            console.print(f"  [green]{wf.name}[/green] v{wf.version}")
+            console.print(f"    [dim]{wf.description or 'No description'}[/dim]")
+            console.print(f"    [dim]Steps: {wf.step_count} | Path: {wf.path.name}[/dim]")
+
+    console.print()
+    console.print("[dim]Usage: vibecollab plan run <workflow-name>[/dim]")
+    console.print()
 
 
 # ============================================

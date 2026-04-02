@@ -1,0 +1,77 @@
+name: "release-prep"
+description: "Release preparation workflow: update version, run tests, build and package"
+version: "1.0"
+category: release
+steps:
+  - action: cli
+    description: "Ensure clean working directory"
+    command: "git diff --quiet && git diff --cached --quiet"
+    on_fail: "abort"
+
+  - action: cli
+    description: "Run full test suite"
+    command: "python -m pytest tests/ -x -q --tb=short"
+    expect:
+      exit_code: 0
+      stdout_contains: "passed"
+    on_fail: "abort"
+
+  - action: cli
+    description: "Validate project configuration"
+    command: "vibecollab validate -c project.yaml"
+    expect:
+      exit_code: 0
+    on_fail: "abort"
+
+  - action: cli
+    description: "Run protocol compliance check"
+    command: "vibecollab check -c project.yaml"
+    expect:
+      exit_code: 0
+      stdout_contains: "All checks passed"
+    on_fail: "abort"
+
+  - action: cli
+    description: "Update version (bump patch)"
+    command: "python scripts/bump_version.py --patch"
+    on_fail: "abort"
+
+  - action: cli
+    description: "Render all documentation"
+    command: "vibecollab docs render --format md"
+    on_fail: "abort"
+
+  - action: cli
+    description: "Build package"
+    command: "python -m build"
+    expect:
+      exit_code: 0
+    on_fail: "abort"
+
+  - action: assert
+    description: "Verify build artifacts exist"
+    file: "dist"
+
+  - action: cli
+    description: "Run smoke tests on build"
+    command: "pip install dist/*.whl --force-reinstall && vibecollab --version"
+    expect:
+      exit_code: 0
+      stdout_contains: "vibecollab"
+    on_fail: "continue"
+
+  - action: cli
+    description: "Stage release changes"
+    command: "git add -A"
+
+  - action: cli
+    description: "Commit release preparation"
+    command: "git commit -m \"chore: prepare release $(python -c 'import vibecollab; print(vibecollab.__version__)')\""
+    on_fail: "continue"
+
+  - action: cli
+    description: "Create git tag"
+    command: "git tag -a \"v$(python -c 'import vibecollab; print(vibecollab.__version__)')\" -m \"Release v$(python -c 'import vibecollab; print(vibecollab.__version__)')\""
+    on_fail: "continue"
+
+on_fail: "abort"

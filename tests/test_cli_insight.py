@@ -9,11 +9,12 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from vibecollab.cli.insight import insight
+from vibecollab.cli.insight import insight, _render_derivation_tree
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def runner():
@@ -31,9 +32,7 @@ def project_dir(tmp_path):
             "context": {"per_role_dir": "docs/roles", "metadata_file": ".metadata.yaml"},
         },
     }
-    (tmp_path / "project.yaml").write_text(
-        yaml.dump(config, allow_unicode=True), encoding="utf-8"
-    )
+    (tmp_path / "project.yaml").write_text(yaml.dump(config, allow_unicode=True), encoding="utf-8")
     (tmp_path / ".vibecollab").mkdir()
     (tmp_path / "docs" / "roles" / "testdev").mkdir(parents=True)
     # Initialize role metadata
@@ -54,6 +53,7 @@ def chdir_project(project_dir, monkeypatch):
 # Tests: list
 # ---------------------------------------------------------------------------
 
+
 class TestListInsights:
     def test_list_empty(self, runner, chdir_project):
         result = runner.invoke(insight, ["list"])
@@ -63,6 +63,7 @@ class TestListInsights:
     @patch("vibecollab.cli.insight._load_role_manager")
     def test_list_with_items(self, mock_dm, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
         mgr.create(
             title="Test Insight",
@@ -78,6 +79,7 @@ class TestListInsights:
 
     def test_list_json(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
         mgr.create(
             title="JSON Test",
@@ -95,6 +97,7 @@ class TestListInsights:
 
     def test_list_active_only(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
         mgr.create(
             title="Active",
@@ -125,9 +128,11 @@ class TestListInsights:
 # Tests: show
 # ---------------------------------------------------------------------------
 
+
 class TestShowInsight:
     def test_show_existing(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
         mgr.create(
             title="Show Test",
@@ -154,24 +159,34 @@ class TestShowInsight:
 # Tests: add
 # ---------------------------------------------------------------------------
 
+
 class TestAddInsight:
     @patch("vibecollab.cli.insight._load_role_manager")
     def test_add_basic(self, mock_dm_factory, runner, chdir_project, project_dir):
         from vibecollab.domain.role import RoleManager
+
         # Mock role manager with fixed identity
-        dm = RoleManager(project_dir, yaml.safe_load(
-            (project_dir / "project.yaml").read_text(encoding="utf-8")
-        ))
+        dm = RoleManager(
+            project_dir, yaml.safe_load((project_dir / "project.yaml").read_text(encoding="utf-8"))
+        )
         with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
-            result = runner.invoke(insight, [
-                "add",
-                "--title", "CLI Created",
-                "--tags", "cli,test",
-                "--category", "technique",
-                "--scenario", "When using CLI",
-                "--approach", "Run the command",
-            ])
+            result = runner.invoke(
+                insight,
+                [
+                    "add",
+                    "--title",
+                    "CLI Created",
+                    "--tags",
+                    "cli,test",
+                    "--category",
+                    "technique",
+                    "--scenario",
+                    "When using CLI",
+                    "--approach",
+                    "Run the command",
+                ],
+            )
         assert result.exit_code == 0
         assert "INS-001" in result.output
         assert "CLI Created" in result.output
@@ -179,23 +194,36 @@ class TestAddInsight:
     @patch("vibecollab.cli.insight._load_role_manager")
     def test_add_with_all_options(self, mock_dm_factory, runner, chdir_project, project_dir):
         from vibecollab.domain.role import RoleManager
-        dm = RoleManager(project_dir, yaml.safe_load(
-            (project_dir / "project.yaml").read_text(encoding="utf-8")
-        ))
+
+        dm = RoleManager(
+            project_dir, yaml.safe_load((project_dir / "project.yaml").read_text(encoding="utf-8"))
+        )
         with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
-            result = runner.invoke(insight, [
-                "add",
-                "--title", "Full Options",
-                "--tags", "arch,python",
-                "--category", "workflow",
-                "--scenario", "Full scenario",
-                "--approach", "Full approach",
-                "--summary", "Full summary",
-                "--validation", "Run tests",
-                "--source-type", "task",
-                "--source-ref", "TASK-DEV-001",
-            ])
+            result = runner.invoke(
+                insight,
+                [
+                    "add",
+                    "--title",
+                    "Full Options",
+                    "--tags",
+                    "arch,python",
+                    "--category",
+                    "workflow",
+                    "--scenario",
+                    "Full scenario",
+                    "--approach",
+                    "Full approach",
+                    "--summary",
+                    "Full summary",
+                    "--validation",
+                    "Run tests",
+                    "--source-type",
+                    "task",
+                    "--source-ref",
+                    "TASK-DEV-001",
+                ],
+            )
         assert result.exit_code == 0
         assert "INS-001" in result.output
 
@@ -204,14 +232,26 @@ class TestAddInsight:
 # Tests: search
 # ---------------------------------------------------------------------------
 
+
 class TestSearchInsights:
     def test_search_by_tags(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="A", tags=["python", "refactor"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
-        mgr.create(title="B", tags=["java"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="A",
+            tags=["python", "refactor"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
+        mgr.create(
+            title="B",
+            tags=["java"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
         result = runner.invoke(insight, ["search", "--tags", "python"])
         assert result.exit_code == 0
@@ -220,11 +260,22 @@ class TestSearchInsights:
 
     def test_search_by_category(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="A", tags=["a"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
-        mgr.create(title="B", tags=["b"], category="workflow",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="A",
+            tags=["a"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
+        mgr.create(
+            title="B",
+            tags=["b"],
+            category="workflow",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
         result = runner.invoke(insight, ["search", "--category", "workflow"])
         assert result.exit_code == 0
@@ -244,6 +295,7 @@ class TestSearchInsights:
 # Tests: use
 # ---------------------------------------------------------------------------
 
+
 class TestUseInsight:
     @patch("vibecollab.cli.insight._load_role_manager")
     def test_use_existing(self, mock_dm_factory, runner, chdir_project, project_dir):
@@ -251,12 +303,17 @@ class TestUseInsight:
         from vibecollab.domain.role import RoleManager
 
         mgr = _load_insight_manager()
-        mgr.create(title="Use Me", tags=["test"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="Use Me",
+            tags=["test"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
-        dm = RoleManager(project_dir, yaml.safe_load(
-            (project_dir / "project.yaml").read_text(encoding="utf-8")
-        ))
+        dm = RoleManager(
+            project_dir, yaml.safe_load((project_dir / "project.yaml").read_text(encoding="utf-8"))
+        )
         with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, ["use", "INS-001"])
@@ -268,9 +325,10 @@ class TestUseInsight:
     @patch("vibecollab.cli.insight._load_role_manager")
     def test_use_not_found(self, mock_dm_factory, runner, chdir_project, project_dir):
         from vibecollab.domain.role import RoleManager
-        dm = RoleManager(project_dir, yaml.safe_load(
-            (project_dir / "project.yaml").read_text(encoding="utf-8")
-        ))
+
+        dm = RoleManager(
+            project_dir, yaml.safe_load((project_dir / "project.yaml").read_text(encoding="utf-8"))
+        )
         with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, ["use", "INS-999"])
@@ -281,12 +339,19 @@ class TestUseInsight:
 # Tests: decay
 # ---------------------------------------------------------------------------
 
+
 class TestDecayInsights:
     def test_decay_dry_run(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="Decay Me", tags=["test"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="Decay Me",
+            tags=["test"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
         result = runner.invoke(insight, ["decay", "--dry-run"])
         assert result.exit_code == 0
@@ -295,9 +360,15 @@ class TestDecayInsights:
 
     def test_decay_execute(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="Decay Me", tags=["test"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="Decay Me",
+            tags=["test"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
         result = runner.invoke(insight, ["decay"])
         assert result.exit_code == 0
@@ -308,12 +379,19 @@ class TestDecayInsights:
 # Tests: check
 # ---------------------------------------------------------------------------
 
+
 class TestCheckInsights:
     def test_check_clean(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="OK", tags=["test"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="OK",
+            tags=["test"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
         result = runner.invoke(insight, ["check"])
         assert result.exit_code == 0
@@ -321,12 +399,19 @@ class TestCheckInsights:
 
     def test_check_with_orphan(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="OK", tags=["test"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="OK",
+            tags=["test"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
         # Manually add a nonexistent entry to the registry
         entries, settings = mgr.get_registry()
         from vibecollab.insight.manager import RegistryEntry
+
         entries["INS-999"] = RegistryEntry()
         mgr._save_registry(entries, settings)
 
@@ -345,6 +430,7 @@ class TestCheckInsights:
 # Tests: delete
 # ---------------------------------------------------------------------------
 
+
 class TestDeleteInsight:
     @patch("vibecollab.cli.insight._load_role_manager")
     def test_delete_with_yes(self, mock_dm_factory, runner, chdir_project, project_dir):
@@ -352,12 +438,17 @@ class TestDeleteInsight:
         from vibecollab.domain.role import RoleManager
 
         mgr = _load_insight_manager()
-        mgr.create(title="Delete Me", tags=["test"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="Delete Me",
+            tags=["test"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
-        dm = RoleManager(project_dir, yaml.safe_load(
-            (project_dir / "project.yaml").read_text(encoding="utf-8")
-        ))
+        dm = RoleManager(
+            project_dir, yaml.safe_load((project_dir / "project.yaml").read_text(encoding="utf-8"))
+        )
         with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, ["delete", "INS-001", "-y"])
@@ -376,6 +467,7 @@ class TestDeleteInsight:
 # Tests: bookmark / unbookmark
 # ---------------------------------------------------------------------------
 
+
 class TestBookmarkInsight:
     @patch("vibecollab.cli.insight._load_role_manager")
     def test_bookmark_existing(self, mock_dm_factory, runner, chdir_project, project_dir):
@@ -383,12 +475,17 @@ class TestBookmarkInsight:
         from vibecollab.domain.role import RoleManager
 
         mgr = _load_insight_manager()
-        mgr.create(title="Bookmark Me", tags=["test"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="Bookmark Me",
+            tags=["test"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
-        dm = RoleManager(project_dir, yaml.safe_load(
-            (project_dir / "project.yaml").read_text(encoding="utf-8")
-        ))
+        dm = RoleManager(
+            project_dir, yaml.safe_load((project_dir / "project.yaml").read_text(encoding="utf-8"))
+        )
         with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, ["bookmark", "INS-001"])
@@ -402,12 +499,17 @@ class TestBookmarkInsight:
         from vibecollab.domain.role import RoleManager
 
         mgr = _load_insight_manager()
-        mgr.create(title="Bookmark Me", tags=["test"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="Bookmark Me",
+            tags=["test"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
-        dm = RoleManager(project_dir, yaml.safe_load(
-            (project_dir / "project.yaml").read_text(encoding="utf-8")
-        ))
+        dm = RoleManager(
+            project_dir, yaml.safe_load((project_dir / "project.yaml").read_text(encoding="utf-8"))
+        )
         with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             runner.invoke(insight, ["bookmark", "INS-001"])
@@ -429,12 +531,17 @@ class TestUnbookmarkInsight:
         from vibecollab.domain.role import RoleManager
 
         mgr = _load_insight_manager()
-        mgr.create(title="Unbookmark Me", tags=["test"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="Unbookmark Me",
+            tags=["test"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
-        dm = RoleManager(project_dir, yaml.safe_load(
-            (project_dir / "project.yaml").read_text(encoding="utf-8")
-        ))
+        dm = RoleManager(
+            project_dir, yaml.safe_load((project_dir / "project.yaml").read_text(encoding="utf-8"))
+        )
         with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             # First bookmark, then unbookmark
@@ -448,9 +555,9 @@ class TestUnbookmarkInsight:
     def test_unbookmark_nonexistent(self, mock_dm_factory, runner, chdir_project, project_dir):
         from vibecollab.domain.role import RoleManager
 
-        dm = RoleManager(project_dir, yaml.safe_load(
-            (project_dir / "project.yaml").read_text(encoding="utf-8")
-        ))
+        dm = RoleManager(
+            project_dir, yaml.safe_load((project_dir / "project.yaml").read_text(encoding="utf-8"))
+        )
         with patch.object(dm, "get_current_role", return_value="testdev"):
             mock_dm_factory.return_value = dm
             result = runner.invoke(insight, ["unbookmark", "INS-999"])
@@ -463,15 +570,27 @@ class TestUnbookmarkInsight:
 # Tests: trace
 # ---------------------------------------------------------------------------
 
+
 class TestTraceInsight:
     def test_trace_simple(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="Base", tags=["a"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
-        mgr.create(title="Child", tags=["b"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev",
-                    derived_from=["INS-001"])
+        mgr.create(
+            title="Base",
+            tags=["a"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
+        mgr.create(
+            title="Child",
+            tags=["b"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+            derived_from=["INS-001"],
+        )
 
         result = runner.invoke(insight, ["trace", "INS-001"])
         assert result.exit_code == 0
@@ -481,9 +600,15 @@ class TestTraceInsight:
 
     def test_trace_no_relations(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="Standalone", tags=["a"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="Standalone",
+            tags=["a"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
         result = runner.invoke(insight, ["trace", "INS-001"])
         assert result.exit_code == 0
@@ -491,9 +616,15 @@ class TestTraceInsight:
 
     def test_trace_json(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="Base", tags=["a"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="Base",
+            tags=["a"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
         result = runner.invoke(insight, ["trace", "INS-001", "--json"])
         assert result.exit_code == 0
@@ -510,12 +641,19 @@ class TestTraceInsight:
 # Tests: who
 # ---------------------------------------------------------------------------
 
+
 class TestWhoInsight:
     def test_who_basic(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="Who Test", tags=["a"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="Who Test",
+            tags=["a"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
         mgr.record_use("INS-001", used_by="otherdev")
 
         result = runner.invoke(insight, ["who", "INS-001"])
@@ -525,9 +663,15 @@ class TestWhoInsight:
 
     def test_who_json(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="Who Test", tags=["a"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="Who Test",
+            tags=["a"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
 
         result = runner.invoke(insight, ["who", "INS-001", "--json"])
         assert result.exit_code == 0
@@ -544,6 +688,7 @@ class TestWhoInsight:
 # Tests: stats
 # ---------------------------------------------------------------------------
 
+
 class TestStatsInsight:
     def test_stats_empty(self, runner, chdir_project):
         result = runner.invoke(insight, ["stats"])
@@ -553,9 +698,15 @@ class TestStatsInsight:
 
     def test_stats_with_data(self, runner, chdir_project):
         from vibecollab.cli.insight import _load_insight_manager
+
         mgr = _load_insight_manager()
-        mgr.create(title="A", tags=["a"], category="technique",
-                    body={"scenario": "s", "approach": "a"}, created_by="testdev")
+        mgr.create(
+            title="A",
+            tags=["a"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
         mgr.record_use("INS-001", used_by="testdev")
 
         result = runner.invoke(insight, ["stats"])
@@ -569,3 +720,268 @@ class TestStatsInsight:
         assert "summary" in data
         assert "roles" in data
         assert "insights" in data
+
+
+# -----------------------------------------------------------------------------
+# Tests: graph (v0.9.4)
+# -----------------------------------------------------------------------------
+
+
+class TestGraphInsight:
+    def test_graph_empty(self, runner, chdir_project):
+        result = runner.invoke(insight, ["graph"])
+        assert result.exit_code == 0
+        assert "0 nodes" in result.output or "nodes" in result.output
+
+    def test_graph_with_nodes(self, runner, chdir_project):
+        from vibecollab.cli.insight import _load_insight_manager
+
+        mgr = _load_insight_manager()
+        mgr.create(
+            title="A",
+            tags=["a"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
+        mgr.create(
+            title="B",
+            tags=["b"],
+            category="workflow",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+            derived_from=["INS-001"],
+        )
+
+        result = runner.invoke(insight, ["graph"])
+        assert result.exit_code == 0
+        assert "2 nodes" in result.output or "nodes" in result.output
+
+    def test_graph_json(self, runner, chdir_project):
+        from vibecollab.cli.insight import _load_insight_manager
+
+        mgr = _load_insight_manager()
+        mgr.create(
+            title="A",
+            tags=["a"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
+
+        result = runner.invoke(insight, ["graph", "--json"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert "nodes" in data
+        assert "edges" in data
+        assert "stats" in data
+
+    def test_graph_mermaid(self, runner, chdir_project):
+        from vibecollab.cli.insight import _load_insight_manager
+
+        mgr = _load_insight_manager()
+        mgr.create(
+            title="A",
+            tags=["a"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
+
+        result = runner.invoke(insight, ["graph", "--format", "mermaid"])
+        assert result.exit_code == 0
+        assert "graph LR" in result.output
+
+
+# -----------------------------------------------------------------------------
+# Tests: graph --show-derivation (FP-015)
+# -----------------------------------------------------------------------------
+
+
+class TestGraphShowDerivation:
+    def test_show_derivation_empty(self, runner, chdir_project):
+        result = runner.invoke(insight, ["graph", "--show-derivation"])
+        assert result.exit_code == 0
+        assert "Derivation Chain" in result.output or "No root insights" in result.output
+
+    def test_show_derivation_with_chain(self, runner, chdir_project):
+        from vibecollab.cli.insight import _load_insight_manager
+
+        mgr = _load_insight_manager()
+        # Create root insight
+        mgr.create(
+            title="Root Insight",
+            tags=["root"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
+        # Create derived insight
+        mgr.create(
+            title="Derived Insight",
+            tags=["derived"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+            derived_from=["INS-001"],
+        )
+
+        result = runner.invoke(insight, ["graph", "--show-derivation"])
+        assert result.exit_code == 0
+        assert "Root" in result.output
+        assert "INS-001" in result.output
+        assert "INS-002" in result.output
+
+    def test_show_derivation_multi_level(self, runner, chdir_project):
+        from vibecollab.cli.insight import _load_insight_manager
+
+        mgr = _load_insight_manager()
+        # Create chain: A -> B -> C
+        mgr.create(
+            title="A",
+            tags=["a"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
+        mgr.create(
+            title="B",
+            tags=["b"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+            derived_from=["INS-001"],
+        )
+        mgr.create(
+            title="C",
+            tags=["c"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+            derived_from=["INS-002"],
+        )
+
+        result = runner.invoke(insight, ["graph", "--show-derivation"])
+        assert result.exit_code == 0
+        # Should show the full chain
+        assert "INS-001" in result.output
+        assert "INS-002" in result.output
+        assert "INS-003" in result.output
+
+
+# -----------------------------------------------------------------------------
+# Tests: derive (FP-015)
+# -----------------------------------------------------------------------------
+
+
+class TestDeriveCommand:
+    @patch("vibecollab.cli.insight._load_role_manager")
+    def test_derive_basic(self, mock_dm_factory, runner, chdir_project, project_dir):
+        from vibecollab.domain.role import RoleManager
+
+        dm = RoleManager(project_dir, {})
+        with patch.object(dm, "get_current_role", return_value="testdev"):
+            mock_dm_factory.return_value = dm
+
+            result = runner.invoke(
+                insight,
+                [
+                    "derive",
+                    "--title",
+                    "Derived Pattern",
+                    "--tags",
+                    "python,pattern",
+                    "--category",
+                    "technique",
+                    "--scenario",
+                    "When refactoring code",
+                    "--approach",
+                    "Use this pattern",
+                ],
+            )
+
+        assert result.exit_code == 0
+        assert "INS-001" in result.output
+        assert "Created insight" in result.output
+
+    @patch("vibecollab.cli.insight._load_role_manager")
+    def test_derive_with_manual_parent(self, mock_dm_factory, runner, chdir_project, project_dir):
+        from vibecollab.cli.insight import _load_insight_manager
+        from vibecollab.domain.role import RoleManager
+
+        mgr = _load_insight_manager()
+        parent = mgr.create(
+            title="Parent",
+            tags=["test"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
+
+        dm = RoleManager(project_dir, {})
+        with patch.object(dm, "get_current_role", return_value="testdev"):
+            mock_dm_factory.return_value = dm
+
+            result = runner.invoke(
+                insight,
+                [
+                    "derive",
+                    "--title",
+                    "Child Pattern",
+                    "--tags",
+                    "test",
+                    "--category",
+                    "technique",
+                    "--scenario",
+                    "S",
+                    "--approach",
+                    "A",
+                    "--derived-from",
+                    parent.id,
+                ],
+            )
+
+        assert result.exit_code == 0
+        assert "Derived from" in result.output
+        assert parent.id in result.output
+
+    @patch("vibecollab.cli.insight._load_role_manager")
+    def test_derive_dry_run(self, mock_dm_factory, runner, chdir_project, project_dir):
+        from vibecollab.cli.insight import _load_insight_manager
+        from vibecollab.domain.role import RoleManager
+
+        mgr = _load_insight_manager()
+        mgr.create(
+            title="Base",
+            tags=["python"],
+            category="technique",
+            body={"scenario": "s", "approach": "a"},
+            created_by="testdev",
+        )
+
+        dm = RoleManager(project_dir, {})
+        with patch.object(dm, "get_current_role", return_value="testdev"):
+            mock_dm_factory.return_value = dm
+
+            result = runner.invoke(
+                insight,
+                [
+                    "derive",
+                    "--title",
+                    "New Pattern",
+                    "--tags",
+                    "python,advanced",
+                    "--category",
+                    "technique",
+                    "--scenario",
+                    "S",
+                    "--approach",
+                    "A",
+                    "--dry-run",
+                ],
+            )
+
+        assert result.exit_code == 0
+        assert "Derivation Suggestions" in result.output or "suggestions" in result.output.lower()
+        # Should not create insight in dry-run mode
+        assert mgr.get("INS-002") is None

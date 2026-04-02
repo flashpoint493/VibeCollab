@@ -1,0 +1,55 @@
+name: "insight-collect"
+description: "Insight collection workflow: scan code, detect patterns, and auto-generate insights"
+version: "1.0"
+category: insight
+steps:
+  - action: cli
+    description: "Check project health signals"
+    command: "vibecollab health -c project.yaml"
+    store_as: "health_report"
+    on_fail: "continue"
+
+  - action: cli
+    description: "Update semantic index"
+    command: "vibecollab index update"
+    on_fail: "continue"
+
+  - action: cli
+    description: "Suggest insights based on current context"
+    command: "vibecollab insight suggest"
+    store_as: "suggested_insights"
+    on_fail: "continue"
+
+  - action: cli
+    description: "Auto-collect code patterns"
+    command: "vibecollab insight collect --auto"
+    on_fail: "continue"
+
+  - action: cli
+    description: "Run insight consistency check"
+    command: "vibecollab insight check"
+    expect:
+      exit_code: 0
+    on_fail: "continue"
+
+  - action: cli
+    description: "Export insights snapshot"
+    command: "vibecollab insight export --output .vibecollab/insights/snapshot-$(date +%Y%m%d).json"
+    on_fail: "continue"
+
+  - action: cli
+    description: "Generate insight report"
+    command: "vibecollab insight list --format json > .vibecollab/insights/report-$(date +%Y%m%d).json"
+    on_fail: "continue"
+
+  - action: cli
+    description: "Stage new insights"
+    command: "git add .vibecollab/insights/"
+    on_fail: "continue"
+
+  - action: cli
+    description: "Commit insights if changes exist"
+    command: "git diff --cached --quiet || git commit -m \"docs: auto-collect insights $(date +%Y-%m-%d)\""
+    on_fail: "continue"
+
+on_fail: "continue"

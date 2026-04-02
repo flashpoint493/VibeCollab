@@ -1,0 +1,75 @@
+# Iteration configuration template - docs/iteration.yaml
+kind: iteration
+version: "1"
+updated_at: "{{ today }}"
+
+# Iteration Management Configuration
+suggestion_pool:
+  enabled: true
+  location: "docs/ROADMAP.md"
+  section: "Iteration Suggestion Pool"
+  categories:
+    - symbol: "[+]"
+      meaning: "Include - Will be implemented in current milestone"
+    - symbol: "[>]"
+      meaning: "Defer - Postpone to future milestone"
+    - symbol: "[-]"
+      meaning: "Reject - Will not implement"
+  review_dimensions:
+    - "Priority and urgency"
+    - "Conflict with existing features"
+    - "Implementation cost"
+    - "User value"
+    - "Technical feasibility"
+
+config_level_iteration:
+  enabled: {{ iteration.config_level_iteration.enabled | default(true) }}
+  commit_prefix: "{{ iteration.config_level_iteration.commit_prefix | default('chore:') }}"
+  definition: "Only adjusting existing parameter values, no adding/removing code logic"
+  examples:
+{% for ex in iteration.config_level_iteration.examples %}
+    - "{{ ex }}"
+{% endfor %}
+{% if not iteration.config_level_iteration.examples %}
+    - "Adjusting timeout values"
+    - "Changing log levels"
+    - "Updating configuration flags"
+    - "Modifying color schemes"
+{% endif %}
+  execution_rules:
+    - "User explicitly states 'config adjustment' or 'value change'"
+    - "AI directly modifies the corresponding config value"
+    - "No PM approval needed, no TASK creation required"
+    - "Commit uses configured prefix"
+  not_applicable:
+    - "Requires new functions/classes/files"
+    - "Involves system interaction logic changes"
+    - "May affect other modules"
+    - "User is unsure what to change"
+
+version_review:
+  enabled: {{ iteration.version_review.enabled | default(true) }}
+  timing: "After milestone acceptance, before starting next phase planning"
+  dimensions:
+    - name: "Test Performance"
+      items:
+        - "Pass rate, issue distribution"
+        - "Stability assessment"
+    - name: "User Experience Feedback"
+      items:
+        - "Core feature validation results"
+        - "Usability, visual experience"
+    - name: "Technical Debt"
+      items:
+        - "Known issues table"
+        - "Performance bottlenecks"
+    - name: "Iteration Suggestion Pool"
+      items:
+        - "Accumulated suggestions from previous version"
+        - "Priority re-evaluation"
+
+iteration_management_principles:
+  - "Iteration suggestions must be reviewed by PM before inclusion"
+  - "PM decides: Include / Defer / Reject"
+  - "Config-level iterations can be executed quickly"
+  - "Regular version review is mandatory"

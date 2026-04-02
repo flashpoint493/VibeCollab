@@ -20,7 +20,7 @@ Commands:
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import click
 import yaml
@@ -799,6 +799,51 @@ def _create_from_candidates(project_root, candidates, collector):
 # ------------------------------------------------------------------
 
 
+def _render_derivation_tree(
+    mgr, insight_id: str, prefix: str = "", visited: Optional[set] = None
+) -> List[str]:
+    """Render a derivation tree starting from an insight.
+
+    Returns list of formatted lines showing the derivation chain.
+    """
+    if visited is None:
+        visited = set()
+
+    if insight_id in visited:
+        return [f"{prefix}└── {insight_id} (circular reference)"]
+    visited.add(insight_id)
+
+    ins = mgr.get(insight_id)
+    if not ins:
+        return [f"{prefix}└── {insight_id} (missing)"]
+
+    lines = []
+    # Find children (insights derived from this one)
+    children = []
+    for child_ins in mgr.list_all():
+        if insight_id in child_ins.origin.derived_from:
+            children.append(child_ins)
+
+    # Sort children by ID for consistent output
+    children.sort(key=lambda x: x.id)
+
+    if children:
+        for i, child in enumerate(children):
+            is_last = i == len(children) - 1
+            connector = "└── " if is_last else "├── "
+            child_prefix = "    " if is_last else "│   "
+            lines.append(
+                f"{prefix}{connector}{child.id} (Derived from {insight_id}) — {child.title}"
+            )
+            # Recursively render grandchildren
+            sub_lines = _render_derivation_tree(
+                mgr, child.id, prefix + child_prefix, visited.copy()
+            )
+            lines.extend(sub_lines)
+
+    return lines
+
+
 @insight.command("graph")
 @click.option(
     "--format",
@@ -814,7 +859,13 @@ def _create_from_candidates(project_root, candidates, collector):
     default=False,
     help=_("JSON output (alias for --format json)"),
 )
-def insight_graph(fmt, json_output):
+@click.option(
+    "--show-derivation",
+    is_flag=True,
+    default=False,
+    help=_("Show derivation tree (root insights and their descendants)"),
+)
+def insight_graph(fmt, json_output, show_derivation):
     """Insight association graph visualization
 
     Display derivation/association relationships between all Insights.
@@ -826,6 +877,8 @@ def insight_graph(fmt, json_output):
         vibecollab insight graph --format mermaid
 
         vibecollab insight graph --json
+
+        vibecollab insight graph --show-derivation
     """
     import json as json_mod
 
@@ -842,6 +895,49 @@ def insight_graph(fmt, json_output):
 
     # text format: human-readable graph summary
     stats = graph["stats"]
+
+    if show_derivation:
+        # Show derivation tree view
+        click.echo("Insight Derivation Chain:\n")
+
+        # Find root insights (those not derived from any other insight)
+        all_ids = {n["id"] for n in graph["nodes"]}
+        derived_ids = set()
+        for edge in graph["edges"]:
+            if edge["type"] == "derived_from":
+                derived_ids.add(edge["to"])
+
+        root_ids = sorted(all_ids - derived_ids)
+
+        if not root_ids:
+            click.echo("  No root insights found.")
+            return
+
+        for root_id in root_ids:
+            root_ins = mgr.get(root_id)
+            if root_ins:
+                click.echo(f"{root_id} (Root) — {root_ins.title}")
+                tree_lines = _render_derivation_tree(mgr, root_id, "")
+                for line in tree_lines:
+                    click.echo(line)
+                if tree_lines:
+                    click.echo()
+
+        # Also show isolated insights (no relations at all)
+        isolated = [
+            n["id"]
+            for n in graph["nodes"]
+            if n["id"] not in derived_ids and n["id"] not in root_ids
+        ]
+        if isolated:
+            click.echo("\nIsolated Insights (no derivation relations):")
+            for iso_id in isolated:
+                iso_ins = mgr.get(iso_id)
+                if iso_ins:
+                    click.echo(f"  {iso_id} — {iso_ins.title}")
+        return
+
+    # Standard text format: human-readable graph summary
     click.echo(f"Insight Graph: {stats['node_count']} nodes, {stats['edge_count']} edges")
     click.echo(f"  Components: {stats['components']}, Isolated: {stats['isolated_count']}")
     click.echo()
@@ -1051,3 +1147,145 @@ def insight_triggers(limit: Optional[int], search: Optional[str], json_output: b
     # Table mode
     output = registry.format_triggers_table(limit)
     click.echo(output)
+
+
+# ------------------------------------------------------------------
+# Derivation commands (FP-015)
+# ------------------------------------------------------------------
+
+
+@insight.command("derive")
+@click.option("--title", "-t", required=True, help=_("Insight title"))
+@click.option("--tags", required=True, help=_("Tag list, comma separated"))
+@click.option(
+    "--category",
+    "-c",
+    required=True,
+    type=click.Choice(["technique", "workflow", "decision", "debug", "tool", "integration"]),
+    help=_("Category"),
+)
+@click.option("--scenario", "-s", required=True, help=_("Applicable scenario"))
+@click.option("--approach", "-a", required=True, help=_("Method/steps"))
+@click.option("--summary", default="", help=_("One-line summary"))
+@click.option("--validation", default="", help=_("Validation method"))
+@click.option("--source-task", default=None, help=_("Source task ID for derivation detection"))
+@click.option(
+    "--min-confidence",
+    default=0.6,
+    type=float,
+    help=_("Minimum confidence for auto-derivation (0.0-1.0)"),
+)
+@click.option("--dry-run", is_flag=True, help=_("Show derivation suggestions without creating"))
+@click.option(
+    "--derived-from", default=None, help=_("Manually specify derived from (comma separated)")
+)
+def create_with_derivation(
+    title,
+    tags,
+    category,
+    scenario,
+    approach,
+    summary,
+    validation,
+    source_task,
+    min_confidence,
+    dry_run,
+    derived_from,
+):
+    """Create a new insight with automatic derivation detection (FP-015)
+
+    This command creates an insight and automatically detects derivation
+    relationships based on recent task activity and insight usage.
+
+    Examples:
+
+        vibecollab insight derive --title "New Pattern" --tags "python,refactor"
+            --category technique --scenario "When refactoring" --approach "Use pattern"
+
+        vibecollab insight derive --source-task TASK-DEV-001 --dry-run
+    """
+    from vibecollab.insight.derivation_detector import DerivationDetector
+
+    mgr = _load_insight_manager()
+    dm = _load_role_manager()
+    created_by = dm.get_current_role()
+
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+    body = {"scenario": scenario, "approach": approach}
+    if validation:
+        body["validation"] = validation
+
+    # Handle manual derived_from
+    manual_derived = None
+    if derived_from:
+        manual_derived = [d.strip() for d in derived_from.split(",") if d.strip()]
+
+    if dry_run:
+        # Just show suggestions without creating
+        detector = DerivationDetector(mgr)
+        suggestions = detector.suggest_for_new_insight(
+            title, tag_list, recent_tasks=[source_task] if source_task else []
+        )
+
+        click.echo(f"\n{EMOJI['info']} Derivation Suggestions for: {title}\n")
+        if suggestions:
+            for s in suggestions:
+                conf_bar = "█" * int(s.confidence * 10)
+                conf_str = f"{conf_bar:<10} {s.confidence:.1%}"
+                click.echo(f"  {s.insight_id}")
+                click.echo(f"    Reason: {s.reason}")
+                click.echo(f"    Confidence: {conf_str}")
+                if s.source_task:
+                    click.echo(f"    Source Task: {s.source_task}")
+                click.echo()
+            click.echo(f"High confidence (≥{min_confidence:.0%}) will be auto-included.")
+        else:
+            click.echo("  No derivation suggestions found.")
+        return
+
+    # Create with derivation detection
+    detector = DerivationDetector(mgr)
+    insight, suggestions = detector.create_insight_with_derivation(
+        title=title,
+        tags=tag_list,
+        category=category,
+        body=body,
+        created_by=created_by,
+        source_task=source_task,
+        auto_derivation=True,
+        min_confidence=min_confidence,
+        summary=summary,
+        derived_from=manual_derived,
+        source_type="insight" if manual_derived else None,
+        source_desc=f"Derived from {','.join(manual_derived)}" if manual_derived else None,
+    )
+
+    # Record to role contributed
+    try:
+        dm.add_contributed(insight.id, created_by)
+    except Exception:
+        pass
+
+    # Update signal snapshot
+    try:
+        from ..insight.signal import InsightSignalCollector
+
+        collector = InsightSignalCollector(Path.cwd())
+        collector.update_snapshot(insight_id=insight.id)
+    except Exception:
+        pass
+
+    click.echo(f"{EMOJI['ok']} Created insight: {insight.id} -- {insight.title}")
+    click.echo(f"  Tags: {', '.join(insight.tags)}")
+    click.echo(f"  Category: {insight.category}")
+
+    if insight.origin.derived_from:
+        click.echo(f"  Derived from: {', '.join(insight.origin.derived_from)}")
+        click.echo(f"  {EMOJI['info']} Based on {len(suggestions)} suggestion(s):")
+        for s in suggestions:
+            if s.confidence >= min_confidence:
+                click.echo(f"    - {s.insight_id}: {s.reason} ({s.confidence:.0%})")
+    else:
+        click.echo(f"  {EMOJI['info']} No high-confidence derivation sources found.")
+        if suggestions:
+            click.echo(f"  Low confidence suggestions available (run with --dry-run to see)")

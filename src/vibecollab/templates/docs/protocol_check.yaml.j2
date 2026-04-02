@@ -1,0 +1,79 @@
+# Protocol Check configuration template - docs/protocol_check.yaml
+kind: protocol_check
+version: "1"
+updated_at: "{{ today }}"
+
+# Protocol Self-Check Configuration
+enabled: {{ config.protocol_check.enabled | default(true) }}
+
+# Check Trigger Methods
+trigger_methods:
+  cli:
+    - command: "vibecollab check"
+      description: "Check protocol compliance"
+    - command: "vibecollab check --strict"
+      description: "Strict mode (warnings as failures)"
+    - command: "vibecollab check --insights"
+      description: "Include Insight consistency check"
+  dialogue_triggers:
+    - "check protocol"
+    - "protocol check"
+    - "self-check"
+    - "verify compliance"
+
+# Check Items
+check_items:
+  git_protocol:
+    description: "Git Protocol Check"
+    items:
+      - name: "Git repository initialized"
+        severity: "error"
+      - name: "Uncommitted changes"
+        severity: "warning"
+      - name: "Git commit frequency"
+        severity: "info"
+  documentation:
+    description: "Documentation Update Check"
+    items:
+      - name: "Required documents exist (CONTEXT.md, CHANGELOG.md, etc.)"
+        severity: "error"
+      - name: "Documents recently updated (within 24 hours)"
+        severity: "warning"
+      - name: "PRD.md exists (if enabled)"
+        severity: "error"
+  dialogue_flow:
+    description: "Dialogue Flow Check"
+    items:
+      - name: "Files that should be read at dialogue start exist"
+        severity: "error"
+      - name: "Files that should be updated at dialogue end exist"
+        severity: "error"
+
+# Check Result Levels
+result_levels:
+  - level: "error"
+    symbol: "[FAIL]"
+    description: "Protocol violation"
+    action_required: "Must fix"
+  - level: "warning"
+    symbol: "[WARN]"
+    description: "Potentially missed protocol step"
+    action_required: "Recommended to address"
+  - level: "info"
+    symbol: "[INFO]"
+    description: "Informational notice"
+    action_required: "Optional"
+
+# AI Self-Check Behavior Guidelines
+behavior_guidelines:
+  - "Execute check: Run the protocol checker, obtain results"
+  - "Display results: Clearly show the status of all check items"
+  - "Provide suggestions: For failed items, provide specific fix suggestions"
+  - "Auto-fix: For auto-fixable issues, proactively execute fixes"
+  - "Record reminders: For issues requiring manual handling, clearly remind the user"
+
+# Best Practices
+best_practices:
+  dialogue_start: "After restoring context, run a quick self-check"
+  dialogue_end: "Before executing git commit, run self-check"
+  periodic: "Run full self-check if long gap since last dialogue"

@@ -1,6 +1,6 @@
 kind: context
 version: "1"
-updated_at: "2026-04-02T14:00:00"
+updated_at: "2026-04-02T15:30:00"
 aggregated_from:
   - architect
   - dev
@@ -12,29 +12,29 @@ project_status:
     - architect
     - dev
     - insight_collector
-  milestone: "v0.12.0 YAML Data Layer + Workflows + Insight Automation — 12/25 items (core infrastructure done)"
+  milestone: "v0.12.0 YAML Data Layer + Workflows + Insight Automation — 22/25 items (88% complete, remaining: test updates)"
 
 roles:
   - role: architect
     updated_at: "2026-04-02"
-    current_task: "v0.12.0 YAML Data Layer architecture (DECISION-025/027)"
-    progress: "v0.12.0 core infrastructure complete, reviewing remaining work"
+    current_task: "v0.12.0 YAML Data Layer architecture review (DECISION-025/027)"
+    progress: "All major features implemented. 22/25 items complete. Template migration, Workflow Integration, Insight Derivation Chain all done."
     pending_issues: null
-    next_steps: "Review module rewrite sequence for v0.12.0"
+    next_steps: "Final review and v0.12.0 release preparation"
 
   - role: dev
     updated_at: "2026-04-02"
-    current_task: "v0.12.0 YAML Data Layer implementation (TASK-DEV-030~034)"
-    progress: "TASK-DEV-030~034 DONE. YAML Data Layer core complete. 1677 tests passing."
+    current_task: "v0.12.0 completion (TASK-DEV-030~036)"
+    progress: "TASK-DEV-030~036 DONE. 24 YAML templates created, Workflow Integration with 3 pre-built workflows, Insight Derivation Chain with graph visualization. 1731 tests passing."
     pending_issues: "MCP onboard timeout after IDE restart"
-    next_steps: "docs/*.md → docs/*.yaml full migration, then module rewrites (ContextAggregator, RoadmapParser, PRDManager)"
+    next_steps: "Final test updates and v0.12.0 release"
 
   - role: insight_collector
-    updated_at: "2026-04-01"
-    current_task: "Insight System Hardening — External project validation pending"
-    progress: "55 Insights indexed, Trigger Registry + Skill Registry operational"
+    updated_at: "2026-04-02"
+    current_task: "Insight Derivation Chain implementation (FP-015)"
+    progress: "FP-015 complete: derived_from field, insight graph --show-derivation, automatic derivation detection. 58 Insights indexed."
     pending_issues: "Cross-project import/export verification not started"
-    next_steps: "External project A/B/C validation"
+    next_steps: "Insight quality validation for v0.12.0"
 
 collaboration: "See docs/roles/ for individual role contexts"
 

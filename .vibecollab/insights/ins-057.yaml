@@ -1,0 +1,29 @@
+kind: insight
+version: '1'
+id: INS-057
+title: 'Insight Derivation Chain: Tracking Knowledge Lineage'
+summary: System for tracking insight lineage through derived_from relationships and
+  automatic detection
+tags:
+- insight
+- derivation
+- graph
+- lineage
+- provenance
+category: technique
+body:
+  scenario: When creating new insights that build upon existing knowledge, you need
+    to track the lineage and relationships between insights
+  approach: Use the derived_from field in Insight YAML to record parent insights.
+    Use 'vibecollab insight graph --show-derivation' to visualize derivation chains.
+    Use DerivationDetector for automatic detection from task transitions.
+  validation: Run 'vibecollab insight graph --show-derivation' to verify chains are
+    displayed correctly
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-04-02'
+  source:
+    type: insight
+    description: 'FP-015 implementation: automatic derivation detection and visualization'
+fingerprint: 762f285502186b307cae9740481f241dbddd845546119ca4e6dcef6d3128c755

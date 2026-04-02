@@ -1,0 +1,129 @@
+id: INS-WF-001
+title: "Workflow Integration Pattern: Pre-built Automation Plans"
+category: workflow
+tags:
+  - workflow
+  - automation
+  - plan
+  - cli
+  - fp-004
+
+body:
+  problem: |
+    Developers need standardized, repeatable workflows for common project
+    maintenance tasks like daily synchronization, release preparation, and
+    insight collection. Without pre-built workflows, each team member
+    improvises their own approach, leading to inconsistency and missed steps.
+
+  solution: |
+    Implement a Workflow Integration system that stores pre-built YAML
+    workflow definitions in .vibecollab/workflows/ and provides CLI commands
+    to discover and execute them.
+
+    Key Components:
+
+    1. Workflow Storage (.vibecollab/workflows/)
+       - YAML files with standardized format matching execution_plan schema
+       - Built-in workflows: daily-sync, release-prep, insight-collect
+       - User can add custom workflows
+
+    2. Discovery & Listing (vibecollab plan list)
+       - Scans workflows directory for *.yaml files
+       - Displays name, description, version, category, step count
+       - Groups by category for better organization
+       - JSON output for programmatic access
+
+    3. Execution (vibecollab plan run <workflow>)
+       - Accepts either file path or workflow name
+       - Auto-resolves workflow names to .vibecollab/workflows/
+       - Reuses existing PlanRunner for execution
+       - Supports all PlanRunner options (--dry-run, --json, --host, etc.)
+
+  implementation: |
+    Core Module: src/vibecollab/core/workflow.py
+
+    Key Classes:
+    - WorkflowInfo: Data class for workflow metadata
+      - name, description, version, category, step_count, path, raw
+      - from_file() class method for loading from YAML
+
+    Key Functions:
+    - get_workflows_dir(): Returns .vibecollab/workflows/ path
+    - discover_workflows(): Scans and returns all WorkflowInfo
+    - find_workflow(name): Finds workflow by name (with/without .yaml)
+    - get_workflow_plan(name): Returns plan dict ready for PlanRunner
+    - list_workflow_categories(): Groups workflows by category
+
+    CLI Integration (src/vibecollab/cli/main.py):
+    - _resolve_plan_file(): Resolves plan file path, checking workflows
+    - plan list: Lists available workflows with rich formatting
+    - plan run: Modified to accept workflow names
+    - plan validate: Modified to accept workflow names
+
+  benefits: |
+    1. Consistency: Standardized workflows across team members
+    2. Discoverability: Easy to find available automation via plan list
+    3. Composability: Workflows reuse existing PlanRunner infrastructure
+    4. Extensibility: Users can add custom workflows to .vibecollab/workflows/
+    5. Versioning: Each workflow has version field for tracking changes
+
+  workflow_format: |
+    name: "workflow-name"
+    description: "Human-readable description"
+    version: "1.0"
+    category: "maintenance|release|insight|custom"
+    steps:
+      - action: cli|assert|wait|prompt|loop
+        description: "Step description"
+        # ... step-specific fields
+    on_fail: "abort|skip|continue"
+
+  examples:
+    - name: "daily-sync"
+      description: "Daily synchronization workflow"
+      steps: 8
+      category: maintenance
+
+    - name: "release-prep"
+      description: "Release preparation workflow"
+      steps: 12
+      category: release
+
+    - name: "insight-collect"
+      description: "Insight collection workflow"
+      steps: 9
+      category: insight
+
+  related_decisions:
+    - "DECISION-018: Execution Plan architecture"
+    - "DECISION-025: YAML Data Layer migration"
+
+  related_insights:
+    - "INS-043: Commit-Type-Based Dynamic Check"
+
+  tests: |
+    24 unit tests in tests/test_workflow.py:
+    - WorkflowInfo loading and parsing
+    - Workflow discovery and listing
+    - Workflow finding by name
+    - Category grouping
+    - Integration with PlanRunner
+
+  status: active
+  created_at: "2026-04-02"
+  updated_at: "2026-04-02"
+
+provenance:
+  - action: created
+    actor: developer
+    date: "2026-04-02"
+    summary: "Created INS-WF-001 for FP-004 Workflow Integration"
+
+metadata:
+  confidence: high
+  quality_score: 8
+  quality_signals:
+    - "Pattern extracted from real implementation"
+    - "Comprehensive test coverage"
+    - "CLI integration verified"
+    - "Documentation complete"

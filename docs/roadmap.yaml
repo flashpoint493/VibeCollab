@@ -279,7 +279,7 @@ milestones:
             done: true
             task_id: "TASK-DEV-031"
           - description: "docs/roles/*/CONTEXT.md → docs/roles/*/context.yaml"
-            done: false
+            done: true
           - description: "Module rewrite: ContextAggregator — YAML in/out"
             done: true
           - description: "Module rewrite: RoadmapParser — YAML native"
@@ -297,7 +297,8 @@ milestones:
           - description: "Module update: mcp/server.py — MCP Resources return YAML"
             done: true
           - description: "Template migration: .md.j2 → .yaml.j2"
-            done: false
+            done: true
+            task_id: "TASK-DEV-035"
           - description: "vibecollab init generates YAML docs"
             done: true
           - description: "vibecollab docs render [--format md|json]"
@@ -307,13 +308,13 @@ milestones:
       - title: "FP-004: Workflow Integration"
         items:
           - description: "Pre-built workflow YAMLs in .vibecollab/workflows/"
-            done: false
+            done: true
           - description: "vibecollab plan list — List available workflow plans"
-            done: false
+            done: true
           - description: "vibecollab plan run <workflow>"
-            done: false
+            done: true
           - description: "Workflow templates use existing PlanRunner"
-            done: false
+            done: true
       - title: "FP-005: Document Template Library"
         items:
           - description: "vibecollab template list/use commands"
@@ -325,11 +326,11 @@ milestones:
       - title: "FP-015: Insight Derivation Chain"
         items:
           - description: "derived_from field in Insight YAML"
-            done: false
+            done: true
           - description: "vibecollab insight graph --show-derivation"
-            done: false
+            done: true
           - description: "Automatic derivation detection from task transitions"
-            done: false
+            done: true
 
   # === Planned Milestones ===
 
