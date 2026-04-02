@@ -1,0 +1,25 @@
+kind: insight
+version: '1'
+id: INS-055
+title: 'YAML Data Layer: Docs Renderer Implementation'
+summary: DocsRenderer enables YAML-first document management with automatic Markdown
+  view generation
+tags:
+- yaml
+- docs
+- render
+- markdown
+- v0.12.0
+category: technique
+body:
+  scenario: v0.12.0 YAML Data Layer migration requiring Markdown docs to be generated
+    from YAML sources
+  approach: Use DocsRenderer with Jinja2 templates. YAML is source of truth, Markdown
+    is generated view. Handle missing fields with existence checks.
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-04-02'
+  context: Implemented for TASK-DEV-034 as part of v0.12.0 YAML Data Layer migration.
+    1677 tests passing.
+fingerprint: 00cbf60e59cb3dd7fda240a5e4be38d653e63533ee607397d858cde9c3465b1e

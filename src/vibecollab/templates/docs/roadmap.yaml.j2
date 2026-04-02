@@ -1,0 +1,39 @@
+# Roadmap template - docs/roadmap.yaml
+kind: roadmap
+version: "1"
+
+lifecycle:
+  current_stage: "demo"
+  stages:
+    - id: demo
+      name: "Prototype Validation"
+      description: "Rapidly validate core concepts and feasibility"
+      focus:
+        - "Rapid iteration"
+        - "Concept validation"
+        - "Core features"
+      principles:
+        - "Fail fast, adjust fast"
+        - "Prioritize core features, defer optimization"
+        - "Technical debt acceptable, but must be documented"
+        - "Detailed Git development iteration records"
+        - "Record important decisions in DECISIONS.md"
+        - "Set up CI/CD"
+
+milestones:
+  - id: v0.1.0
+    title: "Project Initialization"
+    status: in_progress
+    items:
+      - description: "Determine project direction"
+        status: todo
+      - description: "Set up development environment"
+        status: todo
+      - description: "Complete core decisions"
+        status: todo
+
+iteration_pool: []
+
+history:
+  - stage: demo
+    started_at: "{{ today }}"

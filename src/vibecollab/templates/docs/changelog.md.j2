@@ -1,0 +1,25 @@
+# Changelog Markdown template - renders docs/changelog.yaml to docs/CHANGELOG.md
+# {{ project_name }} Changelog
+
+{% for entry in entries %}
+## {% if entry.version == '[Unreleased]' %}[Unreleased]{% else %}{{ entry.version }}{% endif %}
+
+{% if entry.date %}**Date**: {{ entry.date }}
+{% endif %}
+{% if entry.changes %}
+{% set change_types = {'added': 'Added', 'changed': 'Changed', 'deprecated': 'Deprecated', 'removed': 'Removed', 'fixed': 'Fixed', 'security': 'Security'} %}
+{% for type_key, type_label in change_types.items() %}
+{% set type_changes = entry.changes|selectattr('type', 'equalto', type_key)|list %}
+{% if type_changes %}
+### {{ type_label }}
+{% for change in type_changes %}
+- {{ change.description }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+
+---
+*This file is auto-generated from docs/changelog.yaml*

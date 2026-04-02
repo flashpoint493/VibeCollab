@@ -1,0 +1,43 @@
+# Context template - docs/context.yaml
+kind: context
+version: "1"
+updated_at: "{{ today }}"
+{% if role_based %}
+aggregated_from:{{ aggregated_from }}
+{% endif %}
+
+project_status:
+  current_version: "v0.1.0-dev"
+{% if role_based %}
+  active_roles:
+{% for role in roles %}
+    - {{ role.code|lower }}
+{% endfor %}
+{% else %}
+  active_role: "dev"
+{% endif %}
+  milestone: "v0.1.0 Project Initialization"
+
+{% if role_based %}
+roles:
+{% for role in roles %}
+  - role: {{ role.code|lower }}
+    updated_at: "{{ today }}"
+    current_task: "Project initialization"
+    progress: "Starting up"
+    pending_issues: null
+    next_steps: "Define first milestone"
+{% endfor %}
+{% else %}
+role_context:
+  role: dev
+  updated_at: "{{ today }}"
+  current_task: "Project initialization"
+  progress: "Starting up"
+  pending_issues: null
+  next_steps: "Define first milestone"
+{% endif %}
+
+collaboration: "See docs/roles/ for individual role contexts"
+
+technical_debt: []

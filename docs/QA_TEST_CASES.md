@@ -1,20 +1,18 @@
+# QA Markdown template - renders docs/qa.yaml to docs/QA_TEST_CASES.md
 # VibeCollab Test Case Manual
 
-## Test Case Format
+## Test Cases
 
-```
-### TC-{Module}-{Seq}: {Test Name}
-- **Related**: TASK-XXX
-- **Precondition**: {Precondition}
-- **Steps**:
-  1. {Step1}
-  2. {Step2}
-- **Expected**: {Expected Result}
-- **Status**: PASS/WARN/FAIL/SKIP
-```
 
-## Phase 0 Test Cases
+(No test cases yet)
 
-(To be added)
 
----
+## Statistics
+
+- **Total**: 0
+- **By Status**:
+  - 🟢 Pass: 0
+  - 🟡 Partial: 0
+  - 🔴 Fail: 0
+  - ⚪ Skip: 0
+  - TODO: 0

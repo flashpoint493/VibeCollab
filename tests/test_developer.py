@@ -476,10 +476,15 @@ class TestContextAggregator:
         dm.init_role_context("alice")
         agg = ContextAggregator(project_dir, config)
         output = agg.generate_and_save()
+        # v0.12.0+: Returns YAML path (source of truth), Markdown is a generated view
         assert output.exists()
-        assert output == project_dir / "docs" / "CONTEXT.md"
+        assert output == project_dir / "docs" / "context.yaml"
+        # Verify YAML content
         content = output.read_text(encoding="utf-8")
         assert "alice" in content
+        # Verify Markdown view is also generated
+        md_output = project_dir / "docs" / "CONTEXT.md"
+        assert md_output.exists()
 
 
 # ===========================================================================

@@ -6,10 +6,12 @@ current_version: "v0.12.0-dev"
 
 current_tasks:
   - "v0.12.0 YAML Data Layer migration (DECISION-025/027): Docs Markdown → YAML Big-Bang"
-  - "Next up: docs/*.md → docs/*.yaml content migration using new schemas"
-  - "Then: Module rewrites (ContextAggregator, RoadmapParser, PRDManager, ProtocolChecker)"
+  - "Next up: Additional module rewrites (ProtocolChecker YAML-aware, InsightSignalCollector YAML diff detection)"
+  - "Then: Template migration .md.j2 → .yaml.j2 for doc generation"
 
 recently_completed:
+  - date: "2026-04-02"
+    description: "TASK-DEV-034 DONE — DocsRenderer module + 6 YAML templates + 6 MD view templates + vibecollab docs CLI. 1677 tests passing."
   - date: "2026-04-02"
     description: "TASK-DEV-030 — 6 YAML schemas designed and created (context, changelog, decisions, roadmap, prd, qa)"
   - date: "2026-04-02"

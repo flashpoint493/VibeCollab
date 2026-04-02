@@ -1,23 +1,24 @@
-# VibeCollab Product Requirements Document (PRD)
+# PRD Markdown template - renders docs/prd.yaml to docs/PRD.md
+# VibeCollab Product Requirements Document
 
-This document records the project's original requirements and requirement change history.
+## Requirements
 
-## Requirements List
 
-(Requirements to be added)
+(No requirements yet)
 
----
-
-## Requirements Statistics
-
-| Status | Count |
-|--------|-------|
-| draft | 0 |
-| confirmed | 0 |
-| in_progress | 0 |
-| completed | 0 |
-| cancelled | 0 |
 
 ---
 
-*Last updated: 2026-03-27*
+## Statistics
+
+- **Total**: 
+- **By Status**:
+  - Draft: 0
+  - Confirmed: 0
+  - In Progress: 0
+  - Completed: 0
+  - Cancelled: 0
+- **By Priority**:
+  - High: 0
+  - Medium: 0
+  - Low: 0

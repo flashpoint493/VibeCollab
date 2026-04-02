@@ -1,0 +1,57 @@
+# Decisions Markdown template - renders docs/decisions.yaml to docs/DECISIONS.md
+# {{ project_name }} Decision Record
+
+## Pending Decisions
+
+{% set pending = decisions|selectattr('status', 'equalto', 'pending')|list %}
+{% if pending %}
+{% for decision in pending %}
+### {{ decision.id }}: {{ decision.title }}
+- **Level**: {{ decision.level }}
+- **Status**: {{ decision.status }}
+- **Date**: {{ decision.date }}
+- **Context**: {{ decision.context }}
+- **Problem**: {{ decision.problem }}
+- **Options**:
+{% if decision.options %}
+{% for opt in decision.options %}
+  - {{ opt.id }}: {{ opt.description }}
+{% endfor %}
+{% else %}
+  (To be determined)
+{% endif %}
+{% endfor %}
+{% else %}
+(None)
+{% endif %}
+
+## Confirmed Decisions
+
+{% set confirmed = decisions|selectattr('status', 'equalto', 'confirmed')|list %}
+{% if confirmed %}
+{% for decision in confirmed %}
+### {{ decision.id }}: {{ decision.title }}
+- **Level**: {{ decision.level }}
+- **Status**: {{ decision.status }}
+- **Date**: {{ decision.date }}
+- **Context**: {{ decision.context }}
+- **Problem**: {{ decision.problem }}
+- **Decision**: {{ decision.decision_text }}
+- **Rationale**: {{ decision.rationale }}
+{% if decision.validation %}
+- **Validation**:
+{% for check in decision.validation.checks %}
+  - {{ check.name }}: {{ check.result }}{% if check.details %} ({{ check.details }}){% endif %}
+{% endfor %}
+{% endif %}
+{% if decision.related_tasks %}
+- **Related Tasks**: {{ decision.related_tasks|join(', ') }}
+{% endif %}
+
+{% endfor %}
+{% else %}
+(None)
+{% endif %}
+
+---
+*Decision record format: see CONTRIBUTING_AI.md*

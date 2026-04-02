@@ -163,17 +163,25 @@ def init(name: str, domain: str, output: str, force: bool, no_git: bool, role_ba
     table.add_row("llms.txt", _("Project context (with collaboration rules reference)"))
     table.add_row("project.yaml", _("Project config (editable)"))
 
-    if role_based:
-        table.add_row("docs/CONTEXT.md", _("Global aggregated context (auto-generated)"))
-        table.add_row("docs/roles/{dev}/CONTEXT.md", _("Per-role context"))
-        table.add_row("docs/roles/COLLABORATION.md", _("Collaboration document"))
-    else:
-        table.add_row("docs/CONTEXT.md", _("Current context"))
+    # YAML docs (source of truth)
+    table.add_row("docs/context.yaml", _("Context (YAML source)"))
+    table.add_row("docs/decisions.yaml", _("Decisions (YAML source)"))
+    table.add_row("docs/changelog.yaml", _("Changelog (YAML source)"))
+    table.add_row("docs/roadmap.yaml", _("Roadmap (YAML source)"))
+    table.add_row("docs/prd.yaml", _("PRD (YAML source)"))
+    table.add_row("docs/qa.yaml", _("QA test cases (YAML source)"))
 
-    table.add_row("docs/DECISIONS.md", _("Decision records"))
-    table.add_row("docs/CHANGELOG.md", _("Changelog"))
-    table.add_row("docs/ROADMAP.md", _("Roadmap"))
-    table.add_row("docs/QA_TEST_CASES.md", _("Test cases"))
+    # Markdown views (generated from YAML)
+    table.add_row("docs/CONTEXT.md", _("Context view (rendered from YAML)"))
+    table.add_row("docs/DECISIONS.md", _("Decisions view (rendered from YAML)"))
+    table.add_row("docs/CHANGELOG.md", _("Changelog view (rendered from YAML)"))
+    table.add_row("docs/ROADMAP.md", _("Roadmap view (rendered from YAML)"))
+    table.add_row("docs/PRD.md", _("PRD view (rendered from YAML)"))
+    table.add_row("docs/QA_TEST_CASES.md", _("QA view (rendered from YAML)"))
+
+    if role_based:
+        table.add_row("docs/roles/{dev}/context.yaml", _("Per-role context (YAML)"))
+        table.add_row("docs/roles/COLLABORATION.md", _("Collaboration document"))
     console.print(table)
 
     git_warning = project.config.get("_meta", {}).get("git_warning")
@@ -791,9 +799,7 @@ def check(config: str, strict: bool, insights: bool, guards: bool):
                         text=True,
                         timeout=10,
                     )
-                    tracked_files = [
-                        f.strip() for f in result.stdout.splitlines() if f.strip()
-                    ]
+                    tracked_files = [f.strip() for f in result.stdout.splitlines() if f.strip()]
                 except Exception:
                     # Fallback: scan common directories
                     tracked_files = []
@@ -814,9 +820,7 @@ def check(config: str, strict: bool, insights: bool, guards: bool):
                 blocks = [
                     (fp, r) for fp, r in guard_violations if r.severity == GuardSeverity.BLOCK
                 ]
-                warns = [
-                    (fp, r) for fp, r in guard_violations if r.severity == GuardSeverity.WARN
-                ]
+                warns = [(fp, r) for fp, r in guard_violations if r.severity == GuardSeverity.WARN]
 
                 if blocks:
                     guard_blocks = len(blocks)
@@ -825,9 +829,7 @@ def check(config: str, strict: bool, insights: bool, guards: bool):
                     )
                     for fp, rule in blocks:
                         console.print(f"  {BULLET} {fp}")
-                        console.print(
-                            f"    [dim]{_('Rule:')} {rule.name} — {rule.message}[/dim]"
-                        )
+                        console.print(f"    [dim]{_('Rule:')} {rule.name} — {rule.message}[/dim]")
                     console.print()
 
                 if warns:
@@ -837,9 +839,7 @@ def check(config: str, strict: bool, insights: bool, guards: bool):
                     )
                     for fp, rule in warns:
                         console.print(f"  {BULLET} {fp}")
-                        console.print(
-                            f"    [dim]{_('Rule:')} {rule.name} — {rule.message}[/dim]"
-                        )
+                        console.print(f"    [dim]{_('Rule:')} {rule.name} — {rule.message}[/dim]")
                     console.print()
 
                 if not blocks and not warns:
@@ -2359,6 +2359,228 @@ def hooks_list(config: str):
             console.print(f"  • {hook}")
     else:
         console.print("[dim]No vibecollab hooks installed[/dim]")
+
+
+# ============================================
+# Docs commands (v0.12.0+ - YAML Data Layer)
+# ============================================
+
+
+@main.group("docs")
+def docs_group():
+    """Document management (YAML Data Layer)
+
+    Manage YAML documents and render Markdown views.
+    Core principle: YAML is source of truth → Markdown is a generated view.
+
+    Examples:
+
+        vibecollab docs render
+
+        vibecollab docs render --all
+
+        vibecollab docs validate docs/context.yaml
+    """
+    pass
+
+
+@docs_group.command("render")
+@click.option(
+    "--input",
+    "-i",
+    type=click.Path(exists=True),
+    help=_("Specific YAML file to render"),
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(),
+    help=_("Output Markdown file path (optional)"),
+)
+@click.option(
+    "--all",
+    "render_all",
+    is_flag=True,
+    help=_("Render all YAML documents in docs/ directory"),
+)
+@click.option(
+    "--kind",
+    "-k",
+    multiple=True,
+    help=_("Document kind(s) to render (context, decisions, changelog, roadmap, prd, qa)"),
+)
+@click.option(
+    "--docs-dir",
+    "-d",
+    default="docs",
+    help=_("Docs directory path (default: docs)"),
+)
+def docs_render(input, output, render_all, kind, docs_dir):
+    """Render YAML documents to Markdown views
+
+    Converts YAML document files (docs/*.yaml) to human-readable
+    Markdown views (docs/*.md). YAML remains the source of truth.
+
+    Examples:
+
+        vibecollab docs render --all
+
+        vibecollab docs render -i docs/context.yaml
+
+        vibecollab docs render -k context -k roadmap
+    """
+    from pathlib import Path
+
+    from ..core.docs_renderer import DocsRenderer
+
+    renderer = DocsRenderer()
+    docs_path = Path(docs_dir)
+
+    if not docs_path.exists():
+        console.print(f"[red]{_('Error:')} {_('Docs directory not found:')} {docs_dir}[/red]")
+        raise SystemExit(1)
+
+    # Single file mode
+    if input:
+        yaml_path = Path(input)
+        if not yaml_path.exists():
+            console.print(f"[red]{_('Error:')} {_('File not found:')} {input}[/red]")
+            raise SystemExit(1)
+
+        try:
+            result_path = renderer.render_doc(yaml_path, Path(output) if output else None)
+            console.print(f"[green]{EMOJI_MAP['success']} {_('Rendered:')} {result_path}[/green]")
+        except Exception as e:
+            console.print(f"[red]{EMOJI_MAP['error']} {_('Render failed:')} {e}[/red]")
+            raise SystemExit(1)
+        return
+
+    # Batch mode
+    kinds_to_render = list(kind) if kind else None
+
+    if render_all or kinds_to_render:
+        results = renderer.render_all(docs_path, kinds_to_render)
+
+        if not results:
+            console.print(f"[yellow]{_('No renderable YAML documents found')}[/yellow]")
+            return
+
+        console.print()
+        console.print(f"[bold]{_('Rendered Documents')}[/bold]")
+        console.print()
+
+        success_count = 0
+        for doc_kind, result in results.items():
+            if isinstance(result, Exception):
+                console.print(f"  [red]{EMOJI_MAP['error']}[/red] {doc_kind}: {result}")
+            else:
+                console.print(f"  [green]{EMOJI_MAP['success']}[/green] {doc_kind}: {result}")
+                success_count += 1
+
+        console.print()
+        console.print(f"{_('Total')}: {success_count}/{len(results)} {_('rendered')}")
+
+        if success_count < len(results):
+            raise SystemExit(1)
+    else:
+        console.print("[yellow]Please specify --input, --all, or --kind[/yellow]")
+        raise SystemExit(1)
+
+
+@docs_group.command("validate")
+@click.argument("yaml_file", type=click.Path(exists=True))
+def docs_validate(yaml_file):
+    """Validate a YAML document structure
+
+    Checks that the YAML file has the correct structure for its kind.
+
+    Examples:
+
+        vibecollab docs validate docs/context.yaml
+    """
+    from pathlib import Path
+
+    from ..core.docs_renderer import DocsRenderer
+
+    renderer = DocsRenderer()
+    yaml_path = Path(yaml_file)
+
+    is_valid, errors = renderer.validate_doc(yaml_path)
+
+    if is_valid:
+        # Determine kind
+        import yaml
+
+        with open(yaml_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        kind = data.get("kind", "unknown")
+        version = data.get("version", "unknown")
+
+        console.print(f"[green]{EMOJI_MAP['success']} {_('Valid')} {kind} v{version}[/green]")
+    else:
+        console.print(f"[red]{EMOJI_MAP['error']} {_('Validation failed')}[/red]")
+        for error in errors:
+            console.print(f"  [red]•[/red] {error}")
+        raise SystemExit(1)
+
+
+@docs_group.command("list")
+@click.option(
+    "--docs-dir",
+    "-d",
+    default="docs",
+    help=_("Docs directory path (default: docs)"),
+)
+def docs_list(docs_dir):
+    """List all renderable YAML documents
+
+    Shows all YAML files in the docs directory that can be rendered
+    to Markdown.
+
+    Examples:
+
+        vibecollab docs list
+
+        vibecollab docs list -d ./my-docs
+    """
+    from pathlib import Path
+
+    from ..core.docs_renderer import DocsRenderer
+
+    renderer = DocsRenderer()
+    docs_path = Path(docs_dir)
+
+    if not docs_path.exists():
+        console.print(f"[red]{_('Error:')} {_('Docs directory not found:')} {docs_dir}[/red]")
+        raise SystemExit(1)
+
+    renderable = renderer.list_renderable_docs(docs_path)
+
+    if not renderable:
+        console.print(f"[yellow]{_('No renderable YAML documents found in')} {docs_dir}[/yellow]")
+        return
+
+    console.print()
+    console.print(f"[bold]{_('Renderable Documents')}[/bold]")
+    console.print()
+
+    from rich.table import Table
+
+    table = Table(show_header=True)
+    table.add_column(_("Kind"), style="cyan")
+    table.add_column(_("YAML File"))
+    table.add_column(_("Version"))
+    table.add_column(_("Output"))
+
+    for doc in renderable:
+        table.add_row(
+            doc["kind"],
+            str(doc["yaml_path"].relative_to(docs_path)),
+            doc["version"],
+            doc["output_name"],
+        )
+
+    console.print(table)
 
 
 if __name__ == "__main__":

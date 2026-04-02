@@ -25,7 +25,9 @@ class Project:
         self.docs_dir = output_dir / "docs"
 
     @classmethod
-    def create(cls, name: str, domain: str, output_dir: Path, role_based: bool = False) -> "Project":
+    def create(
+        cls, name: str, domain: str, output_dir: Path, role_based: bool = False
+    ) -> "Project":
         """Create a new project
 
         Args:
@@ -84,10 +86,7 @@ class Project:
         # Merge role overrides
         if "roles_override" in ext_config and ext_config["roles_override"]:
             for role in ext_config["roles_override"]:
-                config["roles"] = [
-                    r for r in config.get("roles", [])
-                    if r["code"] != role["code"]
-                ]
+                config["roles"] = [r for r in config.get("roles", []) if r["code"] != role["code"]]
                 config["roles"].append(role)
 
         # Merge domain extensions
@@ -140,13 +139,7 @@ class Project:
         """Save project configuration"""
         config_path = self.output_dir / "project.yaml"
         with open(config_path, "w", encoding="utf-8") as f:
-            yaml.dump(
-                self.config,
-                f,
-                allow_unicode=True,
-                sort_keys=False,
-                default_flow_style=False
-            )
+            yaml.dump(self.config, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
 
     def _generate_llm_txt(self):
         """Generate collaboration rules document (CONTRIBUTING_AI.md) and integrate llms.txt"""
@@ -159,13 +152,12 @@ class Project:
 
         # Integrate llms.txt
         project_name = self.config.get("project", {}).get("name", "Project")
-        project_desc = self.config.get("project", {}).get("description", "AI-assisted development project")
+        project_desc = self.config.get("project", {}).get(
+            "description", "AI-assisted development project"
+        )
 
         updated, llmstxt_path = LLMsTxtManager.ensure_integration(
-            self.output_dir,
-            project_name,
-            project_desc,
-            contributing_ai_path
+            self.output_dir, project_name, project_desc, contributing_ai_path
         )
 
         # Save llms.txt path to config (for future updates)
@@ -173,10 +165,31 @@ class Project:
             self.config.setdefault("_meta", {})["llmstxt_path"] = str(llmstxt_path)
 
     def _create_doc_templates(self):
-        """Create document templates"""
+        """Create document templates (YAML-first, v0.12.0+)
+
+        Core principle: YAML is source of truth → Markdown is a generated view.
+        Creates YAML files in docs/ and renders Markdown views.
+        """
+        from jinja2 import Environment, FileSystemLoader
+
         project_name = self.config.get("project", {}).get("name", "Project")
         today = datetime.now().strftime("%Y-%m-%d")
         role_based_enabled = self.config.get("role_context", {}).get("enabled", False)
+
+        # Setup Jinja2 for YAML template rendering
+        package_dir = Path(__file__).parent.parent  # core/ -> vibecollab/
+        templates_dir = package_dir / "templates" / "docs"
+        jinja_env = Environment(loader=FileSystemLoader(str(templates_dir)))
+
+        # Template context
+        roles_config = self.config.get("roles", [])
+        template_context = {
+            "project_name": project_name,
+            "today": today,
+            "role_based": role_based_enabled,
+            "roles": roles_config,
+            "aggregated_from": [r["code"].lower() for r in roles_config] if roles_config else [],
+        }
 
         # Multi-role mode: initialize role context
         if role_based_enabled:
@@ -188,9 +201,9 @@ class Project:
             # Initialize current role's context
             dm.init_role_context(current_dev)
 
-            # Create COLLABORATION.md
-            collab_config = self.config.get('role_context', {}).get('collaboration', {})
-            collab_file = self.output_dir / collab_config.get('file', 'docs/roles/COLLABORATION.md')
+            # Create COLLABORATION.md (still Markdown for human readability)
+            collab_config = self.config.get("role_context", {}).get("collaboration", {})
+            collab_file = self.output_dir / collab_config.get("file", "docs/roles/COLLABORATION.md")
             collab_file.parent.mkdir(parents=True, exist_ok=True)
 
             collab_content = f"""# {project_name} Role Collaboration Record
@@ -212,167 +225,91 @@ class Project:
 ---
 *Last updated: {today}*
 """
-            collab_file.write_text(collab_content, encoding='utf-8')
+            collab_file.write_text(collab_content, encoding="utf-8")
 
-            # Generate global aggregated CONTEXT.md
-            aggregator = ContextAggregator(self.output_dir, self.config)
-            aggregator.generate_and_save()
+        # Generate YAML documents using templates
+        yaml_files_created = []
 
-        # DECISIONS.md
-        decisions_content = f"""# {project_name} Decision Record
+        # 1. context.yaml (always created, single-role or multi-role source)
+        context_template = jinja_env.get_template("context.yaml.j2")
+        context_yaml = context_template.render(**template_context)
+        context_yaml_path = self.docs_dir / "context.yaml"
+        context_yaml_path.write_text(context_yaml, encoding="utf-8")
+        yaml_files_created.append("context.yaml")
 
-## Pending Decisions
+        # 2. decisions.yaml
+        decisions_template = jinja_env.get_template("decisions.yaml.j2")
+        decisions_yaml = decisions_template.render(**template_context)
+        decisions_yaml_path = self.docs_dir / "decisions.yaml"
+        decisions_yaml_path.write_text(decisions_yaml, encoding="utf-8")
+        yaml_files_created.append("decisions.yaml")
 
-(None)
+        # 3. changelog.yaml
+        changelog_template = jinja_env.get_template("changelog.yaml.j2")
+        changelog_yaml = changelog_template.render(**template_context)
+        changelog_yaml_path = self.docs_dir / "changelog.yaml"
+        changelog_yaml_path.write_text(changelog_yaml, encoding="utf-8")
+        yaml_files_created.append("changelog.yaml")
 
-## Confirmed Decisions
-
-(None)
-
----
-*Decision record format: see CONTRIBUTING_AI.md*
-"""
-
-        # CHANGELOG.md
-        changelog_content = f"""# {project_name} Changelog
-
-## [Unreleased]
-
-### Added
-- Project initialization
-- Generated CONTRIBUTING_AI.md collaboration rules
-
----
-"""
-
-        # ROADMAP.md - includes project lifecycle stage info
+        # 4. roadmap.yaml
+        roadmap_template = jinja_env.get_template("roadmap.yaml.j2")
+        # Add lifecycle info to context
         lifecycle_manager = LifecycleManager(self.config)
         current_stage = lifecycle_manager.get_current_stage()
         stage_info = lifecycle_manager.get_stage_info()
         stage_history = lifecycle_manager.get_stage_history()
-
         current_stage_entry = stage_history[-1] if stage_history else None
         started_at = current_stage_entry.get("started_at", today) if current_stage_entry else today
 
-        roadmap_content = f"""# {project_name} Roadmap
+        roadmap_context = {
+            **template_context,
+            "current_stage": current_stage,
+            "stage_info": stage_info,
+            "started_at": started_at,
+        }
+        roadmap_yaml = roadmap_template.render(**roadmap_context)
+        roadmap_yaml_path = self.docs_dir / "roadmap.yaml"
+        roadmap_yaml_path.write_text(roadmap_yaml, encoding="utf-8")
+        yaml_files_created.append("roadmap.yaml")
 
-## Current Project Lifecycle Stage
+        # 5. prd.yaml
+        prd_template = jinja_env.get_template("prd.yaml.j2")
+        prd_yaml = prd_template.render(**template_context)
+        prd_yaml_path = self.docs_dir / "prd.yaml"
+        prd_yaml_path.write_text(prd_yaml, encoding="utf-8")
+        yaml_files_created.append("prd.yaml")
 
-**Stage**: {stage_info.get('name', 'Unknown')} ({current_stage})
-**Started**: {started_at}
-**Description**: {stage_info.get('description', '')}
+        # 6. qa.yaml
+        qa_template = jinja_env.get_template("qa.yaml.j2")
+        qa_yaml = qa_template.render(**template_context)
+        qa_yaml_path = self.docs_dir / "qa.yaml"
+        qa_yaml_path.write_text(qa_yaml, encoding="utf-8")
+        yaml_files_created.append("qa.yaml")
 
-### Stage Focus
-{chr(10).join(f"- {focus}" for focus in stage_info.get('focus', []))}
+        # Render Markdown views from YAML (YAML is source of truth)
+        from .docs_renderer import DocsRenderer
 
-### Stage Principles
-{chr(10).join(f"- {principle}" for principle in stage_info.get('principles', []))}
+        renderer = DocsRenderer()
+        for kind, yaml_path in [
+            ("context", context_yaml_path),
+            ("decisions", decisions_yaml_path),
+            ("changelog", changelog_yaml_path),
+            ("roadmap", roadmap_yaml_path),
+            ("prd", prd_yaml_path),
+            ("qa", qa_yaml_path),
+        ]:
+            try:
+                renderer.render_doc(yaml_path)
+            except Exception:
+                # If rendering fails, we still have the YAML
+                pass
 
-### Current Stage Milestones
-{self._format_milestones(stage_info.get('milestones', []))}
+        # Multi-role mode: generate aggregated CONTEXT.md from role contexts
+        if role_based_enabled:
+            from ..domain.role import ContextAggregator
 
----
-
-## Milestones
-
-### v0.1.0 - Project Initialization
-
-- [ ] Determine project direction
-- [ ] Set up development environment
-- [ ] Complete core decisions
-
-### Iteration Suggestion Pool
-
-(None)
-
----
-
-## Stage History
-
-{self._format_stage_history(stage_history)}
-
----
-"""
-
-        # QA_TEST_CASES.md
-        qa_content = f"""# {project_name} Test Case Manual
-
-## Test Case Format
-
-```
-### TC-{{Module}}-{{Seq}}: {{Test Name}}
-- **Related**: TASK-XXX
-- **Precondition**: {{Precondition}}
-- **Steps**:
-  1. {{Step1}}
-  2. {{Step2}}
-- **Expected**: {{Expected Result}}
-- **Status**: PASS/WARN/FAIL/SKIP
-```
-
-## Phase 0 Test Cases
-
-(To be added)
-
----
-"""
-
-        # PRD.md - Product Requirements Document
-        prd_content = f"""# {project_name} Product Requirements Document (PRD)
-
-This document records the project's original requirements and requirement change history.
-
-## Requirements List
-
-(Requirements to be added)
-
----
-
-## Requirements Statistics
-
-| Status | Count |
-|--------|-------|
-| draft | 0 |
-| confirmed | 0 |
-| in_progress | 0 |
-| completed | 0 |
-| cancelled | 0 |
-
----
-
-*Last updated: {today}*
-"""
-
-        # Write files
-        if not role_based_enabled:
-            # Single role mode writes CONTEXT.md (multi-dev mode generates via aggregation)
-            context_content = f"""# {project_name} Current Context
-
-## Current Status
-- **Phase**: Phase 0 - Project Initialization
-- **Progress**: Just started
-- **Next step**: Determine primary tasks
-
-## Current Dialogue Goal
-(To be filled)
-
-## Pending Decisions
-(To be filled)
-
-## Completed Items
-- [x] Project initialization
-- [x] Generated CONTRIBUTING_AI.md
-
----
-*Last updated: {today}*
-"""
-            (self.docs_dir / "CONTEXT.md").write_text(context_content, encoding="utf-8")
-
-        (self.docs_dir / "DECISIONS.md").write_text(decisions_content, encoding="utf-8")
-        (self.docs_dir / "CHANGELOG.md").write_text(changelog_content, encoding="utf-8")
-        (self.docs_dir / "ROADMAP.md").write_text(roadmap_content, encoding="utf-8")
-        (self.docs_dir / "QA_TEST_CASES.md").write_text(qa_content, encoding="utf-8")
-        (self.docs_dir / "PRD.md").write_text(prd_content, encoding="utf-8")
+            aggregator = ContextAggregator(self.output_dir, self.config)
+            aggregator.generate_and_save()
 
     def regenerate(self):
         """Regenerate collaboration rules document and update llms.txt"""
