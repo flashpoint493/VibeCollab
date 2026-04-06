@@ -1,0 +1,135 @@
+id: INS-065
+title: "YAML Docs Directory Isolation: Moving Source Files to .vibecollab/docs/"
+category: technique
+tags:
+  - yaml
+  - docs
+  - directory-structure
+  - migration
+  - configuration
+  - "v0.13.0"
+created_at: "2026-04-02"
+updated_at: "2026-04-02"
+author: architect
+version: 1
+context: |
+  将 YAML 文档源文件从项目根目录的 docs/ 迁移到 .vibecollab/docs/，
+  避免与项目自身的文档发生冲突，保持项目目录整洁。
+
+scenario: |
+  当使用 vibecollab 的 YAML-first 文档系统时，
+  项目 docs/ 目录可能已存在项目自身的文档，
+  需要隔离 vibecollab 生成的 YAML 源文件。
+
+approach: |
+  ## 目录结构变更
+
+  ### 变更前
+  ```
+  project/
+  ├── docs/
+  │   ├── context.yaml       # vibecollab YAML 源文件
+  │   ├── context.md         # 渲染的 Markdown
+  │   └── project-doc.md     # 项目自身文档
+  └── .vibecollab/
+      └── insights/
+  ```
+
+  ### 变更后
+  ```
+  project/
+  ├── docs/
+  │   ├── CONTEXT.md         # 渲染的 Markdown (vibecollab)
+  │   └── project-doc.md     # 项目自身文档
+  └── .vibecollab/
+      ├── docs/              # YAML 源文件隔离
+      │   ├── context.yaml
+      │   └── ...
+      └── insights/
+  ```
+
+  ## 代码变更点
+
+  ### 1. CLI 默认路径修改
+  ```python
+  # src/vibecollab/cli/main.py
+  @click.option(
+      "--docs-dir",
+      "-d",
+      default=".vibecollab/docs",  # 从 "docs" 修改
+      help=_("Docs directory path (default: .vibecollab/docs)"),
+  )
+  @click.option(
+      "--md-dir",
+      "-m",
+      default="docs",               # Markdown 输出目录
+      help=_("Output directory for rendered Markdown (default: docs)"),
+  )
+  ```
+
+  ### 2. Project 类初始化
+  ```python
+  # src/vibecollab/core/project.py
+  self.docs_dir = output_dir / ".vibecollab" / "docs"
+  ```
+
+  ### 3. DocsRenderer.render_all() 支持独立输出目录
+  ```python
+  def render_all(
+      self,
+      docs_dir: Path,                    # YAML 源目录
+      kinds: Optional[list[str]] = None,
+      output_dir: Optional[Path] = None, # Markdown 输出目录
+  ) -> Dict[str, Path]:
+  ```
+
+  ## 迁移步骤
+
+  1. 创建新目录: `mkdir -p .vibecollab/docs`
+  2. 移动 YAML 文件: `mv docs/*.yaml .vibecollab/docs/`
+  3. 重新渲染 Markdown: `vibecollab docs render --all`
+  4. 验证: `vibecollab docs list`
+
+  ## 好处
+
+  - **隔离性**: YAML 源文件与项目文档分离
+  - **整洁性**: 项目 docs/ 只包含 Markdown 视图
+  - **一致性**: 所有 vibecollab 数据在 .vibecollab/ 下
+  - **兼容性**: Markdown 仍输出到 docs/，符合用户习惯
+
+checklist:
+  - item: 确认 docs/ 目录中无 YAML 文件
+    checked: true
+  - item: 确认 .vibecollab/docs/ 包含所有 YAML 源文件
+    checked: true
+  - item: 验证 `vibecollab docs list` 正常工作
+    checked: true
+  - item: 验证 `vibecollab docs render --all` 正常输出到 docs/
+    checked: true
+  - item: 运行测试套件确保无回归
+    checked: true
+
+examples:
+  - title: 使用新路径渲染文档
+    code: |
+      # 查看可渲染的 YAML 文件
+      vibecollab docs list
+
+      # 渲染所有文档到 docs/
+      vibecollab docs render --all
+
+      # 指定不同的 YAML 源目录
+      vibecollab docs render --all -d .vibecollab/docs
+
+      # 指定不同的 Markdown 输出目录
+      vibecollab docs render --all -m output/docs
+
+related_insights:
+  - INS-055
+  - INS-060
+
+changelog:
+  - date: "2026-04-02"
+    version: 1
+    changes:
+      - Initial creation documenting the docs directory migration

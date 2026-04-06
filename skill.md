@@ -462,3 +462,66 @@ Each iteration should:
 **Reference Insights**:
 - INS-036: Release Engineering Task-Insight Cycle
 - INS-037: VibeCollab --help Systematic Workflow
+
+---
+
+## v0.12.0 New Features
+
+### YAML Document Management
+
+VibeCollab v0.12.0 introduces a YAML-first document system where YAML files are the source of truth and Markdown files are generated views.
+
+#### List renderable documents
+```bash
+vibecollab docs list
+```
+
+#### Render YAML to Markdown
+```bash
+vibecollab docs render --all
+vibecollab docs render -i docs/context.yaml
+```
+
+#### Validate YAML document
+```bash
+vibecollab docs validate docs/context.yaml
+```
+
+### Workflow Automation Enhancements
+
+#### List available workflows
+```bash
+vibecollab plan list
+```
+
+#### Run a workflow
+```bash
+vibecollab plan run daily-sync
+vibecollab plan run release-prep --dry-run
+```
+
+#### Validate workflow
+```bash
+vibecollab plan validate daily-sync
+```
+
+### Insight Derivation
+
+#### Show derivation graph
+```bash
+vibecollab insight graph --show-derivation
+```
+
+#### Auto-detect derivation
+```bash
+vibecollab insight derive --from-task TASK-DEV-001
+```
+
+### YAML Data Layer Principle
+
+- YAML files (`docs/*.yaml`) are the source of truth
+- Markdown files (`docs/*.md`) are generated views
+- Always edit YAML, render to Markdown
+- Use `vibecollab docs render --all` after YAML changes
+
+> **Note**: This principle ensures single source of truth for project documentation. When updating documentation, modify the YAML files first, then render to Markdown to maintain consistency.

@@ -275,6 +275,8 @@ class DerivationDetector:
         if not self.event_log:
             return set()
 
+        from ..domain.event_log import EventType
+
         events = self.event_log.read_all()
 
         # Find task start event (transition to IN_PROGRESS)
@@ -293,7 +295,10 @@ class DerivationDetector:
         # Find insight_used events between task start and end
         used = set()
         for event in events:
-            if event.event_type == "CUSTOM" and event.payload.get("action") == "insight_used":
+            if (
+                event.event_type == EventType.CUSTOM
+                and event.payload.get("action") == "insight_used"
+            ):
                 ins_id = event.payload.get("insight_id")
                 if ins_id and task_start <= event.timestamp <= (
                     task_end or datetime.now(timezone.utc).isoformat()
@@ -306,6 +311,8 @@ class DerivationDetector:
         """Get insights created during task execution."""
         if not self.event_log:
             return set()
+
+        from ..domain.event_log import EventType
 
         events = self.event_log.read_all()
 
@@ -325,7 +332,10 @@ class DerivationDetector:
         # Find insight_created events during task
         created = set()
         for event in events:
-            if event.event_type == "CUSTOM" and event.payload.get("action") == "insight_created":
+            if (
+                event.event_type == EventType.CUSTOM
+                and event.payload.get("action") == "insight_created"
+            ):
                 ins_id = event.payload.get("insight_id")
                 if ins_id and task_start <= event.timestamp <= (
                     task_end or datetime.now(timezone.utc).isoformat()
@@ -341,6 +351,8 @@ class DerivationDetector:
 
         from datetime import timedelta
 
+        from ..domain.event_log import EventType
+
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)
         cutoff_iso = cutoff.isoformat()
 
@@ -349,7 +361,7 @@ class DerivationDetector:
 
         for event in events:
             if (
-                event.event_type == "CUSTOM"
+                event.event_type == EventType.CUSTOM
                 and event.payload.get("action") == "insight_used"
                 and event.timestamp >= cutoff_iso
             ):
@@ -366,6 +378,8 @@ class DerivationDetector:
 
         from datetime import timedelta
 
+        from ..domain.event_log import EventType
+
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)
         cutoff_iso = cutoff.isoformat()
 
@@ -373,7 +387,7 @@ class DerivationDetector:
         completed = []
 
         for event in events:
-            if event.event_type == "TASK_COMPLETED" or (
+            if event.event_type == EventType.TASK_COMPLETED or (
                 event.payload.get("new_status") == "DONE" and event.payload.get("task_id")
             ):
                 if event.timestamp >= cutoff_iso:

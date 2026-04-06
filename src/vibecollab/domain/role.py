@@ -35,9 +35,9 @@ class RoleManager:
         self.role_context_config = config.get("role_context", config.get("multi_developer", {}))
         self.enabled = self.role_context_config.get("enabled", False)
 
-        # Developer directory
+        # Developer directory (isolated in .vibecollab/ to avoid project conflicts)
         self.roles_dir = project_root / self.role_context_config.get("context", {}).get(
-            "per_role_dir", "docs/roles"
+            "per_role_dir", ".vibecollab/roles"
         )
 
     def get_current_role(self) -> str:
@@ -902,11 +902,14 @@ class ContextAggregator:
                 summary["last_updated"] = data.get("updated_at", "Unknown")
                 tasks = data.get("current_tasks", [])
                 if tasks:
-                    summary["current_task"] = tasks[0][:100] if isinstance(tasks[0], str) else str(tasks[0])[:100]
+                    summary["current_task"] = (
+                        tasks[0][:100] if isinstance(tasks[0], str) else str(tasks[0])[:100]
+                    )
                 pending = data.get("pending_issues", [])
                 if pending:
-                    summary["issues"] = "; ".join(pending[:3]) if isinstance(pending, list) else str(pending)
-                debt = data.get("technical_debt", [])
+                    summary["issues"] = (
+                        "; ".join(pending[:3]) if isinstance(pending, list) else str(pending)
+                    )
                 notes = data.get("notes", "")
                 if notes:
                     summary["progress"] = str(notes)[:100]
@@ -1000,7 +1003,9 @@ class ContextAggregator:
                         if isinstance(debt_item, str):
                             debts.append(f"[{dev}] - {debt_item}")
                         elif isinstance(debt_item, dict):
-                            debts.append(f"[{dev}] - {debt_item.get('description', str(debt_item))}")
+                            debts.append(
+                                f"[{dev}] - {debt_item.get('description', str(debt_item))}"
+                            )
                     continue
 
                 # Legacy Markdown path
@@ -1032,7 +1037,9 @@ class ContextAggregator:
             Saved file path
         """
         context_config = self.role_context_config.get("context", {})
-        md_output_file = self.project_root / context_config.get("aggregation_file", "docs/CONTEXT.md")
+        md_output_file = self.project_root / context_config.get(
+            "aggregation_file", "docs/CONTEXT.md"
+        )
         yaml_output_file = md_output_file.parent / "context.yaml"
 
         # Generate and save YAML (source of truth)
@@ -1056,14 +1063,16 @@ class ContextAggregator:
         roles_data = []
         for dev in developers:
             summary = self._extract_role_summary(dev)
-            roles_data.append({
-                "role": dev,
-                "updated_at": summary["last_updated"],
-                "current_task": summary["current_task"],
-                "progress": summary["progress"],
-                "pending_issues": summary["issues"],
-                "next_steps": summary["next_steps"],
-            })
+            roles_data.append(
+                {
+                    "role": dev,
+                    "updated_at": summary["last_updated"],
+                    "current_task": summary["current_task"],
+                    "progress": summary["progress"],
+                    "pending_issues": summary["issues"],
+                    "next_steps": summary["next_steps"],
+                }
+            )
 
         debts_data = []
         for dev in developers:
@@ -1072,7 +1081,11 @@ class ContextAggregator:
                 with open(context_file, "r", encoding="utf-8") as f:
                     data = yaml.safe_load(f) or {}
                 for debt_item in data.get("technical_debt", []):
-                    desc = debt_item if isinstance(debt_item, str) else debt_item.get("description", str(debt_item))
+                    desc = (
+                        debt_item
+                        if isinstance(debt_item, str)
+                        else debt_item.get("description", str(debt_item))
+                    )
                     debts_data.append({"role": dev, "description": desc})
 
         return {

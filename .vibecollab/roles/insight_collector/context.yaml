@@ -9,6 +9,10 @@ current_tasks:
   - "Phase 2: Test Insight system on 3+ real external projects"
 
 recently_completed:
+  - date: "2026-04-02"
+    description: "INS-064 Tag-Based Insight Discovery: vibecollab insight tags command"
+  - date: "2026-04-02"
+    description: "Added get_all_tags() API and CLI command for tag discovery (182 unique tags)"
   - date: "2026-04-01"
     description: "INS-054 Permission System Testing Pattern created (TASK-DEV-029)"
   - date: "2026-04-01"

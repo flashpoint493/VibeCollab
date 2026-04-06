@@ -151,12 +151,19 @@ class DocsRenderer:
         output_path.write_text(markdown, encoding="utf-8")
         return output_path
 
-    def render_all(self, docs_dir: Path, kinds: Optional[list[str]] = None) -> Dict[str, Path]:
+    def render_all(
+        self,
+        docs_dir: Path,
+        kinds: Optional[list[str]] = None,
+        output_dir: Optional[Path] = None,
+    ) -> Dict[str, Path]:
         """Render all YAML documents in a directory
 
         Args:
-            docs_dir: Path to docs directory
+            docs_dir: Path to docs directory containing YAML files
             kinds: Optional list of kinds to render (render all if None)
+            output_dir: Optional output directory for Markdown files.
+                       If None, outputs to same directory as YAML.
 
         Returns:
             Dict mapping kind to output path
@@ -164,13 +171,17 @@ class DocsRenderer:
         results = {}
         renderable = self.list_renderable_docs(docs_dir)
 
+        # Default output directory is the same as docs_dir
+        if output_dir is None:
+            output_dir = docs_dir
+
         for doc_info in renderable:
             kind = doc_info["kind"]
             if kinds and kind not in kinds:
                 continue
 
             yaml_path = doc_info["yaml_path"]
-            output_path = docs_dir / doc_info["output_name"]
+            output_path = output_dir / doc_info["output_name"]
 
             try:
                 rendered_path = self.render_doc(yaml_path, output_path)

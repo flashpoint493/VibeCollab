@@ -35,7 +35,7 @@ decisions:
           details: "11 checks, 0 errors"
         - name: "Protocol Compliance"
           result: pass
-          details: "Fixed missing docs/roles/ocarina/CONTEXT.md"
+          details: "Fixed missing .vibecollab/roles/ocarina/CONTEXT.md"
         - name: "Documentation"
           result: pass
           details: "skill.md, README.md, README.pypi.md, README.zh-CN.md all synced"

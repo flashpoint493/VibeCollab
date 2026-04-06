@@ -2,13 +2,13 @@
 Tests for insight derivation chain functionality (FP-015)
 """
 
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 
 from vibecollab.domain.event_log import Event, EventLog, EventType
 from vibecollab.insight.derivation_detector import DerivationDetector, DerivationSuggestion
 from vibecollab.insight.manager import InsightManager
-
 
 # -----------------------------------------------------------------------------
 # Fixtures
@@ -95,9 +95,10 @@ class TestDerivationDetectorBasic:
             created_by="test",
         )
 
-        # Suggest for new insight with matching tags (disable lookback to avoid date issues)
+        # Suggest for new insight with matching tags
+        # Use lookback_days=7 and more matching tags to ensure confidence >= 0.3
         suggestions = detector.suggest_for_new_insight(
-            "New Pattern", ["python", "design"], lookback_days=0
+            "New Pattern", ["python", "refactor", "design"], lookback_days=7
         )
 
         assert len(suggestions) > 0
@@ -116,7 +117,7 @@ class TestDerivationFromTask:
         assert suggestions == []
 
     def test_get_insights_used_during_task(self, insight_mgr, event_log, detector):
-        from datetime import datetime, timezone
+        from datetime import timedelta
 
         # Create insight
         ins = insight_mgr.create(
@@ -127,7 +128,11 @@ class TestDerivationFromTask:
             created_by="test",
         )
 
-        now = datetime.now(timezone.utc).isoformat()
+        # Use fixed timestamps to ensure proper ordering
+        base_time = datetime.now(timezone.utc) - timedelta(hours=1)
+        start_time = base_time.isoformat()
+        usage_time = (base_time + timedelta(minutes=5)).isoformat()
+        end_time = (base_time + timedelta(minutes=10)).isoformat()
 
         # Log task transition to IN_PROGRESS
         event_log.append(
@@ -136,7 +141,7 @@ class TestDerivationFromTask:
                 actor="test",
                 summary="Task started",
                 payload={"task_id": "TASK-DEV-001", "new_status": "IN_PROGRESS"},
-                timestamp=now,
+                timestamp=start_time,
             )
         )
 
@@ -147,7 +152,7 @@ class TestDerivationFromTask:
                 actor="test",
                 summary="Used insight",
                 payload={"action": "insight_used", "insight_id": ins.id, "task_id": "TASK-DEV-001"},
-                timestamp=now,
+                timestamp=usage_time,
             )
         )
 
@@ -158,7 +163,7 @@ class TestDerivationFromTask:
                 actor="test",
                 summary="Task completed",
                 payload={"task_id": "TASK-DEV-001", "new_status": "DONE"},
-                timestamp=now,
+                timestamp=end_time,
             )
         )
 
@@ -166,7 +171,7 @@ class TestDerivationFromTask:
         assert ins.id in used
 
     def test_get_recently_used_insights(self, insight_mgr, event_log, detector):
-        from datetime import datetime, timezone
+        from datetime import timedelta
 
         # Create and use insight
         ins = insight_mgr.create(
@@ -177,7 +182,8 @@ class TestDerivationFromTask:
             created_by="test",
         )
 
-        now = datetime.now(timezone.utc).isoformat()
+        # Use a timestamp that is definitely within the last 7 days
+        recent_time = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
 
         event_log.append(
             Event(
@@ -185,7 +191,7 @@ class TestDerivationFromTask:
                 actor="test",
                 summary="Used insight",
                 payload={"action": "insight_used", "insight_id": ins.id},
-                timestamp=now,
+                timestamp=recent_time,
             )
         )
 
@@ -344,7 +350,7 @@ class TestConfidenceScoring:
             body=_body(),
             created_by="test",
         )
-        ins2 = insight_mgr.create(
+        insight_mgr.create(
             title="Related",
             tags=["python", "advanced"],
             category="technique",

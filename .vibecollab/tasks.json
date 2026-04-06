@@ -90,7 +90,7 @@
   },
   "TASK-DEV-028": {
     "assignee": null,
-    "created_at": "2026-03-27T09:47:44.964278+00:00",
+    "created_at": "2026-04-01T06:34:31.200290+00:00",
     "dependencies": [],
     "description": "Finalize the v0.10.x release cycle by:\n1. Verifying PyPI release v0.10.13 is successful\n2. Updating all documentation (CHANGELOG, README, skill.md)\n3. Completing v0.10.3 Git History Rewrite milestone\n4. Finalizing v0.10.4 Execution Plan features\n5. Creating release notes and tagging\n\nThis task follows the Task-Insight iteration cycle to capture release engineering best practices.",
     "dialogue_rounds": 0,
@@ -384,8 +384,8 @@
     "milestone": "v0.12.0",
     "output": "",
     "role": "DEV",
-    "status": "TODO",
-    "updated_at": "2026-04-02T07:07:38.230620+00:00"
+    "status": "DONE",
+    "updated_at": "2026-04-02T07:52:57.517500+00:00"
   },
   "TASK-DEV-036": {
     "assignee": null,
@@ -427,7 +427,388 @@
     "milestone": "v0.12.0",
     "output": "",
     "role": "DEV",
-    "status": "TODO",
-    "updated_at": "2026-04-02T07:07:40.014660+00:00"
+    "status": "DONE",
+    "updated_at": "2026-04-02T07:52:59.619158+00:00"
+  },
+  "TASK-DEV-037": {
+    "assignee": "architect",
+    "created_at": "2026-04-02T09:15:00.000000+00:00",
+    "dependencies": [],
+    "description": "调研 10+ 主流 AI IDE 的 skill/mcp 配置格式，包括 Claude Code, Windsurf, Continue, Kiro, Roo Code, Copilot, Gemini CLI, Trae, Augment, Warp 等。输出配置路径、格式、示例对比表。",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 Universal IDE Adapter: 全平台 IDE 配置格式调研",
+    "id": "TASK-DEV-037",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-050",
+          "score": 0.08,
+          "title": "Dynamic Skill Registration from Insights: Role-Based Skill Injection"
+        },
+        {
+          "id": "INS-007",
+          "score": 0.07,
+          "title": "Three-Mode AI Architecture: IDE + CLI + Agent"
+        },
+        {
+          "id": "INS-023",
+          "score": 0.06,
+          "title": "Skill Injection for AI Assistants (OpenCode)"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "IDE 配置格式对比文档",
+    "role": "ARCH",
+    "status": "DONE",
+    "updated_at": "2026-04-02T09:30:00.000000+00:00"
+  },
+  "TASK-DEV-038": {
+    "assignee": "architect",
+    "created_at": "2026-04-02T09:15:30.000000+00:00",
+    "dependencies": [
+      "TASK-DEV-037"
+    ],
+    "description": "设计 Universal IDE Adapter 架构：统一适配器接口、插件化注册机制、skill/mcp 双模式支持、全局/项目级安装。参考 ui-ux-pro-max-skill CLI 驱动模板系统。",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 Universal IDE Adapter 架构设计",
+    "id": "TASK-DEV-038",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-050",
+          "score": 0.08,
+          "title": "Dynamic Skill Registration from Insights: Role-Based Skill Injection"
+        },
+        {
+          "id": "INS-008",
+          "score": 0.07,
+          "title": "Execution Plan: YAML-Driven Multi-Round Automation"
+        },
+        {
+          "id": "INS-017",
+          "score": 0.06,
+          "title": "Module Restructuring: Flat to Subpackages"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "架构设计文档 + 接口定义",
+    "role": "ARCH",
+    "status": "DONE",
+    "updated_at": "2026-04-02T09:30:00.000000+00:00"
+  },
+  "TASK-DEV-039": {
+    "assignee": "dev",
+    "created_at": "2026-04-02T09:16:00.000000+00:00",
+    "dependencies": [
+      "TASK-DEV-038"
+    ],
+    "description": "实现 Universal IDE Adapter 核心框架：src/vibecollab/ide_adapter/ 包、BaseIDEAdapter 抽象基类、AdapterRegistry 注册表、现有 4 个 skill + 3 个 mcp 适配器迁移。",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 Universal IDE Adapter 核心实现",
+    "id": "TASK-DEV-039",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-050",
+          "score": 0.08,
+          "title": "Dynamic Skill Registration from Insights: Role-Based Skill Injection"
+        },
+        {
+          "id": "INS-007",
+          "score": 0.07,
+          "title": "Three-Mode AI Architecture: IDE + CLI + Agent"
+        },
+        {
+          "id": "INS-020",
+          "score": 0.06,
+          "title": "Host Adapter Pattern: File Exchange & Subprocess"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "ide_adapter/ 包 + 单元测试",
+    "role": "DEV",
+    "status": "DONE",
+    "updated_at": "2026-04-02T09:30:00.000000+00:00"
+  },
+  "TASK-DEV-040": {
+    "assignee": "dev",
+    "created_at": "2026-04-02T09:16:30.000000+00:00",
+    "dependencies": [
+      "TASK-DEV-039"
+    ],
+    "description": "扩展 IDE 支持：新增 Claude Code, Windsurf, Continue, Kiro, Roo Code, Copilot, Gemini CLI, Trae, Augment, Warp 等 10+ 平台适配器。",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 扩展 IDE 适配器实现 (10+ 平台)",
+    "id": "TASK-DEV-040",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-050",
+          "score": 0.08,
+          "title": "Dynamic Skill Registration from Insights: Role-Based Skill Injection"
+        },
+        {
+          "id": "INS-023",
+          "score": 0.06,
+          "title": "Skill Injection for AI Assistants (OpenCode)"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "10+ 新平台适配器 (14 total)",
+    "role": "DEV",
+    "status": "DONE",
+    "updated_at": "2026-04-02T10:55:00.000000+00:00"
+  },
+  "TASK-DEV-041": {
+    "assignee": "dev",
+    "created_at": "2026-04-02T10:48:00.000000+00:00",
+    "dependencies": [
+      "TASK-DEV-039"
+    ],
+    "description": "实现高优先级 IDE 适配器：Claude Code, Windsurf, Roo Code。支持 skill 注入，YAML Frontmatter 格式。",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 IDE Adapter Group A (High Priority)",
+    "id": "TASK-DEV-041",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-050",
+          "score": 0.08,
+          "title": "Dynamic Skill Registration from Insights: Role-Based Skill Injection"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "claude.py, windsurf.py, roocode.py 适配器",
+    "role": "DEV",
+    "status": "DONE",
+    "updated_at": "2026-04-02T10:55:00.000000+00:00"
+  },
+  "TASK-DEV-042": {
+    "assignee": "dev",
+    "created_at": "2026-04-02T10:48:30.000000+00:00",
+    "dependencies": [
+      "TASK-DEV-039"
+    ],
+    "description": "实现中优先级 IDE 适配器：Gemini CLI, Kiro, Continue。支持 skill/mcp 注入。",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 IDE Adapter Group B (Medium Priority)",
+    "id": "TASK-DEV-042",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-050",
+          "score": 0.08,
+          "title": "Dynamic Skill Registration from Insights: Role-Based Skill Injection"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "gemini.py, kiro.py, continue_.py 适配器",
+    "role": "DEV",
+    "status": "DONE",
+    "updated_at": "2026-04-02T10:55:00.000000+00:00"
+  },
+  "TASK-DEV-043": {
+    "assignee": "dev",
+    "created_at": "2026-04-02T10:49:00.000000+00:00",
+    "dependencies": [
+      "TASK-DEV-039"
+    ],
+    "description": "实现低优先级 IDE 适配器：Trae, Copilot, Augment, Warp。部分平台为 skill-only 或特殊配置。",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 IDE Adapter Group C (Low Priority)",
+    "id": "TASK-DEV-043",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-050",
+          "score": 0.08,
+          "title": "Dynamic Skill Registration from Insights: Role-Based Skill Injection"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "trae.py, copilot.py, augment.py, warp.py 适配器",
+    "role": "DEV",
+    "status": "DONE",
+    "updated_at": "2026-04-02T10:55:00.000000+00:00"
+  },
+  "TASK-DEV-044": {
+    "assignee": "dev",
+    "created_at": "2026-04-02T10:49:30.000000+00:00",
+    "dependencies": [
+      "TASK-DEV-041",
+      "TASK-DEV-042",
+      "TASK-DEV-043"
+    ],
+    "description": "扩展 IDE 适配器测试：为所有新适配器添加单元测试，验证 skill/mcp 注入功能。",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 IDE Adapter 单元测试",
+    "id": "TASK-DEV-044",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-050",
+          "score": 0.08,
+          "title": "Dynamic Skill Registration from Insights: Role-Based Skill Injection"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "test_adapters_*.py 测试文件",
+    "role": "DEV",
+    "status": "DONE",
+    "updated_at": "2026-04-02T11:57:52.585315+00:00"
+  },
+  "TASK-DEV-045": {
+    "assignee": "dev",
+    "created_at": "2026-04-02T11:00:00.000000+00:00",
+    "dependencies": [
+      "TASK-DEV-039"
+    ],
+    "description": "实现 KimiCode IDE 适配器。调研 KimiCode skill/mcp 配置格式，实现适配器支持。",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 KimiCode IDE Adapter",
+    "id": "TASK-DEV-045",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-061",
+          "score": 0.09,
+          "title": "Universal IDE Adapter: Multi-Agent Parallel Implementation Pattern"
+        },
+        {
+          "id": "INS-050",
+          "score": 0.08,
+          "title": "Dynamic Skill Registration from Insights: Role-Based Skill Injection"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "kimicode.py 适配器",
+    "role": "DEV",
+    "status": "DONE",
+    "updated_at": "2026-04-02T11:57:52.500979+00:00"
+  },
+  "TASK-DEV-046": {
+    "assignee": "dev",
+    "created_at": "2026-04-02T11:00:30.000000+00:00",
+    "dependencies": [
+      "TASK-DEV-039"
+    ],
+    "description": "验证和增强 OpenCode IDE 适配器。确保 skill 注入和 package.json 配置完整。",
+    "dialogue_rounds": 0,
+    "feature": "v0.12.0 OpenCode Adapter Enhancement",
+    "id": "TASK-DEV-046",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-061",
+          "score": 0.09,
+          "title": "Universal IDE Adapter: Multi-Agent Parallel Implementation Pattern"
+        },
+        {
+          "id": "INS-023",
+          "score": 0.07,
+          "title": "Skill Injection for AI Assistants (OpenCode)"
+        }
+      ]
+    },
+    "milestone": "v0.12.0",
+    "output": "opencode.py 适配器增强",
+    "role": "DEV",
+    "status": "DONE",
+    "updated_at": "2026-04-02T11:55:58.895923+00:00"
+  },
+  "TASK-DEV-047": {
+    "assignee": null,
+    "created_at": "2026-04-02T13:43:02.449882+00:00",
+    "dependencies": [],
+    "description": "",
+    "dialogue_rounds": 0,
+    "feature": "Migrate docs YAML files from docs/ to .vibecollab/docs/ to avoid project conflicts",
+    "id": "TASK-DEV-047",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-055",
+          "score": 0.1667,
+          "title": "YAML Data Layer: Docs Renderer Implementation"
+        },
+        {
+          "id": "INS-008",
+          "score": 0.0731,
+          "title": "Execution Plan: YAML-Driven Multi-Round Automation"
+        },
+        {
+          "id": "INS-059",
+          "score": 0.0714,
+          "title": "Document Template Library: Reusable YAML Templates"
+        },
+        {
+          "id": "INS-060",
+          "score": 0.0714,
+          "title": "v0.12.0 Release: YAML Data Layer Complete"
+        },
+        {
+          "id": "INS-056",
+          "score": 0.0667,
+          "title": "YAML-Aware Module Update Pattern: ProtocolChecker, InsightSignalCollector, Indexer"
+        }
+      ]
+    },
+    "milestone": "",
+    "output": "",
+    "role": "DEV",
+    "status": "DONE",
+    "updated_at": "2026-04-02T13:46:26.541490+00:00"
+  },
+  "TASK-DEV-048": {
+    "assignee": null,
+    "created_at": "2026-04-02T13:48:07.275617+00:00",
+    "dependencies": [],
+    "description": "",
+    "dialogue_rounds": 0,
+    "feature": "Migrate roles directory from docs/roles/ to .vibecollab/roles/ and update CLI/aggregation logic",
+    "id": "TASK-DEV-048",
+    "metadata": {
+      "related_insights": [
+        {
+          "id": "INS-049",
+          "score": 0.0714,
+          "title": "Git Hooks Framework CLI: install/uninstall/run Commands"
+        },
+        {
+          "id": "INS-051",
+          "score": 0.0714,
+          "title": "Insight Trigger Registry: CLI Command for Trigger Discovery"
+        },
+        {
+          "id": "INS-052",
+          "score": 0.0714,
+          "title": "Guard Engine CLI Integration Pattern"
+        },
+        {
+          "id": "INS-055",
+          "score": 0.0714,
+          "title": "YAML Data Layer: Docs Renderer Implementation"
+        },
+        {
+          "id": "INS-007",
+          "score": 0.0679,
+          "title": "Three-Mode AI Architecture: IDE + CLI + Agent"
+        }
+      ]
+    },
+    "milestone": "",
+    "output": "",
+    "role": "ARCH",
+    "status": "DONE",
+    "updated_at": "2026-04-02T15:46:00.117944+00:00"
   }
 }

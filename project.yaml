@@ -580,26 +580,26 @@ role_context:
   enabled: true
   current_role: dev
   context:
-    per_role_dir: docs/roles
+    per_role_dir: .vibecollab/roles
     global_aggregation: true
     aggregation_file: docs/CONTEXT.md
     metadata_file: .metadata.yaml
     auto_sync: true
   collaboration:
     enabled: true
-    file: docs/roles/COLLABORATION.md
+    file: .vibecollab/roles/COLLABORATION.md
     track_dependencies: true
     track_handoffs: true
   dialogue_protocol:
     on_start:
       read_files:
       - docs/CONTEXT.md
-      - docs/roles/{role}/CONTEXT.md
-      - docs/roles/COLLABORATION.md
+      - .vibecollab/roles/{role}/CONTEXT.md
+      - .vibecollab/roles/COLLABORATION.md
       - CONTRIBUTING_AI.md
     on_end:
       update_files:
-      - docs/roles/{role}/CONTEXT.md
+      - .vibecollab/roles/{role}/CONTEXT.md
       - docs/CHANGELOG.md
       aggregate_context: true
       git_commit: true

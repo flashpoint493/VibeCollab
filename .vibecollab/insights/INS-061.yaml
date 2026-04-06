@@ -1,0 +1,126 @@
+id: INS-061
+title: "Universal IDE Adapter: Multi-Agent Parallel Implementation Pattern"
+category: pattern
+tags:
+  - ide-adapter
+  - multi-agent
+  - parallel-execution
+  - architecture
+  - v0.12.0
+
+derived_from:
+  - INS-050
+  - INS-007
+  - INS-023
+
+body: |
+  ## Context
+  
+  VibeCollab v0.12.0 实现了 Universal IDE Adapter 功能，将 IDE 支持从 4 个平台扩展到 14 个平台。
+  采用多 Agent 并行开发模式，大幅提升了开发效率。
+  
+  ## Implementation Pattern
+  
+  ### Phase 1: Research & Architecture (Sequential)
+  1. **TASK-DEV-037**: 调研 10+ IDE 配置格式 (research-agent)
+  2. **TASK-DEV-038**: 设计统一适配器架构 (arch-agent)
+  3. **TASK-DEV-039**: 实现核心框架 (dev-agent)
+  
+  ### Phase 2: Parallel Implementation (3 Groups)
+  按优先级分组，3 个 Agent 并行实现：
+  
+  | Group | Priority | IDEs | Agent |
+  |-------|----------|------|-------|
+  | A | High | Claude, Windsurf, Roo | dev-group-a |
+  | B | Medium | Gemini, Kiro, Continue | dev-group-b |
+  | C | Low | Trae, Copilot, Augment, Warp | dev-group-c |
+  
+  ### Architecture Design
+  
+  ```
+  ide_adapter/
+  ├── base.py              # BaseIDEAdapter 抽象基类
+  ├── registry.py          # AdapterRegistry 注册表
+  ├── injector.py          # 注入服务
+  └── adapters/
+      ├── opencode.py      # 已有
+      ├── cursor.py        # 已有
+      ├── cline.py         # 已有
+      ├── codebuddy.py     # 已有
+      ├── claude.py        # NEW (Group A)
+      ├── windsurf.py      # NEW (Group A)
+      ├── roocode.py       # NEW (Group A)
+      ├── gemini.py        # NEW (Group B)
+      ├── kiro.py          # NEW (Group B)
+      ├── continue_.py     # NEW (Group B)
+      ├── trae.py          # NEW (Group C)
+      ├── copilot.py       # NEW (Group C)
+      ├── augment.py       # NEW (Group C)
+      └── warp.py          # NEW (Group C)
+  ```
+  
+  ### Key Design Decisions
+  
+  1. **Abstract Base Class Pattern**: All adapters inherit from BaseIDEAdapter
+  2. **Decorator Registration**: Use `@register_adapter` for auto-registration
+  3. **Dual Mode Support**: Each adapter declares `supports_skill` and `supports_mcp`
+  4. **Format Flexibility**: Support Markdown, YAML, JSON formats per IDE requirements
+  5. **Backward Compatibility**: Keep existing CLI commands working
+  
+  ## Platform-Specific Configurations
+  
+  | IDE | Skill Path | MCP Path | Format |
+  |-----|------------|----------|--------|
+  | Claude | `CLAUDE.md` | - | Markdown + Frontmatter |
+  | Windsurf | `.windsurf/skills/vibecollab/SKILL.md` | - | Markdown + Frontmatter |
+  | Roo Code | `.agents/skills/vibecollab.md` | - | Markdown + Frontmatter |
+  | Gemini | `.gemini/skills/vibecollab/SKILL.md` | - | Markdown + Frontmatter |
+  | Kiro | `.kiro/skills/vibecollab/SKILL.md` | - | Markdown + Frontmatter |
+  | Continue | - | `.continue/mcpServers/vibecollab.yaml` | YAML |
+  | Trae | `.trae/Skills/vibecollab.md` | - | Markdown |
+  | Copilot | `.github/skills/vibecollab.md` | - | Markdown + Frontmatter |
+  | Augment | N/A (manual) | - | N/A |
+  | Warp | N/A (cloud) | - | N/A |
+  
+  ## Lessons Learned
+  
+  1. **Multi-Agent Benefits**: 3 组并行，理论 3x 效率提升
+  2. **Clear Interface Definition**: 抽象基类让每个 Agent 独立工作无冲突
+  3. **Format Standardization**: YAML Frontmatter 是最主流的技能配置格式
+  4. **Testing Strategy**: 每个 Group 独立测试，最后统一集成测试
+  
+  ## Usage
+  
+  ```python
+  from vibecollab.ide_adapter import get_adapter, list_adapters
+  
+  # List all adapters
+  for adapter in list_adapters():
+      print(f"{adapter.ide_type}: {adapter.display_name}")
+  
+  # Get specific adapter
+  claude = get_adapter('claude')
+  result = claude.inject_skill(Path('.'))
+  ```
+  
+  ## CLI Commands
+  
+  ```bash
+  # Skill injection
+  vibecollab skill inject claude
+  vibecollab skill inject windsurf
+  vibecollab skill inject all
+  
+  # MCP configuration
+  vibecollab mcp inject cursor
+  vibecollab mcp inject continue
+  
+  # List supported IDEs
+  vibecollab skill list
+  ```
+
+impact: high
+confidence: high
+created_at: "2026-04-02"
+updated_at: "2026-04-02"
+version: "1"

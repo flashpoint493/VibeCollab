@@ -1,49 +1,53 @@
 kind: context
-version: "1"
-updated_at: "2026-04-02T15:30:00"
-aggregated_from:
-  - architect
-  - dev
-  - insight_collector
-
+version: '1'
+updated_at: '2026-04-02T23:47:05'
+aggregated_from: &id001
+- architect
+- dev
+- insight_collector
 project_status:
-  current_version: "v0.12.0-dev"
-  active_roles:
-    - architect
-    - dev
-    - insight_collector
-  milestone: "v0.12.0 YAML Data Layer + Workflows + Insight Automation — 22/25 items (88% complete, remaining: test updates)"
-
+  current_version: v1.0
+  active_roles: *id001
 roles:
-  - role: architect
-    updated_at: "2026-04-02"
-    current_task: "v0.12.0 YAML Data Layer architecture review (DECISION-025/027)"
-    progress: "All major features implemented. 22/25 items complete. Template migration, Workflow Integration, Insight Derivation Chain all done."
-    pending_issues: null
-    next_steps: "Final review and v0.12.0 release preparation"
+- role: architect
+  updated_at: '2026-04-02'
+  current_task: 'TASK-DEV-045/046: KimiCode 适配器实现 + OpenCode 验证增强 (多 Agent 并行)'
+  progress: 'v0.12.0 Universal IDE Adapter 当前状态：
 
-  - role: dev
-    updated_at: "2026-04-02"
-    current_task: "v0.12.0 completion (TASK-DEV-030~036)"
-    progress: "TASK-DEV-030~036 DONE. 24 YAML templates created, Workflow Integration with 3 pre-built workflows, Insight Derivation Chain with graph visualization. 1731 tests passing."
-    pending_issues: "MCP onboard timeout after IDE restart"
-    next_steps: "Final test updates and v0.12.0 release"
+    - ✅ 14 个 IDE 适配器已完成 (TASK-DEV-040/041/042/043)
 
-  - role: insight_collector
-    updated_at: "2026-04-02"
-    current_task: "Insight Derivation Chain implementation (FP-015)"
-    progress: "FP-015 complete: derived_from field, insight graph --show-derivation, automatic derivation detection. 58 Insights indexed."
-    pending_issues: "Cross-project import/export verification not started"
-    next_steps: "Insight quality validation for v0.12.0"
+    - ✅ INS-061 已创建 ('
+  pending_issues: 'TASK-DEV-045 IN_PROGRESS: KimiCode 适配器实现 (research + dev); TASK-DEV-046
+    IN_PROGRESS: OpenCode 适配器验证增强'
+  next_steps: (None)
+- role: dev
+  updated_at: '2026-04-02'
+  current_task: 'v0.12.0 YAML Data Layer migration (DECISION-025/027): Docs Markdown
+    → YAML Big-Bang'
+  progress: (None)
+  pending_issues: MCP onboard timeout after IDE restart still needs investigation
+  next_steps: (None)
+- role: insight_collector
+  updated_at: '2026-04-01'
+  current_task: Insight System Hardening — External project validation pending
+  progress: 'Key Metrics:
 
-collaboration: "See docs/roles/ for individual role contexts"
+    - Total Insights: 55 (target: 100+)
 
+    - Avg Weight: 0.95 (target: > 1.0)
+
+    - Semantic Cover'
+  pending_issues: Cross-project import/export verification not started; External project
+    A/B/C validation not started
+  next_steps: (None)
 technical_debt:
-  - role: dev
-    description: "MCP `onboard` tool call timeout after IDE restart still needs investigation"
-  - role: dev
-    description: "`README.zh-CN.md` project structure section is outdated"
-  - role: insight_collector
-    description: "Semantic index staleness (no auto-update on Insight change)"
-  - role: insight_collector
-    description: "Duplicate detection sensitivity threshold needs tuning"
+- role: dev
+  description: MCP `onboard` tool call timeout after IDE restart still needs investigation
+- role: dev
+  description: '`README.zh-CN.md` project structure section is outdated'
+- role: insight_collector
+  description: Semantic index staleness (no auto-update on Insight change)
+- role: insight_collector
+  description: Duplicate detection sensitivity threshold needs tuning
+- role: insight_collector
+  description: Import fingerprint mismatch on rename strategy

@@ -1,0 +1,100 @@
+kind: insight
+version: '1'
+id: INS-060
+title: 'v0.12.0 Release: YAML Data Layer Complete'
+summary: Major milestone completing YAML data layer migration, workflow integration, and insight automation
+tags:
+- release
+- v0.12.0
+- yaml
+- workflow
+- insight-derivation
+- milestone
+category: decision
+body:
+  scenario: |
+    v0.12.0 represents a major architectural shift for VibeCollab, evolving from 
+    Markdown-based documentation to a structured YAML data layer. This enables 
+    reliable programmatic access, better tooling integration, and paves the way 
+    for advanced automation features.
+  approach: |
+    The release includes four major feature pillars:
+
+    1. **YAML Data Layer Migration (TASK-DEV-030~031)**
+       - All docs/*.md migrated to docs/*.yaml with structured schemas
+       - Role contexts moved to .vibecollab/roles/{role}/context.yaml
+       - ContextAggregator, RoadmapParser, PRDManager rewritten for YAML-native operation
+       - ProtocolChecker, InsightSignalCollector, Indexer updated for YAML support
+       - CLI and MCP server updated to read/write YAML
+       - Templates migrated from .md.j2 to .yaml.j2 format
+       - vibecollab init generates YAML docs by default
+       - vibecollab docs render [--format md|json] for view generation
+
+    2. **Workflow Integration (FP-004)**
+       - Pre-built workflow YAMLs in .vibecollab/workflows/
+       - vibecollab plan list - List available workflow plans
+       - vibecollab plan run <workflow> - Execute workflows
+       - 3 built-in workflows: quick-start, feature-dev, release-prep
+       - Integration with existing PlanRunner engine
+
+    3. **Document Template Library (FP-005)**
+       - vibecollab template list/use commands
+       - 24 built-in YAML-native templates via Pattern Engine
+       - User custom templates in .vibecollab/templates/
+       - Template override mechanism for built-in templates
+       - Jinja2 variable substitution support
+
+    4. **Insight Derivation Chain (FP-015)**
+       - derived_from field in Insight YAML for provenance tracking
+       - vibecollab insight graph --show-derivation visualization
+       - Automatic derivation detection from task transitions
+       - DerivationDetector analyzes task completion patterns
+       - Suggests parent insights when creating new insights
+
+  results: |
+    - 1768 tests passing (100% pass rate)
+    - 193+ test updates completed across 4+ test files
+    - 60 Insights indexed
+    - Zero breaking changes to CLI interface
+    - Full backward compatibility maintained
+
+  technical_details: |
+    Key architectural decisions (DECISION-025, DECISION-027):
+    - YAML as source of truth, Markdown as generated view
+    - docs_renderer.py handles YAML → Markdown conversion
+    - Template overlay mechanism preserves user customizations
+    - EventLog integration enables derivation tracking
+
+  migration_guide: |
+    For existing projects:
+    1. Run `vibecollab docs migrate` to convert .md to .yaml
+    2. Update any custom scripts to read YAML instead of Markdown
+    3. Use `vibecollab docs render` to regenerate .md views
+    4. New projects automatically use YAML structure
+
+  related_features:
+    - FP-001: Git Hooks Framework (enhanced for YAML)
+    - FP-004: Workflow Integration
+    - FP-005: Document Template Library
+    - FP-015: Insight Derivation Chain
+    - DECISION-025: YAML as Source of Truth
+    - DECISION-027: Workflow-Driven Development
+
+artifacts:
+  - path: https://github.com/opencodesoft/vibecollab/releases/tag/v0.12.0
+    type: url
+    description: v0.12.0 Release PR
+  - path: tests/
+    type: directory
+    description: 1768 tests, 100% passing
+
+origin:
+  created_by: dev
+  created_at: '2026-04-02'
+  source:
+    type: release
+    description: 'v0.12.0 Release: YAML Data Layer + Workflows + Insight Automation'
+    ref: RELEASE-012
+  derived_from: []
+
+fingerprint: db658ab1d8538e71d3e77fc2ea7cf0a350f5140a8b31bbfcc7c88d09386e75b2

@@ -1,0 +1,98 @@
+"""
+KimiCode IDE Adapter
+
+KimiCode 适配器实现，支持 Skill 注入和 MCP 配置。
+KimiCode 是月之暗面开发的基于 VS Code 的 AI IDE。
+"""
+
+from typing import Any
+
+from ..base import BaseIDEAdapter, IDEType
+from ..registry import register_adapter
+
+
+@register_adapter
+class KimiCodeAdapter(BaseIDEAdapter):
+    """KimiCode IDE 适配器。"""
+
+    ide_type = IDEType.KIMICODE
+    display_name = "KimiCode"
+    description = "KimiCode IDE by Moonshot AI with skill and MCP support"
+
+    supports_skill = True
+    skill_file_path = ".kimicode/rules/vibecollab.md"
+
+    supports_mcp = True
+    mcp_config_path = ".kimicode/mcp.json"
+
+    def get_skill_content(self) -> str:
+        """获取 KimiCode Skill 文件内容（YAML Frontmatter 格式）。"""
+        return """---
+description: VibeCollab Protocol Rules
+globs: "**/*"
+alwaysApply: true
+---
+
+# VibeCollab AI Collaboration Protocol
+
+You are assisting with a VibeCollab-managed project. Follow these guidelines:
+
+## At Start of Conversation
+
+1. Run `vibecollab onboard` to get full project context
+2. Read `docs/CONTEXT.md` for current development state
+3. Check `docs/ROADMAP.md` for current milestone
+4. Review assigned tasks from previous sessions
+
+## During Development
+
+1. **Create task before implementing**: `vibecollab task create --role DEV --feature "X"`
+2. **Check protocol compliance**: `vibecollab check`
+3. **Record insights**: `vibecollab insight add --category pattern --content "..."`
+4. **Update task status**: `vibecollab task transition <id> <status>`
+
+## At End of Conversation
+
+1. **Save session**: `vibecollab session_save --summary "..." --role <role>`
+2. **Complete tasks**: `vibecollab task solidify <id>`
+3. **Update CHANGELOG.md**
+4. **Record decisions** in `docs/DECISIONS.md`
+5. **Git commit** all changes
+
+## Key Files
+
+- `project.yaml` - Project configuration
+- `CONTRIBUTING_AI.md` - Full collaboration rules
+- `docs/CONTEXT.md` - Current context
+- `docs/DECISIONS.md` - Decision records
+- `docs/ROADMAP.md` - Milestones and tasks
+- `docs/CHANGELOG.md` - Change history
+
+## Decision Levels
+
+- **S (Strategic)**: Overall direction - requires human approval
+- **A (Architecture)**: System design - human review required
+- **B (Implementation)**: Specific approach - quick confirm
+- **C (Detail)**: Naming, params - AI decides autonomously
+"""
+
+    def get_mcp_config(self, command: str, args: list[str]) -> dict[str, Any]:
+        """获取 KimiCode MCP 配置。
+
+        KimiCode 使用与 Cursor 类似的 MCP 配置格式。
+
+        Args:
+            command: MCP 服务器命令
+            args: MCP 服务器参数
+
+        Returns:
+            dict: MCP 配置字典
+        """
+        return {
+            "mcpServers": {
+                "vibecollab": {
+                    "command": command,
+                    "args": args,
+                }
+            }
+        }

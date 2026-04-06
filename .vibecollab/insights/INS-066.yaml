@@ -1,0 +1,175 @@
+id: INS-066
+title: "Role Directory Isolation: Migrating from docs/roles/ to .vibecollab/roles/"
+category: technique
+tags:
+  - role
+  - directory-structure
+  - migration
+  - configuration
+  - cli
+  - "v0.13.0"
+created_at: "2026-04-02"
+updated_at: "2026-04-02"
+author: architect
+version: 1
+context: |
+  将角色上下文目录从 docs/roles/ 迁移到 .vibecollab/roles/，
+  与 docs YAML 文件一起隔离在 .vibecollab/ 下，避免与项目文档冲突。
+
+scenario: |
+  当使用 vibecollab 的多角色协作功能时，
+  角色上下文文件（context.yaml、.metadata.yaml）需要与项目文档隔离，
+  防止目录结构混乱。
+
+approach: |
+  ## 目录结构变更
+
+  ### 变更前
+  ```
+  project/
+  ├── docs/
+  │   ├── CONTEXT.md
+  │   └── roles/
+  │       ├── architect/
+  │       │   └── context.yaml
+  │       ├── dev/
+  │       │   └── context.yaml
+  │       └── COLLABORATION.md
+  └── .vibecollab/
+      └── insights/
+  ```
+
+  ### 变更后
+  ```
+  project/
+  ├── docs/
+  │   └── CONTEXT.md          # 聚合后的上下文（渲染输出）
+  └── .vibecollab/
+      ├── docs/               # YAML 文档源文件
+      │   ├── context.yaml
+      │   └── ...
+      ├── roles/              # 角色上下文（隔离）
+      │   ├── architect/
+      │   │   └── context.yaml
+      │   ├── dev/
+      │   │   └── context.yaml
+      │   └── COLLABORATION.md
+      └── insights/
+  ```
+
+  ## 代码变更点
+
+  ### 1. RoleManager 默认路径
+  ```python
+  # src/vibecollab/domain/role.py
+  self.roles_dir = project_root / self.role_context_config.get("context", {}).get(
+      "per_role_dir", ".vibecollab/roles"  # 从 "docs/roles" 修改
+  )
+  ```
+
+  ### 2. ConflictDetector 默认路径
+  ```python
+  # src/vibecollab/domain/conflict_detector.py
+  self.roles_dir = project_root / self.role_context_config.get("context", {}).get(
+      "per_role_dir", ".vibecollab/roles"  # 从 "docs/roles" 修改
+  )
+  ```
+
+  ### 3. ProtocolChecker 默认路径
+  ```python
+  # src/vibecollab/core/protocol_checker.py
+  roles_dir_name = role_context_config.get("context", {}).get(
+      "per_role_dir", ".vibecollab/roles"  # 从 "docs/roles" 修改
+  )
+  ```
+
+  ### 4. Project 类 COLLABORATION.md 路径
+  ```python
+  # src/vibecollab/core/project.py
+  collab_file = self.output_dir / collab_config.get(
+      "file", ".vibecollab/roles/COLLABORATION.md"  # 从 "docs/roles/COLLABORATION.md" 修改
+  )
+  ```
+
+  ### 5. project.yaml 配置更新
+  ```yaml
+  role_context:
+    context:
+      per_role_dir: .vibecollab/roles       # 从 "docs/roles" 修改
+    collaboration:
+      file: .vibecollab/roles/COLLABORATION.md  # 从 "docs/roles/COLLABORATION.md" 修改
+    dialogue_protocol:
+      on_start:
+        read_files:
+          - .vibecollab/roles/{role}/CONTEXT.md   # 从 "docs/roles/{role}/CONTEXT.md" 修改
+          - .vibecollab/roles/COLLABORATION.md    # 从 "docs/roles/COLLABORATION.md" 修改
+      on_end:
+        update_files:
+          - .vibecollab/roles/{role}/CONTEXT.md   # 从 "docs/roles/{role}/CONTEXT.md" 修改
+  ```
+
+  ## 迁移步骤
+
+  1. 移动目录: `mv docs/roles .vibecollab/roles`
+  2. 更新 project.yaml 中的路径配置
+  3. 更新代码中的默认路径
+  4. 更新测试文件中的硬编码路径
+  5. 验证: `vibecollab role list` 和 `vibecollab role sync`
+
+  ## 好处
+
+  - **一致性**: 所有 vibecollab 数据在 .vibecollab/ 下
+  - **隔离性**: 角色数据与项目文档分离
+  - **整洁性**: 项目根目录更干净
+  - **可预测性**: 用户知道所有元数据在 .vibecollab/ 下
+
+checklist:
+  - item: 迁移 docs/roles/ 到 .vibecollab/roles/
+    checked: true
+  - item: 更新 RoleManager 默认路径
+    checked: true
+  - item: 更新 ConflictDetector 默认路径
+    checked: true
+  - item: 更新 ProtocolChecker 默认路径
+    checked: true
+  - item: 更新 project.yaml 配置
+    checked: true
+  - item: 更新测试文件路径
+    checked: true
+  - item: 验证 `vibecollab role list` 正常
+    checked: true
+  - item: 验证 `vibecollab role sync` 正常
+    checked: true
+  - item: 运行测试套件 (38/38 通过)
+    checked: true
+
+examples:
+  - title: 查看角色列表
+    code: |
+      vibecollab role list
+      # 输出:
+      # ┌───────────────────┬───────────┬─────────────────────┬──────────────┐
+      # │ Role              │ Status    │ Last Updated        │ Update Count │
+      # ├───────────────────┼───────────┼─────────────────────┼──────────────┤
+      # │ architect         │ ✅ Active │ -                   │ 0            │
+      # │ dev               │ ✅ Active │ 2026-03-30T16:00:00 │ 0            │
+      # │ insight_collector │ ✅ Active │ 2026-03-27T13:44:34 │ 0            │
+      # └───────────────────┴───────────┴─────────────────────┴──────────────┘
+
+  - title: 同步角色上下文
+    code: |
+      vibecollab role sync
+      # 输出:
+      # Aggregating global CONTEXT...
+      # ✅ Aggregation complete: docs\context.yaml
+
+related_insights:
+  - INS-065
+  - INS-038
+  - INS-004
+
+changelog:
+  - date: "2026-04-02"
+    version: 1
+    changes:
+      - Initial creation documenting the role directory migration

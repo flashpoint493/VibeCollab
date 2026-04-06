@@ -220,6 +220,34 @@ entries:
     weight: 1.0
     used_count: 0
     active: true
+  INS-059:
+    weight: 1.0
+    used_count: 0
+    active: true
+  INS-060:
+    weight: 1.0
+    used_count: 0
+    active: true
+  INS-062:
+    weight: 1.0
+    used_count: 0
+    active: true
+  INS-063:
+    weight: 1.0
+    used_count: 0
+    active: true
+  INS-064:
+    weight: 1.0
+    used_count: 0
+    active: true
+  INS-065:
+    weight: 1.0
+    used_count: 0
+    active: true
+  INS-066:
+    weight: 1.0
+    used_count: 0
+    active: true
 settings:
   decay_rate: 0.95
   decay_interval_days: 30

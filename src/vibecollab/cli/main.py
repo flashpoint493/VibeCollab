@@ -1100,7 +1100,7 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
         plan = load_plan(Path(resolved_path))
     except (FileNotFoundError, ValueError) as e:
         console.print(f"[red]{EMOJI_MAP['error']} {e}[/red]")
-        console.print(f"[dim]Hint: Use 'vibecollab plan list' to see available workflows[/dim]")
+        console.print("[dim]Hint: Use 'vibecollab plan list' to see available workflows[/dim]")
         raise SystemExit(1)
 
     # Optional EventLog integration
@@ -1270,7 +1270,7 @@ def plan_validate(plan_file):
         )
     except (FileNotFoundError, ValueError) as e:
         console.print(f"[red]{EMOJI_MAP['error']} {e}[/red]")
-        console.print(f"[dim]Hint: Use 'vibecollab plan list' to see available workflows[/dim]")
+        console.print("[dim]Hint: Use 'vibecollab plan list' to see available workflows[/dim]")
         raise SystemExit(1)
 
 
@@ -1311,7 +1311,7 @@ def plan_list(json_output):
 
     if not workflows:
         console.print("[yellow]No workflows found.[/yellow]")
-        console.print(f"[dim]Workflows directory: .vibecollab/workflows/[/dim]")
+        console.print("[dim]Workflows directory: .vibecollab/workflows/[/dim]")
         return
 
     # Group by category
@@ -2525,20 +2525,26 @@ def docs_group():
 @click.option(
     "--docs-dir",
     "-d",
-    default="docs",
-    help=_("Docs directory path (default: docs)"),
+    default=".vibecollab/docs",
+    help=_("Docs directory path (default: .vibecollab/docs)"),
 )
-def docs_render(input, output, render_all, kind, docs_dir):
+@click.option(
+    "--md-dir",
+    "-m",
+    default="docs",
+    help=_("Output directory for rendered Markdown (default: docs)"),
+)
+def docs_render(input, output, render_all, kind, docs_dir, md_dir):
     """Render YAML documents to Markdown views
 
-    Converts YAML document files (docs/*.yaml) to human-readable
+    Converts YAML document files (.vibecollab/docs/*.yaml) to human-readable
     Markdown views (docs/*.md). YAML remains the source of truth.
 
     Examples:
 
         vibecollab docs render --all
 
-        vibecollab docs render -i docs/context.yaml
+        vibecollab docs render -i .vibecollab/docs/context.yaml
 
         vibecollab docs render -k context -k roadmap
     """
@@ -2570,9 +2576,11 @@ def docs_render(input, output, render_all, kind, docs_dir):
 
     # Batch mode
     kinds_to_render = list(kind) if kind else None
+    output_path = Path(md_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
 
     if render_all or kinds_to_render:
-        results = renderer.render_all(docs_path, kinds_to_render)
+        results = renderer.render_all(docs_path, kinds_to_render, output_path)
 
         if not results:
             console.print(f"[yellow]{_('No renderable YAML documents found')}[/yellow]")
@@ -2641,8 +2649,8 @@ def docs_validate(yaml_file):
 @click.option(
     "--docs-dir",
     "-d",
-    default="docs",
-    help=_("Docs directory path (default: docs)"),
+    default=".vibecollab/docs",
+    help=_("Docs directory path (default: .vibecollab/docs)"),
 )
 def docs_list(docs_dir):
     """List all renderable YAML documents
@@ -2694,6 +2702,422 @@ def docs_list(docs_dir):
         )
 
     console.print(table)
+
+
+# ============================================
+# Template Library commands (FP-005: v0.12.0+)
+# ============================================
+
+
+@main.group("template")
+def template_group():
+    """Document Template Library — reusable YAML templates
+
+    Manage and use document templates for generating project documentation.
+    Built-in templates are YAML-native Jinja2 templates; users can create
+    custom templates in .vibecollab/templates/.
+
+    Examples:
+
+        vibecollab template list                    # List all templates
+
+        vibecollab template list --category core    # List core templates only
+
+        vibecollab template use context -o docs/context.yaml
+
+        vibecollab template create my-template      # Create custom template
+    """
+    pass
+
+
+@template_group.command("list")
+@click.option(
+    "--category",
+    "-c",
+    help=_("Filter by category (core, configuration, collaboration, domain, custom)"),
+)
+@click.option(
+    "--builtin-only",
+    is_flag=True,
+    help=_("Show only built-in templates"),
+)
+@click.option(
+    "--custom-only",
+    is_flag=True,
+    help=_("Show only custom templates"),
+)
+@click.option(
+    "--json-output",
+    "--json",
+    is_flag=True,
+    help=_("Output in JSON format"),
+)
+@click.option(
+    "--project-root",
+    "-p",
+    type=click.Path(exists=True, file_okay=False),
+    default=".",
+    help=_("Project root directory (default: current directory)"),
+)
+def template_list(category, builtin_only, custom_only, json_output, project_root):
+    """List all available templates (built-in + custom)"""
+    import json as json_mod
+
+    from ..core.template_library import TemplateLibrary
+
+    lib = TemplateLibrary(Path(project_root))
+
+    # Determine what to include
+    include_builtin = not custom_only
+    include_custom = not builtin_only
+
+    templates = lib.list_templates(
+        category=category,
+        include_builtin=include_builtin,
+        include_custom=include_custom,
+    )
+
+    if json_output:
+        data = [
+            {
+                "id": t.get("id"),
+                "description": t.get("description", ""),
+                "type": t.get("type", ""),
+                "source": t.get("source", ""),
+                "category": t.get("category", ""),
+            }
+            for t in templates
+        ]
+        click.echo(json_mod.dumps(data, ensure_ascii=False, indent=2))
+        return
+
+    if not templates:
+        console.print(f"[yellow]{_('No templates found')}[/yellow]")
+        return
+
+    console.print()
+    console.print(f"[bold]{_('Document Templates')}[/bold]")
+    console.print()
+
+    # Group by source
+    builtin_templates = [t for t in templates if t.get("source") == "builtin"]
+    custom_templates = [t for t in templates if t.get("source") == "local"]
+
+    if builtin_templates and include_builtin:
+        console.print(f"[cyan]{EMOJI_MAP['package']} {_('Built-in Templates')}[/cyan]")
+        console.print()
+
+        table = Table(show_header=True)
+        table.add_column(_("ID"), style="cyan")
+        table.add_column(_("Type"))
+        table.add_column(_("Category"))
+        table.add_column(_("Description"))
+
+        for tpl in sorted(builtin_templates, key=lambda x: x.get("id", "")):
+            table.add_row(
+                tpl.get("id", ""),
+                tpl.get("type", ""),
+                tpl.get("category", ""),
+                tpl.get("description", "")[:50],
+            )
+
+        console.print(table)
+        console.print()
+
+    if custom_templates and include_custom:
+        console.print(f"[green]{EMOJI_MAP['sparkles']} {_('Custom Templates')}[/green]")
+        console.print(f"[dim]{_('From:')} {lib.get_custom_templates_dir()}[/dim]")
+        console.print()
+
+        table = Table(show_header=True)
+        table.add_column(_("ID"), style="green")
+        table.add_column(_("Description"))
+
+        for tpl in sorted(custom_templates, key=lambda x: x.get("id", "")):
+            table.add_row(
+                tpl.get("id", ""),
+                tpl.get("description", "")[:60],
+            )
+
+        console.print(table)
+        console.print()
+
+    # Stats
+    stats = lib.get_stats()
+    console.print(
+        f"[dim]{_('Total:')} {stats['total']} "
+        f"({_('builtin')}: {stats['builtin']}, {_('custom')}: {stats['custom']})[/dim]"
+    )
+    console.print()
+
+
+@template_group.command("use")
+@click.argument("template_id")
+@click.option(
+    "--output",
+    "-o",
+    required=True,
+    type=click.Path(),
+    help=_("Output file path (required)"),
+)
+@click.option(
+    "--var",
+    "variables",
+    multiple=True,
+    help=_("Template variable (format: key=value)"),
+)
+@click.option(
+    "--config",
+    "-c",
+    default="project.yaml",
+    help=_("Project config file for template context"),
+)
+@click.option(
+    "--project-root",
+    "-p",
+    type=click.Path(exists=True, file_okay=False),
+    default=".",
+    help=_("Project root directory (default: current directory)"),
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help=_("Preview output without writing file"),
+)
+def template_use(template_id, output, variables, config, project_root, dry_run):
+    """Use a template to generate a document
+
+    Generate a document from a template, with variable substitution.
+    Built-in templates are located in src/vibecollab/templates/docs/.
+    Custom templates can be added to .vibecollab/templates/.
+
+    Examples:
+
+        vibecollab template use context -o docs/context.yaml
+
+        vibecollab template use changelog -o docs/changelog.yaml --var version=1.0.0
+
+        vibecollab template use my-custom -o output.yaml --config my-project.yaml
+    """
+    from ..core.template_library import TemplateLibrary
+
+    lib = TemplateLibrary(Path(project_root))
+
+    # Check if template exists
+    tpl_info = lib.get_template(template_id)
+    if not tpl_info:
+        console.print(f"[red]{EMOJI_MAP['error']} {_('Template not found:')} {template_id}[/red]")
+        console.print()
+        console.print(f"[dim]{_('Available templates:')}[/dim]")
+        all_templates = lib.list_templates()
+        for t in sorted(all_templates, key=lambda x: x.get("id", ""))[:10]:
+            console.print(f"  • {t.get('id')}")
+        if len(all_templates) > 10:
+            console.print(f"  ... {_('and {n} more').format(n=len(all_templates) - 10)}")
+        raise SystemExit(1)
+
+    # Parse variables
+    var_dict = {}
+    for var in variables:
+        if "=" not in var:
+            console.print(f"[red]{EMOJI_MAP['error']} {_('Invalid variable format:')} {var}[/red]")
+            console.print(f"[dim]{_('Use: key=value')}[/dim]")
+            raise SystemExit(1)
+        key, value = var.split("=", 1)
+        var_dict[key] = value
+
+    # Load project config if available
+    project_config = None
+    config_path = Path(project_root) / config
+    if config_path.exists():
+        try:
+            project_config = _safe_load_yaml(config_path)
+        except SystemExit:
+            project_config = None
+
+    output_path = Path(output)
+
+    if dry_run:
+        console.print(f"[bold]{_('Dry Run Preview')}[/bold]")
+        console.print()
+        console.print(f"  {_('Template:')} {template_id}")
+        console.print(f"  {_('Output:')} {output_path}")
+        console.print(f"  {_('Variables:')} {var_dict or _('(none)')}")
+        console.print(f"  {_('Config:')} {config_path if project_config else _('(none)')}")
+        console.print()
+
+        # Try to render without writing
+        template_path = lib.get_template_path(template_id)
+        if template_path:
+            try:
+                from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+                env = Environment(
+                    loader=FileSystemLoader(str(template_path.parent)),
+                    autoescape=select_autoescape([]),
+                    keep_trailing_newline=True,
+                )
+                content = template_path.read_text(encoding="utf-8")
+                template = env.from_string(content)
+                ctx = lib._build_context(var_dict, project_config)
+                rendered = template.render(**ctx)
+
+                # Show first 20 lines
+                lines = rendered.split("\n")[:20]
+                console.print("[dim]--- Preview (first 20 lines) ---[/dim]")
+                for line in lines:
+                    console.print(line)
+                if len(rendered.split("\n")) > 20:
+                    console.print("[dim]... (truncated)[/dim]")
+            except Exception as e:
+                console.print(f"[red]{EMOJI_MAP['error']} {_('Preview failed:')} {e}[/red]")
+        return
+    # Use template
+    with console.status(f"[bold green]{_('Generating document...')}"):
+        success, message = lib.use_template(
+            template_id=template_id,
+            output_path=output_path,
+            variables=var_dict,
+            project_config=project_config,
+        )
+
+    if success:
+        console.print(f"[green]{EMOJI_MAP['success']} {message}[/green]")
+        console.print()
+        console.print(
+            f"[dim]{_('Template:')} {template_id} ({tpl_info.get('source', 'unknown')})[/dim]"
+        )
+        if tpl_info.get("description"):
+            console.print(f"[dim]{_('Description:')} {tpl_info['description'][:60]}[/dim]")
+    else:
+        console.print(f"[red]{EMOJI_MAP['error']} {message}[/red]")
+        raise SystemExit(1)
+
+
+@template_group.command("create")
+@click.argument("template_id")
+@click.option(
+    "--description",
+    "-d",
+    default="",
+    help=_("Template description"),
+)
+@click.option(
+    "--project-root",
+    "-p",
+    type=click.Path(exists=True, file_okay=False),
+    default=".",
+    help=_("Project root directory (default: current directory)"),
+)
+def template_create(template_id, description, project_root):
+    """Create a new custom template
+
+    Creates a new custom template file in .vibecollab/templates/.
+    The template can then be used with: vibecollab template use <template_id>
+
+    Examples:
+
+        vibecollab template create my-template -d "My custom template"
+
+        vibecollab template create api-docs
+    """
+    from ..core.template_library import TemplateLibrary
+
+    lib = TemplateLibrary(Path(project_root))
+
+    success, message = lib.create_custom_template(template_id, description)
+
+    if success:
+        console.print(f"[green]{EMOJI_MAP['success']} {message}[/green]")
+        console.print()
+        console.print(f"[bold]{_('Next steps:')}[/bold]")
+        console.print(f"  1. {_('Edit the template file')}")
+        console.print(f"  2. {_('Use it:')} vibecollab template use {template_id} -o output.yaml")
+    else:
+        console.print(f"[red]{EMOJI_MAP['error']} {message}[/red]")
+        raise SystemExit(1)
+
+
+@template_group.command("validate")
+@click.argument("template_id")
+@click.option(
+    "--project-root",
+    "-p",
+    type=click.Path(exists=True, file_okay=False),
+    default=".",
+    help=_("Project root directory (default: current directory)"),
+)
+def template_validate(template_id, project_root):
+    """Validate a template
+
+    Checks that the template can be loaded and has valid Jinja2 syntax.
+
+    Examples:
+
+        vibecollab template validate context
+
+        vibecollab template validate my-custom
+    """
+    from ..core.template_library import TemplateLibrary
+
+    lib = TemplateLibrary(Path(project_root))
+
+    is_valid, errors = lib.validate_template(template_id)
+
+    if is_valid:
+        console.print(
+            f"[green]{EMOJI_MAP['success']} {_('Template is valid:')} {template_id}[/green]"
+        )
+    else:
+        console.print(f"[red]{EMOJI_MAP['error']} {_('Validation failed:')} {template_id}[/red]")
+        for error in errors:
+            console.print(f"  [red]•[/red] {error}")
+        raise SystemExit(1)
+
+
+@template_group.command("show")
+@click.argument("template_id")
+@click.option(
+    "--project-root",
+    "-p",
+    type=click.Path(exists=True, file_okay=False),
+    default=".",
+    help=_("Project root directory (default: current directory)"),
+)
+def template_show(template_id, project_root):
+    """Show template details
+
+    Display detailed information about a template including its path,
+    description, and source.
+
+    Examples:
+
+        vibecollab template show context
+    """
+    from ..core.template_library import TemplateLibrary
+
+    lib = TemplateLibrary(Path(project_root))
+
+    tpl_info = lib.get_template(template_id)
+    if not tpl_info:
+        console.print(f"[red]{EMOJI_MAP['error']} {_('Template not found:')} {template_id}[/red]")
+        raise SystemExit(1)
+
+    tpl_path = lib.get_template_path(template_id)
+
+    console.print()
+    console.print(f"[bold]{_('Template Details')}[/bold]")
+    console.print()
+    console.print(f"  {_('ID:')} [cyan]{tpl_info.get('id', '')}[/cyan]")
+    console.print(f"  {_('Source:')} {tpl_info.get('source', '')}")
+    console.print(f"  {_('Type:')} {tpl_info.get('type', '')}")
+    if tpl_info.get("category"):
+        console.print(f"  {_('Category:')} {tpl_info['category']}")
+    if tpl_info.get("description"):
+        console.print(f"  {_('Description:')} {tpl_info['description']}")
+    if tpl_path:
+        console.print(f"  {_('Path:')} [dim]{tpl_path}[/dim]")
+    console.print()
 
 
 if __name__ == "__main__":

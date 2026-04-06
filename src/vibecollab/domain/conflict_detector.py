@@ -89,9 +89,9 @@ class ConflictDetector:
         self.config = config
         self.role_context_config = config.get("multi_developer", {})
 
-        # Developer directory
+        # Developer directory (isolated in .vibecollab/ to avoid project conflicts)
         self.roles_dir = project_root / self.role_context_config.get("context", {}).get(
-            "per_role_dir", "docs/roles"
+            "per_role_dir", ".vibecollab/roles"
         )
 
         # Cache

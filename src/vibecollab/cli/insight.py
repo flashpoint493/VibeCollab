@@ -335,6 +335,45 @@ def search_insights(tags, category, semantic, include_inactive, top):
         click.echo(f"          tags: {', '.join(ins.tags)}")
 
 
+@insight.command("tags")
+@click.option(
+    "--include-inactive", is_flag=True, default=False, help=_("Include tags from inactive insights")
+)
+@click.option("--json", "as_json", is_flag=True, default=False, help=_("JSON output"))
+def list_tags(include_inactive, as_json):
+    """List all unique tags across all insights
+
+    Shows tags sorted by usage count (most used first).
+    Use this to discover available tags for searching.
+
+    Examples:
+
+        vibecollab insight tags
+
+        vibecollab insight tags --json
+
+        vibecollab insight search --tags "pattern,python"
+    """
+    import json as json_mod
+
+    mgr = _load_insight_manager()
+    tag_counts = mgr.get_all_tags(active_only=not include_inactive)
+
+    if not tag_counts:
+        click.echo("No tags found.")
+        return
+
+    if as_json:
+        click.echo(json_mod.dumps(tag_counts, ensure_ascii=False, indent=2))
+        return
+
+    click.echo(f"Total {len(tag_counts)} unique tags:\n")
+    click.echo(f"{'Count':>6}  {'Tag':<30}")
+    click.echo("-" * 40)
+    for tag, count in tag_counts.items():
+        click.echo(f"{count:>6}  {tag:<30}")
+
+
 def _semantic_search_insights(query: str, top_k: int):
     """Semantic search for Insights (uses vector index)"""
     from pathlib import Path
@@ -1288,4 +1327,4 @@ def create_with_derivation(
     else:
         click.echo(f"  {EMOJI['info']} No high-confidence derivation sources found.")
         if suggestions:
-            click.echo(f"  Low confidence suggestions available (run with --dry-run to see)")
+            click.echo("  Low confidence suggestions available (run with --dry-run to see)")

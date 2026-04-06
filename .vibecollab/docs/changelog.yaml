@@ -173,10 +173,10 @@ releases:
       - description: "Pattern engine: Update section titles and conditions for role_context"
       - description: "Context aggregator: Update terminology (developer → role)"
       - description: "CLI commands: Rename dev → role throughout codebase"
-      - description: "Default paths: Update docs/developers → docs/roles"
+      - description: "Default paths: Update docs/developers → docs/roles → .vibecollab/roles"
     changed:
       - description: "BREAKING: vibecollab dev → vibecollab role CLI commands"
-      - description: "BREAKING: docs/developers/ → docs/roles/ directory structure"
+      - description: "BREAKING: docs/developers/ → docs/roles/ → .vibecollab/roles/ directory structure"
 
   - release_version: "v0.10.12"
     date: "2026-03-27"

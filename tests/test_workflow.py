@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import pytest
 import yaml
 
 from vibecollab.core.workflow import (
@@ -13,7 +12,6 @@ from vibecollab.core.workflow import (
     get_workflows_dir,
     list_workflow_categories,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -387,7 +385,7 @@ class TestWorkflowPlanRunnerIntegration:
 
     def test_workflow_with_variables(self, tmp_path):
         """Workflow with variable passing between steps (prompt only)."""
-        from vibecollab.core.execution_plan import PlanRunner, load_plan, HostResponse
+        from vibecollab.core.execution_plan import HostResponse, PlanRunner, load_plan
 
         project = tmp_path / "project"
         project.mkdir()

@@ -1,0 +1,49 @@
+schema_version: '1'
+id: INS-064
+title: 'Tag-Based Insight Discovery: vibecollab insight tags Command'
+category: technique
+context: Adding a CLI command to collect and display all tags from insights for tag-based discovery
+scenario: When users want to discover what tags exist in the insight system and find related insights by tag
+approach: |
+  ## Implementation
+  
+  1. Add `get_all_tags()` method to InsightManager:
+     - Iterate through all insights
+     - Collect tags with usage counts
+     - Return sorted by count (descending), then alphabetically
+  
+  2. Add `vibecollab insight tags` CLI command:
+     - Shows total unique tags count
+     - Displays table: Count | Tag
+     - Supports `--json` output for programmatic use
+     - Supports `--include-inactive` to count all insights
+  
+  3. Usage workflow:
+     ```bash
+     # Discover available tags
+     vibecollab insight tags
+     
+     # Get JSON for scripting
+     vibecollab insight tags --json
+     
+     # Search by discovered tag
+     vibecollab insight search --tags "ide-adapter"
+     ```
+  
+  ## Benefits
+  
+  - **Discovery**: Users can see what tags exist before searching
+  - **Navigation**: Tag frequency shows popular topics
+  - **Consistency**: Helps maintain consistent tagging practices
+  - **Integration**: JSON output enables automation
+validation: Successfully lists 180+ unique tags from 63+ insights, sorted by usage count
+tags:
+  - insight
+  - tags
+  - discovery
+  - cli
+  - feature
+  - v0.12.0
+developer: ocarina
+created_at: '2026-04-02T12:20:00+00:00'
+updated_at: '2026-04-02T12:20:00+00:00'

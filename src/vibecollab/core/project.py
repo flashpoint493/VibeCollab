@@ -22,7 +22,8 @@ class Project:
     def __init__(self, config: Dict[str, Any], output_dir: Path):
         self.config = config
         self.output_dir = output_dir
-        self.docs_dir = output_dir / "docs"
+        # YAML source files go to .vibecollab/docs/ (isolated from project docs)
+        self.docs_dir = output_dir / ".vibecollab" / "docs"
 
     @classmethod
     def create(
@@ -105,7 +106,10 @@ class Project:
         """
         # Create directories
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.docs_dir.mkdir(exist_ok=True)
+        # YAML source files: .vibecollab/docs/
+        self.docs_dir.mkdir(parents=True, exist_ok=True)
+        # Markdown output: docs/
+        (self.output_dir / "docs").mkdir(exist_ok=True)
 
         # Create .vibecollab/ directory (Insight / EventLog / vectors runtime data)
         vibecollab_dir = self.output_dir / ".vibecollab"
@@ -203,7 +207,7 @@ class Project:
 
             # Create COLLABORATION.md (still Markdown for human readability)
             collab_config = self.config.get("role_context", {}).get("collaboration", {})
-            collab_file = self.output_dir / collab_config.get("file", "docs/roles/COLLABORATION.md")
+            collab_file = self.output_dir / collab_config.get("file", ".vibecollab/roles/COLLABORATION.md")
             collab_file.parent.mkdir(parents=True, exist_ok=True)
 
             collab_content = f"""# {project_name} Role Collaboration Record
@@ -290,6 +294,10 @@ class Project:
         from .docs_renderer import DocsRenderer
 
         renderer = DocsRenderer()
+        # Markdown output goes to docs/ directory (separate from YAML source)
+        md_output_dir = self.output_dir / "docs"
+        md_output_dir.mkdir(exist_ok=True)
+
         for kind, yaml_path in [
             ("context", context_yaml_path),
             ("decisions", decisions_yaml_path),
@@ -299,7 +307,10 @@ class Project:
             ("qa", qa_yaml_path),
         ]:
             try:
-                renderer.render_doc(yaml_path)
+                # Output Markdown to docs/, keeping YAML in .vibecollab/docs/
+                output_filename = renderer.KIND_OUTPUT_FILES.get(kind, f"{kind.upper()}.md")
+                output_path = md_output_dir / output_filename
+                renderer.render_doc(yaml_path, output_path)
             except Exception:
                 # If rendering fails, we still have the YAML
                 pass

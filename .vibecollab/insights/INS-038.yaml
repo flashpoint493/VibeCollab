@@ -46,7 +46,7 @@ body:
     - Documentation reflects new 'role' terminology
     - Git history shows incremental, reviewable commits
   artifacts:
-    - docs/roles/ directory structure
+    - .vibecollab/roles/ directory structure
     - Updated CLI command references
     - Migrated context files
     - Updated test suites
@@ -58,4 +58,4 @@ origin:
     type: task
     description: Role-Driven Architecture Fix - migrating all developer references to role terminology
     ref: TASK-DEV-027
-fingerprint: e8923aa978d3946c658ac0bc5564af95c06dfe192d3e4c05fc14e0045bffb902
+fingerprint: 4877ffcc8d096a384f3d4f970facfc7ae6f05e0350289396fdbdda6b68fd1ae2

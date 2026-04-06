@@ -241,7 +241,7 @@ class ProtocolChecker:
 
         roles = role_context_config.get("roles", [])
 
-        roles_dir_name = role_context_config.get("context", {}).get("per_role_dir", "docs/roles")
+        roles_dir_name = role_context_config.get("context", {}).get("per_role_dir", ".vibecollab/roles")
         roles_dir = self.project_root / roles_dir_name
 
         # If no static role list, discover dynamically from filesystem
@@ -813,7 +813,7 @@ class ProtocolChecker:
         role_context_config = self.config.get("role_context", {})
         if role_context_config.get("enabled", False):
             roles_dir_name = role_context_config.get("context", {}).get(
-                "per_role_dir", "docs/roles"
+                "per_role_dir", ".vibecollab/roles"
             )
             roles_dir = self.project_root / roles_dir_name
             if roles_dir.exists():

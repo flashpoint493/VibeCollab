@@ -1,5 +1,5 @@
 # Roadmap Markdown template - renders docs/roadmap.yaml to docs/ROADMAP.md
-# VibeCollab Roadmap
+# Project Roadmap
 
 ## Current Project Lifecycle Stage
 
@@ -289,8 +289,8 @@
 
 ### v0.12.0 - YAML Data Layer + Workflows + Insight Automation
 
-**Status**: active
-
+**Status**: completed
+**Date**: 2026-04-02
 
 
 

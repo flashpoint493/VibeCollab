@@ -1,5 +1,5 @@
 # QA Markdown template - renders docs/qa.yaml to docs/QA_TEST_CASES.md
-# VibeCollab Test Case Manual
+# Project Test Case Manual
 
 ## Test Cases
 

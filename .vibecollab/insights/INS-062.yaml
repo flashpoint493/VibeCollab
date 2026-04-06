@@ -1,0 +1,18 @@
+kind: insight
+version: '1'
+id: INS-062
+title: IDE Adapter Implementation Pattern
+tags:
+- ide-adapter
+- pattern
+category: technique
+body:
+  scenario: When implementing a new IDE adapter for the Universal IDE Adapter framework
+  approach: Extend BaseIDEAdapter, implement get_skill_content() and get_mcp_config(),
+    use @register_adapter decorator, add to __init__.py
+artifacts: []
+origin:
+  created_by: ocarina
+  created_at: '2026-04-02'
+  context: Implementation patterns for adding new IDE adapters
+fingerprint: b4310d53b74f408f0a514db4314868e9b018f64d1e14c1d075d0fbd10a23dff7

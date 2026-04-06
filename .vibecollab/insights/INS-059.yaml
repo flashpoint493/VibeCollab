@@ -1,0 +1,97 @@
+kind: insight
+version: "1"
+id: INS-059
+title: "Document Template Library: Reusable YAML Templates"
+summary: "CLI-based document template system supporting built-in YAML-native templates and user custom templates in .vibecollab/templates/"
+tags:
+  - template
+  - yaml
+  - cli
+  - pattern
+  - builtin
+  - custom
+category: tool
+body:
+  scenario: |
+    Projects need standardized document generation across different contexts.
+    Users want to reuse document templates, customize them locally, and generate
+    documents with variable substitution. The system should support both built-in
+    templates shipped with the tool and user-created custom templates.
+  approach: |
+    FP-005 Document Template Library provides:
+
+    ## Built-in Templates (YAML-native)
+    - 24 built-in templates in `src/vibecollab/templates/docs/`
+    - Manifest-based indexing via `manifest.yaml`
+    - Categories: core, configuration, collaboration, domain
+    - Jinja2 templating with automatic variable substitution
+
+    ## CLI Commands
+    ```bash
+    # List all templates (builtin + custom)
+    vibecollab template list
+    vibecollab template list --category core
+    vibecollab template list --json
+
+    # Use a template to generate document
+    vibecollab template use context -o docs/context.yaml
+    vibecollab template use changelog -o docs/changelog.yaml --var version=1.0.0
+
+    # Create custom template
+    vibecollab template create my-template -d "My custom template"
+
+    # Validate template
+    vibecollab template validate context
+
+    # Show template details
+    vibecollab template show context
+    ```
+
+    ## Custom Templates
+    - Store in `.vibecollab/templates/*.yaml.j2`
+    - Override built-in templates with same ID
+    - Full Jinja2 support with project config context
+    - Automatic loading and merging with built-ins
+
+    ## Template Variables
+    Available in all templates:
+    - `today` - Current date (YYYY-MM-DD)
+    - `now` - Current datetime
+    - `config` - Full project config
+    - `project` - Project section from config
+    - `vars` - User-provided variables via --var
+  validation: |
+    1. Run `vibecollab template list` to see all templates
+    2. Run `vibecollab template use context -o test.yaml` to generate
+    3. Create custom template with `vibecollab template create test`
+    4. Verify custom template appears in list
+    5. Run unit tests: `pytest tests/test_template_cli.py -v`
+  constraints:
+    - Template IDs must be alphanumeric with underscores/hyphens
+    - Custom templates must have .yaml.j2 extension
+    - Output paths are relative to current directory
+    - Project config (project.yaml) provides template context
+  notes: |
+    Implementation details:
+    - `TemplateLibrary` class in `src/vibecollab/core/template_library.py`
+    - CLI commands in `src/vibecollab/cli/main.py` (template group)
+    - Built-in templates indexed by `manifest.yaml`
+    - Custom templates override built-ins with same ID
+    - Full test coverage in `tests/test_template_cli.py`
+
+    Integration with Pattern Engine:
+    - Uses same Jinja2 environment setup
+    - Shares variable substitution logic
+    - Consistent with YAML-native approach
+origin:
+  created_by: dev
+  created_at: "2026-04-02"
+  context: "FP-005 Document Template Library implementation"
+  source:
+    type: implementation
+    description: "Implementation of document template library with CLI commands"
+    ref: FP-005
+  derived_from:
+    - INS-058
+fingerprint: ""
+artifacts: []

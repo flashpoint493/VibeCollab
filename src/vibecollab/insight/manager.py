@@ -396,6 +396,33 @@ class InsightManager:
                 continue
         return insights
 
+    def get_all_tags(self, active_only: bool = True) -> Dict[str, int]:
+        """Get all unique tags with usage count across all insights.
+
+        Args:
+            active_only: If True, only count tags from active insights
+
+        Returns:
+            Dict mapping tag name to count (number of insights using this tag)
+        """
+        all_insights = self.list_all()
+        entries, _ = self.get_registry()
+
+        tag_counts: Dict[str, int] = {}
+
+        for ins in all_insights:
+            if active_only:
+                entry = entries.get(ins.id)
+                if entry and not entry.active:
+                    continue
+
+            for tag in ins.tags:
+                tag_lower = tag.lower()
+                tag_counts[tag_lower] = tag_counts.get(tag_lower, 0) + 1
+
+        # Sort by count descending, then alphabetically
+        return dict(sorted(tag_counts.items(), key=lambda x: (-x[1], x[0])))
+
     def update(self, insight_id: str, updated_by: str, **kwargs) -> Optional[Insight]:
         """Update insight fields
 

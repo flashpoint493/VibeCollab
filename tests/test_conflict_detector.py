@@ -162,10 +162,10 @@ class TestConflictDetector:
             "role_context": {
                 "enabled": True,
                 "context": {
-                    "per_role_dir": "docs/roles"
+                    "per_role_dir": ".vibecollab/roles"
                 },
                 "collaboration": {
-                    "file": "docs/roles/COLLABORATION.md"
+                    "file": ".vibecollab/roles/COLLABORATION.md"
                 }
             }
         }
@@ -176,7 +176,7 @@ class TestConflictDetector:
 
         assert detector.project_root == temp_project
         assert detector.config == basic_config
-        assert detector.roles_dir == temp_project / "docs" / "roles"
+        assert detector.roles_dir == temp_project / ".vibecollab" / "roles"
 
     def test_detect_all_conflicts_empty_project(self, temp_project, basic_config):
         """Empty project should have no conflicts"""
@@ -231,7 +231,7 @@ class TestConflictDetectorFileConflicts:
         """Create temporary project with roles"""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            roles_dir = project_root / "docs" / "roles"
+            roles_dir = project_root / ".vibecollab" / "roles"
 
             for dev in ["alice", "bob"]:
                 dev_dir = roles_dir / dev
@@ -244,8 +244,8 @@ class TestConflictDetectorFileConflicts:
         return {
             "role_context": {
                 "enabled": True,
-                "context": {"per_role_dir": "docs/roles"},
-                "collaboration": {"file": "docs/roles/COLLABORATION.md"}
+                "context": {"per_role_dir": ".vibecollab/roles"},
+                "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"}
             }
         }
 
@@ -255,13 +255,13 @@ class TestConflictDetectorFileConflicts:
 
         # Alice modified main.py
         alice_ctx = "## Recently Completed\n- Modified `main.py` and `utils.py`"
-        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "alice" / "CONTEXT.md").write_text(
             alice_ctx, encoding="utf-8"
         )
 
         # Bob also modified main.py
         bob_ctx = "## Recently Completed\n- Updated `main.py` and `config.py`"
-        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "bob" / "CONTEXT.md").write_text(
             bob_ctx, encoding="utf-8"
         )
 
@@ -277,10 +277,10 @@ class TestConflictDetectorFileConflicts:
         """Test no conflict when no common files modified"""
         project = temp_project_with_devs
 
-        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "alice" / "CONTEXT.md").write_text(
             "## Recently Completed\n- Modified `alice.py`", encoding="utf-8"
         )
-        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "bob" / "CONTEXT.md").write_text(
             "## Recently Completed\n- Modified `bob.py`", encoding="utf-8"
         )
 
@@ -299,7 +299,7 @@ class TestConflictDetectorTaskConflicts:
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             for dev in ["alice", "bob"]:
-                dev_dir = project_root / "docs" / "roles" / dev
+                dev_dir = project_root / ".vibecollab" / "roles" / dev
                 dev_dir.mkdir(parents=True)
             yield project_root
 
@@ -308,8 +308,8 @@ class TestConflictDetectorTaskConflicts:
         return {
             "role_context": {
                 "enabled": True,
-                "context": {"per_role_dir": "docs/roles"},
-                "collaboration": {"file": "docs/roles/COLLABORATION.md"}
+                "context": {"per_role_dir": ".vibecollab/roles"},
+                "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"}
             }
         }
 
@@ -319,10 +319,10 @@ class TestConflictDetectorTaskConflicts:
 
         # Two people have very similar tasks (using English for \w+ tokenization, exceeds 60% threshold)
         # Jaccard: {user, login, auth, module} / {implement, user, login, auth, module, develop} = 4/6 = 0.67
-        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "alice" / "CONTEXT.md").write_text(
             "## Current Tasks\n- implement user login auth module", encoding="utf-8"
         )
-        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "bob" / "CONTEXT.md").write_text(
             "## Current Tasks\n- develop user login auth module", encoding="utf-8"
         )
 
@@ -338,10 +338,10 @@ class TestConflictDetectorTaskConflicts:
         project = temp_project_with_devs
 
         # Using English for proper tokenization
-        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "alice" / "CONTEXT.md").write_text(
             "## Current Tasks\n- implement user authentication", encoding="utf-8"
         )
-        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "bob" / "CONTEXT.md").write_text(
             "## Current Tasks\n- optimize database query performance", encoding="utf-8"
         )
 
@@ -367,8 +367,8 @@ class TestConflictDetectorDependencyConflicts:
         return {
             "role_context": {
                 "enabled": True,
-                "context": {"per_role_dir": "docs/roles"},
-                "collaboration": {"file": "docs/roles/COLLABORATION.md"}
+                "context": {"per_role_dir": ".vibecollab/roles"},
+                "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"}
             }
         }
 
@@ -419,7 +419,7 @@ class TestConflictDetectorNamingConflicts:
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             for dev in ["alice", "bob"]:
-                dev_dir = project_root / "docs" / "roles" / dev
+                dev_dir = project_root / ".vibecollab" / "roles" / dev
                 dev_dir.mkdir(parents=True)
             yield project_root
 
@@ -428,8 +428,8 @@ class TestConflictDetectorNamingConflicts:
         return {
             "role_context": {
                 "enabled": True,
-                "context": {"per_role_dir": "docs/roles"},
-                "collaboration": {"file": "docs/roles/COLLABORATION.md"}
+                "context": {"per_role_dir": ".vibecollab/roles"},
+                "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"}
             }
         }
 
@@ -450,10 +450,10 @@ class UserManager:
         pass
 ```
 """
-        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "alice" / "CONTEXT.md").write_text(
             alice_ctx, encoding="utf-8"
         )
-        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "bob" / "CONTEXT.md").write_text(
             bob_ctx, encoding="utf-8"
         )
 
@@ -480,10 +480,10 @@ def process_data(data):
     return data
 ```
 """
-        (project / "docs" / "roles" / "alice" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "alice" / "CONTEXT.md").write_text(
             alice_ctx, encoding="utf-8"
         )
-        (project / "docs" / "roles" / "bob" / "CONTEXT.md").write_text(
+        (project / ".vibecollab" / "roles" / "bob" / "CONTEXT.md").write_text(
             bob_ctx, encoding="utf-8"
         )
 
@@ -698,13 +698,14 @@ class TestConflictDetectorMetadata:
         return {
             "role_context": {
                 "enabled": True,
-                "context": {"per_role_dir": "docs/roles"}
+                "context": {"per_role_dir": ".vibecollab/roles"}
             }
         }
 
     def test_load_context_with_metadata(self, temp_project, basic_config):
         """Test loading context with metadata"""
-        dev_dir = temp_project / "docs" / "roles" / "alice"
+        dev_dir = temp_project / ".vibecollab" / "roles" / "alice"
+        dev_dir.mkdir(parents=True, exist_ok=True)
 
         # Create CONTEXT.md
         (dev_dir / "CONTEXT.md").write_text(
@@ -724,7 +725,7 @@ class TestConflictDetectorMetadata:
 
     def test_skip_hidden_directories(self, temp_project, basic_config):
         """Test skipping hidden directories"""
-        devs_dir = temp_project / "docs" / "roles"
+        devs_dir = temp_project / ".vibecollab" / "roles"
 
         # Create hidden directory
         hidden_dir = devs_dir / ".hidden"
@@ -752,7 +753,7 @@ class TestCollaborationDataParsing:
         return {
             "role_context": {
                 "enabled": True,
-                "collaboration": {"file": "docs/roles/COLLABORATION.md"}
+                "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"}
             }
         }
 

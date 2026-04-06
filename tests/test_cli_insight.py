@@ -9,7 +9,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from vibecollab.cli.insight import insight, _render_derivation_tree
+from vibecollab.cli.insight import insight
 
 # ---------------------------------------------------------------------------
 # Fixtures

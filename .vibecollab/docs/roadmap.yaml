@@ -266,7 +266,8 @@ milestones:
 
   - milestone_version: "v0.12.0"
     title: "YAML Data Layer + Workflows + Insight Automation"
-    status: active
+    status: completed
+    date: "2026-04-02"
     decision_refs: ["DECISION-025", "DECISION-027"]
     objective: "Evolve docs/ from fragile Markdown to structured YAML data layer, enabling reliable workflows and zero-touch Insight automation."
     sections:
@@ -278,7 +279,7 @@ milestones:
           - description: "docs/*.md → docs/*.yaml full migration"
             done: true
             task_id: "TASK-DEV-031"
-          - description: "docs/roles/*/CONTEXT.md → docs/roles/*/context.yaml"
+          - description: "docs/roles/*/CONTEXT.md → .vibecollab/roles/*/context.yaml"
             done: true
           - description: "Module rewrite: ContextAggregator — YAML in/out"
             done: true
@@ -304,7 +305,7 @@ milestones:
           - description: "vibecollab docs render [--format md|json]"
             done: true
           - description: "193+ test updates across 4+ test files"
-            done: false
+            done: true
       - title: "FP-004: Workflow Integration"
         items:
           - description: "Pre-built workflow YAMLs in .vibecollab/workflows/"
@@ -318,11 +319,11 @@ milestones:
       - title: "FP-005: Document Template Library"
         items:
           - description: "vibecollab template list/use commands"
-            done: false
+            done: true
           - description: "Built-in templates via Pattern Engine (YAML-native)"
-            done: false
+            done: true
           - description: "User custom templates in .vibecollab/templates/"
-            done: false
+            done: true
       - title: "FP-015: Insight Derivation Chain"
         items:
           - description: "derived_from field in Insight YAML"

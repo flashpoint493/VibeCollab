@@ -46,13 +46,17 @@ body:
   - ProtocolChecker now validates YAML syntax for context.yaml, decisions.yaml, roadmap.yaml, prd.yaml, changelog.yaml
   - Git tracking messages now show correct filename (CONTEXT.md or context.yaml)
 artifacts:
-- src/vibecollab/core/protocol_checker.py
-- src/vibecollab/insight/signal.py
-- src/vibecollab/search/indexer.py
-- tests/test_protocol_checker.py
+  - path: src/vibecollab/core/protocol_checker.py
+    type: file
+  - path: src/vibecollab/insight/signal.py
+    type: file
+  - path: src/vibecollab/search/indexer.py
+    type: file
+  - path: tests/test_protocol_checker.py
+    type: file
 origin:
   created_by: ocarina
   created_at: '2026-04-02'
   context: Completed v0.12.0 YAML-aware module verification and enhancement. All modules
     now fully support YAML-first document paths. 101 total tests passing (97 existing + 4 new).
-fingerprint: 8a3f2c9e1b5d4e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f
+fingerprint: 089eead559ed38d1521230f3f8abf4328fe05e7c22bab4f0d3b095e782eb4036

@@ -1,0 +1,66 @@
+schema_version: '1'
+id: INS-063
+title: 'IDE Adapter Implementation Pattern: KimiCode/OpenCode Examples'
+category: technique
+context: Implementation patterns for adding new IDE adapters to the Universal IDE Adapter framework
+scenario: When implementing a new IDE adapter for the Universal IDE Adapter framework
+approach: |
+  ## Pattern for VS Code-based IDEs (KimiCode)
+  
+  ```python
+  @register_adapter
+  class KimiCodeAdapter(BaseIDEAdapter):
+      ide_type = IDEType.KIMICODE
+      display_name = "KimiCode"
+      supports_skill = True
+      skill_file_path = ".kimicode/rules/vibecollab.md"
+      supports_mcp = True
+      mcp_config_path = ".kimicode/mcp.json"
+      
+      def get_skill_content(self) -> str:
+          return """---\ndescription: ...\nglobs: \"**/*\"\nalwaysApply: true\n---\n..."""
+      
+      def get_mcp_config(self, command, args) -> dict:
+          return {"mcpServers": {"vibecollab": {"command": command, "args": args}}}
+  ```
+  
+  ## Pattern for Plugin-based IDEs (OpenCode)
+  
+  ```python
+  @register_adapter
+  class OpenCodeAdapter(BaseIDEAdapter):
+      ide_type = IDEType.OPENCODE
+      supports_skill = True
+      supports_mcp = False  # If not supported
+      
+      def inject_skill(self, project_root, force=False):
+          # Call parent first
+          result = super().inject_skill(project_root, force)
+          # Add extra files (e.g., package.json)
+          return result
+  ```
+  
+  ## Key Decisions
+  
+  1. **Skill Format**: Most IDEs use YAML Frontmatter, pure Markdown, or JSON
+  2. **MCP Support**: JSON config (Cursor), YAML config (Continue), or None (OpenCode)
+  3. **Extra Files**: OpenCode requires package.json alongside skill file
+  4. **Registration**: Use @register_adapter decorator for auto-discovery
+  
+  ## Testing Checklist
+  
+  - [ ] Adapter imports successfully
+  - [ ] Metadata correct (ide_type, display_name)
+  - [ ] Skill injection works
+  - [ ] MCP config injection works (if supported)
+  - [ ] Force/overwrite behavior correct
+  - [ ] Config merging works (if applicable)
+tags:
+  - ide-adapter
+  - kimicode
+  - opencode
+  - pattern
+  - universal-adapter
+developer: ocarina
+created_at: '2026-04-02T12:00:00+00:00'
+updated_at: '2026-04-02T12:00:00+00:00'

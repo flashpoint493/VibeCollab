@@ -1,5 +1,5 @@
 # Decisions Markdown template - renders docs/decisions.yaml to docs/DECISIONS.md
-# VibeCollab Decision Record
+# Project Decision Record
 
 ## Pending Decisions
 
@@ -45,7 +45,7 @@
 
   - vibecollab check: pass (11 checks, 0 errors)
 
-  - Protocol Compliance: pass (Fixed missing docs/roles/ocarina/CONTEXT.md)
+  - Protocol Compliance: pass (Fixed missing .vibecollab/roles/ocarina/CONTEXT.md)
 
   - Documentation: pass (skill.md, README.md, README.pypi.md, README.zh-CN.md all synced)
 

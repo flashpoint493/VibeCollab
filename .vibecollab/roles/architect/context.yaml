@@ -1,0 +1,51 @@
+kind: role_context
+version: "1"
+role: architect
+updated_at: "2026-04-02"
+current_version: "v0.12.0-dev"
+
+current_tasks:
+  - "TASK-DEV-045/046: KimiCode 适配器实现 + OpenCode 验证增强 (多 Agent 并行)"
+
+recently_completed:
+  - date: "2026-04-02"
+    description: "TASK-DEV-040/041/042/043 DONE — 14 个 IDE 适配器全部实现完成"
+  - date: "2026-04-02"
+    description: "INS-061 CREATED — Universal IDE Adapter Multi-Agent Pattern"
+  - date: "2026-04-02"
+    description: "TASK-DEV-037 DONE — 10+ IDE 配置格式调研完成"
+  - date: "2026-04-02"
+    description: "TASK-DEV-038 DONE — Universal IDE Adapter 架构设计完成"
+  - date: "2026-04-02"
+    description: "TASK-DEV-039 DONE — ide_adapter/ 核心框架实现完成"
+  - date: "2026-04-02"
+    description: "v0.12.0 RELEASED — 25/25 items complete"
+
+pending_issues:
+  - "TASK-DEV-045 IN_PROGRESS: KimiCode 适配器实现 (research + dev)"
+  - "TASK-DEV-046 IN_PROGRESS: OpenCode 适配器验证增强"
+
+technical_debt: []
+notes: |
+  v0.12.0 Universal IDE Adapter 当前状态：
+  - ✅ 14 个 IDE 适配器已完成 (TASK-DEV-040/041/042/043)
+  - ✅ INS-061 已创建 (Universal IDE Adapter Pattern)
+  - 🔄 新增 KimiCode 适配器 (TASK-DEV-045)
+  - 🔄 OpenCode 验证增强 (TASK-DEV-046)
+  
+  完整 Adapter 列表 (14 + 1 进行中):
+  ├── opencode.py (验证中)
+  ├── cursor.py
+  ├── cline.py
+  ├── codebuddy.py
+  ├── claude.py
+  ├── windsurf.py
+  ├── roocode.py
+  ├── gemini.py
+  ├── kiro.py
+  ├── continue_.py
+  ├── trae.py
+  ├── copilot.py
+  ├── augment.py
+  ├── warp.py
+  └── kimicode.py (开发中)

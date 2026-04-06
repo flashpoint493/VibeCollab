@@ -82,6 +82,8 @@ def config(ide: str):
     import json as json_mod
     import shutil
 
+    from ..ide_adapter import get_adapter
+
     # Resolve full path to vibecollab executable
     vibecollab_cmd = shutil.which("vibecollab")
     if vibecollab_cmd:
@@ -90,46 +92,11 @@ def config(ide: str):
     else:
         vibecollab_cmd = "vibecollab"  # fallback to bare name
 
-    configs = {
-        "cursor": {
-            "path": ".cursor/mcp.json",
-            "content": {
-                "mcpServers": {
-                    "vibecollab": {
-                        "command": vibecollab_cmd,
-                        "args": ["mcp", "serve"],
-                    }
-                }
-            },
-        },
-        "cline": {
-            "path": ".cline/mcp_settings.json",
-            "content": {
-                "mcpServers": {
-                    "vibecollab": {
-                        "command": vibecollab_cmd,
-                        "args": ["mcp", "serve"],
-                        "disabled": False,
-                    }
-                }
-            },
-        },
-        "codebuddy": {
-            "path": ".mcp.json",
-            "content": {
-                "mcpServers": {
-                    "vibecollab": {
-                        "command": vibecollab_cmd,
-                        "args": ["mcp", "serve"],
-                    }
-                }
-            },
-        },
-    }
+    adapter = get_adapter(ide)
+    mcp_config = adapter.get_mcp_config(vibecollab_cmd, ["mcp", "serve"])
 
-    cfg = configs[ide]
-    click.echo(f"# Write the following content to {cfg['path']}:\n")
-    click.echo(json_mod.dumps(cfg["content"], indent=2, ensure_ascii=False))
+    click.echo(f"# Write the following content to {adapter.mcp_config_path}:\n")
+    click.echo(json_mod.dumps(mcp_config, indent=2, ensure_ascii=False))
 
 
 @mcp_group.command("inject")
@@ -151,16 +118,11 @@ def inject(ide: str, project_root: Path):
 
     Automatically create/update IDE MCP config files, no manual copy-paste needed.
     """
-    import json as json_mod
     import shutil
 
-    root = project_root or Path.cwd()
+    from ..ide_adapter import get_adapter, list_adapters
 
-    targets = {
-        "cursor": root / ".cursor" / "mcp.json",
-        "cline": root / ".cline" / "mcp_settings.json",
-        "codebuddy": root / ".mcp.json",
-    }
+    root = project_root or Path.cwd()
 
     # Resolve full path to vibecollab executable
     vibecollab_cmd = shutil.which("vibecollab")
@@ -169,40 +131,35 @@ def inject(ide: str, project_root: Path):
     else:
         vibecollab_cmd = "vibecollab"
 
-    vibecollab_entry = {
-        "command": vibecollab_cmd,
-        "args": ["mcp", "serve"],
-    }
-
-    ides = [ide] if ide != "all" else list(targets.keys())
+    if ide == "all":
+        ides = [a.ide_type.value for a in list_adapters(mcp=True)]
+    else:
+        ides = [ide]
 
     for target_ide in ides:
-        config_path = targets[target_ide]
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Read existing config or create new
-        existing = {}
-        if config_path.exists():
-            try:
-                existing = json_mod.loads(config_path.read_text(encoding="utf-8"))
-            except (json_mod.JSONDecodeError, OSError):
-                existing = {}
-
-        # Merge vibecollab config
-        if "mcpServers" not in existing:
-            existing["mcpServers"] = {}
-
-        if target_ide == "cline":
-            vibecollab_entry_copy = {**vibecollab_entry, "disabled": False}
-        else:
-            vibecollab_entry_copy = vibecollab_entry
-
-        existing["mcpServers"]["vibecollab"] = vibecollab_entry_copy
-
-        config_path.write_text(
-            json_mod.dumps(existing, indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
+        adapter = get_adapter(target_ide)
+        result = adapter.inject_mcp_config(
+            root,
+            command=vibecollab_cmd,
+            args=["mcp", "serve"]
         )
-        click.echo(f"{_('Injected:')} {config_path}")
+
+        # 输出操作结果
+        for op in result.operations:
+            if op.action == "skipped":
+                click.echo(f"  [dim]{adapter.display_name}: {op.message}[/dim]")
+            else:
+                click.echo(f"  {op.action.capitalize()}: {op.path}")
 
     click.echo(f"\n{_('Done! VibeCollab MCP Server will take effect after restarting IDE.')}")
+
+
+# 向后兼容的函数
+def _get_mcp_config(ide: str, command: str, args: list) -> dict:
+    """向后兼容：获取 MCP 配置。
+
+    Deprecated: 使用 ide_adapter.get_adapter(ide).get_mcp_config() 替代。
+    """
+    from ..ide_adapter import get_adapter
+    adapter = get_adapter(ide)
+    return adapter.get_mcp_config(command, args)

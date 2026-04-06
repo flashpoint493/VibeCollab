@@ -1,5 +1,5 @@
 # PRD Markdown template - renders docs/prd.yaml to docs/PRD.md
-# VibeCollab Product Requirements Document
+# Project Product Requirements Document
 
 ## Requirements
 
