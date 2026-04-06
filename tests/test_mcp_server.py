@@ -394,7 +394,7 @@ class TestCliMcp:
             mcp_group, ["inject", "--ide", "cursor", "-p", str(tmp_path)]
         )
         assert result.exit_code == 0
-        assert "Injected" in result.output
+        assert "Updated" in result.output
 
         # Verify file was created
         config_file = tmp_path / ".cursor" / "mcp.json"

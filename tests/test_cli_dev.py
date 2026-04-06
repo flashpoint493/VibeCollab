@@ -21,7 +21,7 @@ def _make_role_based_project(tmp_path: Path) -> Path:
                 {"id": "alice", "name": "Alice", "role": "backend"},
                 {"id": "bob", "name": "Bob", "role": "frontend"},
             ],
-            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
+            "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         },
     }
     config_path = tmp_path / "project.yaml"
@@ -29,7 +29,7 @@ def _make_role_based_project(tmp_path: Path) -> Path:
 
     # Create role directories
     for dev in ("alice", "bob"):
-        dev_dir = tmp_path / "docs" / "roles" / dev
+        dev_dir = tmp_path / ".vibecollab" / "roles" / dev
         dev_dir.mkdir(parents=True, exist_ok=True)
         (dev_dir / "CONTEXT.md").write_text(f"# {dev} Context\nWorking on stuff", encoding="utf-8")
         (dev_dir / ".metadata.yaml").write_text(
@@ -45,7 +45,7 @@ def _make_role_based_project(tmp_path: Path) -> Path:
         )
 
     # Collaboration doc
-    collab_dir = tmp_path / "docs" / "roles"
+    collab_dir = tmp_path / ".vibecollab" / "roles"
     (collab_dir / "COLLABORATION.md").write_text("# Collaboration\n", encoding="utf-8")
 
     return config_path
@@ -161,7 +161,7 @@ class TestDevInit:
             )
             assert result.exit_code == 0
             assert "Initialization complete" in result.output
-            charlie_ctx = Path(tmpdir) / "docs" / "roles" / "charlie" / "CONTEXT.md"
+            charlie_ctx = Path(tmpdir) / ".vibecollab" / "roles" / "charlie" / "CONTEXT.md"
             assert charlie_ctx.exists()
 
     def test_init_disabled(self):

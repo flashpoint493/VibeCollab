@@ -97,7 +97,7 @@ class TestDocProtocol:
         config = _base_config()
         config["role_context"] = {
             "enabled": True,
-            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
+            "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_documentation_protocol()
@@ -140,7 +140,7 @@ class TestMultiDevProtocol:
         config["role_context"] = {
             "enabled": True,
             "roles": [],  # empty → trigger filesystem discovery
-            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
+            "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
         # Create COLLABORATION.md
         (tmp_path / "docs" / "roles" / "COLLABORATION.md").write_text("collab", encoding="utf-8")
@@ -161,7 +161,7 @@ class TestMultiDevProtocol:
         config["role_context"] = {
             "enabled": True,
             "roles": [{"id": "bob", "name": "Bob"}],
-            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
+            "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
         (tmp_path / "docs" / "roles" / "COLLABORATION.md").write_text("c", encoding="utf-8")
 
@@ -185,7 +185,7 @@ class TestMultiDevProtocol:
         config["role_context"] = {
             "enabled": True,
             "roles": [{"id": "alice", "name": "Alice"}],
-            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
+            "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
         (tmp_path / "docs" / "roles" / "COLLABORATION.md").write_text("c", encoding="utf-8")
 
@@ -211,7 +211,7 @@ class TestMultiDevProtocol:
         config["role_context"] = {
             "enabled": True,
             "roles": [{"id": "alice", "name": "Alice"}],
-            "collaboration": {"file": "docs/roles/COLLABORATION.md"},
+            "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
 
         checker = ProtocolChecker(tmp_path, config)
