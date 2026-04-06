@@ -255,13 +255,13 @@ class TestCodeBuddyAdapter:
         assert adapter.ide_type == IDEType.CODEBUDDY
         assert adapter.display_name == "CodeBuddy"
 
-    def test_get_skill_content_json(self):
-        """测试 CodeBuddy skill 是 JSON 格式。"""
+    def test_get_skill_content(self):
+        """测试 CodeBuddy skill 内容。"""
         adapter = CodeBuddyAdapter()
         content = adapter.get_skill_content()
-        # CodeBuddy 使用 JSON 格式
-        config = json.loads(content)
-        assert "name" in config
+        # CodeBuddy 使用 Markdown 格式
+        assert "VibeCollab" in content
+        assert "##" in content  # Markdown headers
 
 
 class TestClaudeAdapter:

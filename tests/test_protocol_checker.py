@@ -159,7 +159,7 @@ class TestProtocolChecker:
             }
 
             # Only create alice's context
-            alice_dir = project_root / "docs" / "roles" / "alice"
+            alice_dir = project_root / ".vibecollab" / "roles" / "alice"
             alice_dir.mkdir(parents=True)
             (alice_dir / "CONTEXT.md").write_text("# Alice Context\n", encoding="utf-8")
             (alice_dir / ".metadata.yaml").write_text("role: backend\n", encoding="utf-8")
@@ -1009,7 +1009,7 @@ class TestYamlFormatCheck:
         """Role context YAML files should be checked when multi-role enabled"""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            roles_dir = project_root / "docs" / "roles" / "alice"
+            roles_dir = project_root / ".vibecollab" / "roles" / "alice"
             roles_dir.mkdir(parents=True)
             (roles_dir / ".metadata.yaml").write_text("role: backend\n", encoding="utf-8")
             (roles_dir / "context.yaml").write_text("current_task: testing\n", encoding="utf-8")

@@ -123,7 +123,7 @@ class TestCLI:
                     {"id": "bob", "name": "Bob", "role": "frontend"}
                 ],
                 "collaboration": {
-                    "file": "docs/roles/COLLABORATION.md"
+                    "file": ".vibecollab/roles/COLLABORATION.md"
                 }
             }
 
@@ -141,8 +141,8 @@ class TestCLI:
             assert result.exit_code == 0
 
             # Check role directories
-            alice_dir = output_dir / "docs" / "roles" / "alice"
-            bob_dir = output_dir / "docs" / "roles" / "bob"
+            alice_dir = output_dir / ".vibecollab" / "roles" / "alice"
+            bob_dir = output_dir / ".vibecollab" / "roles" / "bob"
             assert alice_dir.exists(), "Alice directory should be created"
             assert bob_dir.exists(), "Bob directory should be created"
 
@@ -155,7 +155,7 @@ class TestCLI:
             assert (bob_dir / ".metadata.yaml").exists(), "Bob's .metadata.yaml should be created"
 
             # Check collaboration doc
-            collab_file = output_dir / "docs" / "roles" / "COLLABORATION.md"
+            collab_file = output_dir / ".vibecollab" / "roles" / "COLLABORATION.md"
             assert collab_file.exists(), "COLLABORATION.md should be created"
 
             # Check global aggregated CONTEXT.md

@@ -1,7 +1,7 @@
 # VibeCollab Global Context
 
 > ⚠️ **This file is auto-generated, do not edit manually**
-> Last updated: 2026-04-02 23:47:05
+> Last updated: 2026-04-06 17:03
 > Aggregated from: architect, dev, insight_collector
 
 ## Project Overall Status
@@ -11,30 +11,35 @@
 ## Role Work Status
 
 ### architect
-- **Last updated**: 2026-04-02
-- **Current task**: TASK-DEV-045/046: KimiCode 适配器实现 + OpenCode 验证增强 (多 Agent 并行)
-- **Progress**: v0.12.0 Universal IDE Adapter 当前状态：
-- ✅ 14 个 IDE 适配器已完成 (TASK-DEV-040/041/042/043)
-- ✅ INS-061 已创建 (
-- **Pending issues**: TASK-DEV-045 IN_PROGRESS: KimiCode 适配器实现 (research + dev); TASK-DEV-046 IN_PROGRESS: OpenCode 适配器验证增强
-- **Next steps**: (None)
+- **Last updated**: 2026-04-06
+- **Current task**: v0.12.0 收尾：合并变更并提交
+- **Progress**: 
+  - ✅ 14 个 IDE 适配器已完成 (TASK-DEV-040/041/042/043)
+  - ✅ INS-061 已创建
+  - ✅ YAML Data Layer 迁移完成 (docs/ → .vibecollab/)
+  - ✅ 角色目录迁移完成 (docs/roles/ → .vibecollab/roles/)
+- **Pending issues**: TASK-DEV-045/046 待后续继续
+- **Next steps**: 完成 v0.12.0 提交，准备发布
 
 ### dev
-- **Last updated**: 2026-04-02
+- **Last updated**: 2026-04-06
 - **Current task**: v0.12.0 YAML Data Layer migration (DECISION-025/027): Docs Markdown → YAML Big-Bang
-- **Progress**: (None)
+- **Progress**: 
+  - ✅ 完成 docs/changelog.yaml → docs/CHANGELOG.md 渲染
+  - ✅ 完成角色目录隔离 (docs/roles/ → .vibecollab/roles/)
+  - ✅ 39 个文件变更已整理 (740+ 新增, 2353- 删除)
 - **Pending issues**: MCP onboard timeout after IDE restart still needs investigation
-- **Next steps**: (None)
+- **Next steps**: 提交变更
 
 ### insight_collector
-- **Last updated**: 2026-04-01
-- **Current task**: Insight System Hardening — External project validation pending
-- **Progress**: Key Metrics:
-- Total Insights: 55 (target: 100+)
-- Avg Weight: 0.95 (target: > 1.0)
-- Semantic Cover
-- **Pending issues**: Cross-project import/export verification not started; External project A/B/C validation not started
-- **Next steps**: (None)
+- **Last updated**: 2026-04-06
+- **Current task**: Insight System Hardening — 持续积累
+- **Progress**: 
+  - Total Insights: 63 (target: 100+)
+  - INS-066: 角色目录迁移经验已记录
+  - INS-065: YAML Docs 目录隔离经验已记录
+- **Pending issues**: Cross-project import/export verification not started
+- **Next steps**: 持续监控并提炼新经验
 
 ## Cross-developer Collaboration
 (See docs/developers/COLLABORATION.md for details)

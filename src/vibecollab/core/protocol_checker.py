@@ -293,9 +293,9 @@ class ProtocolChecker:
                     CheckResult(
                         name=f"Role Dir: {dev_name}",
                         passed=False,
-                        message=f"Role '{dev_name}' directory does not exist: docs/roles/{dev_id}",
+                        message=f"Role '{dev_name}' directory does not exist: {roles_dir_name}/{dev_id}",
                         severity="error",
-                        suggestion=f"Create directory docs/roles/{dev_id} and add CONTEXT.md and .metadata.yaml",
+                        suggestion=f"Create directory {roles_dir_name}/{dev_id} and add CONTEXT.md and .metadata.yaml",
                     )
                 )
                 continue
@@ -311,7 +311,7 @@ class ProtocolChecker:
                         passed=False,
                         message=f"Role '{dev_name}' context file does not exist (checked context.yaml and CONTEXT.md)",
                         severity="error",
-                        suggestion=f"Create docs/roles/{dev_id}/context.yaml (or CONTEXT.md) to record the role's work context",
+                        suggestion=f"Create {roles_dir_name}/{dev_id}/context.yaml (or CONTEXT.md) to record the role's work context",
                     )
                 )
             else:
@@ -346,9 +346,9 @@ class ProtocolChecker:
                     CheckResult(
                         name=f"Role Metadata: {dev_name}",
                         passed=False,
-                        message=f"Role '{dev_name}' .metadata.yaml does not exist",
-                        severity="warning",
-                        suggestion=f"Create docs/roles/{dev_id}/.metadata.yaml to record role info (role, expertise, etc.)",
+                            message=f"Role '{dev_name}' .metadata.yaml does not exist",
+                            severity="warning",
+                            suggestion=f"Create {roles_dir_name}/{dev_id}/.metadata.yaml to record role info (role, expertise, etc.)",
                     )
                 )
 
@@ -363,7 +363,7 @@ class ProtocolChecker:
                             passed=False,
                             message=f"Role '{dev_name}' {context_filename} is not tracked in Git version control",
                             severity="warning",
-                            suggestion=f"Run 'git add docs/roles/{dev_id}/{context_filename}' and commit",
+                            suggestion=f"Run 'git add {roles_dir_name}/{dev_id}/{context_filename}' and commit",
                         )
                     )
 
