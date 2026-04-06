@@ -1,6 +1,13 @@
 # Changelog Markdown template - renders docs/changelog.yaml to docs/CHANGELOG.md
 # Project Changelog
 
+## [v0.12.1] - 2026-04-06
+
+### Fixes
+- 修复 Insight 指纹验证问题 (INS-038, INS-060)
+- 修复代码格式问题 (ruff lint)
+- 优化 GitHub Actions CI/CD 流程
+
 ## [v0.12.0] - 2026-04-06
 
 ### Features
