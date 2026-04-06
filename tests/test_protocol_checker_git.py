@@ -88,8 +88,8 @@ class TestDocProtocol:
 
     def test_collab_doc_stale(self, tmp_path):
         """Line 174: collaboration doc exists but > 7 days old."""
-        (tmp_path / "docs" / "roles").mkdir(parents=True)
-        collab = tmp_path / "docs" / "roles" / "COLLABORATION.md"
+        (tmp_path / ".vibecollab" / "roles").mkdir(parents=True)
+        collab = tmp_path / ".vibecollab" / "roles" / "COLLABORATION.md"
         collab.write_text("old collab", encoding="utf-8")
         old_time = time.time() - 8 * 86400
         os.utime(collab, (old_time, old_time))
@@ -132,7 +132,7 @@ class TestDialogueProtocol:
 class TestMultiDevProtocol:
     def test_discover_roles_from_fs(self, tmp_path):
         """Line 228: dynamic role discovery from filesystem."""
-        dev_dir = tmp_path / "docs" / "roles" / "alice"
+        dev_dir = tmp_path / ".vibecollab" / "roles" / "alice"
         dev_dir.mkdir(parents=True)
         (dev_dir / "CONTEXT.md").write_text("# Alice", encoding="utf-8")
         (dev_dir / ".metadata.yaml").write_text("id: alice", encoding="utf-8")
@@ -140,11 +140,12 @@ class TestMultiDevProtocol:
         config = _base_config()
         config["role_context"] = {
             "enabled": True,
+            "context": {"per_role_dir": ".vibecollab/roles"},
             "roles": [],  # empty → trigger filesystem discovery
             "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
         # Create COLLABORATION.md
-        (tmp_path / "docs" / "roles" / "COLLABORATION.md").write_text("collab", encoding="utf-8")
+        (tmp_path / ".vibecollab" / "roles" / "COLLABORATION.md").write_text("collab", encoding="utf-8")
 
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_role_context_protocol()
@@ -154,7 +155,7 @@ class TestMultiDevProtocol:
 
     def test_context_md_missing(self, tmp_path):
         """Line 275: role dir exists but CONTEXT.md doesn't."""
-        dev_dir = tmp_path / "docs" / "roles" / "bob"
+        dev_dir = tmp_path / ".vibecollab" / "roles" / "bob"
         dev_dir.mkdir(parents=True)
         # No CONTEXT.md
 
@@ -165,7 +166,7 @@ class TestMultiDevProtocol:
             "roles": [{"id": "bob", "name": "Bob"}],
             "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
-        (tmp_path / "docs" / "roles" / "COLLABORATION.md").write_text("c", encoding="utf-8")
+        (tmp_path / ".vibecollab" / "roles" / "COLLABORATION.md").write_text("c", encoding="utf-8")
 
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_role_context_protocol()
@@ -175,7 +176,7 @@ class TestMultiDevProtocol:
 
     def test_context_md_stale(self, tmp_path):
         """Line 288: role CONTEXT.md > 7 days old."""
-        dev_dir = tmp_path / "docs" / "roles" / "alice"
+        dev_dir = tmp_path / ".vibecollab" / "roles" / "alice"
         dev_dir.mkdir(parents=True)
         ctx = dev_dir / "CONTEXT.md"
         ctx.write_text("# Alice", encoding="utf-8")
@@ -190,6 +191,8 @@ class TestMultiDevProtocol:
             "roles": [{"id": "alice", "name": "Alice"}],
             "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
+        # Create parent dir before writing COLLABORATION.md
+        (tmp_path / ".vibecollab" / "roles").mkdir(parents=True, exist_ok=True)
         (tmp_path / ".vibecollab" / "roles" / "COLLABORATION.md").write_text("c", encoding="utf-8")
 
         checker = ProtocolChecker(tmp_path, config)
@@ -200,7 +203,7 @@ class TestMultiDevProtocol:
 
     def test_collab_doc_stale_in_role_based(self, tmp_path):
         """Line 345: collaboration doc > 7 days in multi-dev check."""
-        dev_dir = tmp_path / "docs" / "roles" / "alice"
+        dev_dir = tmp_path / ".vibecollab" / "roles" / "alice"
         dev_dir.mkdir(parents=True)
         (dev_dir / "CONTEXT.md").write_text("# Alice", encoding="utf-8")
         (dev_dir / ".metadata.yaml").write_text("id: alice", encoding="utf-8")
