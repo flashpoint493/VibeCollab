@@ -97,6 +97,7 @@ class TestDocProtocol:
         config = _base_config()
         config["role_context"] = {
             "enabled": True,
+            "context": {"per_role_dir": ".vibecollab/roles"},
             "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
         checker = ProtocolChecker(tmp_path, config)
@@ -160,6 +161,7 @@ class TestMultiDevProtocol:
         config = _base_config()
         config["role_context"] = {
             "enabled": True,
+            "context": {"per_role_dir": ".vibecollab/roles"},
             "roles": [{"id": "bob", "name": "Bob"}],
             "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
@@ -184,10 +186,11 @@ class TestMultiDevProtocol:
         config = _base_config()
         config["role_context"] = {
             "enabled": True,
+            "context": {"per_role_dir": ".vibecollab/roles"},
             "roles": [{"id": "alice", "name": "Alice"}],
             "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
-        (tmp_path / "docs" / "roles" / "COLLABORATION.md").write_text("c", encoding="utf-8")
+        (tmp_path / ".vibecollab" / "roles" / "COLLABORATION.md").write_text("c", encoding="utf-8")
 
         checker = ProtocolChecker(tmp_path, config)
         results = checker._check_role_context_protocol()
@@ -202,7 +205,7 @@ class TestMultiDevProtocol:
         (dev_dir / "CONTEXT.md").write_text("# Alice", encoding="utf-8")
         (dev_dir / ".metadata.yaml").write_text("id: alice", encoding="utf-8")
 
-        collab = tmp_path / "docs" / "roles" / "COLLABORATION.md"
+        collab = tmp_path / ".vibecollab" / "roles" / "COLLABORATION.md"
         collab.write_text("old collab", encoding="utf-8")
         old_time = time.time() - 10 * 86400
         os.utime(collab, (old_time, old_time))
@@ -210,6 +213,7 @@ class TestMultiDevProtocol:
         config = _base_config()
         config["role_context"] = {
             "enabled": True,
+            "context": {"per_role_dir": ".vibecollab/roles"},
             "roles": [{"id": "alice", "name": "Alice"}],
             "collaboration": {"file": ".vibecollab/roles/COLLABORATION.md"},
         }
