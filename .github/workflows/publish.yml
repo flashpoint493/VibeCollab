@@ -28,6 +28,9 @@ jobs:
         run: ruff check src/vibecollab/ tests/
 
       - name: Test
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
         run: pytest tests/ -q --tb=short
 
   publish:
