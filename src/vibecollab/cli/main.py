@@ -2259,6 +2259,135 @@ def role_permissions(config: str, role_code: Optional[str], as_json: bool):
     console.print()
 
 
+@role.command("context")
+@click.option("--config", "-c", default="project.yaml", help=_("Project config file path"))
+@click.option("--export", "export_path", type=click.Path(), help=_("Export context to JSON file"))
+@click.option("--import", "import_path", type=click.Path(exists=True), help=_("Import context from JSON file (verify only)"))
+@click.option("--json", "output_json", is_flag=True, help=_("Output as JSON"))
+def role_context(config: str, export_path: Optional[str], import_path: Optional[str], output_json: bool):
+    """Manage role context for workflow execution
+
+    Export current role context to a file for workflow state passing,
+    or verify an exported context file.
+
+    Examples:
+
+        vibecollab role context --export ctx.json
+
+        vibecollab role context --import ctx.json --json
+
+        vibecollab role context --export ctx.json --json
+    """
+    import json as json_module
+
+    from ..domain.role import RoleManager
+
+    config_path = Path(config)
+    project_root = config_path.parent
+
+    if not config_path.exists():
+        if output_json:
+            click.echo(json_module.dumps({"success": False, "error": f"Config file not found: {config}"}))
+        else:
+            console.print(f"[red]{_('Error:')} {_('Config file not found:')} {config}[/red]")
+        raise SystemExit(1)
+
+    with open(config_path, encoding="utf-8") as f:
+        project_config = yaml.safe_load(f)
+
+    dm = RoleManager(project_root, project_config)
+    current_role = dm.get_current_role()
+    context_file = dm.get_role_context_file(current_role)
+
+    # Export mode
+    if export_path:
+        ctx_data = {
+            "role": current_role,
+            "context_file": str(context_file),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "project_root": str(project_root.resolve()),
+        }
+
+        # Add context file content if exists
+        if context_file.exists():
+            try:
+                ctx_content = yaml.safe_load(context_file.read_text(encoding="utf-8"))
+                ctx_data["context_content"] = ctx_content
+            except Exception:
+                ctx_data["context_content"] = None
+        else:
+            ctx_data["context_content"] = None
+
+        try:
+            Path(export_path).write_text(
+                json_module.dumps(ctx_data, ensure_ascii=False, indent=2),
+                encoding="utf-8"
+            )
+            if output_json:
+                click.echo(json_module.dumps({
+                    "success": True,
+                    "exported_to": str(export_path),
+                    "role": current_role
+                }))
+            else:
+                console.print(f"[green]{EMOJI_MAP['success']} {_('Context exported to:')} {export_path}[/green]")
+                console.print(f"  {BULLET} {_('Role:')} {current_role}")
+        except Exception as e:
+            if output_json:
+                click.echo(json_module.dumps({"success": False, "error": str(e)}))
+            else:
+                console.print(f"[red]{_('Export failed:')} {e}[/red]")
+            raise SystemExit(1)
+
+    # Import mode (verify only)
+    elif import_path:
+        try:
+            imported = json_module.loads(Path(import_path).read_text(encoding="utf-8"))
+            if output_json:
+                click.echo(json_module.dumps({
+                    "success": True,
+                    "imported_from": str(import_path),
+                    "role": imported.get("role"),
+                    "timestamp": imported.get("timestamp")
+                }))
+            else:
+                console.print(f"[green]{EMOJI_MAP['success']} {_('Context file valid')}[/green]")
+                console.print(f"  {BULLET} {_('Source:')} {import_path}")
+                console.print(f"  {BULLET} {_('Role:')} {imported.get('role', _('unknown'))}")
+                console.print(f"  {BULLET} {_('Exported:')} {imported.get('timestamp', _('unknown'))}")
+        except Exception as e:
+            if output_json:
+                click.echo(json_module.dumps({"success": False, "error": str(e)}))
+            else:
+                console.print(f"[red]{_('Invalid context file:')} {e}[/red]")
+            raise SystemExit(1)
+
+    # Show current context
+    else:
+        if output_json:
+            click.echo(json_module.dumps({
+                "role": current_role,
+                "context_file": str(context_file),
+                "exists": context_file.exists()
+            }))
+        else:
+            console.print()
+            console.print(Panel.fit(f"[bold]{current_role}[/bold]", title=_("Current Role Context")))
+            console.print()
+            console.print(f"  {BULLET} {_('Context file:')} {context_file}")
+            console.print(f"  {BULLET} {_('Exists:')} {'✓' if context_file.exists() else '✗'}")
+            if context_file.exists():
+                try:
+                    stat = context_file.stat()
+                    mtime = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+                    console.print(f"  {BULLET} {_('Last modified:')} {mtime}")
+                except Exception:
+                    pass
+            console.print()
+            console.print(f"[dim]{_('Use --export to save context, --import to verify')}[/dim]")
+            console.print()
+
+
 # Git Hooks Management Commands
 @main.group("hooks")
 def hooks():

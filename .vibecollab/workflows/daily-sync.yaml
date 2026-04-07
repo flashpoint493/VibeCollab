@@ -1,8 +1,15 @@
 name: "daily-sync"
 description: "Daily synchronization workflow: check docs, render markdown, and commit changes"
-version: "1.0"
+version: "1.1"
 category: maintenance
 steps:
+  # === Pre-flight: Search relevant insights ===
+  - action: cli
+    description: "Search relevant insights for daily sync"
+    command: "vibecollab insight search --tags \"maintenance,documentation,workflow\""
+    store_as: "sync_insights"
+    on_fail: "continue"
+
   - action: cli
     description: "Check for uncommitted changes"
     command: "git status --short"
