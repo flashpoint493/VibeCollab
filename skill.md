@@ -534,6 +534,70 @@ If the project has a `docs/ROADMAP.md`, milestones must use this format for `roa
 
 ---
 
+## v0.12.3+ New Features: Step-by-Step Workflow Execution
+
+### Single-Step Execution (v0.12.3+)
+
+Execute workflows step by step with full state persistence:
+
+```bash
+# List all steps in a workflow
+vibecollab plan steps daily-sync
+
+# Execute a single step by index (0-based)
+vibecollab plan step daily-sync 0
+
+# Check execution status
+vibecollab plan status daily-sync
+
+# Resume from where you left off
+vibecollab plan run daily-sync --resume
+
+# Interactive mode: pause after each step
+vibecollab plan run daily-sync --interactive
+
+# Execute steps 2-4 only
+vibecollab plan run daily-sync --from-step 2 --to-step 4
+
+# Reset/clear saved state
+vibecollab plan reset daily-sync --force
+```
+
+### Step Execution State Persistence
+
+State is automatically saved to `.vibecollab/plan_state/<plan_name>.json`:
+
+| Command | Purpose |
+|---------|---------|
+| `plan step <workflow> <index>` | Execute single step, save state |
+| `plan status [workflow]` | Show execution progress |
+| `plan reset <workflow>` | Clear saved state |
+
+### Interactive Workflow Development
+
+Perfect for AI agents working through complex workflows:
+
+```bash
+# 1. View all steps
+vibecollab plan steps daily-sync
+
+# 2. Execute first step
+vibecollab plan step daily-sync 0
+
+# 3. Check status (shows completed steps)
+vibecollab plan status daily-sync
+
+# 4. Continue with next step
+vibecollab plan step daily-sync 1
+
+# 5. Or resume full execution
+vibecollab plan run daily-sync --resume
+```
+
+State persists across CLI invocations, allowing workflows to be completed across multiple sessions.
+
+---
+
 ## v0.12.0+ New Features Summary
 
 ### YAML Document Management
@@ -545,6 +609,10 @@ If the project has a `docs/ROADMAP.md`, milestones must use this format for `roa
 - `vibecollab plan list` — List available workflows
 - `vibecollab plan run <workflow>` — Execute workflow
 - `vibecollab plan validate <workflow>` — Validate syntax
+- `vibecollab plan step <workflow> <index>` — Single-step execution (v0.12.3+)
+- `vibecollab plan status <workflow>` — Check execution status (v0.12.3+)
+- `vibecollab plan steps <workflow>` — List steps with status (v0.12.3+)
+- `vibecollab plan reset <workflow>` — Reset execution state (v0.12.3+)
 
 ### CLI-Driven Best Practice
 - All workflows use `action: cli` steps

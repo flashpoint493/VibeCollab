@@ -1,6 +1,25 @@
 # Changelog Markdown template - renders docs/changelog.yaml to docs/CHANGELOG.md
 # Project Changelog
 
+## [v0.12.3] - 2026-04-08
+
+### Features
+- **Step-by-Step Workflow Execution**: 单步执行和状态持久化
+  - `vibecollab plan step <workflow> <index>` - 执行单个步骤
+  - `vibecollab plan status <workflow>` - 查看执行状态
+  - `vibecollab plan steps <workflow>` - 列出所有步骤及状态
+  - `vibecollab plan reset <workflow>` - 重置执行状态
+  - `vibecollab plan run <workflow> --interactive` - 交互式执行
+  - `vibecollab plan run <workflow> --resume` - 从保存状态恢复
+  - `vibecollab plan run <workflow> --from-step N --to-step M` - 范围执行
+  - 状态自动持久化到 `.vibecollab/plan_state/<plan_name>.json`
+
+### Implementation
+- 新增 `StepState` / `PlanExecutionState` 数据类
+- 新增 `StepStateManager` 状态持久化管理器
+- 新增 `StepExecutor` 单步骤执行器
+- 扩展 `PlanRunner` 支持单步、交互、范围、恢复执行模式
+
 ## [v0.12.1] - 2026-04-06
 
 ### Fixes

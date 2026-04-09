@@ -55,13 +55,14 @@ Plan format examples:
 See DECISION-018 for architecture rationale.
 """
 
+import json
 import os
 import subprocess
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -90,6 +91,8 @@ __all__ = [
     "PlanResult",
     "LoopRound",
     "LoopResult",
+    "StepState",
+    "PlanExecutionState",
     # Protocols & Adapters
     "HostAdapter",
     "SubprocessAdapter",
@@ -100,8 +103,11 @@ __all__ = [
     "resolve_host_adapter",
     "run_state_command",
     "check_goal",
+    # State management
+    "StepStateManager",
     # Runner
     "PlanRunner",
+    "StepExecutor",
 ]
 
 # ---------------------------------------------------------------------------
@@ -1113,24 +1119,323 @@ def _exec_loop(
     )
 
 
+
 # ---------------------------------------------------------------------------
-# Plan Runner
+# Step State Management (v0.11.0+ - Single-step execution support)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class StepState:
+    """State of a single step execution."""
+    index: int
+    action: str
+    description: str
+    success: bool = False
+    executed: bool = False
+    skipped: bool = False
+    error: str = ""
+    stdout: str = ""
+    stderr: str = ""
+    duration_ms: int = 0
+    executed_at: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "index": self.index,
+            "action": self.action,
+            "description": self.description,
+            "success": self.success,
+            "executed": self.executed,
+            "skipped": self.skipped,
+            "error": self.error,
+            "stdout": self.stdout,
+            "stderr": self.stderr,
+            "duration_ms": self.duration_ms,
+            "executed_at": self.executed_at,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "StepState":
+        return cls(
+            index=data.get("index", 0),
+            action=data.get("action", ""),
+            description=data.get("description", ""),
+            success=data.get("success", False),
+            executed=data.get("executed", False),
+            skipped=data.get("skipped", False),
+            error=data.get("error", ""),
+            stdout=data.get("stdout", ""),
+            stderr=data.get("stderr", ""),
+            duration_ms=data.get("duration_ms", 0),
+            executed_at=data.get("executed_at"),
+        )
+
+
+@dataclass
+class PlanExecutionState:
+    """Complete execution state for a plan."""
+    plan_name: str
+    plan_path: str
+    total_steps: int
+    steps: List[StepState]
+    variables: Dict[str, str]
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    status: str = "pending"  # pending, running, paused, completed, failed
+    current_step_index: int = 0
+    last_stdout: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "plan_name": self.plan_name,
+            "plan_path": self.plan_path,
+            "total_steps": self.total_steps,
+            "steps": [s.to_dict() for s in self.steps],
+            "variables": self.variables,
+            "started_at": self.started_at,
+            "completed_at": self.completed_at,
+            "status": self.status,
+            "current_step_index": self.current_step_index,
+            "last_stdout": self.last_stdout,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "PlanExecutionState":
+        return cls(
+            plan_name=data.get("plan_name", ""),
+            plan_path=data.get("plan_path", ""),
+            total_steps=data.get("total_steps", 0),
+            steps=[StepState.from_dict(s) for s in data.get("steps", [])],
+            variables=data.get("variables", {}),
+            started_at=data.get("started_at"),
+            completed_at=data.get("completed_at"),
+            status=data.get("status", "pending"),
+            current_step_index=data.get("current_step_index", 0),
+            last_stdout=data.get("last_stdout", ""),
+        )
+
+    @property
+    def completed_steps(self) -> int:
+        return sum(1 for s in self.steps if s.executed and s.success)
+
+    @property
+    def failed_steps(self) -> int:
+        return sum(1 for s in self.steps if s.executed and not s.success and not s.skipped)
+
+    @property
+    def is_complete(self) -> bool:
+        return self.status in ("completed", "failed")
+
+
+class StepStateManager:
+    """Manages persistent storage of plan execution state.
+
+    State is stored in .vibecollab/plan_state/<plan_name>.json
+    """
+
+    def __init__(self, project_root: Path):
+        self.project_root = project_root.resolve()
+        self.state_dir = self.project_root / ".vibecollab" / "plan_state"
+
+    def _ensure_dir(self) -> None:
+        """Ensure state directory exists."""
+        self.state_dir.mkdir(parents=True, exist_ok=True)
+
+    def _get_state_file(self, plan_name: str) -> Path:
+        """Get the state file path for a plan."""
+        # Sanitize plan name for filesystem
+        safe_name = plan_name.replace("/", "_").replace("\\", "_").replace(":", "_")
+        return self.state_dir / f"{safe_name}.json"
+
+    def save_state(self, state: PlanExecutionState) -> None:
+        """Save execution state to disk."""
+        self._ensure_dir()
+        state_file = self._get_state_file(state.plan_name)
+        with open(state_file, "w", encoding="utf-8") as f:
+            json.dump(state.to_dict(), f, indent=2, ensure_ascii=False)
+
+    def load_state(self, plan_name: str) -> Optional[PlanExecutionState]:
+        """Load execution state from disk."""
+        state_file = self._get_state_file(plan_name)
+        if not state_file.exists():
+            return None
+        try:
+            with open(state_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return PlanExecutionState.from_dict(data)
+        except (json.JSONDecodeError, KeyError, TypeError):
+            return None
+
+    def delete_state(self, plan_name: str) -> bool:
+        """Delete execution state for a plan."""
+        state_file = self._get_state_file(plan_name)
+        if state_file.exists():
+            state_file.unlink()
+            return True
+        return False
+
+    def list_states(self) -> List[Dict[str, Any]]:
+        """List all saved execution states."""
+        if not self.state_dir.exists():
+            return []
+        states = []
+        for state_file in self.state_dir.glob("*.json"):
+            try:
+                with open(state_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                states.append({
+                    "plan_name": data.get("plan_name", state_file.stem),
+                    "status": data.get("status", "unknown"),
+                    "progress": f"{data.get('current_step_index', 0)}/{data.get('total_steps', 0)}",
+                    "started_at": data.get("started_at"),
+                    "path": str(state_file),
+                })
+            except Exception:
+                pass
+        return states
+
+    def has_state(self, plan_name: str) -> bool:
+        """Check if a saved state exists for a plan."""
+        return self._get_state_file(plan_name).exists()
+
+
+# ---------------------------------------------------------------------------
+# Step Executor - Single step execution
+# ---------------------------------------------------------------------------
+
+class StepExecutor:
+    """Execute a single step with state tracking.
+
+    This class encapsulates the logic for executing individual steps,
+    making it reusable for both full plan execution and single-step mode.
+    """
+
+    def __init__(
+        self,
+        project_root: Path,
+        timeout: int = 120,
+        host: Optional[HostAdapter] = None,
+        verbose: bool = False,
+    ):
+        self.project_root = project_root.resolve()
+        self.timeout = timeout
+        self.host = host
+        self.verbose = verbose
+
+    def execute(
+        self,
+        step: Dict[str, Any],
+        step_index: int,
+        last_stdout: str = "",
+        variables: Optional[Dict[str, str]] = None,
+    ) -> Tuple[StepResult, str, Dict[str, str]]:
+        """Execute a single step.
+
+        Args:
+            step: The step definition
+            step_index: Index of the step
+            last_stdout: stdout from previous step (for assert steps)
+            variables: Variable storage for store_as functionality
+
+        Returns:
+            Tuple of (StepResult, new_last_stdout, updated_variables)
+        """
+        action = step.get("action", "")
+        variables = variables or {}
+
+        step_start = time.monotonic()
+
+        if action == "cli":
+            sr = _exec_cli(step, self.project_root, self.timeout)
+        elif action == "assert":
+            sr = _exec_assert(step, self.project_root, last_stdout)
+        elif action == "wait":
+            sr = _exec_wait(step)
+        elif action == "prompt":
+            if self.host is None:
+                sr = StepResult(
+                    step_index=step_index,
+                    action="prompt",
+                    success=False,
+                    error="No host adapter configured for prompt steps",
+                )
+            else:
+                sr = _exec_prompt(step, self.host, variables)
+        elif action == "loop":
+            if self.host is None:
+                sr = StepResult(
+                    step_index=step_index,
+                    action="loop",
+                    success=False,
+                    error="No host adapter configured for loop steps",
+                )
+            else:
+                sr = _exec_loop(
+                    step, self.host, variables, self.project_root,
+                    timeout=self.timeout,
+                    vlog=self._vlog if self.verbose else None,
+                )
+        else:
+            sr = StepResult(
+                step_index=step_index,
+                action=action,
+                success=False,
+                error=f"Unknown action: {action}",
+            )
+
+        sr.step_index = step_index
+        sr.duration_ms = int((time.monotonic() - step_start) * 1000)
+
+        # Update last_stdout for next step
+        if action in ("cli", "prompt", "loop"):
+            last_stdout = sr.stdout or ""
+
+        # Handle variable storage
+        store_as = step.get("store_as")
+        if store_as and sr.stdout:
+            variables[store_as] = sr.stdout
+
+        return sr, last_stdout, variables
+
+    def _vlog(self, msg: str) -> None:
+        """Print verbose log message."""
+        if self.verbose:
+            import sys as _sys
+            ts = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+            print(f"[plan:{ts}] {msg}", file=_sys.stderr, flush=True)
+
+
+# ---------------------------------------------------------------------------
+# Extended PlanRunner with single-step and interactive support
 # ---------------------------------------------------------------------------
 
 class PlanRunner:
     """Execute a YAML plan against a project directory.
 
+    Supports:
+    - Full plan execution
+    - Single-step execution (--index)
+    - Interactive step-by-step execution (--interactive)
+    - Resume from saved state (--resume)
+    - Range execution (--from-step, --to-step)
+
     Usage:
         plan = load_plan(Path("my_plan.yaml"))
         runner = PlanRunner(project_root=Path("/path/to/project"))
-        result = runner.run(plan)
-        print(result.summary())
 
-    With a host adapter for prompt steps:
-        runner = PlanRunner(
-            project_root=Path("."),
-            host=FileExchangeAdapter(project_root=Path(".")),
-        )
+        # Full execution
+        result = runner.run(plan)
+
+        # Single step
+        result = runner.run_step(plan, step_index=2)
+
+        # Interactive
+        result = runner.run_interactive(plan)
+
+        # Resume from saved state
+        result = runner.run(plan, resume=True)
+
+        print(result.summary())
     """
 
     def __init__(
@@ -1139,8 +1444,9 @@ class PlanRunner:
         timeout: int = 120,
         event_log: Optional[Any] = None,
         dry_run: bool = False,
-        host: Optional["HostAdapter"] = None,
+        host: Optional[HostAdapter] = None,
         verbose: bool = False,
+        state_manager: Optional[StepStateManager] = None,
     ):
         self.project_root = project_root.resolve()
         self.timeout = timeout
@@ -1148,48 +1454,125 @@ class PlanRunner:
         self.dry_run = dry_run
         self.host = host
         self.verbose = verbose
-        self._variables: Dict[str, str] = {}  # store_as → response content
+        self.state_manager = state_manager or StepStateManager(project_root)
+        self._variables: Dict[str, str] = {}
+        self._state: Optional[PlanExecutionState] = None
 
     def _vlog(self, msg: str) -> None:
-        """Print verbose log message to stderr (never interferes with stdout)."""
+        """Print verbose log message to stderr."""
         if self.verbose:
             import sys as _sys
             ts = datetime.now().strftime("%H:%M:%S.%f")[:-3]
             print(f"[plan:{ts}] {msg}", file=_sys.stderr, flush=True)
 
-    def run(self, plan: Dict[str, Any]) -> PlanResult:
-        """Execute all steps in a plan sequentially.
+    def _init_state(self, plan: Dict[str, Any], plan_path: str = "") -> PlanExecutionState:
+        """Initialize execution state from plan."""
+        steps = plan.get("steps", [])
+        step_states = [
+            StepState(
+                index=i,
+                action=s.get("action", ""),
+                description=s.get(
+                    "description",
+                    s.get("command", s.get("message", s.get("action", "")))[:80]
+                ),
+            )
+            for i, s in enumerate(steps)
+        ]
+        return PlanExecutionState(
+            plan_name=plan.get("name", "unnamed"),
+            plan_path=plan_path,
+            total_steps=len(steps),
+            steps=step_states,
+            variables={},
+        )
+
+    def _save_state(self) -> None:
+        """Save current execution state."""
+        if self._state:
+            self._state.variables = self._variables.copy()
+            self.state_manager.save_state(self._state)
+
+    def run(
+        self,
+        plan: Dict[str, Any],
+        plan_path: str = "",
+        from_step: int = 0,
+        to_step: Optional[int] = None,
+        resume: bool = False,
+        interactive: bool = False,
+    ) -> PlanResult:
+        """Execute plan with various modes.
+
+        Args:
+            plan: The plan dictionary
+            plan_path: Path to the plan file (for state tracking)
+            from_step: Start from this step index (0-based)
+            to_step: Stop at this step index (inclusive, None for all)
+            resume: Resume from saved state
+            interactive: Pause after each step for user confirmation
 
         Returns:
-            PlanResult with per-step results and aggregate stats.
+            PlanResult with execution results
         """
         name = plan.get("name", "unnamed")
         steps = plan.get("steps", [])
         default_on_fail = plan.get("on_fail", "abort")
 
-        # Auto-resolve host adapter from plan if not injected
+        # Initialize or load state
+        if resume:
+            saved_state = self.state_manager.load_state(name)
+            if saved_state:
+                self._state = saved_state
+                from_step = saved_state.current_step_index
+                self._variables = saved_state.variables.copy()
+                self._vlog(f"Resumed from saved state at step {from_step}")
+            else:
+                self._state = self._init_state(plan, plan_path)
+                self._vlog("No saved state found, starting from beginning")
+        else:
+            self._state = self._init_state(plan, plan_path)
+
+        self._state.started_at = datetime.now(timezone.utc).isoformat()
+        self._state.status = "running"
+
+        # Auto-resolve host adapter
         host = self.host
         if host is None and plan.get("host"):
-            host = resolve_host_adapter(plan, self.project_root)
+            host = resolve_host_adapter(plan, self.project_root, self.verbose)
 
         result = PlanResult(name=name, total_steps=len(steps))
         plan_start = time.monotonic()
 
-        self._log_event(PLAN_STARTED, {"name": name, "steps": len(steps)})
-        self._variables.clear()
+        self._log_event(PLAN_STARTED, {"name": name, "steps": len(steps), "from_step": from_step})
 
         self._vlog(f"{'='*60}")
         self._vlog(f"PLAN START: '{name}' ({len(steps)} steps)")
         self._vlog(f"  project_root: {self.project_root}")
+        self._vlog(f"  from_step: {from_step}")
+        if to_step is not None:
+            self._vlog(f"  to_step: {to_step}")
         if host:
             self._vlog(f"  host adapter: {type(host).__name__}")
         if self.dry_run:
             self._vlog("  mode: DRY RUN")
+        if interactive:
+            self._vlog("  mode: INTERACTIVE")
         self._vlog(f"{'='*60}")
 
-        last_stdout = ""
+        # Initialize step executor
+        executor = StepExecutor(
+            project_root=self.project_root,
+            timeout=self.timeout,
+            host=host,
+            verbose=self.verbose,
+        )
 
-        for i, step in enumerate(steps):
+        last_stdout = self._state.last_stdout
+        end_step = to_step if to_step is not None else len(steps) - 1
+
+        for i in range(from_step, min(end_step + 1, len(steps))):
+            step = steps[i]
             action = step.get("action", "")
             on_fail = step.get("on_fail", default_on_fail)
             description = step.get(
@@ -1197,8 +1580,40 @@ class PlanRunner:
                 step.get("command", step.get("message", action)[:80] if step.get("message") else action),
             )
 
+            self._state.current_step_index = i
+
             self._vlog("")
             self._vlog(f"--- Step {i}/{len(steps)-1}: [{action}] {description[:60]} ---")
+
+            # Print step info for interactive mode
+            if interactive:
+                print(f"\n[Step {i+1}/{len(steps)}] {description}")
+                print(f"  Action: {action}")
+                if step.get("command"):
+                    print(f"  Command: {step.get('command')}")
+                if self.dry_run:
+                    print("  [DRY RUN - skipping]")
+                else:
+                    response = input("  Press Enter to execute, 's' to skip, 'q' to quit: ").strip().lower()
+                    if response == 'q':
+                        self._state.status = "paused"
+                        result.aborted = True
+                        result.abort_reason = "User quit at step {i}"
+                        self._save_state()
+                        print("  State saved. Resume with: vibecollab plan run <workflow> --resume")
+                        break
+                    elif response == 's':
+                        sr = StepResult(
+                            step_index=i,
+                            action=action,
+                            success=True,
+                            skipped=True,
+                        )
+                        self._state.steps[i].skipped = True
+                        self._state.steps[i].executed = True
+                        result.steps.append(sr)
+                        result.skipped += 1
+                        continue
 
             if self.dry_run:
                 self._vlog("  [SKIP] dry-run mode")
@@ -1212,97 +1627,47 @@ class PlanRunner:
                 result.skipped += 1
                 continue
 
-            step_start = time.monotonic()
+            # Execute the step
+            sr, last_stdout, self._variables = executor.execute(
+                step=step,
+                step_index=i,
+                last_stdout=last_stdout,
+                variables=self._variables,
+            )
 
-            if action == "cli":
-                self._vlog(f"  cmd: {step.get('command', '')[:100]}")
-                sr = _exec_cli(step, self.project_root, self.timeout)
-            elif action == "assert":
-                target = step.get('file', step.get('stdout_contains', '?'))
-                self._vlog(f"  target: {target}")
-                sr = _exec_assert(step, self.project_root, last_stdout)
-            elif action == "wait":
-                self._vlog(f"  seconds: {step.get('seconds')}")
-                sr = _exec_wait(step)
-            elif action == "prompt":
-                msg_preview = step.get("message", "")[:80].replace("\n", " ")
-                self._vlog(f"  message: {msg_preview}...")
-                if host is None:
-                    sr = StepResult(
-                        step_index=i,
-                        action="prompt",
-                        success=False,
-                        error="No host adapter configured for prompt steps",
-                    )
-                else:
-                    sr = _exec_prompt(step, host, self._variables)
-            elif action == "loop":
-                max_r = step.get("max_rounds", 10)
-                self._vlog(f"  loop: max_rounds={max_r}")
-                if host is None:
-                    sr = StepResult(
-                        step_index=i,
-                        action="loop",
-                        success=False,
-                        error="No host adapter configured for loop steps",
-                    )
-                else:
-                    sr = _exec_loop(
-                        step, host, self._variables, self.project_root,
-                        timeout=self.timeout,
-                        vlog=self._vlog if self.verbose else None,
-                    )
-            else:
-                sr = StepResult(
-                    step_index=i,
-                    action=action,
-                    success=False,
-                    error=f"Unknown action: {action}",
-                )
-
-            sr.step_index = i
-            sr.duration_ms = int((time.monotonic() - step_start) * 1000)
             result.steps.append(sr)
 
-            # Verbose logging of step result
+            # Update state
+            self._state.steps[i].executed = True
+            self._state.steps[i].success = sr.success
+            self._state.steps[i].skipped = sr.skipped
+            self._state.steps[i].error = sr.error or ""
+            self._state.steps[i].stdout = sr.stdout or ""
+            self._state.steps[i].stderr = sr.stderr or ""
+            self._state.steps[i].duration_ms = sr.duration_ms
+            self._state.steps[i].executed_at = datetime.now(timezone.utc).isoformat()
+            self._state.last_stdout = last_stdout
+
+            # Verbose logging
             status_mark = "PASS" if sr.success else "FAIL"
             self._vlog(f"  [{status_mark}] {sr.duration_ms}ms")
-            if sr.exit_code is not None:
-                self._vlog(f"  exit_code: {sr.exit_code}")
-            if sr.stdout:
-                preview = sr.stdout.strip()[:200].replace("\n", "\n         ")
-                self._vlog(f"  stdout: {preview}")
-            if sr.stderr:
-                preview = sr.stderr.strip()[:200].replace("\n", "\n         ")
-                self._vlog(f"  stderr: {preview}")
             if sr.error:
                 self._vlog(f"  error: {sr.error}")
 
-            # Track stdout for assert steps and variable storage
-            if action in ("cli", "prompt", "loop"):
-                last_stdout = sr.stdout or ""
-            store_as = step.get("store_as")
-            if store_as and sr.stdout:
-                self._variables[store_as] = sr.stdout
-                self._vlog(f"  stored as: {{{{ {store_as} }}}}")
+            # Save state after each step
+            self._save_state()
 
-            if sr.success:
+            if sr.success and not sr.skipped:
                 result.passed += 1
-                self._log_event(PLAN_STEP_OK, {
-                    "step": i, "action": action, "description": description,
-                })
-            else:
+                self._log_event(PLAN_STEP_OK, {"step": i, "action": action})
+            elif not sr.skipped:
                 result.failed += 1
-                self._log_event(PLAN_STEP_FAIL, {
-                    "step": i, "action": action, "error": sr.error,
-                    "description": description,
-                })
+                self._log_event(PLAN_STEP_FAIL, {"step": i, "action": action, "error": sr.error})
 
                 if on_fail == "abort":
                     result.aborted = True
-                    result.abort_reason = (
-                        f"Step {i} ({action}) failed: {sr.error}"
-                    )
+                    result.abort_reason = f"Step {i} ({action}) failed: {sr.error}"
+                    self._state.status = "failed"
                     # Mark remaining steps as skipped
                     for j in range(i + 1, len(steps)):
                         result.steps.append(StepResult(
@@ -1313,12 +1678,18 @@ class PlanRunner:
                         ))
                         result.skipped += 1
                     break
-                elif on_fail == "skip":
-                    # Already counted as failed, continue to next
-                    pass
-                # "continue" also just continues
 
         result.duration_ms = int((time.monotonic() - plan_start) * 1000)
+
+        # Final state update
+        if not result.aborted and result.failed == 0:
+            self._state.status = "completed"
+            self._state.completed_at = datetime.now(timezone.utc).isoformat()
+        elif not result.aborted:
+            self._state.status = "failed"
+
+        self._state.current_step_index = len(result.steps)
+        self._save_state()
 
         event_type = PLAN_COMPLETED if result.success else PLAN_ABORTED
         self._log_event(event_type, result.to_dict())
@@ -1326,11 +1697,7 @@ class PlanRunner:
         self._vlog("")
         self._vlog(f"{'='*60}")
         self._vlog(f"PLAN {'PASSED' if result.success else 'FAILED'}: '{name}'")
-        self._vlog(f"  {result.passed}/{result.total_steps} passed, "
-                   f"{result.failed} failed, {result.skipped} skipped")
-        self._vlog(f"  duration: {result.duration_ms}ms")
-        if result.aborted:
-            self._vlog(f"  abort: {result.abort_reason}")
+        self._vlog(f"  {result.passed}/{result.total_steps} passed")
         self._vlog(f"{'='*60}")
 
         # Cleanup host adapter
@@ -1339,6 +1706,145 @@ class PlanRunner:
                 host.close()
             except Exception:
                 pass
+
+        return result
+
+    def run_step(
+        self,
+        plan: Dict[str, Any],
+        step_index: int,
+        plan_path: str = "",
+        save_state: bool = True,
+    ) -> StepResult:
+        """Execute a single step by index.
+
+        Args:
+            plan: The plan dictionary
+            step_index: Index of the step to execute
+            plan_path: Path to the plan file
+            save_state: Whether to save execution state
+
+        Returns:
+            StepResult for the executed step
+        """
+        steps = plan.get("steps", [])
+        if step_index < 0 or step_index >= len(steps):
+            raise ValueError(f"Invalid step index: {step_index} (plan has {len(steps)} steps)")
+
+        # Load or initialize state
+        name = plan.get("name", "unnamed")
+        saved_state = self.state_manager.load_state(name)
+        if saved_state:
+            self._state = saved_state
+            self._variables = saved_state.variables.copy()
+        else:
+            self._state = self._init_state(plan, plan_path)
+
+        self._state.status = "running"
+
+        # Auto-resolve host adapter
+        host = self.host
+        if host is None and plan.get("host"):
+            host = resolve_host_adapter(plan, self.project_root, self.verbose)
+
+        step = steps[step_index]
+        action = step.get("action", "")
+
+        self._vlog(f"Executing single step {step_index}: [{action}]")
+
+        # Initialize step executor
+        executor = StepExecutor(
+            project_root=self.project_root,
+            timeout=self.timeout,
+            host=host,
+            verbose=self.verbose,
+        )
+
+        # Execute
+        last_stdout = self._state.last_stdout if step_index == 0 else self._state.steps[step_index - 1].stdout
+        sr, new_stdout, self._variables = executor.execute(
+            step=step,
+            step_index=step_index,
+            last_stdout=last_stdout,
+            variables=self._variables,
+        )
+
+        # Update state
+        self._state.steps[step_index].executed = True
+        self._state.steps[step_index].success = sr.success
+        self._state.steps[step_index].error = sr.error or ""
+        self._state.steps[step_index].stdout = sr.stdout or ""
+        self._state.steps[step_index].stderr = sr.stderr or ""
+        self._state.steps[step_index].duration_ms = sr.duration_ms
+        self._state.steps[step_index].executed_at = datetime.now(timezone.utc).isoformat()
+        self._state.current_step_index = step_index + 1
+        self._state.last_stdout = new_stdout
+
+        if save_state:
+            self._save_state()
+
+        # Cleanup host adapter
+        if host is not None and host is not self.host:
+            try:
+                host.close()
+            except Exception:
+                pass
+
+        return sr
+
+    def run_interactive(self, plan: Dict[str, Any], plan_path: str = "") -> PlanResult:
+        """Run plan in interactive mode (alias for run with interactive=True).
+
+        Args:
+            plan: The plan dictionary
+            plan_path: Path to the plan file
+
+        Returns:
+            PlanResult with execution results
+        """
+        return self.run(plan, plan_path=plan_path, interactive=True)
+
+    def get_step_info(self, plan: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Get information about all steps in a plan.
+
+        Args:
+            plan: The plan dictionary
+
+        Returns:
+            List of step information dictionaries
+        """
+        steps = plan.get("steps", [])
+        name = plan.get("name", "unnamed")
+
+        # Load state if exists
+        saved_state = self.state_manager.load_state(name)
+        step_states = {}
+        if saved_state:
+            step_states = {s.index: s for s in saved_state.steps}
+
+        result = []
+        for i, step in enumerate(steps):
+            action = step.get("action", "")
+            description = step.get(
+                "description",
+                step.get("command", step.get("message", action)[:80] if step.get("message") else action),
+            )
+
+            state = step_states.get(i)
+            status = "pending"
+            if state:
+                if state.skipped:
+                    status = "skipped"
+                elif state.executed:
+                    status = "success" if state.success else "failed"
+
+            result.append({
+                "index": i,
+                "action": action,
+                "description": description,
+                "status": status,
+                "executed_at": state.executed_at if state else None,
+            })
 
         return result
 

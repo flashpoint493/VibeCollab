@@ -1060,7 +1060,12 @@ def _resolve_plan_file(plan_file: str) -> tuple[str, bool]:
     help=_("Host adapter: file_exchange, subprocess:cmd, auto:cursor, auto:cline"),
 )
 @click.option("--verbose", "-v", is_flag=True, help=_("Verbose step-by-step logging"))
-def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
+@click.option("--index", "step_index", type=int, default=None, help=_("Execute only a single step by index (0-based)"))
+@click.option("--interactive", "-i", is_flag=True, help=_("Interactive mode: pause after each step"))
+@click.option("--resume", is_flag=True, help=_("Resume from saved execution state"))
+@click.option("--from-step", type=int, default=0, help=_("Start execution from this step index"))
+@click.option("--to-step", type=int, default=None, help=_("Stop execution at this step index (inclusive)"))
+def plan_run(plan_file, dry_run, json_output, timeout, host, verbose, step_index, interactive, resume, from_step, to_step):
     """Execute a YAML automation plan
 
     The unified execution engine for all VibeCollab automation workflows,
@@ -1083,12 +1088,24 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
         vibecollab plan run my_plan.yaml --host file_exchange
 
         vibecollab plan run plans/dev-loop.yaml --host auto:cursor -v
+
+        # Single-step execution (v0.11.0+)
+        vibecollab plan run daily-sync --index 2
+
+        # Interactive step-by-step execution
+        vibecollab plan run daily-sync --interactive
+
+        # Resume from saved state
+        vibecollab plan run daily-sync --resume
+
+        # Execute steps 2-4 only
+        vibecollab plan run daily-sync --from-step 2 --to-step 4
     """
     import json as json_mod
     import os as _os
     import signal as _signal
 
-    from ..core.execution_plan import PlanRunner, load_plan, resolve_host_adapter
+    from ..core.execution_plan import PlanRunner, StepStateManager, load_plan, resolve_host_adapter
 
     # Resolve plan file (check workflows directory if not found as-is)
     resolved_path, is_workflow = _resolve_plan_file(plan_file)
@@ -1132,6 +1149,47 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
                 Path(".").resolve(),
                 verbose=verbose,
             )
+
+    # Initialize state manager
+    state_manager = StepStateManager(Path(".").resolve())
+
+    # If single-step mode
+    if step_index is not None:
+        runner = PlanRunner(
+            project_root=Path(".").resolve(),
+            timeout=timeout,
+            event_log=event_log,
+            dry_run=dry_run,
+            host=host_adapter,
+            verbose=verbose,
+            state_manager=state_manager,
+        )
+        try:
+            sr = runner.run_step(plan, step_index, plan_path=str(resolved_path))
+            if json_output:
+                click.echo(json_mod.dumps(sr.to_dict(), ensure_ascii=False, indent=2))
+            else:
+                status_emoji = EMOJI_MAP["success"] if sr.success else EMOJI_MAP["error"]
+                status_color = "green" if sr.success else "red"
+                console.print()
+                console.print(
+                    Panel.fit(
+                        f"[bold]Step {step_index}[/bold]\n\n"
+                        f"Action: {sr.action}\n"
+                        f"Status: [{status_color}]{status_emoji} {'PASSED' if sr.success else 'FAILED'}[/{status_color}]\n"
+                        f"Duration: {sr.duration_ms}ms",
+                        title="Step Result",
+                    )
+                )
+                if sr.error:
+                    console.print(f"\n  [red]Error: {sr.error}[/red]")
+                console.print()
+            if not sr.success:
+                raise SystemExit(1)
+        except ValueError as e:
+            console.print(f"[red]{EMOJI_MAP['error']} {e}[/red]")
+            raise SystemExit(1)
+        return
 
     # If using auto adapter, set up process state tracking and signal handlers
     auto_state = None
@@ -1188,8 +1246,21 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
         dry_run=dry_run,
         host=host_adapter,
         verbose=verbose,
+        state_manager=state_manager,
     )
-    result = runner.run(plan)
+
+    # Determine execution mode
+    if resume:
+        from_step = 0  # Will be overridden by saved state
+
+    result = runner.run(
+        plan,
+        plan_path=str(resolved_path),
+        from_step=from_step,
+        to_step=to_step,
+        resume=resume,
+        interactive=interactive,
+    )
 
     # Update auto state if tracking
     if auto_state:
@@ -1232,6 +1303,11 @@ def plan_run(plan_file, dry_run, json_output, timeout, host, verbose):
                     )
             if result.abort_reason:
                 console.print(f"\n  [red]Aborted: {result.abort_reason}[/red]")
+
+        # Show state save info if interactive or partial execution
+        if interactive or resume or from_step > 0 or to_step is not None:
+            console.print()
+            console.print(f"[dim]State saved. Resume with: vibecollab plan run {plan_file} --resume[/dim]")
 
         console.print()
 
@@ -1337,6 +1413,356 @@ def plan_list(json_output):
     console.print()
     console.print("[dim]Usage: vibecollab plan run <workflow-name>[/dim]")
     console.print()
+
+
+@plan_group.command("step")
+@click.argument("plan_file")
+@click.argument("step_index", type=int)
+@click.option("--dry-run", is_flag=True, help=_("Preview step without executing"))
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
+@click.option("--timeout", default=120, help=_("Step timeout in seconds"))
+@click.option("--host", default=None, help=_("Host adapter override"))
+@click.option("--verbose", "-v", is_flag=True, help=_("Verbose logging"))
+def plan_step(plan_file, step_index, dry_run, json_output, timeout, host, verbose):
+    """Execute a single step by index
+
+    Executes only the specified step (0-based index) and saves state.
+    This allows precise control over workflow execution.
+
+    Examples:
+
+        vibecollab plan step daily-sync 0
+
+        vibecollab plan step daily-sync 2 --dry-run
+
+        vibecollab plan step daily-sync 1 --json
+    """
+    import json as json_mod
+
+    from ..core.execution_plan import PlanRunner, StepStateManager, load_plan, resolve_host_adapter
+
+    # Resolve plan file
+    resolved_path, is_workflow = _resolve_plan_file(plan_file)
+
+    try:
+        plan = load_plan(Path(resolved_path))
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"[red]{EMOJI_MAP['error']} {e}[/red]")
+        raise SystemExit(1)
+
+    steps = plan.get("steps", [])
+    if step_index < 0 or step_index >= len(steps):
+        console.print(f"[red]{EMOJI_MAP['error']} Invalid step index: {step_index}[/red]")
+        console.print(f"[dim]Plan has {len(steps)} steps (indices 0-{len(steps)-1})[/dim]")
+        raise SystemExit(1)
+
+    # Show step info
+    step = steps[step_index]
+    action = step.get("action", "")
+    description = step.get("description", step.get("command", step.get("message", action)))
+
+    if not json_output:
+        console.print()
+        console.print(Panel.fit(
+            f"[bold]Step {step_index}[/bold]: {description[:60]}\n"
+            f"Action: {action}",
+            title=f"Executing: {plan.get('name', 'unnamed')}",
+        ))
+
+    # Optional EventLog integration
+    event_log = None
+    vibecollab_dir = Path(".vibecollab")
+    if vibecollab_dir.exists():
+        try:
+            from ..domain.event_log import EventLog
+            event_log = EventLog(Path("."))
+        except Exception:
+            pass
+
+    # Resolve host adapter
+    host_adapter = None
+    if host:
+        if host.startswith("subprocess:"):
+            from ..core.execution_plan import SubprocessAdapter
+            host_adapter = SubprocessAdapter(
+                command=host[len("subprocess:"):],
+                cwd=Path(".").resolve(),
+            )
+        else:
+            override_plan = {**plan, "host": host}
+            host_adapter = resolve_host_adapter(override_plan, Path(".").resolve(), verbose=verbose)
+
+    # Execute single step
+    state_manager = StepStateManager(Path(".").resolve())
+    runner = PlanRunner(
+        project_root=Path(".").resolve(),
+        timeout=timeout,
+        event_log=event_log,
+        dry_run=dry_run,
+        host=host_adapter,
+        verbose=verbose,
+        state_manager=state_manager,
+    )
+
+    try:
+        sr = runner.run_step(plan, step_index, plan_path=str(resolved_path))
+    except Exception as e:
+        console.print(f"[red]{EMOJI_MAP['error']} Execution failed: {e}[/red]")
+        raise SystemExit(1)
+
+    if json_output:
+        click.echo(json_mod.dumps(sr.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        status_emoji = EMOJI_MAP["success"] if sr.success else EMOJI_MAP["error"]
+        status_color = "green" if sr.success else "red"
+        console.print()
+        console.print(
+            f"Status: [{status_color}]{status_emoji} {'PASSED' if sr.success else 'FAILED'}[/{status_color}]"
+        )
+        console.print(f"Duration: {sr.duration_ms}ms")
+        if sr.stdout:
+            console.print("\n[dim]Output:[/dim]")
+            console.print(sr.stdout[:500])
+        if sr.error:
+            console.print(f"\n[red]Error: {sr.error}[/red]")
+        console.print()
+        console.print(f"[dim]Next: vibecollab plan step {plan_file} {step_index + 1}[/dim]")
+        console.print(f"[dim]   or: vibecollab plan run {plan_file} --resume[/dim]")
+
+    if not sr.success:
+        raise SystemExit(1)
+
+
+@plan_group.command("status")
+@click.argument("plan_file", required=False)
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
+def plan_status(plan_file, json_output):
+    """Show execution status of a plan
+
+    Displays the current execution state, including completed steps
+    and next step to execute.
+
+    Examples:
+
+        vibecollab plan status daily-sync
+
+        vibecollab plan status  # List all saved states
+
+        vibecollab plan status daily-sync --json
+    """
+    import json as json_mod
+
+    from ..core.execution_plan import StepStateManager, load_plan
+
+    state_manager = StepStateManager(Path(".").resolve())
+
+    # If no plan file specified, list all saved states
+    if not plan_file:
+        states = state_manager.list_states()
+        if json_output:
+            click.echo(json_mod.dumps(states, ensure_ascii=False, indent=2))
+        else:
+            if not states:
+                console.print("[dim]No saved execution states found.[/dim]")
+                return
+            console.print()
+            console.print("[bold]Saved Execution States[/bold]")
+            console.print()
+            for s in states:
+                status_color = {
+                    "completed": "green",
+                    "failed": "red",
+                    "paused": "yellow",
+                    "running": "blue",
+                }.get(s.get("status", ""), "white")
+                console.print(f"  [cyan]{s.get('plan_name', '?')}[/cyan]")
+                console.print(f"    Status: [{status_color}]{s.get('status', '?')}[/{status_color}]")
+                console.print(f"    Progress: {s.get('progress', '?')}")
+                console.print(f"    Started: {s.get('started_at', '?')}")
+                console.print()
+        return
+
+    # Show specific plan status
+    resolved_path, is_workflow = _resolve_plan_file(plan_file)
+
+    try:
+        plan = load_plan(Path(resolved_path))
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"[red]{EMOJI_MAP['error']} {e}[/red]")
+        raise SystemExit(1)
+
+    plan_name = plan.get("name", "unnamed")
+    state = state_manager.load_state(plan_name)
+
+    if not state:
+        if json_output:
+            click.echo(json_mod.dumps({"status": "not_started", "plan_name": plan_name}, ensure_ascii=False))
+        else:
+            console.print(f"[dim]No execution state found for '{plan_name}'.[/dim]")
+            console.print(f"[dim]Run: vibecollab plan run {plan_file}[/dim]")
+        return
+
+    if json_output:
+        click.echo(json_mod.dumps(state.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        status_color = {
+            "completed": "green",
+            "failed": "red",
+            "paused": "yellow",
+            "running": "blue",
+            "pending": "dim",
+        }.get(state.status, "white")
+
+        console.print()
+        console.print(Panel.fit(
+            f"[bold]{state.plan_name}[/bold]\n\n"
+            f"Status: [{status_color}]{state.status}[/{status_color}]\n"
+            f"Progress: {state.completed_steps}/{state.total_steps} steps completed\n"
+            f"Failed: {state.failed_steps} steps\n"
+            f"Current step index: {state.current_step_index}",
+            title="Plan Execution Status",
+        ))
+
+        # Show step details
+        console.print()
+        console.print("[bold]Steps:[/bold]")
+        for step_state in state.steps:
+            if step_state.executed:
+                if step_state.success:
+                    status = f"[green]{EMOJI_MAP['success']}[/green]"
+                else:
+                    status = f"[red]{EMOJI_MAP['error']}[/red]"
+            else:
+                status = "[dim]○[/dim]"
+
+            current_marker = " →" if step_state.index == state.current_step_index and not state.is_complete else ""
+            console.print(f"  {status} Step {step_state.index}: {step_state.description[:50]}{current_marker}")
+
+        if not state.is_complete:
+            console.print()
+            console.print(f"[dim]Resume with: vibecollab plan run {plan_file} --resume[/dim]")
+        console.print()
+
+
+@plan_group.command("steps")
+@click.argument("plan_file")
+@click.option("--json-output", "--json", is_flag=True, help=_("JSON output"))
+def plan_steps(plan_file, json_output):
+    """List all steps in a plan with their status
+
+    Shows all steps in the plan along with their execution status
+    if a saved state exists.
+
+    Examples:
+
+        vibecollab plan steps daily-sync
+
+        vibecollab plan steps daily-sync --json
+    """
+    import json as json_mod
+
+    from ..core.execution_plan import PlanRunner, StepStateManager, load_plan
+
+    # Resolve plan file
+    resolved_path, is_workflow = _resolve_plan_file(plan_file)
+
+    try:
+        plan = load_plan(Path(resolved_path))
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"[red]{EMOJI_MAP['error']} {e}[/red]")
+        raise SystemExit(1)
+
+    runner = PlanRunner(
+        project_root=Path(".").resolve(),
+        state_manager=StepStateManager(Path(".").resolve()),
+    )
+
+    step_info = runner.get_step_info(plan)
+
+    if json_output:
+        click.echo(json_mod.dumps(step_info, ensure_ascii=False, indent=2))
+    else:
+        plan_name = plan.get("name", "unnamed")
+        console.print()
+        console.print(Panel.fit(
+            f"[bold]{plan_name}[/bold]\n\n"
+            f"Total steps: {len(step_info)}",
+            title="Plan Steps",
+        ))
+        console.print()
+
+        for info in step_info:
+            status = info.get("status", "pending")
+            status_emoji = {
+                "success": EMOJI_MAP["success"],
+                "failed": EMOJI_MAP["error"],
+                "skipped": "⊘",
+                "pending": "○",
+            }.get(status, "○")
+            color = {
+                "success": "green",
+                "failed": "red",
+                "skipped": "yellow",
+                "pending": "dim",
+            }.get(status, "white")
+
+            console.print(f"  [{color}]{status_emoji}[/{color}] Step {info['index']}: [{color}]{info['action']}[/{color}]")
+            console.print(f"      {info['description']}")
+            if info.get('executed_at'):
+                console.print(f"      [dim]Executed: {info['executed_at']}[/dim]")
+
+        console.print()
+        console.print(f"[dim]Run a step: vibecollab plan step {plan_file} <index>[/dim]")
+        console.print()
+
+
+@plan_group.command("reset")
+@click.argument("plan_file")
+@click.option("--force", "-f", is_flag=True, help=_("Force reset without confirmation"))
+def plan_reset(plan_file, force):
+    """Reset/clear execution state for a plan
+
+    Removes the saved execution state, allowing the plan to be
+    executed from the beginning.
+
+    Examples:
+
+        vibecollab plan reset daily-sync
+
+        vibecollab plan reset daily-sync --force
+    """
+    from ..core.execution_plan import StepStateManager, load_plan
+
+    # Resolve plan file to get plan name
+    resolved_path, is_workflow = _resolve_plan_file(plan_file)
+
+    try:
+        plan = load_plan(Path(resolved_path))
+    except (FileNotFoundError, ValueError) as e:
+        console.print(f"[red]{EMOJI_MAP['error']} {e}[/red]")
+        raise SystemExit(1)
+
+    plan_name = plan.get("name", "unnamed")
+    state_manager = StepStateManager(Path(".").resolve())
+
+    # Check if state exists
+    if not state_manager.has_state(plan_name):
+        console.print(f"[dim]No saved state found for '{plan_name}'[/dim]")
+        return
+
+    # Confirm unless --force
+    if not force:
+        console.print(f"This will delete the execution state for '[cyan]{plan_name}[/cyan]'")
+        response = input("Are you sure? [y/N]: ").strip().lower()
+        if response != 'y':
+            console.print("Cancelled.")
+            return
+
+    # Delete state
+    if state_manager.delete_state(plan_name):
+        console.print(f"[green]{EMOJI_MAP['success']} Execution state reset for '{plan_name}'[/green]")
+    else:
+        console.print(f"[yellow]Failed to reset state for '{plan_name}'[/yellow]")
 
 
 # ============================================

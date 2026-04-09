@@ -1,35 +1,39 @@
 # VibeCollab Global Context
 
 > ⚠️ **This file is auto-generated, do not edit manually**
-> Last updated: 2026-04-06 17:03
+> Last updated: 2026-04-08 17:03
 > Aggregated from: architect, dev, insight_collector
 
 ## Project Overall Status
-- **Version**: v1.0
+- **Version**: v0.12.3
 - **Active roles**: 3 (architect, dev, insight_collector)
 
 ## Role Work Status
 
 ### architect
-- **Last updated**: 2026-04-06
-- **Current task**: v0.12.0 收尾：合并变更并提交
+- **Last updated**: 2026-04-08
+- **Current task**: v0.12.3 PyPI Release
 - **Progress**: 
-  - ✅ 14 个 IDE 适配器已完成 (TASK-DEV-040/041/042/043)
-  - ✅ INS-061 已创建
-  - ✅ YAML Data Layer 迁移完成 (docs/ → .vibecollab/)
-  - ✅ 角色目录迁移完成 (docs/roles/ → .vibecollab/roles/)
+  - ✅ v0.12.3 版本号已更新 (__version__ = "0.12.3")
+  - ✅ CHANGELOG.md 已更新 v0.12.3 变更记录
+  - ✅ 单步工作流执行功能已实现 (step/status/steps/reset commands)
+  - ✅ StepState / PlanExecutionState 数据类已添加
+  - ✅ StepStateManager 状态持久化管理器已添加
+  - ✅ StepExecutor 单步骤执行器已添加
+  - ✅ PlanRunner 扩展支持单步/交互/范围/恢复执行模式
 - **Pending issues**: TASK-DEV-045/046 待后续继续
-- **Next steps**: 完成 v0.12.0 提交，准备发布
+- **Next steps**: 提交变更，创建 v0.12.3 标签，推送到 GitHub 触发 PyPI 发布
 
 ### dev
-- **Last updated**: 2026-04-06
-- **Current task**: v0.12.0 YAML Data Layer migration (DECISION-025/027): Docs Markdown → YAML Big-Bang
+- **Last updated**: 2026-04-08
+- **Current task**: v0.12.3 Release Preparation
 - **Progress**: 
-  - ✅ 完成 docs/changelog.yaml → docs/CHANGELOG.md 渲染
-  - ✅ 完成角色目录隔离 (docs/roles/ → .vibecollab/roles/)
-  - ✅ 39 个文件变更已整理 (740+ 新增, 2353- 删除)
+  - ✅ v0.12.3 功能开发完成 (单步工作流执行)
+  - ✅ 所有测试通过
+  - ✅ Guard check 通过
+  - ✅ Insight consistency check 通过
 - **Pending issues**: MCP onboard timeout after IDE restart still needs investigation
-- **Next steps**: 提交变更
+- **Next steps**: 完成发布流程
 
 ### insight_collector
 - **Last updated**: 2026-04-06
