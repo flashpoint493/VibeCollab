@@ -779,7 +779,28 @@ def check(config: str, strict: bool, insights: bool, guards: bool):
         try:
             from ..domain.guard import GuardEngine, GuardSeverity
 
+            # Load guard config: prefer .vibecollab/guard.yaml, fallback to project.yaml guards section
             guard_config = project_config.get("guards", None)
+            guard_yaml_path = project_root / ".vibecollab" / "guard.yaml"
+            if guard_yaml_path.exists():
+                try:
+                    import yaml as _yaml
+                    with open(guard_yaml_path, "r", encoding="utf-8") as _f:
+                        guard_yaml = _yaml.safe_load(_f) or {}
+                    # Convert guard.yaml format to engine config format
+                    if "rules" in guard_yaml:
+                        guard_config = {"rules": []}
+                        for k, v in guard_yaml["rules"].items():
+                            if not isinstance(v, dict):
+                                continue
+                            rule_entry = {**v, "name": k}
+                            # Disabled rules: set action to 'allow' so they override defaults harmlessly
+                            if not v.get("enabled", True):
+                                rule_entry["action"] = "allow"
+                            guard_config["rules"].append(rule_entry)
+                except Exception:
+                    pass  # Fallback to project.yaml config
+
             engine = GuardEngine(guard_config)
 
             if not engine.enabled:
