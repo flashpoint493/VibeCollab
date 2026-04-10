@@ -41,7 +41,7 @@ def _load_insight_manager(config_path: str = "project.yaml"):
             "Error: .vibecollab/ directory not found. Please run vibecollab init first", err=True
         )
         raise SystemExit(1)
-    event_log = EventLog(vibecollab_dir / "events.jsonl")
+    event_log = EventLog(project_root)
     return InsightManager(project_root=project_root, event_log=event_log)
 
 

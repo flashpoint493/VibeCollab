@@ -736,7 +736,7 @@ def check(config: str, strict: bool, insights: bool, guards: bool):
             from ..domain.event_log import EventLog
             from ..insight.manager import InsightManager
 
-            event_log = EventLog(project_root / ".vibecollab" / "events.jsonl")
+            event_log = EventLog(project_root)
             mgr = InsightManager(project_root=project_root, event_log=event_log)
             report = mgr.check_consistency()
 

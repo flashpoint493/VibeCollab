@@ -127,7 +127,14 @@ def _atomic_append(path: Path, line: str) -> None:
     directory then appends. Falls back to direct append if renaming
     is not feasible for append operations.
     """
-    path.parent.mkdir(parents=True, exist_ok=True)
+    # Defensive: ensure parent is a directory, not a file
+    parent = path.parent
+    if parent.exists() and parent.is_file():
+        raise ValueError(
+            f"EventLog path misconfiguration: parent '{parent}' is a file, not a directory. "
+            f"EventLog should be initialised with project_root (directory), not a file path."
+        )
+    parent.mkdir(parents=True, exist_ok=True)
 
     # For JSONL append, we open in append mode with a file lock approach:
     # write the full line in one call to minimise partial-write risk.

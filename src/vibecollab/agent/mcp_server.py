@@ -69,7 +69,7 @@ def _get_managers(root: Path):
     from ..domain.task_manager import TaskManager
     from ..insight.manager import InsightManager
 
-    event_log = EventLog(root / ".vibecollab" / "events.jsonl")
+    event_log = EventLog(root)
     im = InsightManager(project_root=root, event_log=event_log)
 
     # Try to load RoleManager for permission enforcement
