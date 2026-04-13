@@ -159,6 +159,7 @@ EMOJI = {
     "ok": "OK" if _GBK else "✅",
     "warn": "!" if _GBK else "⚠️",
     "err": "X" if _GBK else "❌",
+    "fail": "X" if _GBK else "❌",
     # Insight triggers
     "search": "[?]" if _GBK else "🔍",
 }

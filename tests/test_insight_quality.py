@@ -22,12 +22,11 @@ from vibecollab.insight.manager import InsightManager
 # Fixtures
 # ======================================================================
 
+
 @pytest.fixture
 def tmp_project(tmp_path):
     """Create a temporary project directory with project.yaml and .vibecollab/"""
-    (tmp_path / "project.yaml").write_text(
-        "project_name: TestProject\n", encoding="utf-8"
-    )
+    (tmp_path / "project.yaml").write_text("project_name: TestProject\n", encoding="utf-8")
     vibecollab_dir = tmp_path / ".vibecollab"
     vibecollab_dir.mkdir()
     return tmp_path
@@ -36,7 +35,7 @@ def tmp_project(tmp_path):
 @pytest.fixture
 def mgr(tmp_project):
     """Return an InsightManager with EventLog"""
-    event_log = EventLog(tmp_project / ".vibecollab" / "events.jsonl")
+    event_log = EventLog(tmp_project)
     return InsightManager(project_root=tmp_project, event_log=event_log)
 
 
@@ -47,7 +46,10 @@ def populated_mgr(mgr):
         title="Windows GBK encoding fix",
         tags=["python", "encoding", "windows"],
         category="debug",
-        body={"scenario": "Windows terminal encoding", "approach": "Use _compat.py compatibility layer"},
+        body={
+            "scenario": "Windows terminal encoding",
+            "approach": "Use _compat.py compatibility layer",
+        },
         created_by="ocarina",
     )
     mgr.create(
@@ -72,6 +74,7 @@ def populated_mgr(mgr):
 # TestFindDuplicates - Deduplication detection
 # ======================================================================
 
+
 class TestFindDuplicates:
     """Test InsightManager.find_duplicates()"""
 
@@ -84,7 +87,10 @@ class TestFindDuplicates:
         result = populated_mgr.find_duplicates(
             title="Windows GBK encoding fix",
             tags=["python", "encoding", "windows"],
-            body={"scenario": "Windows terminal encoding", "approach": "Use _compat.py compatibility layer"},
+            body={
+                "scenario": "Windows terminal encoding",
+                "approach": "Use _compat.py compatibility layer",
+            },
         )
         assert len(result) == 1
         assert result[0]["score"] == 1.0
@@ -152,6 +158,7 @@ class TestFindDuplicates:
 # TestBuildGraph — Global association graph
 # ======================================================================
 
+
 class TestBuildGraph:
     """Test InsightManager.build_graph()"""
 
@@ -207,6 +214,7 @@ class TestToMermaid:
 # TestExport — Export
 # ======================================================================
 
+
 class TestExportInsights:
     """Test InsightManager.export_insights()"""
 
@@ -243,6 +251,7 @@ class TestExportInsights:
 # TestImport - Import
 # ======================================================================
 
+
 class TestImportInsights:
     """Test InsightManager.import_insights()"""
 
@@ -260,7 +269,8 @@ class TestImportInsights:
             "version": "1",
             "insights": [
                 {
-                    "kind": "insight", "version": "1",
+                    "kind": "insight",
+                    "version": "1",
                     "id": "INS-001",
                     "title": "Test insight",
                     "tags": ["test"],
@@ -317,7 +327,8 @@ class TestImportInsights:
             "source_project": "SourceProject",
             "insights": [
                 {
-                    "kind": "insight", "version": "1",
+                    "kind": "insight",
+                    "version": "1",
                     "id": "INS-001",
                     "title": "Cross project insight",
                     "tags": ["cross"],
@@ -342,7 +353,8 @@ class TestImportInsights:
             "version": "1",
             "insights": [
                 {
-                    "kind": "insight", "version": "1",
+                    "kind": "insight",
+                    "version": "1",
                     "id": "INS-001",
                     "title": "Test",
                     "tags": ["t"],
@@ -364,12 +376,14 @@ class TestImportInsights:
 # TestCLI - CLI commands
 # ======================================================================
 
+
 class TestCLIGraph:
     """Test vibecollab insight graph"""
 
     def test_graph_text(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
+
         runner = CliRunner()
         result = runner.invoke(insight, ["graph"])
         assert result.exit_code == 0
@@ -379,6 +393,7 @@ class TestCLIGraph:
     def test_graph_json(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
+
         runner = CliRunner()
         result = runner.invoke(insight, ["graph", "--json"])
         assert result.exit_code == 0
@@ -388,6 +403,7 @@ class TestCLIGraph:
     def test_graph_mermaid(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
+
         runner = CliRunner()
         result = runner.invoke(insight, ["graph", "--format", "mermaid"])
         assert result.exit_code == 0
@@ -400,6 +416,7 @@ class TestCLIExportImport:
     def test_export_stdout(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
+
         runner = CliRunner()
         result = runner.invoke(insight, ["export"])
         assert result.exit_code == 0
@@ -410,6 +427,7 @@ class TestCLIExportImport:
     def test_export_to_file(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
+
         runner = CliRunner()
         out_path = str(tmp_project / "export.yaml")
         result = runner.invoke(insight, ["export", "-o", out_path])
@@ -419,6 +437,7 @@ class TestCLIExportImport:
     def test_import_file(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
+
         runner = CliRunner()
 
         # Export first
@@ -433,6 +452,7 @@ class TestCLIExportImport:
     def test_import_invalid_file(self, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
+
         runner = CliRunner()
         # Non-existent file
         result = runner.invoke(insight, ["import", "nonexistent.yaml"])
@@ -441,6 +461,7 @@ class TestCLIExportImport:
     def test_import_rename_strategy(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
+
         runner = CliRunner()
 
         out_path = str(tmp_project / "bundle.yaml")
@@ -457,45 +478,72 @@ class TestCLIAddDedup:
     def test_add_detects_duplicate(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
+
         runner = CliRunner()
-        result = runner.invoke(insight, [
-            "add",
-            "-t", "Windows GBK encoding fix",
-            "--tags", "python,encoding,windows",
-            "-c", "debug",
-            "-s", "same scenario",
-            "-a", "same approach",
-        ])
+        result = runner.invoke(
+            insight,
+            [
+                "add",
+                "-t",
+                "Windows GBK encoding fix",
+                "--tags",
+                "python,encoding,windows",
+                "-c",
+                "debug",
+                "-s",
+                "same scenario",
+                "-a",
+                "same approach",
+            ],
+        )
         assert result.exit_code == 1
         assert "duplicate" in result.output.lower()
 
     def test_add_force_bypasses_dedup(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
+
         runner = CliRunner()
-        result = runner.invoke(insight, [
-            "add",
-            "-t", "Windows GBK encoding fix",
-            "--tags", "python,encoding,windows",
-            "-c", "debug",
-            "-s", "same scenario",
-            "-a", "same approach",
-            "--force",
-        ])
+        result = runner.invoke(
+            insight,
+            [
+                "add",
+                "-t",
+                "Windows GBK encoding fix",
+                "--tags",
+                "python,encoding,windows",
+                "-c",
+                "debug",
+                "-s",
+                "same scenario",
+                "-a",
+                "same approach",
+                "--force",
+            ],
+        )
         assert result.exit_code == 0
         assert "Created" in result.output or "INS-004" in result.output
 
     def test_add_no_duplicate_passes(self, populated_mgr, tmp_project, monkeypatch):
         monkeypatch.chdir(tmp_project)
         from vibecollab.cli.insight import insight
+
         runner = CliRunner()
-        result = runner.invoke(insight, [
-            "add",
-            "-t", "Completely unique insight",
-            "--tags", "unique,special",
-            "-c", "workflow",
-            "-s", "unique scenario",
-            "-a", "unique approach",
-        ])
+        result = runner.invoke(
+            insight,
+            [
+                "add",
+                "-t",
+                "Completely unique insight",
+                "--tags",
+                "unique,special",
+                "-c",
+                "workflow",
+                "-s",
+                "unique scenario",
+                "-a",
+                "unique approach",
+            ],
+        )
         assert result.exit_code == 0
         assert "Created" in result.output

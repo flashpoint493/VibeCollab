@@ -53,22 +53,22 @@ class TestGuardEngine:
         result = engine.check_operation("create", "safe_file.txt")
         assert result.allowed is True
 
-    def test_check_operation_blocks_meta_delete(self):
-        """Test that deleting .meta files is blocked"""
+    def test_check_operation_warns_meta_delete(self):
+        """Test that deleting .meta files shows warning (v0.12.4: changed from BLOCK to WARN)"""
         engine = GuardEngine()
 
         result = engine.check_operation("delete", "test.meta")
-        assert result.allowed is False
-        assert result.severity == GuardSeverity.BLOCK
+        assert result.allowed is True  # WARN allows the operation
+        assert result.severity == GuardSeverity.WARN
         assert "meta" in result.message.lower()
 
-    def test_check_operation_blocks_meta_modify(self):
-        """Test that modifying .meta files is blocked"""
+    def test_check_operation_warns_meta_modify(self):
+        """Test that modifying .meta files shows warning (v0.12.4: changed from BLOCK to WARN)"""
         engine = GuardEngine()
 
         result = engine.check_operation("modify", "test.meta")
-        assert result.allowed is False
-        assert result.severity == GuardSeverity.BLOCK
+        assert result.allowed is True  # WARN allows the operation
+        assert result.severity == GuardSeverity.WARN
 
     def test_check_operation_allows_meta_create(self):
         """Test that creating .meta files is allowed"""
@@ -91,7 +91,7 @@ class TestGuardEngine:
 
         operations = [
             {"operation": "create", "file_path": "safe.txt"},
-            {"operation": "delete", "file_path": "test.meta"},
+            {"operation": "delete", "file_path": "test.meta"},  # v0.12.4: WARN allows
             {"operation": "modify", "file_path": "normal.txt"},
         ]
 
@@ -99,7 +99,7 @@ class TestGuardEngine:
 
         assert len(results) == 3
         assert results[0].allowed is True
-        assert results[1].allowed is False
+        assert results[1].allowed is True  # v0.12.4: WARN allows operation
         assert results[2].allowed is True
 
     def test_test_path_returns_matching_rules(self):
