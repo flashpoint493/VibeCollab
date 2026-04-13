@@ -7,7 +7,7 @@ aggregated_from:
   - insight_collector
 
 project_status:
-  current_version: "v0.12.2"
+  current_version: "v0.12.4"
   active_roles:
     - architect
     - dev
@@ -16,23 +16,23 @@ project_status:
 
 roles:
   - role: architect
-    updated_at: "2026-04-02"
-    current_task: "TASK-DEV-048 DONE - Role directory migration to .vibecollab/roles/"
-    progress: "v0.12.0 RELEASED. Additional: TASK-DEV-047 (docs → .vibecollab/docs/) and TASK-DEV-048 (roles → .vibecollab/roles/) completed. INS-065 and INS-066 created documenting directory isolation patterns. All vibecollab data now consolidated under .vibecollab/."
+    updated_at: "2026-04-13"
+    current_task: "v0.12.4 RELEASED"
+    progress: "v0.12.4 RELEASED: Step-by-step workflow execution, EventLog path fix, Guard.yaml override support. All v0.12.x features complete."
     pending_issues: null
     next_steps: "v0.13.0 planning or v1.0.0 release preparation"
 
   - role: dev
-    updated_at: "2026-04-02"
-    current_task: "TASK-DEV-047/048 DONE - Directory isolation complete"
-    progress: "v0.12.0 RELEASED. TASK-DEV-047: Migrated docs YAML to .vibecollab/docs/. TASK-DEV-048: Migrated roles to .vibecollab/roles/. Updated CLI defaults, project.yaml configs, and 38 tests. All tests passing."
+    updated_at: "2026-04-13"
+    current_task: "v0.12.4 RELEASED"
+    progress: "v0.12.4 RELEASED: EventLog path nesting bug fixed, Guard.yaml override and exclude_patterns support added, insight-collect workflow enhanced with tags enumeration. All tests passing."
     pending_issues: "MCP onboard timeout after IDE restart (moved to v0.13.0)"
     next_steps: "v0.13.0 Insight-First Ecosystem or v1.0.0 release engineering"
 
   - role: insight_collector
-    updated_at: "2026-04-02"
-    current_task: "v0.12.0 RELEASED - FP-015 complete"
-    progress: "FP-015 complete: derived_from field, insight graph --show-derivation, automatic derivation detection. 60 Insights indexed. Insight derivation chain fully operational."
+    updated_at: "2026-04-13"
+    current_task: "v0.12.4 RELEASED"
+    progress: "v0.12.4 RELEASED: Insight-collect workflow enhanced with tags enumeration step. 60+ Insights indexed. Insight derivation chain fully operational."
     pending_issues: "Cross-project import/export verification (v0.13.0 scope)"
     next_steps: "Insight marketplace planning for v0.13.0"
 

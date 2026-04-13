@@ -15,6 +15,12 @@ steps:
     on_fail: "continue"
 
   - action: cli
+    description: "Enumerate all insight tags for knowledge panorama"
+    command: "vibecollab insight tags"
+    store_as: "all_tags"
+    on_fail: "continue"
+
+  - action: cli
     description: "Suggest insights based on current context"
     command: "vibecollab insight suggest"
     store_as: "suggested_insights"

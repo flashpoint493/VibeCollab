@@ -88,6 +88,35 @@ unreleased:
     - "使用vibecollab docs render --all更新所有文档"
 
 releases:
+  - release_version: "v0.12.4"
+    date: "2026-04-13"
+    added:
+      - description: "Step-by-Step Workflow Execution (v0.12.3 enhancement)"
+        task_ids: ["TASK-DEV-049"]
+        details:
+          - "vibecollab plan steps <workflow>: List all steps with status"
+          - "vibecollab plan step <workflow> <index>: Execute single step with state persistence"
+          - "vibecollab plan status <workflow>: Check execution progress"
+          - "vibecollab plan reset <workflow>: Clear saved state"
+          - "--interactive mode: Pause after each step"
+          - "--resume: Continue from saved state"
+          - "--from-step/--to-step: Execute step range"
+      - description: "Insight workflow enhancement: tags enumeration step"
+        details:
+          - "Added 'vibecollab insight tags' step to insight-collect workflow"
+          - "Provides knowledge panorama for better insight discovery"
+    fixed:
+      - description: "EventLog path nesting bug: Fixed double directory creation issue"
+        details:
+          - "Added defensive check for path components ending with .json"
+          - "Prevents events/events.jsonl.json malformed paths"
+      - description: "Guard.yaml override and exclude_patterns support"
+        details:
+          - "check command now properly loads guard.yaml configuration"
+          - "Supports override_rules and exclude_patterns from guard.yaml"
+    changed:
+      - description: "Version bump: 0.12.3 → 0.12.4"
+
   - release_version: "v0.11.0"
     date: "2026-04-02"
     added:
