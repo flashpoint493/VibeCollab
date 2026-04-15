@@ -1,0 +1,42 @@
+name: "qa-test"
+description: "QA测试工作流：运行VibeCollab质量检查和验证"
+version: "1.0"
+category: test
+
+steps:
+  - name: "health_check"
+    action: cli
+    description: "检查项目健康状况"
+    command: "vibecollab health"
+    store_as: "health_report"
+    on_fail: "continue"
+
+  - name: "config_validation"
+    action: cli
+    description: "验证项目配置"
+    command: "vibecollab validate"
+    store_as: "validation_report"
+    on_fail: "continue"
+
+  - name: "workflow_health_check"
+    action: cli
+    description: "检查工作流状态"
+    command: "vibecollab workflow validate"
+    store_as: "workflow_health"
+    on_fail: "continue"
+
+  - name: "snapshot_generation"
+    action: cli
+    description: "生成工作流快照"
+    command: "vibecollab workflow snapshot"
+    store_as: "workflow_snapshot"
+    on_fail: "continue"
+
+  - name: "list_workflows"
+    action: cli
+    description: "列出可用工作流"
+    command: "vibecollab plan list"
+    store_as: "available_workflows"
+    on_fail: "continue"
+
+on_fail: "continue"

@@ -275,10 +275,10 @@ def _collect_project_context(
     # Role info
     role_info = None
     if role:
-        dev_context_yaml = project_root / "docs" / "roles" / role / "context.yaml"
-        dev_context_md = project_root / "docs" / "roles" / role / "CONTEXT.md"
+        dev_context_yaml = project_root / ".vibecollab" / "roles" / role / "context.yaml"
+        dev_context_md = project_root / ".vibecollab" / "roles" / role / "CONTEXT.md"
         dev_context_path = dev_context_yaml if dev_context_yaml.exists() else dev_context_md
-        dev_meta_path = project_root / "docs" / "roles" / role / ".metadata.yaml"
+        dev_meta_path = project_root / ".vibecollab" / "roles" / role / ".metadata.yaml"
         role_info = {
             "id": role,
             "context": _safe_read_text(dev_context_path, max_lines=20),

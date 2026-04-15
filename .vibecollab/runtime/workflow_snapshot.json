@@ -1,0 +1,94 @@
+{
+  "kind": "workflow_snapshot",
+  "generated_at": "2026-04-14T02:59:52.002336+00:00",
+  "project": {
+    "name": "VibeCollab",
+    "version": "v1.0",
+    "milestone": "Unknown",
+    "git_dirty": false,
+    "git_changed_files": 0,
+    "recent_event_time": "2026-04-13T11:59:34.613659+00:00",
+    "current_role": null
+  },
+  "git": {
+    "dirty": false,
+    "changed_files": 0
+  },
+  "role": {
+    "current": "Unknown",
+    "active_roles": [
+      "architect",
+      "dev",
+      "insight_collector"
+    ]
+  },
+  "roadmap": {
+    "milestone_pending_count": 10,
+    "todo_count": 0,
+    "in_progress_count": 0,
+    "review_count": 0,
+    "done_count": 24,
+    "current_main_task": null,
+    "role_request_entry_hint": "Use 'vibecollab role switch <role>' to change context"
+  },
+  "tasks": {
+    "summary": {
+      "todo": 0,
+      "in_progress": 0,
+      "review": 0,
+      "done": 24,
+      "total": 24
+    },
+    "active": []
+  },
+  "plans": {
+    "active": [
+      {
+        "plan_name": "qa-test",
+        "status": "running",
+        "current_step_index": 5,
+        "total_steps": 5,
+        "step_statuses": [],
+        "recent_step_output": "",
+        "resumable": true
+      }
+    ]
+  },
+  "workflows": {
+    "discovered": [
+      {
+        "name": "daily-sync",
+        "category": "maintenance",
+        "description": "Daily synchronization workflow: check docs, render markdown, and commit changes"
+      },
+      {
+        "name": "insight-collect",
+        "category": "insight",
+        "description": "Insight collection workflow: scan code, detect patterns, and auto-generate insights"
+      },
+      {
+        "name": "qa-test",
+        "category": "test",
+        "description": "QA测试工作流：运行VibeCollab质量检查和验证"
+      },
+      {
+        "name": "release-prep",
+        "category": "release",
+        "description": "Release preparation workflow: update version, run tests, build and package"
+      }
+    ]
+  },
+  "validate": {
+    "status": "ok",
+    "issues": []
+  },
+  "suggestions": {
+    "next_commands": [
+      "vibecollab workflow panel --watch",
+      "vibecollab plan status daily-sync"
+    ],
+    "prompt_hints": [
+      "Update docs/CONTEXT.md after plan completion"
+    ]
+  }
+}
