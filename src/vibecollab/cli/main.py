@@ -3699,7 +3699,7 @@ def template_show(template_id, project_root):
 @main.group("workflow")
 def workflow_group():
     """Workflow Dashboard: Development cockpit visualization and validation.
-    
+
     Real-time monitoring of workflow context, roadmap progress, active plans,
     role requests, and prompt suggestions.
     """
@@ -3722,18 +3722,19 @@ def workflow_group():
 )
 def workflow_panel(watch, project_root):
     """Display development cockpit panel
-    
+
     Shows real-time visualization of project status, workflow health,
     roadmap progress, active plans, role requests, and prompt suggestions.
-    
+
     Examples:
-    
+
         vibecollab workflow panel
         vibecollab workflow panel --watch
     """
     from pathlib import Path
+
     from vibecollab_dashboard import display_workflow_panel
-    
+
     try:
         display_workflow_panel(Path(project_root), watch)
     except Exception as e:
@@ -3757,22 +3758,23 @@ def workflow_panel(watch, project_root):
 )
 def workflow_validate(project_root, json_output):
     """Validate workflow runtime state
-    
+
     Performs comprehensive validation of workflow files, plan schemas,
     host configurations, and runtime state.
-    
+
     Examples:
-    
+
         vibecollab workflow validate
         vibecollab workflow validate --json-output
     """
-    from pathlib import Path
-    from vibecollab_dashboard import validate_workflow
     import json
-    
+    from pathlib import Path
+
+    from vibecollab_dashboard import validate_workflow
+
     try:
         result = validate_workflow(Path(project_root))
-        
+
         if json_output:
             # Convert to JSON-serializable format
             output_data = {
@@ -3804,14 +3806,14 @@ def workflow_validate(project_root, json_output):
             else:
                 status_emoji = EMOJI_MAP["success"]
                 status_style = "green"
-            
+
             console.print(f"{status_emoji} [bold {status_style}]Workflow Validation: {result.status.upper()}[/bold {status_style}]")
             console.print(f"[dim]Total Issues: {result.total_issues} (Errors: {result.error_count}, Warnings: {result.warning_count}, Info: {result.info_count})[/dim]")
-            
+
             if result.issues:
                 console.print()
                 console.print("[bold]Issues Found:[/bold]")
-                
+
                 for issue in result.issues:
                     if issue.severity == "ERROR":
                         issue_emoji = EMOJI_MAP["error"]
@@ -3822,14 +3824,14 @@ def workflow_validate(project_root, json_output):
                     else:
                         issue_emoji = EMOJI_MAP["info"]
                         issue_style = "blue"
-                    
+
                     console.print(f"  {issue_emoji} [{issue_style}]{issue.severity}:[/{issue_style}] {issue.message}")
                     if issue.suggestion:
                         console.print(f"     [dim]Suggestion: {issue.suggestion}[/dim]")
                     if issue.affected_files:
                         console.print(f"     [dim]Files: {', '.join(issue.affected_files)}[/dim]")
                     console.print()
-            
+
     except Exception as e:
         console.print(f"[red]{EMOJI_MAP['error']} {_('Failed to display panel:')} {str(e)}[/red]")
         raise SystemExit(1)
@@ -3851,40 +3853,40 @@ def workflow_validate(project_root, json_output):
 )
 def workflow_snapshot(project_root, output):
     """Generate machine-readable workflow snapshot
-    
+
     Creates a JSON snapshot of current workflow state for external tools
     and integrations.
-    
+
     Examples:
-    
+
         vibecollab workflow snapshot
         vibecollab workflow snapshot --output dashboard.json
     """
     from pathlib import Path
+
     from vibecollab_dashboard import WorkflowSnapshotGenerator, save_snapshot
-    import json
-    
+
     try:
         generator = WorkflowSnapshotGenerator(Path(project_root))
         snapshot = generator.generate_snapshot()
-        
+
         if output:
             output_path = Path(output)
         else:
             output_path = Path(project_root) / ".vibecollab" / "runtime" / "workflow_snapshot.json"
-        
+
         save_snapshot(snapshot, output_path)
-        
+
         if not output:
             console.print(f"{EMOJI_MAP['success']} [green]Snapshot saved to: {output_path.relative_to(Path(project_root))}[/green]")
         else:
             console.print(f"{EMOJI_MAP['success']} [green]Snapshot saved to: {output_path}[/green]")
-        
+
         # Also print summary
         console.print(f"[dim]Generated at: {snapshot.generated_at}[/dim]")
         if snapshot.project:
             console.print(f"[dim]Project: {snapshot.project.name} v{snapshot.project.version}[/dim]")
-        
+
     except Exception as e:
         console.print(f"[red]{EMOJI_MAP['error']} {_('Failed to generate snapshot:')} {str(e)}[/red]")
         raise SystemExit(1)
