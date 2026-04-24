@@ -272,13 +272,17 @@ def _collect_project_context(
 
     proj = project_config.get("project", {})
 
+    # Role context directory (respect per_role_dir config from project.yaml)
+    role_context_config = project_config.get("role_context", project_config.get("multi_developer", {}))
+    roles_dir_name = role_context_config.get("context", {}).get("per_role_dir", ".vibecollab/roles")
+
     # Role info
     role_info = None
     if role:
-        dev_context_yaml = project_root / ".vibecollab" / "roles" / role / "context.yaml"
-        dev_context_md = project_root / ".vibecollab" / "roles" / role / "CONTEXT.md"
+        dev_context_yaml = project_root / roles_dir_name / role / "context.yaml"
+        dev_context_md = project_root / roles_dir_name / role / "CONTEXT.md"
         dev_context_path = dev_context_yaml if dev_context_yaml.exists() else dev_context_md
-        dev_meta_path = project_root / ".vibecollab" / "roles" / role / ".metadata.yaml"
+        dev_meta_path = project_root / roles_dir_name / role / ".metadata.yaml"
         role_info = {
             "id": role,
             "context": _safe_read_text(dev_context_path, max_lines=20),
