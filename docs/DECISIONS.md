@@ -165,5 +165,21 @@ Simplify Project.yaml, Skill over Preset.
 
 
 
+
+
+### DECISION-028: Monorepo Split Package Strategy
+- **Level**: S
+- **Status**: confirmed
+- **Date**: 2026-04-25
+- **Context**: v0.12.6 main package contains all code in `src/vibecollab/`. Need to split into independently installable sub-packages for modular adoption.
+- **Problem**: How to split monorepo into 8 PyPI packages while maintaining backward compatibility and functional stability?
+- **Decision**: 
+  1. **Namespace**: Keep independent top-level packages (`vibecollab_core`, `vibecollab_cli`, etc.) rather than namespace packages (`vibecollab.core`). Already published on PyPI 0.12.5.
+  2. **File allocation**: Core owns all foundational modules (core/, domain/, utils/, i18n/, contrib/, search/); other packages own their specialty modules. Task-related domain files duplicated in `vibecollab-tasks` for backward compat.
+  3. **Import strategy**: Rewrite all cross-package relative imports to absolute imports pointing to the owning package. Keep intra-package relative imports unchanged.
+  4. **Dependency graph**: core (base) → insights/ide/mcp → cli (aggregator). Patterns and generator re-export core APIs for backward compat.
+  5. **Validation order**: Fix sub-packages first → local validation → PyPI publish → main repo branch switch → combination validation → main package release.
+- **Rationale**: Independent top-level packages avoid namespace package fragility. Absolute cross-package imports make dependencies explicit. Staged validation (sub-packages first, then main package) prevents breaking the stable release.
+
 ---
 *Decision record format: see CONTRIBUTING_AI.md*
