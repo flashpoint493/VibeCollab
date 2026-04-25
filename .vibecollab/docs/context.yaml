@@ -1,13 +1,13 @@
 kind: context
 version: "1"
-updated_at: "2026-04-02T16:00:00"
+updated_at: "2026-04-25T14:30:00"
 aggregated_from:
   - architect
   - dev
   - insight_collector
 
 project_status:
-  current_version: "v0.12.4"
+  current_version: "v0.12.6"
   active_roles:
     - architect
     - dev
@@ -16,18 +16,18 @@ project_status:
 
 roles:
   - role: architect
-    updated_at: "2026-04-13"
-    current_task: "v0.12.4 RELEASED"
-    progress: "v0.12.4 RELEASED: Step-by-step workflow execution, EventLog path fix, Guard.yaml override support. All v0.12.x features complete."
+    updated_at: "2026-04-25"
+    current_task: "Package split architecture validation"
+    progress: "Split package structure finalized. Cross-package dependency graph resolved. Core retains domain/models/utils/i18n/contrib; insights owns search+insight; cli owns all CLI entrypoints."
     pending_issues: null
-    next_steps: "v0.13.0 planning or v1.0.0 release preparation"
+    next_steps: "After user validation, approve PyPI publish + main repo modular-deps branch"
 
   - role: dev
-    updated_at: "2026-04-13"
-    current_task: "v0.12.4 RELEASED"
-    progress: "v0.12.4 RELEASED: EventLog path nesting bug fixed, Guard.yaml override and exclude_patterns support added, insight-collect workflow enhanced with tags enumeration. All tests passing."
-    pending_issues: "MCP onboard timeout after IDE restart (moved to v0.13.0)"
-    next_steps: "v0.13.0 Insight-First Ecosystem or v1.0.0 release engineering"
+    updated_at: "2026-04-25"
+    current_task: "Split package build & import fix"
+    progress: "Automated script scripts/fix_split_packages.py created. All relative imports rewritten. All 8 packages build and import successfully. Code pushed to GitHub."
+    pending_issues: "Local validation by user before PyPI upload"
+    next_steps: "Await validation feedback, then proceed to main repo branch switch"
 
   - role: insight_collector
     updated_at: "2026-04-13"
@@ -40,9 +40,11 @@ collaboration: "See .vibecollab/roles/ for individual role contexts"
 
 technical_debt:
   - role: dev
-    description: "MCP `onboard` tool call timeout after IDE restart still needs investigation"
+    description: "MCP onboard tool call timeout after IDE restart still needs investigation"
   - role: dev
-    description: "`README.zh-CN.md` project structure section is outdated"
+    description: "README.zh-CN.md project structure section is outdated"
+  - role: dev
+    description: "Sub-package code duplication between vibecollab-core and vibecollab-tasks (task_manager, event_log, role, roadmap_parser, prd_manager) — acceptable for backward compat during transition"
   - role: insight_collector
     description: "Semantic index staleness (no auto-update on Insight change)"
   - role: insight_collector

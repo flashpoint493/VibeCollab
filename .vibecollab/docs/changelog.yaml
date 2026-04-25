@@ -88,6 +88,31 @@ unreleased:
     - "使用vibecollab docs render --all更新所有文档"
 
 releases:
+  - release_version: "v0.12.6"
+    date: "2026-04-25"
+    added:
+      - description: "Monorepo Split Package Refactoring (DECISION-028)"
+        task_ids: ["TASK-DEV-050"]
+        decision_ids: ["DECISION-028"]
+        details:
+          - "Extracted 8 sub-packages from main monorepo with fixed cross-package imports"
+          - "vibecollab-core: domain models, core logic, utils, i18n, contrib"
+          - "vibecollab-insights: insight manager, embedder, vector store, search"
+          - "vibecollab-ide: IDE adapters for Cursor, Windsurf, Cline, Claude, etc."
+          - "vibecollab-mcp: MCP server, LLM client, agent executor"
+          - "vibecollab-patterns: Jinja2 pattern templates (re-exports from core)"
+          - "vibecollab-generator: document templates & plans (re-exports from core)"
+          - "vibecollab-tasks: task manager, roadmap parser, PRD manager"
+          - "vibecollab-cli: all CLI commands and vibecollab entrypoint"
+          - "Local wheel build + import validation: 8/8 passed"
+    changed:
+      - description: "Version bump: 0.12.5 → 0.12.6"
+    fixed:
+      - description: "Cross-package import resolution for all split packages"
+        details:
+          - "Rewrote relative imports to absolute imports across all sub-packages"
+          - "Generated pyproject.toml with correct inter-dependencies"
+
   - release_version: "v0.12.4"
     date: "2026-04-13"
     added:
