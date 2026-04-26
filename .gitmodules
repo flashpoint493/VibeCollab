@@ -1,0 +1,31 @@
+[submodule "packages/vibecollab-core"]
+	path = packages/vibecollab-core
+	url = https://github.com/flashpoint493/vibecollab-core.git
+
+[submodule "packages/vibecollab-insights"]
+	path = packages/vibecollab-insights
+	url = https://github.com/flashpoint493/vibecollab-insights.git
+
+[submodule "packages/vibecollab-ide"]
+	path = packages/vibecollab-ide
+	url = https://github.com/flashpoint493/vibecollab-ide.git
+
+[submodule "packages/vibecollab-mcp"]
+	path = packages/vibecollab-mcp
+	url = https://github.com/flashpoint493/vibecollab-mcp.git
+
+[submodule "packages/vibecollab-patterns"]
+	path = packages/vibecollab-patterns
+	url = https://github.com/flashpoint493/vibecollab-patterns.git
+
+[submodule "packages/vibecollab-generator"]
+	path = packages/vibecollab-generator
+	url = https://github.com/flashpoint493/vibecollab-generator.git
+
+[submodule "packages/vibecollab-tasks"]
+	path = packages/vibecollab-tasks
+	url = https://github.com/flashpoint493/vibecollab-tasks.git
+
+[submodule "packages/vibecollab-cli"]
+	path = packages/vibecollab-cli
+	url = https://github.com/flashpoint493/vibecollab-cli.git
