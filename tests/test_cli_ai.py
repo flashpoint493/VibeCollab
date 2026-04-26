@@ -9,8 +9,8 @@ from unittest import mock
 import pytest
 from click.testing import CliRunner
 
-from vibecollab.agent.llm_client import LLMConfig, LLMResponse
-from vibecollab.cli.ai import (
+from vibecollab_mcp.agent.llm_client import LLMConfig, LLMResponse
+from vibecollab_cli.cli.ai import (
     DEFAULT_MAX_CYCLES,
     DEFAULT_MAX_RSS_MB,
     DEFAULT_MAX_SLEEP_S,
@@ -25,8 +25,8 @@ from vibecollab.cli.ai import (
     _release_lock,
     ai,
 )
-from vibecollab.domain.event_log import Event, EventLog, EventType
-from vibecollab.domain.task_manager import TaskManager, TaskStatus
+from vibecollab_core.domain.event_log import Event, EventLog, EventType
+from vibecollab_core.domain.task_manager import TaskManager, TaskStatus
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -592,7 +592,7 @@ class TestExecuteAgentCycle:
 
     def test_plan_failure(self, tmp_project):
         """Plan phase: LLM returns failure."""
-        from vibecollab.cli.ai import _execute_agent_cycle
+        from vibecollab_cli.cli.ai import _execute_agent_cycle
         event_log = EventLog(tmp_project)
         task_mgr = TaskManager(tmp_project, event_log)
 
@@ -604,7 +604,7 @@ class TestExecuteAgentCycle:
 
     def test_exec_failure(self, tmp_project):
         """Execute phase: LLM returns failure."""
-        from vibecollab.cli.ai import _execute_agent_cycle
+        from vibecollab_cli.cli.ai import _execute_agent_cycle
         event_log = EventLog(tmp_project)
         task_mgr = TaskManager(tmp_project, event_log)
 
@@ -618,7 +618,7 @@ class TestExecuteAgentCycle:
 
     def test_no_parseable_changes(self, tmp_project):
         """LLM output cannot be parsed as changes -> returns True (not failure)."""
-        from vibecollab.cli.ai import _execute_agent_cycle
+        from vibecollab_cli.cli.ai import _execute_agent_cycle
         event_log = EventLog(tmp_project)
         task_mgr = TaskManager(tmp_project, event_log)
 
@@ -632,7 +632,7 @@ class TestExecuteAgentCycle:
 
     def test_exception_in_cycle(self, tmp_project):
         """Exception in cycle -> returns False."""
-        from vibecollab.cli.ai import _execute_agent_cycle
+        from vibecollab_cli.cli.ai import _execute_agent_cycle
         event_log = EventLog(tmp_project)
         task_mgr = TaskManager(tmp_project, event_log)
 
@@ -644,7 +644,7 @@ class TestExecuteAgentCycle:
 
     def test_successful_cycle_with_changes(self, tmp_project):
         """Successful cycle: plan -> execute(valid JSON) -> apply -> test -> commit."""
-        from vibecollab.cli.ai import _execute_agent_cycle
+        from vibecollab_cli.cli.ai import _execute_agent_cycle
         event_log = EventLog(tmp_project)
         task_mgr = TaskManager(tmp_project, event_log)
 
@@ -659,7 +659,7 @@ class TestExecuteAgentCycle:
         client.chat.side_effect = [plan_resp, exec_resp]
 
         # Mock execute_full_cycle to avoid real git operations
-        from vibecollab.agent.executor import ExecutionResult
+        from vibecollab_mcp.agent.executor import ExecutionResult
         mock_result = ExecutionResult(
             success=True,
             changes_applied=["create: hello.txt"],
